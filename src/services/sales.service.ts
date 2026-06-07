@@ -125,7 +125,6 @@ class SalesService {
         const amountPaidCents = Math.round(safeNumber(saleData.amountPaid) * 100);
         const remainingCents = Math.max(0, totalCents - amountPaidCents);
 
-        // FIX: seuil 0.9 remplacé par Math.abs < 1 pour cohérence centimétrique
         const paymentStatus: Sale['paymentStatus'] =
             Math.abs(remainingCents) < 1 ? 'paid' :
             amountPaidCents > 0            ? 'partial' : 'unpaid';
@@ -159,9 +158,17 @@ class SalesService {
             dueDate: saleData.dueDate,
         };
 
-        // FIX: invoiceNumber généré DANS la transaction — atomicité garantie
-        // FIX: db.payments et db.product_returns retirés de la transaction (non utilisés)
-        await db.transaction('rw', [db.sales, db.products, db.inventory_logs, db.customers, db.company_profile], async () => {
+        // CRITICAL FIX: The transaction scope must include ALL tables used by child services.
+        // customerService.recalculateCustomerStatus uses 'payments' and 'product_returns'.
+        await db.transaction('rw', [
+            db.sales, 
+            db.products, 
+            db.inventory_logs, 
+            db.customers, 
+            db.company_profile,
+            db.payments,
+            db.product_returns
+        ], async () => {
             invoiceNumber = await this.generateInvoiceNumber();
             newSale.invoiceNumber = invoiceNumber;
             await db.sales.add(newSale);
@@ -184,7 +191,7 @@ class SalesService {
      * Cela préserve la piste d'audit comptable et empêche la perte de données irréversible.
      */
     async processSaleCancellation(uuid: string): Promise<void> {
-        await db.transaction('rw', [db.sales, db.products, db.customers, db.inventory_logs], async () => {
+        await db.transaction('rw', [db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns], async () => {
             const sale = await this.getSaleByUuid(uuid);
             if (!sale || !sale.id) throw new Error('Vente non trouvée.');
             if (sale.isCancelled) throw new Error('Cette vente est déjà annulée.');
