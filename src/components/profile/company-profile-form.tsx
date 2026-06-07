@@ -25,10 +25,9 @@ import { SupabaseSqlDialog } from './SupabaseSqlDialog';
  * Inclut désormais les paramètres Cloud (Supabase) et les références de prix (Or/Pain).
  */
 export function CompanyProfileForm() {
-    const { companyProfile, isCompanyProfileLoading } = useAppStore(state => ({
-        companyProfile: state.companyProfile,
-        isCompanyProfileLoading: state.isCompanyProfileLoading,
-    }));
+    // FIX: Individual selectors to avoid reference instability and loops in React 19
+    const companyProfile = useAppStore(state => state.companyProfile);
+    const isCompanyProfileLoading = useAppStore(state => state.isCompanyProfileLoading);
     const { updateCompanyProfile } = useAppStore(state => state.actions);
     
     const [formState, setFormState] = useState<Partial<CompanyProfile>>({});
