@@ -9,17 +9,9 @@ import { safeToDate, safeNumber, roundFinancial, preciseMultiply } from '@/lib/u
 import { startOfDay, endOfDay } from 'date-fns';
 import { useAppStore } from '@/stores/appStore';
 
-const triggerSync = () => {
-    if (typeof window !== 'undefined') {
-        const state = useAppStore.getState();
-        if (state && state.actions) {
-            state.actions.triggerSmartSync();
-        }
-    }
-};
-
 /**
  * Service de gestion des ventes Elite.
+ * Gère le cycle de vie complet d'une transaction commerciale.
  */
 class SalesService {
 
@@ -50,8 +42,6 @@ class SalesService {
         }
 
         let sales = await collection.toArray();
-
-        // FIX: Exclude soft-deleted (cancelled) sales from normal results
         sales = sales.filter(s => !s.isCancelled);
 
         if (filters.status && filters.status !== 'all') {
@@ -60,35 +50,16 @@ class SalesService {
 
         if (filters.query) {
             const lowerQuery = filters.query.toLowerCase().trim();
-            const customers = await db.customers.toArray();
-            const customerUuids = new Set(
-                customers
-                    .filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(lowerQuery))
-                    .map(c => c.uuid)
-            );
-            sales = sales.filter(
-                s =>
-                    s.invoiceNumber.toLowerCase().includes(lowerQuery) ||
-                    (s.customerUuid && customerUuids.has(s.customerUuid)),
-            );
+            sales = sales.filter(s => s.invoiceNumber.toLowerCase().includes(lowerQuery));
         }
 
-        return sales.sort(
-            (a, b) => safeToDate(b.createdAt!).getTime() - safeToDate(a.createdAt!).getTime()
-        );
+        return sales.sort((a, b) => safeToDate(b.createdAt!).getTime() - safeToDate(a.createdAt!).getTime());
     }
 
-    /**
-     * Génère le prochain numéro de facture.
-     * DOIT être appelé UNIQUEMENT depuis l'intérieur d'une db.transaction()
-     * pour garantir l'atomicité et éviter les race conditions.
-     */
     private async generateInvoiceNumber(): Promise<string> {
-        const now = new Date();
-        const year = now.getFullYear();
         const profile = await db.company_profile.toCollection().first();
         const currentCounter = profile?.invoice_counter ?? 1;
-        const prefix = profile?.invoice_prefix || String(year);
+        const prefix = profile?.invoice_prefix || String(new Date().getFullYear());
         const invoiceNumber = `${prefix}-${String(currentCounter).padStart(6, '0')}`;
 
         if (profile?.id) {
@@ -100,6 +71,10 @@ class SalesService {
         return invoiceNumber;
     }
 
+    /**
+     * Crée une vente de manière atomique.
+     * Inclut : génération numéro, décrémentation stock, mise à jour solde client, logs audit.
+     */
     async createSale(saleData: {
         items: CartItem[];
         discountType: 'fixed' | 'percentage';
@@ -127,10 +102,9 @@ class SalesService {
 
         const paymentStatus: Sale['paymentStatus'] =
             Math.abs(remainingCents) < 1 ? 'paid' :
-            amountPaidCents > 0            ? 'partial' : 'unpaid';
+            amountPaidCents > 0 ? 'partial' : 'unpaid';
 
         const profile = await db.company_profile.toCollection().first();
-
         const saleItems: SaleItem[] = saleData.items.map(item => ({
             productUuid: item.uuid.startsWith('custom-') ? null : item.uuid,
             name: item.name,
@@ -140,10 +114,9 @@ class SalesService {
             tva_rate: profile?.tva_rate || 19,
         }));
 
-        let invoiceNumber = '';
         const newSale: Sale = {
             uuid: uuidv4(),
-            invoiceNumber,
+            invoiceNumber: '', // Sera rempli dans la transaction
             items: saleItems,
             subtotal: subtotalCents / 100,
             discountType: saleData.discountType,
@@ -158,52 +131,39 @@ class SalesService {
             dueDate: saleData.dueDate,
         };
 
-        // CRITICAL FIX: The transaction scope must include ALL tables used by child services.
-        // customerService.recalculateCustomerStatus uses 'payments' and 'product_returns'.
+        // TRANSACTION CRITIQUE : Verrouille toutes les tables impactées
         await db.transaction('rw', [
-            db.sales, 
-            db.products, 
-            db.inventory_logs, 
-            db.customers, 
-            db.company_profile,
-            db.payments,
-            db.product_returns
+            db.sales, db.products, db.inventory_logs, 
+            db.customers, db.company_profile, db.payments, db.product_returns
         ], async () => {
-            invoiceNumber = await this.generateInvoiceNumber();
-            newSale.invoiceNumber = invoiceNumber;
+            newSale.invoiceNumber = await this.generateInvoiceNumber();
             await db.sales.add(newSale);
+            
             for (const item of saleData.items) {
                 await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
             }
+            
             if (newSale.customerUuid) {
                 await customerService.recalculateCustomerStatus(newSale.customerUuid);
             }
         });
 
-        triggerSync();
-
+        this.triggerSync();
         return newSale;
     }
 
-    /**
-     * Annule une vente.
-     * FIX: Soft-delete — la vente est marquée isCancelled + cancelledAt au lieu d'être supprimée.
-     * Cela préserve la piste d'audit comptable et empêche la perte de données irréversible.
-     */
     async processSaleCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns], async () => {
             const sale = await this.getSaleByUuid(uuid);
             if (!sale || !sale.id) throw new Error('Vente non trouvée.');
-            if (sale.isCancelled) throw new Error('Cette vente est déjà annulée.');
+            if (sale.isCancelled) return;
 
-            // FIX: Soft-delete au lieu de db.sales.delete()
             await db.sales.update(sale.id, {
                 isCancelled: true,
                 cancelledAt: new Date(),
                 updatedAt: new Date(),
             });
 
-            // Réintégrer le stock
             for (const item of sale.items) {
                 if (item.productUuid) {
                     await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
@@ -214,7 +174,13 @@ class SalesService {
             }
         });
 
-        triggerSync();
+        this.triggerSync();
+    }
+
+    private triggerSync() {
+        if (typeof window !== 'undefined') {
+            useAppStore.getState().actions.triggerSmartSync();
+        }
     }
 }
 

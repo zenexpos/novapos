@@ -4,13 +4,14 @@ import { db, DB_VERSION } from '@/lib/db';
 import { toast } from 'sonner';
 
 /**
- * Service de gestion des archives et de la souveraineté des données.
- * FIX: Backup includes _meta block with schemaVersion for safe restore validation.
+ * @fileOverview Service de gestion des archives et de la souveraineté des données.
+ * Système de restauration "Total State" : remplace intégralement l'état actuel par le contenu du manifeste.
  */
 class BackupService {
 
     private async exportData(): Promise<Record<string, any[]>> {
         const data: Record<string, any[]> = {};
+        // Exportation de toutes les tables enregistrées dans Dexie
         for (const table of db.tables) {
             data[table.name] = await table.toArray();
         }
@@ -18,108 +19,85 @@ class BackupService {
     }
 
     /**
-     * Génère un fichier de sauvegarde JSON avec métadonnées de version.
-     * FIX: Inclut _meta.schemaVersion pour valider la compatibilité lors de la restauration.
+     * Génère un fichier de sauvegarde JSON complet.
      */
     async createBackup(): Promise<File> {
         try {
             const tableData = await this.exportData();
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `ipos-backup-${timestamp}.json`;
+            const fileName = `ipos-zen-full-backup-${timestamp}.json`;
 
-            // FIX: Add metadata block — schemaVersion used to detect version mismatch on restore
             const backupPayload = {
                 _meta: {
                     schemaVersion: DB_VERSION,
                     exportedAt:    new Date().toISOString(),
                     appName:       'iPOS Zen',
+                    isFullBackup:  true
                 },
                 ...tableData,
             };
 
-            const file = new File(
+            return new File(
                 [JSON.stringify(backupPayload, null, 2)],
                 fileName,
                 { type: 'application/json' }
             );
-            return file;
         } catch (error) {
             console.error('Backup creation failed:', error);
-            throw new Error('La compression des archives a échoué.');
+            throw new Error('La génération de la sauvegarde a échoué.');
         }
     }
 
     /**
-     * Valide et analyse une archive avant aperçu.
-     * FIX: Vérifie que schemaVersion de la sauvegarde ≤ version actuelle.
+     * Valide un manifeste avant injection.
      */
     async validateAndParseBackup(file: File): Promise<Record<string, any[]>> {
         try {
             const text = await file.text();
             const raw = JSON.parse(text);
-
-            // FIX: Extract _meta and validate schema version
             const { _meta, ...tableData } = raw;
 
-            if (_meta?.schemaVersion !== undefined) {
-                const backupVersion = Number(_meta.schemaVersion);
-                if (backupVersion > DB_VERSION) {
-                    throw new Error(
-                        `Cette sauvegarde (v${backupVersion}) est plus récente que l'application (v${DB_VERSION}). Mettez à jour iPOS Zen avant de restaurer.`
-                    );
-                }
+            if (_meta?.schemaVersion && Number(_meta.schemaVersion) > DB_VERSION) {
+                throw new Error(`Version incompatible (v${_meta.schemaVersion}). Veuillez mettre à jour l'application.`);
             }
-            // Legacy backups (no _meta) are accepted without version check
 
-            // Ensure all known tables are present (even as empty arrays)
             const data: Record<string, any[]> = {};
-            const allTableNames = db.tables.map(t => t.name);
-            allTableNames.forEach(tableName => {
-                data[tableName] = Array.isArray(tableData[tableName])
-                    ? tableData[tableName]
-                    : [];
+            db.tables.forEach(table => {
+                data[table.name] = Array.isArray(tableData[table.name]) ? tableData[table.name] : [];
             });
 
             return data;
         } catch (error: any) {
-            throw new Error('Manifeste corrompu ou invalide : ' + error.message);
+            throw new Error('Fichier invalide : ' + error.message);
         }
     }
 
     /**
-     * Restaure les données sélectionnées dans IndexedDB.
-     * FIX: Opération complète dans une transaction — si un table échoue,
-     * toutes les tables déjà vidées sont restaurées (Dexie rollback).
+     * Restauration TOTALE : Vide toutes les tables et injecte les nouvelles données.
+     * Cette opération rend l'application identique à l'état de la sauvegarde.
      */
     async restoreBackup(data: Record<string, any[]>): Promise<void> {
+        const allTables = db.tables;
+        
         try {
-            const availableTables = new Set(db.tables.map(t => t.name));
-            const tablesToRestore = Object.keys(data).filter(t => availableTables.has(t));
-
-            if (tablesToRestore.length === 0) return;
-
-            const dexieTables = tablesToRestore.map(t => db.table(t));
-
-            await db.transaction('rw', dexieTables, async () => {
-                for (const tableName of tablesToRestore) {
-                    const table = db.table(tableName);
-                    const records = data[tableName];
-
-                    if (records && Array.isArray(records)) {
-                        await table.clear();
-                        // Strip local auto-increment ids — Dexie will reassign
-                        const cleanData = records.map(({ id, ...rest }) => rest);
-                        if (cleanData.length > 0) {
-                            await table.bulkAdd(cleanData);
-                        }
+            // Utilisation d'une transaction globale sur TOUTES les tables pour garantir l'atomicité
+            await db.transaction('rw', allTables, async () => {
+                for (const table of allTables) {
+                    await table.clear(); // Purge totale avant injection
+                    
+                    const records = data[table.name];
+                    if (records && records.length > 0) {
+                        // On retire les IDs locaux pour laisser Dexie les réattribuer si nécessaire, 
+                        // tout en conservant les UUID pour la synchronisation.
+                        const cleanRecords = records.map(({ id, ...rest }) => rest);
+                        await table.bulkAdd(cleanRecords);
                     }
                 }
             });
-
-            toast.success('Restauration sélective terminée.');
+            toast.success("Restauration complète réussie. Le système est à jour.");
         } catch (error: any) {
-            console.error('Restore failed:', error);
-            throw new Error('Échec critique de la restauration : ' + error.message);
+            console.error('Critical Restore Failure:', error);
+            throw new Error("Échec de la restauration totale : " + error.message);
         }
     }
 }
