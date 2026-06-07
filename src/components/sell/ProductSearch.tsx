@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
@@ -64,7 +65,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // FIX: Use individual selector for item count after mount to prevent SSR hydration mismatch/loop
     const storeCartItemCount = useCartStore(
         (state) => {
             const activeCart = state.carts.find(c => c.id === state.activeCartId);
@@ -72,14 +72,12 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         }
     );
 
-    // FIX: Prevent SSR/CSR hydration mismatch — only access store after mount
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
     const cartItemCount = isMounted ? storeCartItemCount : 0;
 
-    // Moteur de focus automatique pour le scan code-barres
     const refocusInput = () => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -91,7 +89,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         focusInput: refocusInput
     }));
 
-    // Surveillance : re-focus après ajout au panier
     useEffect(() => {
         setTimeout(refocusInput, 10);
     }, [cartItemCount]);
@@ -112,7 +109,17 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     signal
                 });
                 if (!signal.aborted) {
-                    setSearchResults(data.slice(0, 15));
+                    const results = data.slice(0, 15);
+                    setSearchResults(results);
+
+                    // ميزة الإضافة التلقائية عند مطابقة الكودبار بدقة
+                    if (results.length > 0) {
+                        const q = debouncedSearchQuery.trim();
+                        const exactMatch = results.find(p => p.barcodes?.includes(q));
+                        if (exactMatch) {
+                            handleSelect(exactMatch);
+                        }
+                    }
                 }
             } catch (e: any) {
                 if (!signal.aborted && e.name !== 'AbortError') {
@@ -130,7 +137,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         addItemToCart(product);
         setSearchQuery('');
         setSearchResults([]);
-        // Re-focus immediately for next barcode scan
         setTimeout(refocusInput, 5);
     };
     
@@ -216,7 +222,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                         ) : !isSearching && (
                             <div className="py-24 text-center space-y-4 opacity-20 flex flex-col items-center">
                                 <ShoppingBag className="h-16 w-16 mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertorié.</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertوريé.</p>
                             </div>
                         )}
                     </div>
