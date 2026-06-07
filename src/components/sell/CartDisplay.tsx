@@ -45,10 +45,10 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
 
     /**
      * ميزة الحساب العكسي: عند تغيير الإجمالي، نحسب الكمية
-     * الكمية = الإجمالي الجديد / سعر الوحدة
+     * يتم إجبار الإجمالي على أن يكون عدداً صحيحاً (بدون فاصلة)
      */
     const handleTotalChange = (val: string) => {
-        const newTotal = parseFloat(val);
+        const newTotal = parseInt(val, 10);
         if (isNaN(newTotal) || item.price <= 0) return;
         const calculatedQty = newTotal / item.price;
         // تقريب إلى 3 أرقام عشرية لدعم الوزن (كغ)
@@ -198,8 +198,8 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                         ref={totalInputRef}
                         type="number"
                         min="0"
-                        step="0.01"
-                        value={isZero ? '0' : lineTotal}
+                        step="1"
+                        value={isZero ? '0' : Math.round(lineTotal)}
                         onChange={(e) => handleTotalChange(e.target.value)}
                         onFocus={e => e.target.select()}
                         className={cn(
