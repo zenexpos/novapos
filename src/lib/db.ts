@@ -23,7 +23,7 @@ class iPOSDatabase extends Dexie {
     constructor() {
         super('iPOSDatabase');
 
-        // FIX: Version 1 — initial schema (for users on v1, migration path is defined)
+        // Version 1 — المخطط الأولي
         this.version(1).stores({
             products:         '++id, &uuid, name, supplierUuid, stockStatus',
             customers:        '++id, &uuid, searchName, debtStatus',
@@ -39,7 +39,7 @@ class iPOSDatabase extends Dexie {
             inventory_logs:   '++id, &uuid, productUuid, relatedUuid, reason, createdAt',
         });
 
-        // FIX: Version 2 — adds proforma_invoices and extra indexes
+        // Version 2 — إضافة الفواتير الأولية والفهارس المتقدمة
         this.version(2).stores({
             products:         '++id, &uuid, name, *barcodes, supplierUuid, stockStatus, dateExpiration',
             customers:        '++id, &uuid, searchName, debtStatus, isOverLimit, isBreadClient, outstandingBalance',
@@ -56,9 +56,7 @@ class iPOSDatabase extends Dexie {
             proforma_invoices:'++id, &uuid, &proformaNumber, customerUuid, createdAt',
         });
 
-        // FIX: Version 3 — adds bread_type_recurrence index + uniqueness on proformaNumber
-        // FIX: createdAt indexed on sales (was missing — caused full table scan on date queries)
-        // FIX: proformaNumber marked unique (&) to prevent duplicate invoice numbers
+        // Version 3 — تحسين فهارس رصيد العميل وتفرد أرقام الفواتير
         this.version(3).stores({
             products:         '++id, &uuid, name, *barcodes, supplierUuid, stockStatus, dateExpiration',
             customers:        '++id, &uuid, searchName, debtStatus, isOverLimit, isBreadClient, bread_type_recurrence, outstandingBalance',
@@ -75,8 +73,7 @@ class iPOSDatabase extends Dexie {
             proforma_invoices:'++id, &uuid, &proformaNumber, customerUuid, createdAt',
         });
 
-        // FIX v4: isCancelled indexed on sales — enables efficient soft-delete queries
-        // without full table scans. cancelledAt indexed for audit reports by date.
+        // Version 4 — إضافة فهارس الحذف الناعم (isCancelled) والمزامنة المتقدمة
         this.version(4).stores({
             products:         '++id, &uuid, name, *barcodes, supplierUuid, stockStatus, dateExpiration',
             customers:        '++id, &uuid, searchName, debtStatus, isOverLimit, isBreadClient, bread_type_recurrence, outstandingBalance',
@@ -95,16 +92,12 @@ class iPOSDatabase extends Dexie {
     }
 }
 
-// FIX: Single source of truth for schema version — used in backup.service.ts
 export const DB_VERSION = 4;
-
 export const db = new iPOSDatabase();
 
-// FIX: Reload the page if another tab upgrades the schema — prevents stale Dexie connection
 if (typeof window !== 'undefined') {
     db.on('versionchange', () => {
-        console.warn('[iPOS] Nouvelle version de la base détectée — rechargement...');
+        console.warn('[iPOS] تحديث إصدار قاعدة البيانات — جاري إعادة تحميل التطبيق...');
         window.location.reload();
     });
 }
-
