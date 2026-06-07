@@ -13,7 +13,7 @@ import {
     Loader2, Building, MapPin, Phone, Mail, Wheat, Coins, 
     FileText, CheckCircle2, RotateCcw, Hash, Cloud, Key, 
     ShieldCheck, Landmark, Receipt, Percent, Globe, Link as LinkIcon,
-    Sparkles, Eye, EyeOff
+    Sparkles, Eye, EyeOff, Scale
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { format } from 'date-fns';
@@ -110,7 +110,7 @@ export function CompanyProfileForm() {
                             <Input id="companyName" value={formState.companyName || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg focus-visible:ring-primary/20" required disabled={isSaving}/>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="legal_form" className="text-[10px] font-bold uppercase ml-1 opacity-40">Forme Juridique</Label>
+                            <Label htmlFor="legal_form" className="text-[10px] font-bold uppercase ml-1 opacity-40">Formه Juridique</Label>
                             <Input id="legal_form" value={formState.legal_form || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold focus-visible:ring-primary/20" placeholder="Ex: SARL, EURL, EI, Auto-entrepreneur..." disabled={isSaving}/>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export function CompanyProfileForm() {
                                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30" />
                                     <Input
                                         id="supabase_key"
-                                        type={showSupabaseKey ? 'text' : 'password'} /* FIX: toggleable — hidden by default */
+                                        type={showSupabaseKey ? 'text' : 'password'}
                                         value={formState.supabase_key || ''}
                                         onChange={handleInputChange}
                                         className="pl-11 pr-11 h-11 rounded-xl bg-background border-none shadow-sm font-mono text-xs font-bold"
@@ -185,34 +185,10 @@ export function CompanyProfileForm() {
                     </div>
                 </div>
 
-                {/* 3. RÉFÉRENCES ÉCONOMIQUES (GOLD & BREAD) */}
+                {/* 3. LOGISTIQUE & RÉFÉRENCES */}
                 <div className="space-y-6 pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-                    <SectionTitle title="Références Économiques & Unités" icon={Coins} />
+                    <SectionTitle title="Logistique & Unités" icon={Wheat} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="p-6 bg-amber-500/5 rounded-2xl border border-amber-500/10 space-y-4 group hover:bg-amber-500/10 transition-all shadow-inner">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600">
-                                    <Coins className="h-5 w-5" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <Label htmlFor="goldPricePerGram" className="text-[10px] font-black uppercase tracking-wider">Cours de l'Or (24k)</Label>
-                                    <span className="text-[8px] text-amber-600/60 font-bold">Référence pour calcul du Nissab (Zakat)</span>
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <Input 
-                                    id="goldPricePerGram" 
-                                    type="number" 
-                                    value={formState.goldPricePerGram || ''} 
-                                    onChange={handleInputChange} 
-                                    className="h-12 rounded-xl bg-background border-none shadow-sm font-black text-xl text-amber-600 text-center focus-visible:ring-amber-500/20" 
-                                    placeholder="0.00"
-                                    disabled={isSaving}
-                                />
-                                <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-xs text-amber-600/30">DA / g</span>
-                            </div>
-                        </div>
-
                         <div className="p-6 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-4 group hover:bg-emerald-500/10 transition-all shadow-inner">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -239,8 +215,60 @@ export function CompanyProfileForm() {
                     </div>
                 </div>
 
-                {/* 4. IDENTIFIANTS FISCAUX ALGÉRIENS */}
+                {/* 4. PARAMÈTRES ZAKAT ELITE */}
                 <div className="space-y-6 pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                    <SectionTitle title="Paramètres Zakat & Seuil Nissab" icon={Scale} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-6 bg-amber-500/5 rounded-2xl border border-amber-500/10 space-y-4 group hover:bg-amber-500/10 transition-all shadow-inner">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600">
+                                    <Coins className="h-5 w-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <Label htmlFor="goldPricePerGram" className="text-[10px] font-black uppercase tracking-wider">Cours de l'Or (24k)</Label>
+                                    <span className="text-[8px] text-amber-600/60 font-bold">Base du calcul du Nissab (85g)</span>
+                                </div>
+                            </div>
+                            <div className="relative">
+                                <Input 
+                                    id="goldPricePerGram" 
+                                    type="number" 
+                                    value={formState.goldPricePerGram || ''} 
+                                    onChange={handleInputChange} 
+                                    className="h-12 rounded-xl bg-background border-none shadow-sm font-black text-xl text-amber-600 text-center focus-visible:ring-amber-500/20" 
+                                    placeholder="0.00"
+                                    disabled={isSaving}
+                                />
+                                <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-xs text-amber-600/30">DA / g</span>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 space-y-6 flex flex-col justify-between">
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] font-black uppercase tracking-wider">Méthode d'Évaluation</Label>
+                                    <p className="text-[9px] text-muted-foreground/60 leading-tight">Valorisation du stock pour l'assiette imposable</p>
+                                </div>
+                                <Switch 
+                                    checked={formState.zakat_use_sale_price ?? true}
+                                    onCheckedChange={(checked) => setFormState(prev => ({ ...prev, zakat_use_sale_price: checked }))}
+                                    className="data-[state=checked]:bg-primary"
+                                    disabled={isSaving}
+                                />
+                            </div>
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-black/20 text-[10px] font-bold">
+                                {formState.zakat_use_sale_price ?? true ? (
+                                    <span className="text-emerald-500">Prix de Vente (Recommandé)</span>
+                                ) : (
+                                    <span className="text-amber-500">Prix d'Achat (PMP)</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. IDENTIFIANTS FISCAUX ALGÉRIENS */}
+                <div className="space-y-6 pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
                     <SectionTitle title="Régime Fiscal & Identifiants" icon={Landmark} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="space-y-2">
@@ -262,8 +290,8 @@ export function CompanyProfileForm() {
                     </div>
                 </div>
 
-                {/* 5. SÉQUENÇAGE & FACTURATION */}
-                <div className="space-y-6 pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+                {/* 6. SÉQUENÇAGE & FACTURATION */}
+                <div className="space-y-6 pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
                     <SectionTitle title="Facturation & Contacts" icon={Receipt} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-2xl border border-white/5 shadow-inner">

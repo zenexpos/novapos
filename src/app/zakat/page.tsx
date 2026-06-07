@@ -28,12 +28,18 @@ import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useAppStore, useAppActions } from '@/stores/appStore';
 
 export default function ZakatPage() {
+    const profile = useAppStore(state => state.companyProfile);
+    const { updateCompanyProfile } = useAppActions();
+    
     const [data, setData] = useState<ZakatData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [useSalePrice, setUseSalePrice] = useState(true);
     
+    // Connect evaluation method to profile state
+    const useSalePrice = profile?.zakat_use_sale_price ?? true;
+
     const [cashInHand, setCashInHand] = useState<number>(0);
     const [cashInBank, setCashInBank] = useState<number>(0);
 
@@ -64,6 +70,11 @@ export default function ZakatPage() {
 
         return { assets, base, zakat, isEligible };
     }, [data, useSalePrice, cashInHand, cashInBank]);
+
+    const handleToggleMethod = (checked: boolean) => {
+        updateCompanyProfile({ zakat_use_sale_price: checked });
+        toast.info(checked ? "Méthode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
+    };
 
     // Raccourci pour actualiser le bilan
     useKeyboardShortcuts([
@@ -219,7 +230,7 @@ export default function ZakatPage() {
                                             <Label className="text-[10px] font-semibold uppercase tracking-wide text-primary/60">Évaluation au prix de vente</Label>
                                             <Switch 
                                                 checked={useSalePrice} 
-                                                onCheckedChange={setUseSalePrice}
+                                                onCheckedChange={handleToggleMethod}
                                                 className="data-[state=checked]:bg-primary"
                                             />
                                         </div>

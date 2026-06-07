@@ -277,6 +277,7 @@ export interface CompanyProfile {
     logoUrl?:           string;
     goldPricePerGram?:  number;
     prix_pain?:         number;
+    zakat_use_sale_price?: boolean;
     updatedAt?:         Date;
     supabase_url?:      string;
     supabase_key?:      string;

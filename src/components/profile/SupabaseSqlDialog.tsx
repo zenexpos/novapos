@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS company_profile (
     -- Configuration & Sync
     gold_price_per_gram   NUMERIC(15,2) DEFAULT 0,
     prix_pain             NUMERIC(15,2) DEFAULT 0,
+    zakat_use_sale_price  BOOLEAN DEFAULT true,
     supabase_url          TEXT,
     supabase_key          TEXT,
     last_sync_at          TIMESTAMPTZ,
