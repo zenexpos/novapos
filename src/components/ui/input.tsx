@@ -5,43 +5,37 @@ import { cn } from '@/lib/utils';
 
 export interface InputProps
     extends React.InputHTMLAttributes<HTMLInputElement> {
-    /** Icône placée à gauche dans l'input */
     startIcon?: React.ReactNode;
-    /** Icône ou bouton placé à droite dans l'input */
     endIcon?:   React.ReactNode;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, startIcon, endIcon, ...props }, ref) => {
+        const baseClass = cn(
+            'flex h-11 w-full rounded-xl border border-border',
+            'bg-muted/30 backdrop-blur-md',
+            'px-4 py-2 text-sm font-medium',
+            'ring-offset-background',
+            'placeholder:text-muted-foreground/30',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            'transition-all duration-200',
+            startIcon && 'pl-11',
+            endIcon   && 'pr-11',
+            className,
+        );
+
         if (startIcon || endIcon) {
             return (
-                <div className="relative flex items-center w-full">
+                <div className="relative flex items-center w-full group">
                     {startIcon && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/50">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/30 group-focus-within:text-primary transition-colors">
                             {startIcon}
                         </div>
                     )}
-                    <input
-                        type={type}
-                        className={cn(
-                            'flex h-10 w-full rounded-xl border border-input',
-                            'bg-[var(--glass-bg)] backdrop-blur-sm',
-                            'px-3 py-2 text-sm',
-                            'ring-offset-background',
-                            'placeholder:text-muted-foreground/40',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                            'disabled:cursor-not-allowed disabled:opacity-50',
-                            'transition-colors duration-150',
-                            'focus-within-glass',
-                            startIcon && 'pl-9',
-                            endIcon   && 'pr-9',
-                            className,
-                        )}
-                        ref={ref}
-                        {...props}
-                    />
+                    <input type={type} className={baseClass} ref={ref} {...props} />
                     {endIcon && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 group-focus-within:text-primary transition-colors">
                             {endIcon}
                         </div>
                     )}
@@ -52,17 +46,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         return (
             <input
                 type={type}
-                className={cn(
-                    'flex h-10 w-full rounded-xl border border-input',
-                    'bg-[var(--glass-bg)] backdrop-blur-sm',
-                    'px-3 py-2 text-sm',
-                    'ring-offset-background',
-                    'placeholder:text-muted-foreground/40',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                    'disabled:cursor-not-allowed disabled:opacity-50',
-                    'transition-colors duration-150',
-                    className,
-                )}
+                className={baseClass}
                 ref={ref}
                 {...props}
             />

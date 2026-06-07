@@ -43,15 +43,10 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         onPriceUpdate(item.uuid, Math.max(0, num));
     };
 
-    /**
-     * ميزة الحساب العكسي: عند تغيير الإجمالي، نحسب الكمية
-     * يتم إجبار الإجمالي على أن يكون عدداً صحيحاً (بدون فاصلة)
-     */
     const handleTotalChange = (val: string) => {
         const newTotal = parseInt(val, 10);
         if (isNaN(newTotal) || item.price <= 0) return;
         const calculatedQty = newTotal / item.price;
-        // تقريب إلى 3 أرقام عشرية لدعم الوزن (كغ)
         onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
     };
 
@@ -110,8 +105,8 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
             tabIndex={0}
             onFocus={onSelect}
             className={cn(
-                "grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center p-4 rounded-2xl border transition-all duration-500 group outline-none",
-                isSelected ? "bg-primary/10 border-primary/30 ring-1 ring-primary/20 shadow-sm" : "bg-card/40 border-white/5 hover:bg-card/60",
+                "grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center p-4 rounded-2xl border transition-all duration-300 group outline-none",
+                isSelected ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20 shadow-sm" : "bg-muted/20 border-border hover:bg-muted/30",
                 isZero && "opacity-50 grayscale",
                 item.flash && 'animate-flash ring-2 ring-primary/30'
             )}
@@ -137,12 +132,12 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                             onChange={(e) => handlePriceChange(e.target.value)}
                             onFocus={e => e.target.select()}
                             className={cn(
-                                "h-6 w-24 pl-6 pr-1 text-[10px] font-black bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 rounded-lg",
-                                isSellingAtLoss && "text-destructive"
+                                "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg",
+                                isSellingAtLoss && "text-destructive border-destructive/30"
                             )}
                         />
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">/ {item.unite || 'pcs'}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unite || 'pcs'}</span>
                     
                     {isSellingAtLoss && (
                         <TooltipProvider>
@@ -164,10 +159,10 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
             </div>
             
             <div className="flex flex-col items-center">
-                <div className="flex items-center bg-black/20 rounded-xl border border-white/5 overflow-hidden shadow-inner">
+                <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
                     <button 
                         onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, Number((item.cartQuantity - 1).toFixed(3)))); }}
-                        className="px-3 h-10 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors font-black"
+                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
                         −
                     </button>
@@ -178,13 +173,13 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                         onChange={(e) => handleQtyChange(e.target.value)}
                         onFocus={e => e.target.select()}
                         className={cn(
-                            "w-20 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0",
+                            "w-16 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0",
                             isZero ? "text-destructive" : "text-primary"
                         )}
                     />
                     <button 
                         onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Number((item.cartQuantity + 1).toFixed(3))); }}
-                        className="px-3 h-10 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors font-black"
+                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
                         +
                     </button>
@@ -203,7 +198,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                         onChange={(e) => handleTotalChange(e.target.value)}
                         onFocus={e => e.target.select()}
                         className={cn(
-                            "h-10 w-28 pl-7 text-right font-black text-base tracking-tighter tabular-nums bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 rounded-xl",
+                            "h-10 w-28 pl-7 text-right font-black text-base tracking-tighter tabular-nums bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-xl",
                             isZero && "text-muted-foreground/20 line-through"
                         )}
                     />
@@ -267,7 +262,7 @@ export function CartDisplay() {
     if (!cart || cart.items.length === 0) {
         return (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-10 space-y-6 animate-in fade-in duration-1000">
-                <div className="p-8 rounded-3xl bg-muted/20 border border-white/5 shadow-inner">
+                <div className="p-8 rounded-3xl bg-muted/20 border border-border shadow-inner">
                     <ShoppingCart className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
