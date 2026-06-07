@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, ShoppingCart, Tag, X, Coins, AlertTriangle } from 'lucide-react';
+import { Trash2, ShoppingCart, Tag, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
@@ -29,6 +29,7 @@ interface CartItemRowProps {
 const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const priceInputRef = useRef<HTMLInputElement>(null);
     const qtyInputRef = useRef<HTMLInputElement>(null);
+    const totalInputRef = useRef<HTMLInputElement>(null);
 
     const handleQtyChange = (val: string) => {
         const num = parseFloat(val);
@@ -40,6 +41,18 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         const num = parseFloat(val);
         if (isNaN(num)) return;
         onPriceUpdate(item.uuid, Math.max(0, num));
+    };
+
+    /**
+     * ميزة الحساب العكسي: عند تغيير الإجمالي، نحسب الكمية
+     * الكمية = الإجمالي الجديد / سعر الوحدة
+     */
+    const handleTotalChange = (val: string) => {
+        const newTotal = parseFloat(val);
+        if (isNaN(newTotal) || item.price <= 0) return;
+        const calculatedQty = newTotal / item.price;
+        // تقريب إلى 3 أرقام عشرية لدعم الوزن (كغ)
+        onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
     };
 
     useKeyboardShortcuts([
@@ -74,6 +87,12 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
             ignoreInputFocus: false
         },
         {
+            key: 't',
+            action: () => totalInputRef.current?.focus(),
+            description: 'Modifier par Total HT',
+            ignoreInputFocus: false
+        },
+        {
             key: 'Delete',
             action: () => onRemove(item.uuid),
             description: 'Supprimer l\'article',
@@ -84,6 +103,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
     const isCustom = item.uuid.startsWith('custom-');
     const isZero = item.cartQuantity <= 0;
     const isSellingAtLoss = item.price < item.purchasePrice && item.purchasePrice > 0;
+    const lineTotal = item.price * item.cartQuantity;
 
     return (
         <div 
@@ -171,13 +191,24 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                 </div>
             </div>
 
-            <div className="w-28 text-right">
-                <p className={cn(
-                    "font-black text-base tracking-tighter tabular-nums",
-                    isZero ? "text-muted-foreground/20 line-through" : "text-foreground"
-                )}>
-                    {formatCurrency(item.price * item.cartQuantity)}
-                </p>
+            <div className="w-32 flex flex-col items-end">
+                <div className="relative group/total">
+                    <Calculator className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/total:text-primary transition-colors" />
+                    <Input
+                        ref={totalInputRef}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={isZero ? '0' : lineTotal}
+                        onChange={(e) => handleTotalChange(e.target.value)}
+                        onFocus={e => e.target.select()}
+                        className={cn(
+                            "h-10 w-28 pl-7 text-right font-black text-base tracking-tighter tabular-nums bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 rounded-xl",
+                            isZero && "text-muted-foreground/20 line-through"
+                        )}
+                    />
+                </div>
+                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Total HT [T]</p>
             </div>
 
             <Button 
@@ -253,7 +284,7 @@ export function CartDisplay() {
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center text-[9px] font-black uppercase text-muted-foreground/40 px-6 mb-6 tracking-widest">
                     <div className="text-left">Désignation Produit</div>
                     <div className="text-center">Quantité Flux</div>
-                    <div className="text-right">Total HT</div>
+                    <div className="text-right">Total HT (Modifiable)</div>
                     <div></div>
                 </div>
 
