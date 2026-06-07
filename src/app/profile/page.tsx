@@ -15,10 +15,9 @@ import { cn } from "@/lib/utils";
  * Permet de configurer l'identité légale de l'établissement pour la facturation et les rapports.
  */
 export default function ProfilePage() {
-    const { companyProfile, isCompanyProfileLoading } = useAppStore(state => ({
-        companyProfile: state.companyProfile,
-        isCompanyProfileLoading: state.isCompanyProfileLoading,
-    }));
+    // FIX: Individual selectors to avoid getServerSnapshot loop in React 19
+    const companyProfile = useAppStore(state => state.companyProfile);
+    const isCompanyProfileLoading = useAppStore(state => state.isCompanyProfileLoading);
 
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-6xl mx-auto pb-32 animate-in fade-in duration-1000">

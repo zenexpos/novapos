@@ -81,11 +81,14 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         focusInput: refocusInput
     }));
 
-    // FIX: Use selector instead of subscribe — avoids full-store re-renders on every state change
-    // Only derive cart data after mount to prevent SSR hydration mismatch
+    // FIX: Use individual selector for item count after mount to prevent SSR hydration mismatch/loop
     const cartItemCount = isMounted ? useCartStore(
-        (state) => state.carts.find(c => c.id === state.activeCartId)?.items.length ?? 0
+        (state) => {
+            const activeCart = state.carts.find(c => c.id === state.activeCartId);
+            return activeCart?.items.length ?? 0;
+        }
     ) : 0;
+
     // Surveillance : re-focus après ajout au panier
     useEffect(() => {
         setTimeout(refocusInput, 10);

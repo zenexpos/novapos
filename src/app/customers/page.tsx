@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Customer, ImportAnalysis } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,10 +39,10 @@ const sortOptions: { [key: string]: string } = {
 function CustomersContent() {
     const searchParams = useSearchParams();
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const { viewMode, setViewMode } = useAppStore(state => ({
-        viewMode: state.customersViewMode,
-        setViewMode: state.actions.setCustomersViewMode,
-    }));
+    
+    // FIX: Individual selectors to avoid reference instability
+    const viewMode = useAppStore(state => state.customersViewMode);
+    const setViewMode = useAppStore(state => state.actions.setCustomersViewMode);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
@@ -396,7 +396,7 @@ function CustomersContent() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="rounded-xl h-11 border-none shadow-sm bg-card hover:bg-primary/5 min-w-[140px] font-medium">
                                 <Users className="mr-2 h-4 w-4 opacity-50" />
-                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'Plafond dépassé' : 'Clients de Pain'}
+                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'Plafوند dépassé' : 'Clients de Pain'}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-xl border-none shadow-xl min-w-[200px]">

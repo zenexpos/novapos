@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -49,7 +48,6 @@ import { formatCurrency, cn, safeNumber } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
 import { useAppStore } from '@/stores/appStore';
 import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -90,10 +88,11 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
 
 export default function ExpensesPage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const { viewMode, setViewMode } = useAppStore(state => ({
-        viewMode: state.expensesViewMode,
-        setViewMode: state.actions.setExpensesViewMode,
-    }));
+    
+    // FIX: Individual selectors to avoid reference instability in React 19
+    const viewMode = useAppStore(state => state.expensesViewMode);
+    const setViewMode = useAppStore(state => state.actions.setExpensesViewMode);
+    const profile = useAppStore(state => state.companyProfile);
 
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -108,7 +107,6 @@ export default function ExpensesPage() {
     const [selectedExpenses, setSelectedExpenses] = useState<Set<string>>(new Set());
     
     const { dateRange, setDate, isMounted } = useDateRange(29);
-    const profile = useAppStore(state => state.companyProfile);
 
     // ─── LIVE DATA ──────────────────────────────────────────
 

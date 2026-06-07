@@ -38,10 +38,10 @@ type StockTab = 'intakes' | 'logs' | 'suppliers';
 export default function StockPage() {
     const router = useRouter();
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const { viewMode, setViewMode } = useAppStore(state => ({
-        viewMode: state.stockViewMode,
-        setViewMode: state.actions.setStockViewMode,
-    }));
+    
+    // FIX: Individual selectors for React 19 stability
+    const viewMode = useAppStore(state => state.stockViewMode);
+    const setViewMode = useAppStore(state => state.actions.setStockViewMode);
 
     const [activeTab, setActiveTab] = useState<StockTab>('intakes');
     const [searchQuery, setSearchQuery] = useState('');
@@ -273,7 +273,7 @@ export default function StockPage() {
                 {activeTab === 'suppliers' ? (
                     <div className="grid gap-6 md:grid-cols-3">
                         {isLoading ? (
-                            [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />)
+                            [...Array(3)].map((_, i) => <Skeleton className="h-32 w-full rounded-lg bg-card/40" />)
                         ) : (
                             <>
                                 <div className="app-card p-6 rounded-lg glass flex items-center justify-between group overflow-hidden">
@@ -346,7 +346,7 @@ export default function StockPage() {
 
                 <div className="flex items-center gap-4 px-4">
                     <div className="relative group flex-grow max-w-xs">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-500" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors duration-500" />
                         <Input 
                             ref={searchInputRef}
                             placeholder="Rechercher [F3]..."
@@ -423,7 +423,7 @@ export default function StockPage() {
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers?.length === 0 ? (
-                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commencez par ajouter votre premier fournisseur."} />
+                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commenceز par ajouter votre premier fournisseur."} />
                             ) : (
                                 <SupplierTable 
                                     suppliers={filteredSuppliers!} 

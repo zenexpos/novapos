@@ -35,10 +35,11 @@ export function AppHeader() {
     ], []);
     const pathname = usePathname();
     const { performBackgroundSync } = useAppActions();
-    const { companyProfile, syncStatus } = useAppStore(state => ({
-        companyProfile: state.companyProfile,
-        syncStatus:     state.syncStatus,
-    }));
+    
+    // FIX: Individually select properties to avoid reference instability in React 19
+    const companyProfile = useAppStore(state => state.companyProfile);
+    const syncStatus = useAppStore(state => state.syncStatus);
+    
     const isSyncing = syncStatus === 'syncing';
 
     const [mounted, setMounted]             = useState(false);

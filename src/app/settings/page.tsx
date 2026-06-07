@@ -66,7 +66,10 @@ export default function SettingsPage() {
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-    const { companyProfile, syncStatus } = useAppStore();
+    // FIX: Individual selectors to avoid hydration loop in React 19
+    const companyProfile = useAppStore(state => state.companyProfile);
+    const syncStatus = useAppStore(state => state.syncStatus);
+    
     const isSyncing = syncStatus === 'syncing';
     const { performCloudSync } = useAppActions();
 
@@ -212,7 +215,7 @@ export default function SettingsPage() {
                                         )}>
                                             {connectionStatus === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                             <span className="text-[10px] font-semibold uppercase tracking-wide">
-                                                {connectionStatus === 'success' ? "Canal Saphir Opérationnel" : "Erreur de poignée de main Cloud"}
+                                                {connectionStatus === 'success' ? "Canال Saphir Opérationnel" : "Erreur de poignée de main Cloud"}
                                             </span>
                                         </div>
                                     )}

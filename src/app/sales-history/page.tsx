@@ -3,7 +3,6 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import { salesService } from '@/services/sales.service';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useDateRange } from '@/hooks/useDateRange';
 import type { Sale, Customer, Payment } from '@/lib/types';
 import { Input } from '@/components/ui/input';
@@ -67,10 +66,9 @@ export default function SalesHistoryPage() {
         setIsMounted(true);
     }, []);
 
-    const { viewMode, setViewMode } = useAppStore(state => ({
-        viewMode: state.salesViewMode,
-        setViewMode: state.actions.setSalesViewMode,
-    }));
+    // FIX: Individual selectors to avoid reference loop in React 19
+    const viewMode = useAppStore(state => state.salesViewMode);
+    const setViewMode = useAppStore(state => state.actions.setSalesViewMode);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<SalesStatus>('all');
@@ -140,7 +138,6 @@ export default function SalesHistoryPage() {
     const isLoading = historyDataResult.isLoading || !isMounted;
 
     // FIX: Pagination — load 50 records at a time instead of rendering all at once.
-    // Prevents UI freeze on 1000+ records. Load more on scroll via Intersection Observer.
     const PAGE_SIZE = 50;
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
@@ -310,7 +307,7 @@ export default function SalesHistoryPage() {
 
                     <Card className="app-card rounded-lg glass p-6 space-y-6 shadow-sm">
                         <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <Input ref={searchInputRef} placeholder="Chercher un flux... [F3]" className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-lg" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
                         <div className="space-y-4 animate-page-enter">

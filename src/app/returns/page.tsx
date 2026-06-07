@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { ProductReturn, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -42,10 +41,10 @@ import { returnService } from '@/services/return.service';
 
 export default function ReturnsPage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const { viewMode, setViewMode } = useAppStore(state => ({
-        viewMode: state.returnsViewMode,
-        setViewMode: state.actions.setReturnsViewMode,
-    }));
+    
+    // FIX: Individual selectors to avoid hydration loop in React 19
+    const viewMode = useAppStore(state => state.returnsViewMode);
+    const setViewMode = useAppStore(state => state.actions.setReturnsViewMode);
 
     const [searchQuery, setSearchQuery] = useState('');
     const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
