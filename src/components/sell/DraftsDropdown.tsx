@@ -36,11 +36,11 @@ import { calculateCartTotals, formatCurrency, cn } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 export function DraftsDropdown() {
-    const [isMounted, setIsMounted]     = useState(false);
-    const carts                          = isMounted ? useCartStore(state => state.carts) : [];
-    const activeCartId                   = isMounted ? useCartStore(state => state.activeCartId) : null;
+    const storeCarts = useCartStore(state => state.carts);
+    const storeActiveCartId = useCartStore(state => state.activeCartId);
     const { createCart, selectCart, deleteCart, renameCart } = useCartActions();
 
+    const [isMounted, setIsMounted] = useState(false);
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [cartToRename, setCartToRename] = useState<{
         id: string;
@@ -52,9 +52,9 @@ export function DraftsDropdown() {
         setIsMounted(true);
     }, []);
 
-    // FIX: useMemo — shortcutConfigs était recréé à chaque render, forçant
-    // useKeyboardShortcuts à désenregistrer/réenregistrer les listeners en boucle.
-    // En mémoisant sur [carts, selectCart], on ne recalcule que si les paniers changent.
+    const carts = isMounted ? storeCarts : [];
+    const activeCartId = isMounted ? storeActiveCartId : null;
+
     const shortcutConfigs = useMemo(
         () =>
             [1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => ({

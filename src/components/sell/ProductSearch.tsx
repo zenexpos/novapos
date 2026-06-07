@@ -64,10 +64,20 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // FIX: Use individual selector for item count after mount to prevent SSR hydration mismatch/loop
+    const storeCartItemCount = useCartStore(
+        (state) => {
+            const activeCart = state.carts.find(c => c.id === state.activeCartId);
+            return activeCart?.items.length ?? 0;
+        }
+    );
+
     // FIX: Prevent SSR/CSR hydration mismatch — only access store after mount
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    const cartItemCount = isMounted ? storeCartItemCount : 0;
 
     // Moteur de focus automatique pour le scan code-barres
     const refocusInput = () => {
@@ -80,14 +90,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     useImperativeHandle(ref, () => ({
         focusInput: refocusInput
     }));
-
-    // FIX: Use individual selector for item count after mount to prevent SSR hydration mismatch/loop
-    const cartItemCount = isMounted ? useCartStore(
-        (state) => {
-            const activeCart = state.carts.find(c => c.id === state.activeCartId);
-            return activeCart?.items.length ?? 0;
-        }
-    ) : 0;
 
     // Surveillance : re-focus après ajout au panier
     useEffect(() => {
