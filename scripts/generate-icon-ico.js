@@ -1,0 +1,50 @@
+const fs = require('fs');
+const width = 256;
+const height = 256;
+const pixelCount = width * height;
+const pixels = Buffer.alloc(pixelCount * 4);
+for (let y = 0; y < height; y++) {
+  for (let x = 0; x < width; x++) {
+    const offset = (y * width + x) * 4;
+    const r = Math.round(0x2a + (x / (width - 1)) * 0x55);
+    const g = Math.round(0x5f + (y / (height - 1)) * 0x50);
+    const b = 0xcc;
+    pixels[offset + 0] = b;
+    pixels[offset + 1] = g;
+    pixels[offset + 2] = r;
+    pixels[offset + 3] = 0xff;
+  }
+}
+const maskRowSize = Math.ceil(width / 32) * 4;
+const mask = Buffer.alloc(maskRowSize * height, 0xff);
+const header = Buffer.alloc(6);
+header.writeUInt16LE(0, 0);
+header.writeUInt16LE(1, 2);
+header.writeUInt16LE(1, 4);
+const entry = Buffer.alloc(16);
+entry.writeUInt8(width === 256 ? 0 : width, 0);
+entry.writeUInt8(height === 256 ? 0 : height, 1);
+entry.writeUInt8(0, 2);
+entry.writeUInt8(0, 3);
+entry.writeUInt16LE(1, 4);
+entry.writeUInt16LE(32, 6);
+const imageDataOffset = 6 + 16;
+const imageSize = 40 + pixels.length + mask.length;
+entry.writeUInt32LE(imageSize, 8);
+entry.writeUInt32LE(imageDataOffset, 12);
+const dib = Buffer.alloc(40);
+dib.writeUInt32LE(40, 0);
+dib.writeInt32LE(width, 4);
+dib.writeInt32LE(height * 2, 8);
+dib.writeUInt16LE(1, 12);
+dib.writeUInt16LE(32, 14);
+dib.writeUInt32LE(0, 16);
+dib.writeUInt32LE(pixels.length + mask.length, 20);
+dib.writeInt32LE(0, 24);
+dib.writeInt32LE(0, 28);
+dib.writeUInt32LE(0, 32);
+dib.writeUInt32LE(0, 36);
+const out = Buffer.concat([header, entry, dib, pixels, mask]);
+fs.mkdirSync('public/icons', { recursive: true });
+fs.writeFileSync('public/icons/icon.ico', out);
+console.log('created icon.ico', out.length);
