@@ -11,7 +11,7 @@ import { useAppStore } from '@/stores/appStore';
 
 /**
  * Service de gestion des ventes Elite.
- * Gère le cycle de vie complet d'une transaction commerciale.
+ * Gère le cycle de vie complet d'une transaction commerciale de manière ATOMIQUE.
  */
 class SalesService {
 
@@ -73,7 +73,8 @@ class SalesService {
 
     /**
      * Crée une vente de manière atomique.
-     * Inclut : génération numéro, décrémentation stock, mise à jour solde client, logs audit.
+     * Cette méthode est critique : elle verrouille toutes les tables nécessaires
+     * pour garantir qu'aucune donnée n'est perdue ou incohérente.
      */
     async createSale(saleData: {
         items: CartItem[];
@@ -84,6 +85,8 @@ class SalesService {
         dueDate?: Date;
     }): Promise<Sale> {
         const now = new Date();
+        
+        // 1. Pré-calculs de précision Elite
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -105,6 +108,7 @@ class SalesService {
             amountPaidCents > 0 ? 'partial' : 'unpaid';
 
         const profile = await db.company_profile.toCollection().first();
+        
         const saleItems: SaleItem[] = saleData.items.map(item => ({
             productUuid: item.uuid.startsWith('custom-') ? null : item.uuid,
             name: item.name,
@@ -116,7 +120,7 @@ class SalesService {
 
         const newSale: Sale = {
             uuid: uuidv4(),
-            invoiceNumber: '', // Sera rempli dans la transaction
+            invoiceNumber: '', // Assigné dans la transaction
             items: saleItems,
             subtotal: subtotalCents / 100,
             discountType: saleData.discountType,
@@ -131,18 +135,25 @@ class SalesService {
             dueDate: saleData.dueDate,
         };
 
-        // TRANSACTION CRITIQUE : Verrouille toutes les tables impactées
+        // TRANSACTION TOTALE ET ATOMIQUE
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.payments, db.product_returns
         ], async () => {
+            // A. Génération du numéro (bloquant pour éviter les doublons)
             newSale.invoiceNumber = await this.generateInvoiceNumber();
+            
+            // B. Enregistrement de la vente
             await db.sales.add(newSale);
             
+            // C. Décrémentation du stock pour chaque article
             for (const item of saleData.items) {
-                await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
+                if (item.uuid && !item.uuid.startsWith('custom-')) {
+                    await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
+                }
             }
             
+            // D. Mise à jour du solde et du statut du client
             if (newSale.customerUuid) {
                 await customerService.recalculateCustomerStatus(newSale.customerUuid);
             }
@@ -153,22 +164,28 @@ class SalesService {
     }
 
     async processSaleCancellation(uuid: string): Promise<void> {
-        await db.transaction('rw', [db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns], async () => {
+        await db.transaction('rw', [
+            db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns
+        ], async () => {
             const sale = await this.getSaleByUuid(uuid);
             if (!sale || !sale.id) throw new Error('Vente non trouvée.');
             if (sale.isCancelled) return;
 
+            // Soft-delete
             await db.sales.update(sale.id, {
                 isCancelled: true,
                 cancelledAt: new Date(),
                 updatedAt: new Date(),
             });
 
+            // Réintégration du stock
             for (const item of sale.items) {
                 if (item.productUuid) {
                     await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
                 }
             }
+            
+            // Mise à jour client
             if (sale.customerUuid) {
                 await customerService.recalculateCustomerStatus(sale.customerUuid);
             }

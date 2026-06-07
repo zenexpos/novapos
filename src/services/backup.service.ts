@@ -11,7 +11,7 @@ class BackupService {
 
     private async exportData(): Promise<Record<string, any[]>> {
         const data: Record<string, any[]> = {};
-        // Exportation de toutes les tables enregistrées dans Dexie
+        // Exportation de toutes les tables enregistrées dans Dexie pour une sauvegarde TOTALE
         for (const table of db.tables) {
             data[table.name] = await table.toArray();
         }
@@ -19,7 +19,7 @@ class BackupService {
     }
 
     /**
-     * Génère un fichier de sauvegarde JSON complet.
+     * Génère un fichier de sauvegarde JSON complet incluant TOUTES les données.
      */
     async createBackup(): Promise<File> {
         try {
@@ -63,6 +63,7 @@ class BackupService {
 
             const data: Record<string, any[]> = {};
             db.tables.forEach(table => {
+                // On s'assure que même si une table est absente du fichier, on la traite (vide)
                 data[table.name] = Array.isArray(tableData[table.name]) ? tableData[table.name] : [];
             });
 
@@ -73,28 +74,30 @@ class BackupService {
     }
 
     /**
-     * Restauration TOTALE : Vide toutes les tables et injecte les nouvelles données.
-     * Cette opération rend l'application identique à l'état de la sauvegarde.
+     * Restaurer TOUT le système : purge totale puis injection.
+     * Cette méthode garantit que l'app revient exactement à l'état du fichier.
      */
     async restoreBackup(data: Record<string, any[]>): Promise<void> {
         const allTables = db.tables;
         
         try {
-            // Utilisation d'une transaction globale sur TOUTES les tables pour garantir l'atomicité
+            // Transaction globale atomique sur TOUTES les tables
             await db.transaction('rw', allTables, async () => {
                 for (const table of allTables) {
-                    await table.clear(); // Purge totale avant injection
+                    // 1. Purge totale du contenu local pour cette table
+                    await table.clear(); 
                     
                     const records = data[table.name];
                     if (records && records.length > 0) {
-                        // On retire les IDs locaux pour laisser Dexie les réattribuer si nécessaire, 
-                        // tout en conservant les UUID pour la synchronisation.
+                        // 2. Nettoyage des IDs locaux pour éviter les conflits et forcer la ré-indexation
+                        // Tout en préservant les UUIDs qui sont les clés de synchronisation cloud.
                         const cleanRecords = records.map(({ id, ...rest }) => rest);
                         await table.bulkAdd(cleanRecords);
                     }
                 }
             });
-            toast.success("Restauration complète réussie. Le système est à jour.");
+            
+            toast.success("Système restauré intégralement.");
         } catch (error: any) {
             console.error('Critical Restore Failure:', error);
             throw new Error("Échec de la restauration totale : " + error.message);
