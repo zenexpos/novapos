@@ -1,13 +1,11 @@
+
 'use client';
 
 import { useAppStore, useAppActions } from '@/stores/appStore';
 import { useEffect, useRef } from 'react';
 
 /**
- * Composant client gérant la logique de synchronisation globale.
- * FIX: setInterval only runs when Supabase is configured (url + key present)
- * FIX: initialSyncTriggered resets on sync failure so retry is possible
- * FIX: syncDebounceTimeout stored in useRef to avoid leak in React Strict Mode double-mount
+ * مكون مسؤول عن إدارة عمليات المزامنة وضمان استقرار التطبيق في وضع الأوفلاين.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
@@ -20,9 +18,9 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         fetchCompanyProfile();
     }, [fetchCompanyProfile]);
 
-    // Initial sync — only once, only when Supabase is configured
+    // المزامنة الأولية عند التوفر
     useEffect(() => {
-        // FIX: Guard — do nothing if Supabase is not configured
+        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
         if (isSyncing || initialSyncTriggered.current) return;
 
@@ -31,17 +29,15 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
             try {
                 await performBackgroundSync();
             } catch {
-                // FIX: Reset flag on failure so user can retry
                 initialSyncTriggered.current = false;
             }
         }, 3000);
         return () => clearTimeout(timeoutId);
     }, [companyProfile, isSyncing, performBackgroundSync]);
 
-    // Sync on network reconnect
+    // التفاعل مع استعادة الاتصال
     useEffect(() => {
         const handleOnline = () => {
-            // FIX: Only sync if Supabase is configured
             if (companyProfile?.supabase_url && companyProfile?.supabase_key) {
                 performBackgroundSync();
             }
@@ -50,7 +46,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('online', handleOnline);
     }, [performBackgroundSync, companyProfile]);
 
-    // Sync on tab visibility restore
+    // التفاعل مع استعادة نشاط الصفحة
     useEffect(() => {
         const handleVisibility = () => {
             if (document.visibilityState === 'visible' &&
@@ -64,14 +60,12 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, [performBackgroundSync, companyProfile]);
 
-    // Periodic sync every 5 minutes — FIX: only when Supabase configured
+    // دورة المزامنة الدورية (فقط عند توفر الإنترنت)
     useEffect(() => {
-        // FIX: Don't create interval at all if Supabase not configured
         if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
 
         const SYNC_INTERVAL = 5 * 60 * 1000;
         const intervalId = setInterval(() => {
-            if (!companyProfile?.supabase_url) return;
             if (typeof navigator !== 'undefined' && navigator.onLine) {
                 performBackgroundSync();
             }
