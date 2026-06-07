@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "coffee-maker",
+      "description": "Premium Espresso Machine",
+      "imageUrl": "https://picsum.photos/seed/12/400/400",
+      "imageHint": "espresso machine"
+    },
+    {
+      "id": "headphones",
+      "description": "Wireless Noise Cancelling Headphones",
+      "imageUrl": "https://picsum.photos/seed/45/400/400",
+      "imageHint": "headphones"
+    },
+    {
+      "id": "smartwatch",
+      "description": "Fitness Smartwatch Series 5",
+      "imageUrl": "https://picsum.photos/seed/78/400/400",
+      "imageHint": "smartwatch"
+    },
+    {
+      "id": "laptop",
+      "description": "Ultra-thin Workstation Laptop",
+      "imageUrl": "https://picsum.photos/seed/92/400/400",
+      "imageHint": "laptop"
+    },
+    {
+      "id": "backpack",
+      "description": "Waterproof Commuter Backpack",
+      "imageUrl": "https://picsum.photos/seed/105/400/400",
+      "imageHint": "backpack"
+    }
+  ]
+}
