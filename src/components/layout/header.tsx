@@ -6,7 +6,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Settings, Package, Users2, History, Undo2, Archive,
     Wallet, LayoutDashboard, Wheat, ShoppingCart, Building,
-    Download, Coins, BellRing, RefreshCw, Zap,
+    Download, Coins, BellRing, RefreshCw, Zap, UserCog,
+    Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -32,18 +33,19 @@ export function AppHeader() {
         { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
+        { href: '/profile',       label: 'Profil',    icon: UserCog },
+        { href: '/install',       label: 'Installer', icon: Smartphone },
     ], []);
+    
     const pathname = usePathname();
     const { performBackgroundSync } = useAppActions();
     
-    // FIX: Individually select properties to avoid reference instability in React 19
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
     
     const isSyncing = syncStatus === 'syncing';
 
     const [mounted, setMounted]             = useState(false);
-    const [syncHovered, setSyncHovered]     = useState(false);
     const [logoHovered, setLogoHovered]     = useState(false);
     const navRef                            = useRef<HTMLDivElement>(null);
 

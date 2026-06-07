@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-import { Package, Users2, LayoutDashboard, ShoppingCart, Archive } from 'lucide-react';
+import { Package, Users2, LayoutDashboard, ShoppingCart, Archive, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/products',  label: 'Produits',  icon: Package },
-    { href: '/sell',      label: 'Vendre',    icon: ShoppingCart },
-    { href: '/customers', label: 'Clients',   icon: Users2 },
-    { href: '/stock',     label: 'Stock',     icon: Archive },
+    { href: '/dashboard',   label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/products',    label: 'Produits',  icon: Package },
+    { href: '/sell',        label: 'Vendre',    icon: ShoppingCart },
+    { href: '/debt-alerts', label: 'Alertes',   icon: BellRing },
+    { href: '/stock',       label: 'Stock',     icon: Archive },
 ];
 
 export function BottomNavBar() {
@@ -39,7 +39,7 @@ export function BottomNavBar() {
                                 href={link.href}
                                 className={cn(
                                     'relative flex flex-col items-center justify-center gap-2 px-1 py-1 transition-all duration-200',
-                                    'text-muted-foreground text-[12px] font-semibold',
+                                    'text-muted-foreground text-[10px] font-semibold',
                                     active && 'text-primary',
                                 )}
                             >
@@ -68,9 +68,6 @@ export function BottomNavBar() {
                                         isSell ? 'h-5 w-5' : 'h-5 w-5',
                                         active && 'scale-110',
                                     )} />
-
-                                    {/* Active shimmer */}
-
                                 </div>
 
                                 {/* Active indicator */}
@@ -79,7 +76,7 @@ export function BottomNavBar() {
                                 )}
 
                                 <span className={cn(
-                                    'transition-colors duration-200',
+                                    'transition-colors duration-200 truncate w-full text-center',
                                     active ? 'text-primary font-semibold' : 'text-muted-foreground/80',
                                 )}>
                                     {link.label}
