@@ -1,5 +1,5 @@
+
 'use client';
-import React from 'react';
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { BackupPreviewDialog } from './BackupPreviewDialog';
 export function DataManagementCard() {
     const [isCreating, setIsCreating] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [backupData, setBackupData] = useState<Record<string, any[]> | null>(null);
+    const [backupPayload, setBackupPayload] = useState<any>(null);
 
     const handleCreateBackup = async () => {
         setIsCreating(true);
@@ -38,8 +38,8 @@ export function DataManagementCard() {
         const file = event.target.files?.[0];
         if (file) {
             try {
-                const data = await backupService.validateAndParseBackup(file);
-                setBackupData(data);
+                const payload = await backupService.validateAndParseBackup(file);
+                setBackupPayload(payload);
                 setIsPreviewOpen(true);
             } catch (error: any) {
                 toast.error("Erreur d'analyse", { description: error.message });
@@ -53,7 +53,7 @@ export function DataManagementCard() {
             <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
                 <CardHeader className="bg-primary/5 border-b border-white/5 p-4 pb-10">
                     <div className="flex items-center gap-4">
-                        <div className="p-3.5 rounded-2xl bg-primary text-primary-foreground shadow-sm shadow-sm">
+                        <div className="p-3.5 rounded-2xl bg-primary text-primary-foreground shadow-sm">
                             <Database className="h-6 w-6" />
                         </div>
                         <div>
@@ -75,7 +75,7 @@ export function DataManagementCard() {
                                 <span className="text-[10px] font-semibold uppercase ">Coffre-Fort Numérique</span>
                             </div>
                             <p className="text-xs text-muted-foreground/60 font-medium leading-relaxed relative z-10">
-                                Génère un manifeste .json sécurisé contenant l'intégralité de vos actifs commerciaux pour un stockage externe.
+                                Génère un manifeste .json sécurisé contenant l'intégralité de vos actifs commerciaux et réglages.
                             </p>
                             <Button 
                                 onClick={handleCreateBackup} 
@@ -137,11 +137,11 @@ export function DataManagementCard() {
                 </CardFooter>
             </Card>
 
-            {backupData && (
+            {backupPayload && (
                 <BackupPreviewDialog 
                     isOpen={isPreviewOpen}
                     onOpenChange={setIsPreviewOpen}
-                    initialData={backupData}
+                    payload={backupPayload}
                 />
             )}
         </>

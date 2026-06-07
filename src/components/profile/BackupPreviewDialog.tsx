@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -13,38 +14,36 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
     Database, 
-    CheckCircle2, 
-    X, 
-    Save,
     Loader2,
     RotateCcw,
     AlertTriangle,
-    ShieldAlert
+    ShieldAlert,
+    Save
 } from 'lucide-react';
 import { backupService } from '@/services/backup.service';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface BackupPreviewDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
-    initialData: Record<string, any[]>;
+    payload: any;
 }
 
 /**
  * Dialogue d'aperçu pour la RESTAURATION TOTALE.
- * Affiche un résumé des entités qui vont remplacer l'état actuel.
+ * Affiche un résumé des entités et des paramètres système qui vont remplacer l'état actuel.
  */
-export function BackupPreviewDialog({ isOpen, onOpenChange, initialData }: BackupPreviewDialogProps) {
+export function BackupPreviewDialog({ isOpen, onOpenChange, payload }: BackupPreviewDialogProps) {
     const [isRestoring, setIsRestoring] = useState(false);
     const [confirmReplacement, setConfirmReplacement] = useState(false);
 
     const stats = useMemo(() => {
-        return Object.entries(initialData).map(([tableName, records]) => ({
+        if (!payload || !payload.db) return [];
+        return Object.entries(payload.db).map(([tableName, records]: [string, any]) => ({
             name: tableName,
             count: records.length
         })).filter(s => s.count > 0);
-    }, [initialData]);
+    }, [payload]);
 
     const handleRestore = async () => {
         if (!confirmReplacement) {
@@ -54,10 +53,8 @@ export function BackupPreviewDialog({ isOpen, onOpenChange, initialData }: Backu
 
         setIsRestoring(true);
         try {
-            await backupService.restoreBackup(initialData);
+            await backupService.restoreBackup(payload);
             onOpenChange(false);
-            // Rechargement immédiat pour forcer la mise à jour de l'UI avec le nouvel état
-            window.location.reload();
         } catch (error: any) {
             toast.error("Échec de la restauration", { description: error.message });
             setIsRestoring(false);
@@ -85,7 +82,7 @@ export function BackupPreviewDialog({ isOpen, onOpenChange, initialData }: Backu
                         <div className="space-y-1">
                             <p className="text-sm font-bold text-amber-700 uppercase">Attention Remplacement</p>
                             <p className="text-xs text-amber-600/80 leading-relaxed">
-                                Cette action va <span className="font-black underline">écraser intégralement</span> votre base de données locale actuelle par le contenu de ce fichier.
+                                Cette action va <span className="font-black underline">écraser intégralement</span> votre base de données locale actuelle ainsi que vos réglages par le contenu de ce fichier.
                             </p>
                         </div>
                     </div>

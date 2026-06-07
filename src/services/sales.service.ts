@@ -1,3 +1,4 @@
+
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -86,7 +87,7 @@ class SalesService {
     }): Promise<Sale> {
         const now = new Date();
         
-        // 1. Pré-calculs de précision Elite
+        // Pré-calculs de précision Elite
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -120,7 +121,7 @@ class SalesService {
 
         const newSale: Sale = {
             uuid: uuidv4(),
-            invoiceNumber: '', // Assigné dans la transaction
+            invoiceNumber: '',
             items: saleItems,
             subtotal: subtotalCents / 100,
             discountType: saleData.discountType,
@@ -135,25 +136,21 @@ class SalesService {
             dueDate: saleData.dueDate,
         };
 
-        // TRANSACTION TOTALE ET ATOMIQUE
+        // TRANSACTION TOTALE ET ATOMIQUE — Verrouillage de l'ensemble du domaine de données
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
-            db.customers, db.company_profile, db.payments, db.product_returns
+            db.customers, db.company_profile, db.payments, db.product_returns,
+            db.bread_orders
         ], async () => {
-            // A. Génération du numéro (bloquant pour éviter les doublons)
             newSale.invoiceNumber = await this.generateInvoiceNumber();
-            
-            // B. Enregistrement de la vente
             await db.sales.add(newSale);
             
-            // C. Décrémentation du stock pour chaque article
             for (const item of saleData.items) {
-                if (item.uuid && !item.uuid.startsWith('custom-')) {
+                if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT') {
                     await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
                 }
             }
             
-            // D. Mise à jour du solde et du statut du client
             if (newSale.customerUuid) {
                 await customerService.recalculateCustomerStatus(newSale.customerUuid);
             }
@@ -171,21 +168,18 @@ class SalesService {
             if (!sale || !sale.id) throw new Error('Vente non trouvée.');
             if (sale.isCancelled) return;
 
-            // Soft-delete
             await db.sales.update(sale.id, {
                 isCancelled: true,
                 cancelledAt: new Date(),
                 updatedAt: new Date(),
             });
 
-            // Réintégration du stock
             for (const item of sale.items) {
                 if (item.productUuid) {
                     await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
                 }
             }
             
-            // Mise à jour client
             if (sale.customerUuid) {
                 await customerService.recalculateCustomerStatus(sale.customerUuid);
             }
@@ -196,7 +190,10 @@ class SalesService {
 
     private triggerSync() {
         if (typeof window !== 'undefined') {
-            useAppStore.getState().actions.triggerSmartSync();
+            const state = useAppStore.getState();
+            if (state && state.actions) {
+                state.actions.triggerSmartSync();
+            }
         }
     }
 }

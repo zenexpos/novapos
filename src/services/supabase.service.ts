@@ -1,3 +1,4 @@
+
 'use client';
 
 import { db } from '@/lib/db';
@@ -25,17 +26,14 @@ class SupabaseSyncService {
         { name: 'bread_orders',      table: db.bread_orders },
         { name: 'inventory_logs',    table: db.inventory_logs },
         { name: 'supplier_payments', table: db.supplier_payments },
-        { name: 'proforma_invoices', table: db.proforma_invoices }, // Ajout de la table Proforma au moteur de sync
+        { name: 'proforma_invoices', table: db.proforma_invoices },
     ];
 
-    // FIX: Whitelist for abbreviations that must NOT be split with underscores
-    // e.g. "nif" → "nif" (not "_n_i_f"), "tva" → "tva", "rc" → "rc"
     private readonly ABBREVIATION_WHITELIST = new Set([
         'nif', 'nis', 'tva', 'rc', 'ai', 'url', 'ccp', 'pdf', 'csv', 'pwa',
     ]);
 
     private camelToSnake(str: string): string {
-        // FIX: Use lookahead to avoid splitting consecutive uppercase (abbreviations)
         return str
             .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
             .replace(/([a-z\d])([A-Z])/g, '$1_$2')
@@ -43,7 +41,6 @@ class SupabaseSyncService {
     }
 
     private snakeToCamel(str: string): string {
-        // FIX: Preserve whitelisted abbreviations as-is
         if (this.ABBREVIATION_WHITELIST.has(str)) return str;
         return str.replace(/(_[a-z])/g, m => m[1].toUpperCase());
     }
@@ -162,13 +159,11 @@ class SupabaseSyncService {
     async pushAllData(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
         this.isSyncing = true;
-
         const supabase = getSupabaseClient(url, key);
         if (!supabase) {
             this.isSyncing = false;
             throw new Error('Supabase non configuré.');
         }
-
         try {
             await this.pushAllDataInternal(supabase);
         } finally {
@@ -179,13 +174,11 @@ class SupabaseSyncService {
     async pullAllData(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
         this.isSyncing = true;
-
         const supabase = getSupabaseClient(url, key);
         if (!supabase) {
             this.isSyncing = false;
             throw new Error('Supabase non configuré.');
         }
-
         try {
             await this.pullAllDataInternal(supabase);
         } finally {
@@ -196,13 +189,11 @@ class SupabaseSyncService {
     async smartSync(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
         this.isSyncing = true;
-
         const supabase = getSupabaseClient(url, key);
         if (!supabase) {
             this.isSyncing = false;
             throw new Error('Supabase non configuré.');
         }
-
         try {
             await this.pullAllDataInternal(supabase);
             await this.pushAllDataInternal(supabase);

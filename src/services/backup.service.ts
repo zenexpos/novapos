@@ -1,3 +1,4 @@
+
 'use client';
 
 import { db, DB_VERSION } from '@/lib/db';
@@ -18,12 +19,22 @@ class BackupService {
         return data;
     }
 
+    private getLocalStorageData(): Record<string, string | null> {
+        const keys = ['ipos-app-store', 'ipos-cart-store', 'ipos-theme', 'ipos-autoprint-enabled'];
+        const data: Record<string, string | null> = {};
+        keys.forEach(k => {
+            data[k] = localStorage.getItem(k);
+        });
+        return data;
+    }
+
     /**
      * Génère un fichier de sauvegarde JSON complet incluant TOUTES les données.
      */
     async createBackup(): Promise<File> {
         try {
             const tableData = await this.exportData();
+            const storageData = this.getLocalStorageData();
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const fileName = `ipos-zen-full-backup-${timestamp}.json`;
 
@@ -34,7 +45,8 @@ class BackupService {
                     appName:       'iPOS Zen',
                     isFullBackup:  true
                 },
-                ...tableData,
+                db: tableData,
+                storage: storageData
             };
 
             return new File(
@@ -51,23 +63,20 @@ class BackupService {
     /**
      * Valide un manifeste avant injection.
      */
-    async validateAndParseBackup(file: File): Promise<Record<string, any[]>> {
+    async validateAndParseBackup(file: File): Promise<any> {
         try {
             const text = await file.text();
             const raw = JSON.parse(text);
-            const { _meta, ...tableData } = raw;
-
-            if (_meta?.schemaVersion && Number(_meta.schemaVersion) > DB_VERSION) {
-                throw new Error(`Version incompatible (v${_meta.schemaVersion}). Veuillez mettre à jour l'application.`);
+            
+            if (!raw.db || !raw._meta) {
+                throw new Error("Le fichier ne semble pas être un manifeste iPOS Zen valide.");
             }
 
-            const data: Record<string, any[]> = {};
-            db.tables.forEach(table => {
-                // On s'assure que même si une table est absente du fichier, on la traite (vide)
-                data[table.name] = Array.isArray(tableData[table.name]) ? tableData[table.name] : [];
-            });
+            if (raw._meta?.schemaVersion && Number(raw._meta.schemaVersion) > DB_VERSION) {
+                throw new Error(`Version incompatible (v${raw._meta.schemaVersion}). Veuillez mettre à jour l'application.`);
+            }
 
-            return data;
+            return raw;
         } catch (error: any) {
             throw new Error('Fichier invalide : ' + error.message);
         }
@@ -77,27 +86,38 @@ class BackupService {
      * Restaurer TOUT le système : purge totale puis injection.
      * Cette méthode garantit que l'app revient exactement à l'état du fichier.
      */
-    async restoreBackup(data: Record<string, any[]>): Promise<void> {
+    async restoreBackup(payload: any): Promise<void> {
         const allTables = db.tables;
+        const data = payload.db;
+        const storage = payload.storage;
         
         try {
-            // Transaction globale atomique sur TOUTES les tables
+            // 1. Transaction globale atomique sur TOUTES les tables Dexie
             await db.transaction('rw', allTables, async () => {
                 for (const table of allTables) {
-                    // 1. Purge totale du contenu local pour cette table
                     await table.clear(); 
-                    
                     const records = data[table.name];
                     if (records && records.length > 0) {
-                        // 2. Nettoyage des IDs locaux pour éviter les conflits et forcer la ré-indexation
-                        // Tout en préservant les UUIDs qui sont les clés de synchronisation cloud.
-                        const cleanRecords = records.map(({ id, ...rest }) => rest);
+                        // Nettoyage des IDs pour ré-indexation propre
+                        const cleanRecords = records.map(({ id, ...rest }: any) => rest);
                         await table.bulkAdd(cleanRecords);
                     }
                 }
             });
+
+            // 2. Restauration des états Zustand et préférences UI
+            if (storage) {
+                Object.entries(storage).forEach(([key, value]) => {
+                    if (value) localStorage.setItem(key, value as string);
+                });
+            }
             
             toast.success("Système restauré intégralement.");
+            
+            // Rechargement obligatoire pour réinitialiser les stores en mémoire
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } catch (error: any) {
             console.error('Critical Restore Failure:', error);
             throw new Error("Échec de la restauration totale : " + error.message);
