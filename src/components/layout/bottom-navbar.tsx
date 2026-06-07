@@ -38,49 +38,38 @@ export function BottomNavBar() {
                                 key={link.href}
                                 href={link.href}
                                 className={cn(
-                                    'relative flex flex-col items-center justify-center gap-2 px-1 py-1 transition-all duration-200',
+                                    'relative flex flex-col items-center justify-center gap-1 px-1 py-1 transition-all duration-300',
                                     'text-muted-foreground text-[10px] font-semibold',
                                     active && 'text-primary',
                                 )}
                             >
                                 {/* Icon container */}
                                 <div className={cn(
-                                    'relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300',
-                                    isSell && !active && [
+                                    'relative flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-500',
+                                    active && [
                                         'bg-primary/15 text-primary',
                                         'border border-primary/20',
                                         'shadow-sm',
+                                        'scale-110',
                                     ],
-                                    active && !isSell && [
-                                        'bg-primary/15 text-primary',
-                                        'border border-primary/20',
-                                        'shadow-sm',
-                                    ],
-                                    isSell && active && [
-                                        'bg-primary/20 text-primary',
-                                        'border border-primary/25',
-                                        'shadow-sm',
-                                        'scale-105',
-                                    ],
+                                    !active && 'hover:bg-primary/5'
                                 )}>
                                     <Icon className={cn(
-                                        'transition-transform duration-200',
-                                        isSell ? 'h-5 w-5' : 'h-5 w-5',
-                                        active && 'scale-110',
+                                        'transition-transform duration-300',
+                                        active ? 'h-5 w-5' : 'h-5 w-5 opacity-60',
                                     )} />
                                 </div>
 
                                 {/* Active indicator */}
-                                {active && !isSell && (
-                                    <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)]" />
+                                {active && (
+                                    <span className="text-[8px] font-black uppercase tracking-tighter animate-in fade-in slide-in-from-bottom-1 duration-500">
+                                        {link.label}
+                                    </span>
                                 )}
 
-                                <span className={cn(
-                                    'transition-colors duration-200 truncate w-full text-center',
-                                    active ? 'text-primary font-semibold' : 'text-muted-foreground/80',
-                                )}>
-                                    {link.label}
-                                </span>
+                                {!active && (
+                                    <span className="w-1 h-1 rounded-full bg-muted-foreground/10" />
+                                )}
                             </Link>
                         );
                     })}

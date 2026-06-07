@@ -95,7 +95,7 @@ export function AppHeader() {
 
                 {/* ── Navigation ── */}
                 <TooltipProvider delayDuration={0}>
-                    <nav ref={navRef} className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
+                    <nav ref={navRef} className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
                         {navLinks.map((link, idx) => {
                             const isActive = pathname.startsWith(link.href);
                             const Icon = link.icon as React.ElementType;
@@ -108,31 +108,26 @@ export function AppHeader() {
                                                 aria-label={link.label}
                                                 style={{ animationDelay: `${idx * 40}ms` }}
                                                 className={cn(
-                                                    'relative flex items-center justify-center w-8 h-8 rounded-lg shrink-0 group',
-                                                    'transition-all duration-200',
-                                                    'lg:h-10 lg:px-3 lg:w-auto lg:justify-start',
+                                                    'relative flex items-center justify-center rounded-xl shrink-0 group transition-all duration-500',
                                                     isActive
-                                                        ? [
-                                                            'bg-primary/10 border border-primary/25 text-primary',
-                                                            'shadow-sm',
-                                                        ]
-                                                        : [
-                                                            'text-muted-foreground border border-transparent',
-                                                            'hover:bg-primary/10 hover:border-primary/20 hover:text-foreground',
-                                                            'hover:shadow-sm',
-                                                        ],
+                                                        ? 'h-9 px-4 bg-primary/10 border border-primary/25 text-primary shadow-sm w-auto animate-scale-in'
+                                                        : 'w-9 h-9 text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-foreground'
                                                 )}
                                             >
                                                 <Icon className={cn(
-                                                    'h-4 w-4 transition-transform duration-200',
-                                                    isActive ? 'scale-110' : 'group-hover:scale-105',
+                                                    'h-4 w-4 transition-transform duration-300',
+                                                    isActive ? 'scale-110' : 'group-hover:scale-110',
                                                 )} />
-                                                <span className="sr-only lg:not-sr-only lg:ml-2 lg:text-[11px] lg:font-medium">
-                                                    {link.label}
-                                                </span>
+                                                
+                                                {isActive && (
+                                                    <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-500">
+                                                        {link.label}
+                                                    </span>
+                                                )}
+
                                                 {/* Active indicator dot */}
                                                 {isActive && (
-                                                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)] animate-scale-in" />
+                                                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)] animate-scale-in" />
                                                 )}
                                             </Link>
                                         </span>
@@ -172,7 +167,7 @@ export function AppHeader() {
                                             'h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
                                             isSyncing
                                                 ? 'border-primary/25 bg-primary/10 text-primary'
-                                                : 'hover:bg-primary/8 hover:border-primary/20 text-muted-foreground hover:text-foreground',
+                                                : 'hover:bg-primary/8 hover:border-primary/15 text-muted-foreground hover:text-foreground',
                                         )}
                                         onClick={() => performBackgroundSync()}
                                         disabled={isSyncing}
