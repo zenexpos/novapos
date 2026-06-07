@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 
 function SellPageContent() {
+    const [isMounted, setIsMounted] = useState(false);
     const cart = useActiveCart();
     const { createCart, clearCart, selectCart } = useCartActions();
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -20,6 +21,10 @@ function SellPageContent() {
 
     const searchInputRef = useRef<{ focusInput: () => void }>(null);
     const customerComboRef = useRef<{ focusInput: () => void }>(null);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const openPayment = useCallback(() => {
         if (cart && cart.items.length > 0) {
@@ -87,6 +92,8 @@ function SellPageContent() {
     ];
 
     useKeyboardShortcuts(shortcuts, 'Vente');
+
+    if (!isMounted) return null;
 
     return (
         <div className="h-full flex flex-col p-2 gap-2 overflow-hidden">

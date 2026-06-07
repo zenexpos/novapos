@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Settings, Package, Users2, History, Undo2, Archive,
     Wallet, LayoutDashboard, Wheat, ShoppingCart, Building,
-    Download, Coins, BellRing, RefreshCw, Zap, UserCog,
+    Coins, BellRing, RefreshCw, Zap, UserCog,
     Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,6 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useAppStore, useAppActions } from '@/stores/appStore';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -46,7 +44,6 @@ export function AppHeader() {
     const isSyncing = syncStatus === 'syncing';
 
     const [mounted, setMounted]             = useState(false);
-    const [logoHovered, setLogoHovered]     = useState(false);
     const navRef                            = useRef<HTMLDivElement>(null);
 
     useEffect(() => { setMounted(true); }, []);
@@ -67,8 +64,6 @@ export function AppHeader() {
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
-                    onMouseEnter={() => setLogoHovered(true)}
-                    onMouseLeave={() => setLogoHovered(false)}
                 >
                     {/* Logo icon glass pill */}
                     <div className={cn(
@@ -76,7 +71,7 @@ export function AppHeader() {
                         "bg-primary/90",
                         "border border-primary/20",
                         "shadow-sm",
-                        logoHovered && "shadow-md scale-105",
+                        "group-hover:shadow-md group-hover:scale-105",
                     )}>
                         <Zap className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
                     </div>
@@ -154,7 +149,7 @@ export function AppHeader() {
                     )}
 
                     {/* Sync button */}
-                    {companyProfile?.supabase_url && (
+                    {mounted && companyProfile?.supabase_url && (
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <span>
