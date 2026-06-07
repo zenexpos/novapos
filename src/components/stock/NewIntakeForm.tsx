@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, Calculator, Coins, Sparkles, BadgePercent, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, Calculator, Coins, Sparkles, BadgePercent, AlertTriangle, TrendingUp, ScanLine } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
+import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import type { Product, StockIntakeItem } from '@/lib/types';
 import { formatCurrency, cn, safeNumber, preciseMultiply } from '@/lib/utils';
 import { useAppActions } from '@/stores/appStore';
@@ -102,6 +103,34 @@ export function NewIntakeForm() {
     const removeItem = (id: string) => {
         setItems(prev => prev.filter(item => item.id !== id));
     };
+
+    const handleOcrResult = useCallback((result: { rawText: string, lines: string[] }) => {
+        // 1. Détection du numéro de facture (Patterns: N°, Facture, Ref...)
+        const invMatch = result.rawText.match(/(?:N°|Facture|Ref|Invoice|Nº)[:\s]*([A-Z0-9-]+)/i);
+        if (invMatch && invMatch[1]) {
+            setInvoiceNumber(invMatch[1]);
+        }
+
+        // 2. Détection de la date
+        const dateMatch = result.rawText.match(/(\d{2}[/-]\d{2}[/-]\d{2,4})/);
+        if (dateMatch) {
+            const parsedDate = new Date(dateMatch[0].replace(/-/g, '/'));
+            if (!isNaN(parsedDate.getTime())) {
+                setInvoiceDate(parsedDate);
+            }
+        }
+
+        // 3. Heuristique pour le fournisseur (souvent sur la première ou deuxième ligne)
+        if (result.lines.length > 0 && !supplierName) {
+            // On ignore les lignes trop courtes ou purement numériques
+            const potentialName = result.lines.find(l => l.length > 3 && !/^\d+$/.test(l));
+            if (potentialName) setSupplierName(potentialName);
+        }
+
+        toast.success("Analyse OCR terminée", {
+            description: "Les informations détectées ont été pré-remplies."
+        });
+    }, [supplierName]);
 
     const handleSave = async () => {
         if (!supplierName.trim()) {
@@ -307,6 +336,15 @@ export function NewIntakeForm() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
+                        {/* OCR Scanner Section */}
+                        <div className="p-4 bg-primary/5 rounded-2xl border border-dashed border-primary/20 space-y-3">
+                            <div className="flex items-center gap-2 text-primary">
+                                <ScanLine className="h-4 w-4" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Saisie par OCR AI</span>
+                            </div>
+                            <OcrInvoiceScanner onResult={handleOcrResult} disabled={isSubmitting} />
+                        </div>
+
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1 tracking-widest">Établissement Fournisseur *</Label>
