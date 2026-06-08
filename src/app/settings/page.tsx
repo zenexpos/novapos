@@ -38,7 +38,10 @@ import {
     DownloadCloud,
     CheckCircle2,
     AlertCircle,
-    Printer
+    Printer,
+    Download,
+    Laptop,
+    Sparkles
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { toast } from "sonner";
@@ -49,6 +52,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { supabaseSyncService } from '@/services/supabase.service';
 import { Switch } from '@/components/ui/switch';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 export default function SettingsPage() {
     const [stats, setStats] = useState({
@@ -66,7 +70,7 @@ export default function SettingsPage() {
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-    // FIX: Individual selectors to avoid hydration loop in React 19
+    const { isInstallable, install } = usePwaInstall();
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
     
@@ -169,6 +173,49 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="lg:col-span-8 space-y-4">
+                    {/* PWA Installation Card - High Visibility */}
+                    {isInstallable && (
+                        <Card className="app-card rounded-lg border-accent/20 bg-accent/5 overflow-hidden shadow-xl group animate-in slide-in-from-top-4 duration-1000">
+                            <CardHeader className="bg-accent/10 border-b border-accent/10 p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 rounded-2xl bg-accent text-accent-foreground shadow-lg animate-install">
+                                            <Laptop className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl font-black tracking-tight text-accent-foreground">Mode iPOS Desktop</CardTitle>
+                                            <CardDescription className="text-[10px] font-black uppercase text-accent/60 tracking-widest">Expérience Native Elite</CardDescription>
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        onClick={install}
+                                        className="rounded-2xl h-12 px-8 bg-accent text-accent-foreground hover:bg-accent/90 font-black text-xs uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all gap-3"
+                                    >
+                                        <Download className="h-5 w-5" />
+                                        Installer Maintenant
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-6 relative overflow-hidden">
+                                <Sparkles className="absolute -right-8 -bottom-8 h-40 w-40 text-accent/5 rotate-12" />
+                                <div className="flex gap-10 items-start relative z-10">
+                                    <div className="space-y-2 max-w-xl">
+                                        <p className="text-sm font-bold text-accent-foreground/80 leading-relaxed">
+                                            Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément depuis votre barre des tâches, sans les distractions du navigateur.
+                                        </p>
+                                        <div className="flex flex-wrap gap-3 mt-4">
+                                            {['Lancement Rapide', 'Icône Bureau', 'Plein Écran', 'Hors-ligne Stable'].map((feat, i) => (
+                                                <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-[9px] font-black uppercase text-accent-foreground/60">
+                                                    <CheckCircle2 className="h-2.5 w-2.5" /> {feat}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
                         <CardHeader className="bg-primary/5 border-b border-white/5 p-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -215,7 +262,7 @@ export default function SettingsPage() {
                                         )}>
                                             {connectionStatus === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                             <span className="text-[10px] font-semibold uppercase tracking-wide">
-                                                {connectionStatus === 'success' ? "Canال Saphir Opérationnel" : "Erreur de poignée de main Cloud"}
+                                                {connectionStatus === 'success' ? "Canal Saphir Opérationnel" : "Erreur de poignée de main Cloud"}
                                             </span>
                                         </div>
                                     )}
