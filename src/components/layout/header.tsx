@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useAppStore, useAppActions } from '@/stores/appStore';
+import Image from 'next/image';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -65,15 +66,21 @@ export function AppHeader() {
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
-                    {/* New Zen Elite Logo */}
+                    {/* Zen Elite SVG Logo */}
                     <div className={cn(
-                        "relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-500",
+                        "relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-500",
                         "bg-gradient-to-br from-primary to-amber-700",
                         "border border-white/10",
                         "shadow-[0_0_15px_rgba(192,120,20,0.3)]",
                         "group-hover:shadow-[0_0_20px_rgba(192,120,20,0.5)] group-hover:scale-110",
                     )}>
-                        <Crown className="h-4.5 w-4.5 text-white fill-white/20" />
+                        <Image 
+                            src="/icon.svg" 
+                            alt="iPOS Zen Logo" 
+                            width={24} 
+                            height={24} 
+                            className="invert-0 group-hover:rotate-12 transition-transform duration-500"
+                        />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none">
                         <span className="font-black text-sm tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>

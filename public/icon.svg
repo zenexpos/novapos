@@ -1,13 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="url(#paint0_linear)"/>
+  <path d="M128 368L160 192L256 288L352 192L384 368H128Z" fill="white" fill-opacity="0.2"/>
+  <path d="M128 368L160 192L256 288L352 192L384 368H128Z" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="160" cy="192" r="24" fill="white"/>
+  <circle cx="256" cy="288" r="24" fill="white"/>
+  <circle cx="352" cy="192" r="24" fill="white"/>
+  <circle cx="128" cy="368" r="16" fill="white"/>
+  <circle cx="384" cy="368" r="16" fill="white"/>
   <defs>
-    <linearGradient id="zenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#c07814;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c4d0a;stop-opacity:1" />
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C07814"/>
+      <stop offset="1" stop-color="#8B570D"/>
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="28" fill="url(#zenGradient)" />
-  <path d="M50 25 L75 45 L65 75 L35 75 L25 45 Z" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="4" stroke-linejoin="round" />
-  <circle cx="50" cy="40" r="6" fill="white" />
-  <circle cx="25" cy="45" r="3" fill="white" />
-  <circle cx="75" cy="45" r="3" fill="white" />
 </svg>
