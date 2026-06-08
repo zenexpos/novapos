@@ -86,15 +86,17 @@
 
 /* SOLID UI - NO TRANSPARENCY */
 .app-card {
-  background-color: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
 }
 
 .nav-solid {
-  background-color: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
-  border-bottom: 2px solid hsl(var(--primary));
+  background-color: hsl(var(--secondary)) !important;
+  color: hsl(var(--secondary-foreground)) !important;
+  border-bottom: 2px solid hsl(var(--primary)) !important;
 }
 
 [role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper] > div {
@@ -106,8 +108,8 @@
 }
 
 .info-bar-solid {
-  background-color: hsl(var(--card));
-  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
 .print-hide {
