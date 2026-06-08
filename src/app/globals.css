@@ -84,7 +84,7 @@
   }
 }
 
-/* SOLID UI - NO TRANSPARENCY */
+/* SOLID UI - NO TRANSPARENCY & NO BLUR */
 .app-card {
   background-color: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
@@ -125,4 +125,14 @@
   min-height: 297mm;
   padding: 15mm;
   margin: 0 auto;
+}
+
+@keyframes flash {
+  0% { background-color: transparent; }
+  50% { background-color: hsl(var(--primary) / 0.1); }
+  100% { background-color: transparent; }
+}
+
+.animate-flash {
+  animation: flash 0.5s ease-in-out;
 }

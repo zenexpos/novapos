@@ -2,47 +2,37 @@
 
 import { useState, useEffect } from 'react';
 
-/**
- * Hook لإدارة عملية تثبيت التطبيق (PWA).
- * يستمع لحدث beforeinstallprompt ويوفر وظيفة التثبيت.
- */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstallable, setIsInstallable] = useState(false);
 
     useEffect(() => {
-        const handler = (e: any) => {
-            // منع المتصفح من إظهار الواجهة الافتراضية
+        const handleBeforeInstallPrompt = (e: any) => {
             e.preventDefault();
-            // تخزين الحدث لاستخدامه لاحقاً
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
 
-        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // التحقق مما إذا كان التطبيق مثبتاً بالفعل
+        // Check if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsInstallable(false);
         }
 
-        return () => window.removeEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
 
     const install = async () => {
         if (!deferredPrompt) return;
 
-        // إظهار واجهة التثبيت
         deferredPrompt.prompt();
-
-        // انتظار رد فعل المستخدم
         const { outcome } = await deferredPrompt.userChoice;
         
         if (outcome === 'accepted') {
             setIsInstallable(false);
+            setDeferredPrompt(null);
         }
-        
-        setDeferredPrompt(null);
     };
 
     return { isInstallable, install };
