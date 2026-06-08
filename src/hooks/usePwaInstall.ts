@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 /**
- * usePwaInstall — هوك مخصص لإدارة عملية تثبيت التطبيق على سطح المكتب.
+ * usePwaInstall — هوك نخبوي لإدارة عملية التثبيت المباشر على سطح المكتب.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -11,16 +11,16 @@ export function usePwaInstall() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع المتصفح من إظهار النافذة الافتراضية
+            // منع المتصفح من إظهار النافذة التلقائية
             e.preventDefault();
-            // حفظ الحدث لاستخدامه لاحقاً
+            // حفظ الحدث لتشغيله عند ضغط الزر الذهبي
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // التحقق مما إذا كان التطبيق مثبتاً بالفعل
+        // التحقق من حالة العرض (Standalone يعني أنه مثبت بالفعل)
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsInstallable(false);
         }
@@ -31,10 +31,9 @@ export function usePwaInstall() {
     const install = async () => {
         if (!deferredPrompt) return;
 
-        // إظهار نافذة التثبيت
+        // إظهار واجهة تثبيت النظام الأصلية
         deferredPrompt.prompt();
         
-        // انتظار رد فعل المستخدم
         const { outcome } = await deferredPrompt.userChoice;
         
         if (outcome === 'accepted') {
