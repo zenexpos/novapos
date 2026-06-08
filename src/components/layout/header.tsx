@@ -174,7 +174,7 @@ export function AppHeader() {
                     <ThemeToggle />
 
                     {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 max-w-[140px] shadow-sm">
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 max-w-[1400px] shadow-sm">
                             <Building className="h-3 w-3 text-primary shrink-0" />
                             <span className="text-[10px] font-black uppercase text-primary truncate">
                                 {companyProfile.companyName}

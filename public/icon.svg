@@ -1,28 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="elite-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#c07814" />
-      <stop offset="100%" stop-color="#f59e0b" />
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C07814;stop-opacity:1" />
     </linearGradient>
     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feGaussianBlur stdDeviation="15" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
-  <!-- شاشة الحاسوب -->
-  <rect x="24" y="24" width="80" height="56" rx="8" fill="#1f2937" stroke="url(#elite-grad)" stroke-width="4" />
-  <path d="M52 80L48 92H80L76 80" stroke="url(#elite-grad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M40 92H88" stroke="url(#elite-grad)" stroke-width="4" stroke-linecap="round" />
   
-  <!-- الدفتر المحاسبي المتداخل -->
-  <g filter="url(#glow)">
-    <rect x="64" y="48" width="44" height="60" rx="4" fill="white" stroke="#c07814" stroke-width="2" />
-    <path d="M72 60H100" stroke="#c07814" stroke-width="2" stroke-linecap="round" />
-    <path d="M72 72H100" stroke="#c07814" stroke-width="2" stroke-linecap="round" />
-    <path d="M72 84H100" stroke="#c07814" stroke-width="2" stroke-linecap="round" />
-    <!-- حلقات الدفتر -->
-    <circle cx="64" cy="58" r="2.5" fill="#c07814" />
-    <circle cx="64" cy="74" r="2.5" fill="#c07814" />
-    <circle cx="64" cy="90" r="2.5" fill="#c07814" />
-  </g>
+  <!-- Outer Capsule -->
+  <rect x="40" y="40" width="432" height="432" rx="100" fill="url(#goldGradient)" fill-opacity="0.1" stroke="url(#goldGradient)" stroke-width="12" />
+  
+  <!-- Screen Base -->
+  <path d="M120 320 L392 320 L420 380 L92 380 Z" fill="url(#goldGradient)" filter="url(#glow)" />
+  
+  <!-- Monitor Frame -->
+  <rect x="140" y="120" width="232" height="180" rx="15" stroke="url(#goldGradient)" stroke-width="20" fill="transparent" />
+  
+  <!-- Ledger Details (Inside Screen) -->
+  <path d="M180 160 H332 M180 200 H332 M180 240 H280" stroke="url(#goldGradient)" stroke-width="12" stroke-linecap="round" />
+  
+  <!-- Spiral of Ledger (On the left side of screen) -->
+  <circle cx="150" cy="150" r="8" fill="url(#goldGradient)" />
+  <circle cx="150" cy="190" r="8" fill="url(#goldGradient)" />
+  <circle cx="150" cy="230" r="8" fill="url(#goldGradient)" />
+  <circle cx="150" cy="270" r="8" fill="url(#goldGradient)" />
 </svg>
