@@ -1,29 +1,17 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Professional Monitor Background -->
-  <rect x="40" y="60" width="432" height="300" rx="24" fill="#1E293B" />
-  <rect x="56" y="76" width="400" height="268" rx="16" fill="#F8FAFC" />
+  <!-- Elite Ledger & Screen Logo -->
+  <rect x="64" y="96" width="384" height="280" rx="24" fill="#1E293B"/>
+  <rect x="96" y="128" width="320" height="216" rx="8" fill="#F8FAFC"/>
   
-  <!-- Monitor Stand -->
-  <rect x="216" y="360" width="80" height="40" fill="#1E293B" />
-  <rect x="156" y="400" width="200" height="20" rx="10" fill="#1E293B" />
+  <!-- Ledger Icon inside screen -->
+  <path d="M160 160H352V312H160V160Z" fill="#AFB42B" fill-opacity="0.1"/>
+  <rect x="180" y="180" width="152" height="12" rx="2" fill="#AFB42B"/>
+  <rect x="180" y="204" width="152" height="12" rx="2" fill="#1E293B"/>
+  <rect x="180" y="228" width="100" height="12" rx="2" fill="#D4AF37"/>
+  <rect x="180" y="252" width="152" height="12" rx="2" fill="#1E293B"/>
+  <rect x="180" y="276" width="120" height="12" rx="2" fill="#AFB42B"/>
   
-  <!-- Ledger Notebook integrated with screen -->
-  <rect x="220" y="100" width="180" height="240" rx="12" fill="#AFB42B" />
-  <path d="M220 120H400M220 160H400M220 200H400M220 240H400M220 280H400" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
-  
-  <!-- Spiral bindings -->
-  <circle cx="220" cy="120" r="8" fill="#D4AF37"/>
-  <circle cx="220" cy="160" r="8" fill="#D4AF37"/>
-  <circle cx="220" cy="200" r="8" fill="#D4AF37"/>
-  <circle cx="220" cy="240" r="8" fill="#D4AF37"/>
-  <circle cx="220" cy="280" r="8" fill="#D4AF37"/>
-  <circle cx="220" cy="320" r="8" fill="#D4AF37"/>
-
-  <!-- Screen Content Symbols -->
-  <rect x="80" y="110" width="100" height="15" rx="4" fill="#1E293B" opacity="0.1"/>
-  <rect x="80" y="140" width="80" height="15" rx="4" fill="#1E293B" opacity="0.1"/>
-  <rect x="80" y="170" width="120" height="40" rx="6" fill="#AFB42B" opacity="0.2"/>
-  
-  <!-- The "Z" for Zen/Elite -->
-  <path d="M100 240H160L100 320H160" stroke="#D4AF37" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Screen Stand -->
+  <rect x="224" y="376" width="64" height="40" fill="#1E293B"/>
+  <rect x="160" y="416" width="192" height="16" rx="8" fill="#1E293B"/>
 </svg>

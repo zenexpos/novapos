@@ -16,7 +16,7 @@ export function AppHeaderWrapper() {
 
     if (!mounted) {
         return (
-            <header className="h-13 border-b border-border bg-card/95 animate-pulse flex items-center px-4">
+            <header className="h-13 border-b border-border bg-card animate-pulse flex items-center px-4">
                 <div className="w-8 h-8 rounded-lg bg-muted" />
                 <div className="ml-4 w-32 h-4 rounded bg-muted" />
             </header>

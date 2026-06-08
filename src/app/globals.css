@@ -15,37 +15,36 @@
     --animate-page-enter:    page-enter 0.2s ease-out both;
     --animate-fade-in:       fade-in 0.15s ease both;
 
-    /* Semantic Color Mapping - Elite Solid Palette */
-    --color-primary:         65  60% 44%;
-    --color-secondary:       217 33% 17%;
-    --color-accent:          45  65% 52%;
-    --color-background:      210 40% 98%;
-    --color-card:            0   0% 100%;
-    --color-popover:         0   0% 100%;
+    /* Elite Solid Palette - Zero Transparency */
+    --color-primary:         65  60% 44%; /* #AFB42B */
+    --color-secondary:       217 33% 17%; /* #1E293B */
+    --color-accent:          45  65% 52%; /* #D4AF37 */
+    --color-background:      210 40% 98%; /* #F8FAFC */
+    --color-card:            0   0% 100%; /* Pure White */
+    --color-popover:         0   0% 100%; /* Pure White */
 }
 
 @layer base {
     :root {
-        /* Core Palette (Solid) */
-        --primary:              65  60% 44%; /* #AFB42B */
+        --primary:              65  60% 44%;
         --primary-foreground:   0   0% 100%;
         
-        --secondary:            217 33% 17%; /* #1E293B */
+        --secondary:            217 33% 17%;
         --secondary-foreground: 210 40% 98%;
         
-        --accent:               45  65% 52%; /* #D4AF37 */
+        --accent:               45  65% 52%;
         --accent-foreground:    222 47% 11%;
         
-        --background:           210 40% 98%; /* #F8FAFC */
-        --foreground:           222 47% 11%; /* #0F172A */
+        --background:           210 40% 98%;
+        --foreground:           222 47% 11%;
         
-        --card:                  0   0% 100%; /* Pure White - Solid */
+        --card:                  0   0% 100%;
         --card-foreground:      222 47% 11%;
 
-        --popover:               0   0% 100%; /* Pure White - Solid */
+        --popover:               0   0% 100%;
         --popover-foreground:    222 47% 11%;
         
-        --muted:                210 40% 94%; /* Light Grey - Solid */
+        --muted:                210 40% 94%; /* Solid Grey */
         --muted-foreground:     215 16% 47%;
         
         --border:               214 32% 91%;
@@ -108,10 +107,6 @@
         border-radius: var(--radius-2xl);
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .app-card:hover {
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     }
     
     .solid-header {
