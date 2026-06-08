@@ -1,19 +1,24 @@
+/**
+ * iPOS Zen — Service Worker (Elite Edition)
+ * مُتطلب أساسي لظهور زر التثبيت والعمل في وضع الأوفلاين.
+ */
+
 const CACHE_NAME = 'ipos-zen-v2';
-const ASSETS = [
+const ASSETS_TO_CACHE = [
   '/',
+  '/manifest.webmanifest',
   '/icon.svg',
   '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/manifest.webmanifest'
+  '/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -28,25 +33,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  
+  // مُستمع الـ fetch ضروري جداً لظهور زر التثبيت في Chrome
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-      });
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });

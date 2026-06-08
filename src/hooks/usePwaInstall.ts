@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * usePwaInstall — هوك نخبوي لإدارة عملية التثبيت المباشر.
- * يضمن التقاط حدث التثبيت وتوفير دالة تشغيل واجهة النظام الأصلية.
+ * usePwaInstall — هوك نخبوي لالتقاط حدث التثبيت المباشر.
+ * يضمن ظهور زر التثبيت الذهبي في شريط التنقل.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,19 +12,23 @@ export function usePwaInstall() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع المتصفح من إظهار النافذة التلقائية المزعجة
+            // منع النافذة التلقائية
             e.preventDefault();
-            // حفظ الحدث لتشغيله يدوياً عند ضغط الزر الذهبي
+            // حفظ الحدث لتشغيله عند الضغط على الزر الذهبي
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // التحقق مما إذا كان التطبيق مثبتاً بالفعل
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            setIsInstallable(false);
-        }
+        // إخفاء الزر إذا كان التطبيق مثبتاً بالفعل
+        const checkStandalone = () => {
+            if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+                setIsInstallable(false);
+            }
+        };
+
+        checkStandalone();
 
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
@@ -32,7 +36,7 @@ export function usePwaInstall() {
     const install = useCallback(async () => {
         if (!deferredPrompt) return;
 
-        // إظهار واجهة تثبيت النظام الأصلية (Native)
+        // إظهار واجهة تثبيت النظام
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;

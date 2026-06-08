@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export const dynamic = 'force-static';
 
+/**
+ * ملف المانيفست — بطاقة التعريف التقنية للـ PWA.
+ * تم ضبط الخصائص لضمان قبول التثبيت كبرنامج مكتب.
+ */
 export default function manifest(): MetadataRoute.Manifest {
     return {
         name: 'iPOS Zen Elite Ledger',

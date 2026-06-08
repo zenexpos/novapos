@@ -84,8 +84,8 @@
   }
 }
 
-/* SOLID UI - NO TRANSPARENCY & NO BLUR */
-.app-card {
+/* SOLID UI - NO TRANSPARENCY & NO BLUR FOR ELITE STABILITY */
+.app-card, .glass, .glass-stat, .glass-elevated {
   background-color: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
