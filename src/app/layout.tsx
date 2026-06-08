@@ -34,13 +34,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr-DZ">
-      <body className="antialiased bg-background text-foreground">
+      <body className="antialiased bg-background text-foreground overflow-hidden">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>
               <AppSyncManager>
-                  <div className="flex h-screen flex-col bg-background overflow-hidden relative">
+                  <div className="flex h-screen flex-col bg-background relative overflow-hidden">
                         <AppHeaderWrapper />
                         <SaleInfoBarWrapper />
                         <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background">
