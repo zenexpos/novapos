@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
     Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building
+    RefreshCw, Building, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -32,6 +32,7 @@ export function AppHeader() {
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
+        { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
     
     const pathname = usePathname();
