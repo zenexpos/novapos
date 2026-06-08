@@ -1,19 +1,22 @@
-const CACHE_NAME = 'ipos-zen-v2';
+/**
+ * iPOS Zen — Service Worker
+ * تفعيل ميزة العمل بدون إنترنت ودعم التثبيت المباشر (PWA).
+ */
+
+const CACHE_NAME = 'ipos-zen-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/manifest.webmanifest',
   '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/manifest.webmanifest'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -32,19 +35,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Required for PWA installation prompt
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
-    );
-    return;
-  }
-  
+  // استراتيجية Network First مع Fallback للكاش لضمان حداثة البيانات
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
