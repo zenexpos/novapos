@@ -1,18 +1,25 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Solid Background Circle -->
-  <rect width="128" height="128" rx="32" fill="#c07814"/>
-  
-  <!-- Monitor/Screen Base -->
-  <rect x="25" y="30" width="78" height="55" rx="8" fill="#0D0804"/>
-  <rect x="30" y="35" width="68" height="40" rx="4" fill="#1A1108"/>
-  
-  <!-- Stand -->
-  <rect x="58" y="85" width="12" height="10" fill="#0D0804"/>
-  <rect x="45" y="95" width="38" height="4" rx="2" fill="#0D0804"/>
-  
-  <!-- Ledger Notebook Shape Overlay -->
-  <rect x="60" y="45" width="45" height="60" rx="4" fill="#f0a040" stroke="#0D0804" stroke-width="3"/>
-  <path d="M68 58H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
-  <path d="M68 70H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
-  <path d="M68 82H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Frame -->
+    <rect width="512" height="512" rx="120" fill="#c07814"/>
+    
+    <!-- Professional Logo: Screen & Ledger Combo -->
+    <!-- Monitor Base -->
+    <rect x="180" y="380" width="152" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.9"/>
+    <rect x="240" y="340" width="32" height="40" fill="#FFFFFF" fill-opacity="0.8"/>
+    
+    <!-- Monitor Frame -->
+    <rect x="100" y="100" width="312" height="240" rx="20" fill="#0D0804"/>
+    
+    <!-- Ledger Element inside/overlapping Screen -->
+    <rect x="120" y="120" width="272" height="200" rx="10" fill="#FFFFFF" fill-opacity="0.05"/>
+    
+    <!-- The "Ledger" Paper -->
+    <rect x="200" y="140" width="160" height="210" rx="8" fill="#FFFFFF" stroke="#0D0804" stroke-width="4"/>
+    
+    <!-- Ledger Lines & Detail -->
+    <line x1="220" y1="180" x2="340" y2="180" stroke="#c07814" stroke-width="6" stroke-linecap="round"/>
+    <line x1="220" y1="210" x2="340" y2="210" stroke="#0D0804" stroke-width="2" stroke-dasharray="4 8"/>
+    <line x1="220" y1="240" x2="340" y2="240" stroke="#0D0804" stroke-width="2" stroke-dasharray="4 8"/>
+    <line x1="220" y1="270" x2="340" y2="270" stroke="#0D0804" stroke-width="2" stroke-dasharray="4 8"/>
+    <circle cx="320" cy="310" r="15" fill="#c07814"/>
 </svg>

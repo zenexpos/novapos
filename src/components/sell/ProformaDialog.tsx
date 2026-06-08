@@ -53,10 +53,9 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
 
     const generatePDFFile = async (customScale = 3): Promise<File | null> => {
         try {
-            const [{ jsPDF }, html2canvas] = await Promise.all([
-                import('jspdf/dist/jspdf.es.min.js'),
-                import('html2canvas').then(m => m.default)
-            ]);
+            const { jsPDF } = await import('jspdf');
+            const html2canvas = (await import('html2canvas')).default;
+            
             const element = document.getElementById('proforma-render-inner');
             if (!element) return null;
 
@@ -71,7 +70,9 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
             const pdfWidth = receiptType === 'a4' ? 210 : 80;
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] });
-            pdf.addImage({ imageData: imgData, format: 'PNG', x: 0, y: 0, width: pdfWidth, height: pdfHeight, compression: 'FAST' });
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+            
             const blob = pdf.output('blob');
             return new File([blob], `Proforma_${proforma?.proformaNumber.replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
         } catch (e) {
@@ -102,15 +103,10 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
         if (!proforma) return;
         setIsGenerating(true);
         try {
-            const file = await generatePDFFile(2); // Scale reduit pour mobile
+            const file = await generatePDFFile(2); 
             const shareText = `Bonjour, voici votre facture proforma ${proforma.proformaNumber} de l'établissement ${profile?.companyName || 'iPOS'}. Total: ${proforma.total} DA.`;
             
-            const canShare = typeof navigator !== 'undefined'
-                && typeof navigator.share === 'function'
-                && typeof navigator.canShare === 'function'
-                && navigator.canShare({ files: [file!] });
-
-            if (canShare && file) {
+            if (typeof navigator !== 'undefined' && navigator.share && file) {
                 await navigator.share({
                     files: [file],
                     title: `Proforma ${proforma.proformaNumber}`,
@@ -118,7 +114,6 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
                 });
                 toast.success("Partage effectué.");
             } else {
-                // Fallback direct
                 const msg = encodeURIComponent(shareText);
                 window.open(`https://wa.me/?text=${msg}`, '_blank');
                 if (file) {
@@ -127,14 +122,12 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
                     link.href = url;
                     link.download = file.name;
                     link.click();
-                    toast.info("Le document a été téléchargé pour envoi manuel.");
+                    toast.info("Document téléchargé.");
                 }
             }
         } catch (e: any) {
             if (e.name !== 'AbortError') {
-                const msg = encodeURIComponent(`Proforma ${proforma.proformaNumber} - Total: ${proforma.total} DA.`);
-                window.open(`https://wa.me/?text=${msg}`, '_blank');
-                toast.info("Lien envoyé. Pensez à joindre le fichier manuellement.");
+                toast.error("Erreur lors du partage.");
             }
         } finally {
             setIsGenerating(false);
@@ -145,7 +138,7 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
+            <DialogContent className="sm:max-w-4xl h-auto max-h-[95vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
                 <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -157,7 +150,7 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
                                 <DialogDescription className="text-xs font-bold uppercase text-primary/40 tracking-widest">Document souverain : {proforma.proformaNumber}</DialogDescription>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 bg-background/50 p-1.5 rounded-xl border border-primary/10">
+                        <div className="flex items-center gap-4 bg-background p-1.5 rounded-xl border border-primary/10">
                             <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all", receiptType === 'thermal' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40")}>
                                 <Smartphone className="h-3.5 w-3.5" />
                                 <span className="text-[10px] font-bold uppercase">Ticket</span>
@@ -171,7 +164,7 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
                     </div>
                 </DialogHeader>
 
-                <div className="flex-grow overflow-y-auto bg-muted/40 p-8 flex justify-center custom-scrollbar">
+                <div className="flex-grow overflow-y-auto bg-muted p-8 flex justify-center custom-scrollbar">
                     <div id="proforma-render-container" className={cn("bg-white shadow-2xl transition-all origin-top", receiptType === 'a4' ? "w-[210mm]" : "w-[80mm]")}>
                         <div id="proforma-render-inner">
                             <ProformaReceipt proforma={proforma} profile={profile} receiptType={receiptType} customerName={customerName} />
@@ -183,7 +176,7 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
                     <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl h-11 font-bold px-6">
                         <X className="mr-2 h-4 w-4" /> Fermer
                     </Button>
-                    <Button variant="outline" onClick={handleDownload} disabled={isGenerating} className="rounded-xl h-11 font-bold gap-2 border-primary/20 hover:bg-primary/5">
+                    <Button variant="outline" onClick={handleDownload} disabled={isGenerating} className="rounded-xl h-11 font-bold gap-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         PDF
                     </Button>
@@ -199,4 +192,3 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
         </Dialog>
     );
 }
-

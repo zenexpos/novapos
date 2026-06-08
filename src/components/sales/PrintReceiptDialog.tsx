@@ -20,10 +20,6 @@ interface PrintReceiptDialogProps {
     customerName?: string;
 }
 
-/**
- * Composant de gestion documentaire Elite iPOS Zen.
- * Gère l'impression physique et le partage numérique HD via WhatsApp/PDF.
- */
 export function PrintReceiptDialog({
     isOpen,
     onOpenChange,
@@ -35,7 +31,6 @@ export function PrintReceiptDialog({
     const [isGenerating, setIsGenerating] = useState(false);
     const [customer, setCustomer] = useState<Customer | null>(null);
     
-    // Calcul du solde antérieur pour la transparence documentaire
     const oldBalance = useMemo(() => {
         if (!customer || !sale) return 0;
         const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
@@ -61,9 +56,6 @@ export function PrintReceiptDialog({
         return 'Client de passage';
     }, [customer, customerName]);
 
-    /**
-     * handlePrint - Flux d'impression systeme direct.
-     */
     const handlePrint = useCallback(() => {
         if (!sale) return;
         
@@ -104,24 +96,18 @@ export function PrintReceiptDialog({
         }
     ], 'Impression', isOpen);
 
-    /**
-     * handleGeneratePDF - Generation PDF Ultra-HD et partage WhatsApp.
-     */
     const handleGeneratePDF = useCallback(async (isShare: boolean) => {
         if (!sale) return;
         setIsGenerating(true);
 
         try {
-            // Importation dynamique pour optimiser les performances
-            const [{ jsPDF }, html2canvas] = await Promise.all([
-                import('jspdf/dist/jspdf.es.min.js'),
-                import('html2canvas').then(m => m.default)
-            ]);
+            // Fix: using standard import with fallback types
+            const { jsPDF } = await import('jspdf');
+            const html2canvas = (await import('html2canvas')).default;
 
             const element = document.getElementById('receipt-render-target-inner');
             if (!element) throw new Error("Source de rendu introuvable");
 
-            // Capture avec echelle moderee pour stabilite maximale
             const canvas = await html2canvas(element, {
                 scale: 2, 
                 useCORS: true,
@@ -139,14 +125,7 @@ export function PrintReceiptDialog({
                 format: [pdfWidth, pdfHeight]
             });
 
-            pdf.addImage({
-                imageData: imgData,
-                format:    'PNG',
-                x: 0, y: 0,
-                width:  pdfWidth,
-                height: pdfHeight,
-                compression: 'FAST',
-            });
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
             
             const fileName = `Facture_${sale.invoiceNumber}.pdf`;
 
@@ -158,7 +137,7 @@ export function PrintReceiptDialog({
                     await navigator.share({
                         files: [file],
                         title: `Facture #${sale.invoiceNumber}`,
-                        text: `Bonjour, voici votre facture #${sale.invoiceNumber} de l'etablissement ${profile?.companyName || 'iPOS'}. Cordialement.`
+                        text: `Bonjour, voici votre facture #${sale.invoiceNumber} de l'établissement ${profile?.companyName || 'iPOS'}. Cordialement.`
                     });
                     toast.success("Partage effectue avec succes.");
                 } catch (e: any) {
@@ -195,7 +174,7 @@ export function PrintReceiptDialog({
                                 <DialogDescription className="text-[10px] uppercase font-semibold text-primary/50">Facture : #{sale.invoiceNumber}</DialogDescription>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 bg-background/50 p-1.5 rounded-xl border border-primary/10">
+                        <div className="flex items-center gap-4 bg-background p-1.5 rounded-xl border border-primary/10">
                             <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all", receiptType === 'thermal' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40")}>
                                 <Smartphone className="h-3.5 w-3.5" />
                                 <span className="text-[10px] font-bold uppercase">Ticket</span>
@@ -212,7 +191,7 @@ export function PrintReceiptDialog({
                     </div>
                 </DialogHeader>
 
-                <div className="flex-grow overflow-y-auto bg-muted/30 p-6 custom-scrollbar flex justify-center">
+                <div className="flex-grow overflow-y-auto bg-muted p-6 custom-scrollbar flex justify-center">
                     <div 
                         id="receipt-render-target"
                         className={cn(
