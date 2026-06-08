@@ -1,26 +1,19 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Solid Background Circle using Secondary #1E293B -->
-  <circle cx="256" cy="256" r="240" fill="#1E293B"/>
-  
-  <!-- Monitor Frame - Solid Primary #AFB42B -->
-  <rect x="120" y="140" width="272" height="180" rx="12" fill="#AFB42B"/>
-  <!-- Monitor Screen -->
-  <rect x="135" y="155" width="242" height="150" rx="4" fill="#FFFFFF"/>
-  <!-- Monitor Stand -->
-  <path d="M210 320L200 360H312L302 320H210Z" fill="#AFB42B"/>
-  <rect x="180" y="360" width="152" height="12" rx="6" fill="#AFB42B"/>
-  
-  <!-- Ledger/Notebook overlapping - Solid Accent #D4AF37 -->
-  <rect x="280" y="240" width="140" height="180" rx="8" fill="#D4AF37" stroke="#1E293B" stroke-width="4"/>
-  <!-- Notebook Lines -->
-  <line x1="300" y1="280" x2="400" y2="280" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
-  <line x1="300" y1="310" x2="400" y2="310" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
-  <line x1="300" y1="340" x2="400" y2="340" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
-  <line x1="300" y1="370" x2="360" y2="370" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
-  
-  <!-- Binding spirals -->
-  <circle cx="280" cy="270" r="6" fill="#1E293B"/>
-  <circle cx="280" cy="310" r="6" fill="#1E293B"/>
-  <circle cx="280" cy="350" r="6" fill="#1E293B"/>
-  <circle cx="280" cy="390" r="6" fill="#1E293B"/>
+    <!-- Background Frame -->
+    <rect width="512" height="512" rx="128" fill="#1E293B"/>
+    
+    <!-- Laptop Screen Representation -->
+    <rect x="106" y="140" width="300" height="180" rx="12" fill="#AFB42B"/>
+    <rect x="126" y="160" width="260" height="130" rx="4" fill="#F8FAFC"/>
+    
+    <!-- Ledger Representation overlay -->
+    <rect x="230" y="240" width="160" height="140" rx="8" fill="#D4AF37" stroke="#1E293B" stroke-width="8"/>
+    
+    <!-- Ledger Lines -->
+    <path d="M260 280H360" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+    <path d="M260 310H360" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+    <path d="M260 340H320" stroke="#1E293B" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Laptop Base -->
+    <path d="M100 320C100 320 80 360 140 360H372C432 360 412 320 412 320" stroke="#AFB42B" stroke-width="14" stroke-linecap="round"/>
 </svg>

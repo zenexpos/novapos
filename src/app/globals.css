@@ -15,70 +15,66 @@
     --animate-page-enter:    page-enter 0.2s ease-out both;
     --animate-fade-in:       fade-in 0.15s ease both;
 
-    /* New Palette Constants */
-    --color-primary:         62  61% 44%;
+    /* Semantic Color Mapping - Solid v2 */
+    --color-primary:         65  60% 44%;
+    --color-secondary:       217 33% 17%;
+    --color-accent:          45  65% 52%;
     --color-background:      210 40% 98%;
     --color-card:            0   0% 100%;
 }
 
 @layer base {
     :root {
-        /* Primary: #AFB42B */
-        --primary:              62  61% 44%;
+        /* UI Color Palette based on User Specs */
+        --primary:              65  60% 44%; /* #AFB42B */
         --primary-foreground:   0   0% 100%;
         
-        /* Secondary: #1E293B */
-        --secondary:            217 33% 17%;
+        --secondary:            217 33% 17%; /* #1E293B */
         --secondary-foreground: 210 40% 98%;
         
-        /* Accent: #D4AF37 */
-        --accent:               46  65% 52%;
+        --accent:               45  65% 52%; /* #D4AF37 */
         --accent-foreground:    222 47% 11%;
         
-        /* Background: #F8FAFC */
-        --background:           210 40% 98%;
+        --background:           210 40% 98%; /* #F8FAFC */
+        --foreground:           222 47% 11%; /* #0F172A */
         
-        /* Text Primary: #0F172A */
-        --foreground:           222 47% 11%;
-        
-        /* Text Secondary: #64748B */
-        --muted-foreground:     215 16% 47%;
-        
-        --card:                  0   0% 100%;
+        --card:                  0   0% 100%; /* #FFFFFF */
         --card-foreground:      222 47% 11%;
         
         --muted:                210 40% 94%;
+        --muted-foreground:     215 16% 47%; /* #64748B */
+        
         --border:               214 32% 91%;
         --input:                214 32% 91%;
-        --ring:                 62  61% 44%;
+        --ring:                 65  60% 44%;
         --radius:               0.75rem;
         
         --destructive:          0   84% 60%;
         --destructive-foreground: 0 0% 100%;
 
-        --chart-primary:    62 61% 44%;
+        /* Chart Colors Optimized for Elite Palette */
+        --chart-primary:    65 60% 44%;
         --chart-secondary:  217 33% 17%;
-        --chart-tertiary:   46 65% 52%;
+        --chart-tertiary:   45 65% 52%;
         --chart-quaternary: 215 16% 47%;
         --chart-quinary:    222 47% 11%;
     }
 
     .dark {
-        --background:           222 47% 11%;
+        --background:           222 47% 6%;
         --foreground:           210 40% 98%;
-        --card:                 222 47% 8%;
+        --card:                 222 47% 4%;
         --card-foreground:      210 40% 98%;
-        --primary:              62  80% 55%;
+        --primary:              65  60% 55%;
         --primary-foreground:   222 47% 11%;
         --secondary:            217 33% 25%;
         --secondary-foreground: 210 40% 98%;
-        --muted:                222 47% 15%;
+        --muted:                222 47% 12%;
         --muted-foreground:     215 20% 65%;
-        --accent:               46  80% 60%;
+        --accent:               45  80% 60%;
         --accent-foreground:    222 47% 11%;
-        --border:               222 47% 18%;
-        --input:                222 47% 18%;
-        --ring:                 62  80% 55%;
+        --border:               222 47% 15%;
+        --input:                222 47% 15%;
     }
 }
 
@@ -95,20 +91,32 @@
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-display);
+        letter-spacing: -0.02em;
     }
 }
 
 @layer utilities {
-    .solid-card {
+    .app-card {
         background-color: hsl(var(--card));
         border: 1px solid hsl(var(--border));
         border-radius: var(--radius-2xl);
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     
-    .themed-popup-header {
-        background-color: hsl(var(--primary));
-        color: hsl(var(--primary-foreground));
+    .app-card:hover {
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+    
+    .themed-header {
+        background-color: hsl(var(--secondary));
+        color: hsl(var(--secondary-foreground));
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 }
 

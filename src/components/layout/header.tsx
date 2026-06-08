@@ -60,7 +60,7 @@ export function AppHeader() {
                 >
                     <div className={cn(
                         "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300",
-                        "bg-primary",
+                        "bg-secondary",
                         "group-hover:scale-105",
                     )}>
                         <Image 
@@ -144,7 +144,7 @@ export function AppHeader() {
                     <ThemeToggle />
 
                     {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-wider shadow-sm">
+                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground font-black text-[10px] uppercase tracking-wider shadow-sm">
                             <Building className="h-3.5 w-3.5" />
                             <span className="truncate max-w-[120px]">
                                 {companyProfile.companyName}
