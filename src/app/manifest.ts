@@ -4,7 +4,7 @@ export const dynamic = 'force-static';
 
 /**
  * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر.
- * يجب أن تتوافق الأيقونات مع المسارات الفعلية لنجاح التثبيت.
+ * تم التأكد من توافق كافة المسارات والأيقونات مع معايير PWA العالمية.
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {

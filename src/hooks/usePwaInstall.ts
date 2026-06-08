@@ -3,15 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * @fileOverview هوك التثبيت المباشر — يلتقط حدث beforeinstallprompt.
- * هذا الحدث لا يطلق إلا بوجود Service Worker مسجل وفعال.
+ * @fileOverview هوك التثبيت المباشر المطور.
+ * يقوم بالتقاط حدث beforeinstallprompt وتخزينه لتمكين الزر الذهبي.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isInstallable, setIsInstallable] = useState(false);
 
     useEffect(() => {
-        // التحقق من حالة التثبيت الحالية (إذا كان مثبتاً بالفعل لا تظهر الزر)
+        // منع الظهور إذا كان التطبيق مثبتاً بالفعل
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
             || (window.navigator as any).standalone === true;
 
@@ -21,29 +21,28 @@ export function usePwaInstall() {
         }
 
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع النافذة التلقائية
+            // منع النافذة التلقائية المزعجة للمتصفح
             e.preventDefault();
-            // حفظ الحدث للاستخدام عند النقر على الزر الذهبي
+            // حفظ الحدث ليتم تفعيله يدوياً عبر زر "Installer iPOS"
             setDeferredPrompt(e);
             setIsInstallable(true);
-            console.log('PWA: iPOS Zen is ready for installation.');
+            console.log('PWA: iPOS Zen readiness detected.');
         };
 
-        // الاستماع للحدث
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // التحقق من الجاهزية فور التحميل (في حال أطلق الحدث بسرعة)
+        // تنظيف عند فك المكون
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
 
     const install = useCallback(async () => {
         if (!deferredPrompt) return;
 
-        // إظهار نافذة التثبيت
+        // إظهار نافذة التثبيت الرسمية للمتصفح
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`PWA: Install outcome -> ${outcome}`);
+        console.log(`PWA: Install choice -> ${outcome}`);
         
         if (outcome === 'accepted') {
             setIsInstallable(false);

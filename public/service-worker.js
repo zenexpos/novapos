@@ -1,47 +1,53 @@
-// iPOS Zen — Elite Service Worker v2.0
-const CACHE_NAME = 'ipos-zen-v2';
-const ASSETS_TO_CACHE = [
+/**
+ * iPOS Zen — Service Worker (Elite Edition)
+ * المحرك التقني لتمكين التثبيت والعمل في وضع الأوفلاين.
+ */
+
+const CACHE_NAME = 'ipos-zen-cache-v1';
+
+// الملفات الأساسية المطلوب تخزينها للعمل أوفلاين
+const urlsToCache = [
   '/',
-  '/manifest.webmanifest',
   '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/manifest.webmanifest'
 ];
 
-// Install: Cache essential assets
+// تثبيت ملف الخدمة
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(urlsToCache);
     })
   );
-  self.skipWaiting();
 });
 
-// Activate: Cleanup old caches
+// تفعيل ملف الخدمة وتنظيف الكاش القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
-  self.clients.claim();
+  return self.clients.claim();
 });
 
-// Fetch: MANDATORY for PWA installation trigger
+/**
+ * مستمع حدث الـ fetch:
+ * هذا هو الجزء الأهم لظهور زر التثبيت في Chrome/Edge.
+ * المتصفح يرفض التثبيت إذا لم يجد هذا المستمع.
+ */
 self.addEventListener('fetch', (event) => {
-  // Check for extension or non-http requests
-  if (!event.request.url.startsWith('http')) return;
-
+  // استراتيجية: البحث في الكاش أولاً، ثم الشبكة
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
