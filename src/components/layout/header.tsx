@@ -51,28 +51,25 @@ export function AppHeader() {
             <div className="
                 relative flex h-13 items-center gap-2 px-3
                 border-b border-border
-                bg-card/95
+                bg-card
                 shadow-sm
             ">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent pointer-events-none" />
-
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
                     <div className={cn(
-                        "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-500",
-                        "bg-gradient-to-br from-primary/20 to-primary/5",
+                        "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300",
+                        "bg-primary",
                         "border border-primary/20",
-                        "shadow-[0_0_15px_rgba(192,120,20,0.1)]",
-                        "group-hover:shadow-[0_0_20px_rgba(192,120,20,0.3)] group-hover:scale-105",
+                        "group-hover:scale-105",
                     )}>
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
                             width={32} 
                             height={32} 
-                            className="group-hover:rotate-6 transition-transform duration-500 filter drop-shadow-md"
+                            className="group-hover:rotate-3 transition-transform duration-500"
                         />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1">
@@ -85,7 +82,7 @@ export function AppHeader() {
                     </div>
                 </Link>
 
-                <div className="h-5 w-px bg-gradient-to-b from-transparent via-border to-transparent mx-1 shrink-0" />
+                <div className="h-5 w-px bg-border mx-1 shrink-0" />
 
                 <TooltipProvider delayDuration={0}>
                     <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
@@ -99,35 +96,29 @@ export function AppHeader() {
                                             <Link
                                                 href={link.href}
                                                 aria-label={link.label}
-                                                style={{ animationDelay: `${idx * 40}ms` }}
                                                 className={cn(
-                                                    'relative flex items-center justify-center rounded-xl shrink-0 group transition-all duration-500',
+                                                    'relative flex items-center justify-center rounded-xl shrink-0 group transition-all duration-200',
                                                     isActive
-                                                        ? 'h-9 px-4 bg-primary/10 border border-primary/25 text-primary shadow-sm w-auto'
-                                                        : 'w-9 h-9 text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-foreground'
+                                                        ? 'h-9 px-4 bg-primary text-primary-foreground shadow-sm w-auto'
+                                                        : 'w-9 h-9 text-muted-foreground border border-transparent hover:bg-muted hover:text-foreground'
                                                 )}
                                             >
                                                 <Icon className={cn(
-                                                    'h-4 w-4 transition-transform duration-300',
-                                                    isActive ? 'scale-110' : 'group-hover:scale-110',
-                                                    !isActive && link.color
+                                                    'h-4 w-4 transition-transform duration-200',
+                                                    isActive ? 'scale-110' : 'group-hover:scale-110'
                                                 )} />
                                                 
                                                 {isActive && (
-                                                    <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-500">
+                                                    <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                                                         {link.label}
                                                     </span>
-                                                )}
-
-                                                {isActive && (
-                                                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)]" />
                                                 )}
                                             </Link>
                                         </span>
                                     </TooltipTrigger>
                                     <TooltipContent
                                         side="bottom"
-                                        className="text-xs font-medium bg-card/95 border border-border shadow-sm"
+                                        className="text-xs font-medium bg-card border border-border shadow-sm"
                                     >
                                         {link.label}
                                     </TooltipContent>
@@ -138,45 +129,33 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                    <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-card/95 text-xs text-muted-foreground font-mono gap-1.5 shadow-sm">
+                    <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-muted text-xs text-muted-foreground font-mono gap-1.5">
                         <Clock />
                     </div>
 
                     {companyProfile?.supabase_url && (
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span>
-                                        <Button
-                                            aria-label={isSyncing ? 'Synchronisation en cours' : 'Synchroniser'}
-                                            variant="ghost"
-                                            size="icon"
-                                            className={cn(
-                                                'h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
-                                                isSyncing
-                                                    ? 'border-primary/25 bg-primary/10 text-primary'
-                                                    : 'hover:bg-primary/8 hover:border-primary/15 text-muted-foreground hover:text-foreground',
-                                            )}
-                                            onClick={() => performBackgroundSync()}
-                                            disabled={isSyncing}
-                                        >
-                                            <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
-                                        </Button>
-                                    </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="text-xs">
-                                    {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                'h-8 w-8 rounded-lg border border-transparent transition-all',
+                                isSyncing
+                                    ? 'border-primary/25 bg-primary/10 text-primary'
+                                    : 'hover:bg-muted text-muted-foreground',
+                            )}
+                            onClick={() => performBackgroundSync()}
+                            disabled={isSyncing}
+                        >
+                            <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
+                        </Button>
                     )}
 
                     <ThemeToggle />
 
                     {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 max-w-[1400px] shadow-sm">
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 shadow-sm">
                             <Building className="h-3 w-3 text-primary shrink-0" />
-                            <span className="text-[10px] font-black uppercase text-primary truncate">
+                            <span className="text-[10px] font-black uppercase text-primary truncate max-w-[150px]">
                                 {companyProfile.companyName}
                             </span>
                         </div>

@@ -89,27 +89,22 @@
 }
 
 @layer utilities {
+    /* Solid Design - No Transparency */
     .solid-card {
         background: hsl(var(--card));
         border: 1px solid hsl(var(--border));
         border-radius: var(--radius-2xl);
-        transition: all 0.3s;
+        transition: all 0.2s;
     }
 
     .solid-card:hover {
         border-color: hsl(var(--primary));
-        transform: translateY(-2px);
+        transform: translateY(-1px);
     }
 
     .gradient-text {
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-        background-image: linear-gradient(to bottom right, hsl(var(--foreground)), hsl(var(--foreground)));
+        color: hsl(var(--foreground));
     }
-
-    .anim-delay-200 { animation-delay: 200ms; }
-    .anim-delay-400 { animation-delay: 400ms; }
 }
 
 .animate-page-enter { animation: var(--animate-page-enter); }
