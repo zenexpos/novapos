@@ -25,6 +25,12 @@
     --color-card:            0   0% 100%;
 }
 
+@keyframes ambient-orb {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(2%, -3%) scale(1.05); }
+    66% { transform: translate(-1%, 2%) scale(0.95); }
+}
+
 @layer base {
     :root {
         --background:           35  25% 94%;
@@ -67,10 +73,14 @@
     }
 }
 
+@layer utilities {
+    .anim-delay-200 { animation-delay: 200ms; }
+    .anim-delay-400 { animation-delay: 400ms; }
+    .will-change-gpu { will-change: transform, opacity; }
+}
+
 /* Optimization for rendering speed */
 .animate-page-enter { animation: var(--animate-page-enter); }
-.will-change-transform { will-change: transform; }
-.will-change-opacity { will-change: opacity; }
 
 /* Content visibility for large lists */
 .scroll-smooth {

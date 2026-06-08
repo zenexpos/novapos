@@ -10,6 +10,7 @@ import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
+import { AmbientBackground } from '@/components/layout/AmbientBackground';
 
 const APP_NAME = "iPOS Zen";
 const APP_DEFAULT_TITLE = "iPOS Zen - Système de Vente Elite";
@@ -65,22 +66,20 @@ export default function RootLayout({
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>
               <AppSyncManager>
-                  <div className="flex h-screen flex-col bg-background overflow-hidden">
-                      <AppHeaderWrapper />
-                      <SaleInfoBarWrapper />
-                      <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth relative">
-                          {/* Ambient Background - Static on Server, Fluid on Client */}
-                          <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-50">
-                              <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-[100px]" />
-                              <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/10 blur-[100px]" />
-                          </div>
-                          
-                          <div className="relative z-10">
-                            {children}
-                          </div>
-                      </main>
-                      <BottomNavBarWrapper />
-                      <KeyboardShortcutsHelp />
+                  <div className="flex h-screen flex-col bg-background overflow-hidden relative">
+                      <AmbientBackground />
+                      
+                      <div className="relative z-10 flex flex-col h-full overflow-hidden">
+                        <AppHeaderWrapper />
+                        <SaleInfoBarWrapper />
+                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth">
+                            <div className="relative z-10">
+                              {children}
+                            </div>
+                        </main>
+                        <BottomNavBarWrapper />
+                        <KeyboardShortcutsHelp />
+                      </div>
                   </div>
               </AppSyncManager>
             </KeyboardShortcutsProvider>

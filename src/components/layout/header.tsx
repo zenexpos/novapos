@@ -104,7 +104,7 @@ export function AppHeader() {
                                                 className={cn(
                                                     'relative flex items-center justify-center rounded-xl shrink-0 group transition-all duration-500',
                                                     isActive
-                                                        ? 'h-9 px-4 bg-primary/10 border border-primary/25 text-primary shadow-sm w-auto animate-scale-in'
+                                                        ? 'h-9 px-4 bg-primary/10 border border-primary/25 text-primary shadow-sm w-auto'
                                                         : 'w-9 h-9 text-muted-foreground border border-transparent hover:bg-primary/5 hover:text-foreground'
                                                 )}
                                             >
@@ -120,7 +120,7 @@ export function AppHeader() {
                                                 )}
 
                                                 {isActive && (
-                                                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)] animate-scale-in" />
+                                                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)]" />
                                                 )}
                                             </Link>
                                         </span>
