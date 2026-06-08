@@ -47,22 +47,13 @@ export function AppHeader() {
     if (!mounted) return null;
 
     return (
-        <header className="print-hide sticky top-0 z-40 w-full">
-            <div className="
-                relative flex h-14 items-center gap-2 px-4
-                border-b border-border
-                bg-card
-                shadow-sm
-            ">
+        <header className="print-hide sticky top-0 z-40 w-full nav-solid">
+            <div className="flex h-14 items-center gap-2 px-4 shadow-sm">
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
-                    <div className={cn(
-                        "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300",
-                        "bg-secondary",
-                        "group-hover:scale-105 group-hover:rotate-2",
-                    )}>
+                    <div className="relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 bg-white shadow-lg group-hover:scale-105 group-hover:rotate-2">
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
@@ -72,16 +63,16 @@ export function AppHeader() {
                         />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1">
-                        <span className="font-black text-sm tracking-tight text-foreground uppercase" style={{ fontFamily: 'Syne, sans-serif' }}>
+                        <span className="font-black text-sm tracking-tight text-white uppercase">
                             iPOS <span className="text-primary">Zen</span>
                         </span>
-                        <span className="text-[8px] text-muted-foreground font-black tracking-[0.2em] uppercase">
+                        <span className="text-[8px] text-primary/70 font-black tracking-[0.2em] uppercase">
                             Elite Ledger
                         </span>
                     </div>
                 </Link>
 
-                <div className="h-6 w-px bg-border mx-2 shrink-0" />
+                <div className="h-6 w-px bg-white/10 mx-2 shrink-0" />
 
                 <TooltipProvider delayDuration={0}>
                     <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
@@ -96,8 +87,8 @@ export function AppHeader() {
                                             className={cn(
                                                 'relative flex items-center justify-center rounded-xl shrink-0 transition-all duration-200',
                                                 isActive
-                                                    ? 'h-10 px-4 bg-primary text-primary-foreground shadow-sm'
-                                                    : 'w-10 h-10 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                                    ? 'h-10 px-4 bg-primary text-primary-foreground shadow-md'
+                                                    : 'w-10 h-10 text-white/60 hover:bg-white/10 hover:text-white'
                                             )}
                                         >
                                             <Icon className={cn(
@@ -111,7 +102,7 @@ export function AppHeader() {
                                             )}
                                         </Link>
                                     </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="bg-secondary text-secondary-foreground border-none font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg shadow-xl">
+                                    <TooltipContent side="bottom" className="bg-secondary text-white border-none font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg shadow-xl">
                                         {link.label}
                                     </TooltipContent>
                                 </Tooltip>
@@ -121,7 +112,7 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <div className="hidden md:block">
+                    <div className="hidden md:block text-white/80">
                         <Clock />
                     </div>
 
@@ -130,10 +121,8 @@ export function AppHeader() {
                             variant="ghost"
                             size="icon"
                             className={cn(
-                                'h-9 w-9 rounded-xl transition-all',
-                                isSyncing
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-muted-foreground hover:bg-muted',
+                                'h-9 w-9 rounded-xl transition-all text-white/60 hover:text-white hover:bg-white/10',
+                                isSyncing && 'text-primary'
                             )}
                             onClick={() => performBackgroundSync()}
                             disabled={isSyncing}
@@ -145,7 +134,7 @@ export function AppHeader() {
                     <ThemeToggle />
 
                     {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground font-black text-[10px] uppercase tracking-wider shadow-sm border border-white/5">
+                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 text-white font-black text-[10px] uppercase tracking-wider border border-white/10">
                             <Building className="h-3.5 w-3.5 text-primary" />
                             <span className="truncate max-w-[120px]">
                                 {companyProfile.companyName}

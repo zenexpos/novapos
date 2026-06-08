@@ -49,12 +49,12 @@ export function SaleInfoBar() {
 
     return (
         <>
-            <div className="print-hide border-b-2 border-secondary bg-card text-sm z-30">
+            <div className="print-hide info-bar-solid text-sm z-30">
                 <div className="mx-auto grid w-full gap-3 px-4 py-3 sm:px-4 sm:py-4 md:grid-cols-[auto_1fr_auto] md:items-center">
                     {/* Session badge */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                        <div className="flex items-center gap-1.5 rounded-xl border-2 border-secondary bg-muted px-3 py-2 text-secondary">
-                            <Receipt className="h-4 w-4" />
+                        <div className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-2 text-foreground">
+                            <Receipt className="h-4 w-4 text-primary" />
                             <div className="min-w-0">
                                 <p className="text-xs font-black uppercase tracking-tight truncate">{cart.name}</p>
                                 {hasItems && (
@@ -67,7 +67,7 @@ export function SaleInfoBar() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-2 md:justify-center">
-                        <div className="rounded-xl border-2 border-secondary bg-muted px-4 py-3 flex flex-col gap-1">
+                        <div className="rounded-xl border border-border bg-muted px-4 py-3 flex flex-col gap-1">
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground">TOTAL NET</p>
                             <div className="flex items-center justify-between">
                                 <p className="text-2xl font-black text-primary tabular-nums tracking-tighter">
@@ -81,16 +81,16 @@ export function SaleInfoBar() {
                             </div>
                         </div>
 
-                        <div className="rounded-xl border-2 border-secondary bg-muted px-4 py-3 flex items-center justify-between">
+                        <div className="rounded-xl border border-border bg-muted px-4 py-3 flex items-center justify-between">
                             {customer ? (
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className="p-2 rounded-lg bg-primary/20 text-primary border border-primary">
+                                    <div className="p-2 rounded-lg bg-primary text-primary-foreground shadow-sm">
                                         <User className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
                                         <Link
                                             href={`/customers/detail?uuid=${customer.uuid}`}
-                                            className="block truncate text-sm font-black uppercase text-secondary hover:text-primary transition-colors"
+                                            className="block truncate text-sm font-black uppercase text-foreground hover:text-primary transition-colors"
                                         >
                                             {customer.firstName} {customer.lastName}
                                         </Link>
@@ -109,7 +109,7 @@ export function SaleInfoBar() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-9 px-4 text-[10px] font-black uppercase tracking-widest bg-card hover:bg-secondary hover:text-white border-2 border-secondary"
+                                    className="h-9 px-4 text-[10px] font-black uppercase tracking-widest bg-white border-2 border-primary/20 hover:border-primary transition-all"
                                     onClick={() => setIsPaymentDialogOpen(true)}
                                 >
                                     <HandCoins className="h-4 w-4 mr-2" />
@@ -124,7 +124,7 @@ export function SaleInfoBar() {
                             <Button
                                 variant="destructive"
                                 size="icon"
-                                className="h-12 w-12 rounded-xl border-2 border-secondary shadow-sm"
+                                className="h-12 w-12 rounded-xl border border-destructive/20 shadow-sm"
                                 onClick={() => clearCart()}
                                 title="Vider le panier"
                             >
