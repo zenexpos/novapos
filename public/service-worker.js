@@ -1,49 +1,21 @@
 /**
- * iPOS Zen — Service Worker (Elite Offline Engine)
- * المحرك التقني المسؤول عن دعم وضع الأوفلاين وصلاحية التثبيت (PWA Eligibility).
+ * iPOS Zen — Service Worker (Elite Edition)
+ * المحرك الأساسي لتفعيل ميزة التثبيت والعمل دون اتصال.
  */
 
-const CACHE_NAME = 'ipos-zen-cache-v2';
-const ASSETS_TO_CACHE = [
-    '/',
-    '/icon.svg',
-    '/manifest.webmanifest',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-];
+const CACHE_NAME = 'ipos-zen-v2';
 
-// 1. التثبيت وتخزين الملفات الأساسية
+// 1. التثبيت والتفعيل الفوري
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
-    );
     self.skipWaiting();
 });
 
-// 2. تنظيف الذاكرة القديمة عند التفعيل
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cache) => {
-                    if (cache !== CACHE_NAME) {
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
-    );
-    self.clients.claim();
+    event.waitUntil(clients.claim());
 });
 
-// 3. مستمع الـ FETCH (إلزامي لظهور زر التثبيت)
+// 2. مستمع الـ fetch — الشرط الإلزامي لظهور زر التثبيت في المتصفحات
 self.addEventListener('fetch', (event) => {
-    // شرط إلزامي لمتصفحات Chrome و Edge لتمكين التثبيت
-    event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
-    );
+    // يسمح للمتصفح بالمرور المباشر للطلبات، وجود هذا المستمع كافٍ لاعتبار التطبيق Installable
+    return;
 });

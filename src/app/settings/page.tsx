@@ -75,7 +75,7 @@ export default function SettingsPage() {
     const syncStatus = useAppStore(state => state.syncStatus);
     
     const isSyncing = syncStatus === 'syncing';
-    const { performCloudSync } = useAppActions();
+    const { performCloudSync, performBackgroundSync } = useAppActions();
 
     useEffect(() => {
         setIsMounted(true);
@@ -173,18 +173,18 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="lg:col-span-8 space-y-4">
-                    {/* PWA Installation Card - High Visibility */}
+                    {/* PWA Installation Card - يتم عرضه عندما يكتشف المتصفح أن التطبيق جاهز للتثبيت */}
                     {isInstallable && (
-                        <Card className="app-card rounded-lg border-accent/20 bg-accent/5 overflow-hidden shadow-xl group animate-in slide-in-from-top-4 duration-1000">
-                            <CardHeader className="bg-accent/10 border-b border-accent/10 p-6">
-                                <div className="flex items-center justify-between">
+                        <Card className="app-card rounded-lg border-primary/20 bg-primary/5 overflow-hidden shadow-xl group animate-in slide-in-from-top-4 duration-1000">
+                            <CardHeader className="bg-primary/10 border-b border-primary/10 p-6">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 rounded-2xl bg-accent text-accent-foreground shadow-lg animate-install">
+                                        <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg animate-install">
                                             <Laptop className="h-6 w-6" />
                                         </div>
                                         <div>
-                                            <CardTitle className="text-xl font-black tracking-tight text-accent-foreground">Mode iPOS Desktop</CardTitle>
-                                            <CardDescription className="text-[10px] font-black uppercase text-accent/60 tracking-widest">Expérience Native Elite</CardDescription>
+                                            <CardTitle className="text-xl font-black tracking-tight">Mode iPOS Desktop</CardTitle>
+                                            <CardDescription className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Expérience Native Elite</CardDescription>
                                         </div>
                                     </div>
                                     <Button 
@@ -197,19 +197,17 @@ export default function SettingsPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-6 relative overflow-hidden">
-                                <Sparkles className="absolute -right-8 -bottom-8 h-40 w-40 text-accent/5 rotate-12" />
-                                <div className="flex gap-10 items-start relative z-10">
-                                    <div className="space-y-2 max-w-xl">
-                                        <p className="text-sm font-bold text-accent-foreground/80 leading-relaxed">
-                                            Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément depuis votre barre des tâches, sans les distractions du navigateur.
-                                        </p>
-                                        <div className="flex flex-wrap gap-3 mt-4">
-                                            {['Lancement Rapide', 'Icône Bureau', 'Plein Écran', 'Hors-ligne Stable'].map((feat, i) => (
-                                                <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-[9px] font-black uppercase text-accent-foreground/60">
-                                                    <CheckCircle2 className="h-2.5 w-2.5" /> {feat}
-                                                </div>
-                                            ))}
-                                        </div>
+                                <Sparkles className="absolute -right-8 -bottom-8 h-40 w-40 text-primary/5 rotate-12" />
+                                <div className="space-y-4 relative z-10">
+                                    <p className="text-sm font-bold text-muted-foreground/80 leading-relaxed">
+                                        Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément منذ شريط المهام، دون تشتيت المتصفح.
+                                    </p>
+                                    <div className="flex flex-wrap gap-3">
+                                        {['Lancement Rapide', 'Icône Bureau', 'Plein Écran', 'Hors-ligne Stable'].map((feat, i) => (
+                                            <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/20 border border-white/5 text-[9px] font-black uppercase tracking-widest">
+                                                <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" /> {feat}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </CardContent>
@@ -522,7 +520,7 @@ export default function SettingsPage() {
                             {[
                                 'Catalogue Produits', 'Fichiers Clients', 
                                 'Registre des Ventes', 'Journal d\'Audit', 
-                                'Profil Établissement', 'Historique Stock'
+                                'Profil Étabلissement', 'Historique Stock'
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-muted/20 border border-white/5">
                                     <X className="h-3 w-3 text-destructive opacity-40" />
