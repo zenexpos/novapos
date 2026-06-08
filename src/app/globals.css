@@ -84,7 +84,7 @@
   }
 }
 
-/* SOLID UI — NO TRANSPARENCY FOR ELITE STABILITY */
+/* SOLID UI — إلغاء الشفافية لضمان استقرار وموثوقية النظام */
 .app-card, .glass, .glass-stat, .glass-elevated {
   background-color: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;

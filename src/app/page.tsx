@@ -4,15 +4,14 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
- * RootPage — Client-side redirect.
- * Fixed for 'output: export' compatibility in Next.js 15.
- * Prevents 404 errors on initial load in static environments.
+ * RootPage — توجيه سيادي فوري.
+ * يضمن تحويل المستخدم مباشرة إلى لوحة التحكم عند فتح التطبيق.
  */
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Immediate replacement to dashboard
+    // استخدام replace بدلاً من push لمنع العودة لصفحة التحميل
     router.replace('/dashboard/');
   }, [router]);
 
