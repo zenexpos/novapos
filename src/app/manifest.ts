@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
         name: 'iPOS Zen',
         short_name: 'iPOS',
         description: 'Point de Vente intelligent — Local-First',
-        start_url: '/sell',
+        start_url: '/sell/',
         display: 'standalone',
         background_color: '#0D0804',
         theme_color: '#c07814',
@@ -31,17 +31,17 @@ export default function manifest(): MetadataRoute.Manifest {
         shortcuts: [
             {
                 name: 'Vente',
-                url: '/sell',
+                url: '/sell/',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
             {
                 name: 'Dashboard',
-                url: '/dashboard',
+                url: '/dashboard/',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
             {
                 name: 'Produits',
-                url: '/products',
+                url: '/products/',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
         ],

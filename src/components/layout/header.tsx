@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Settings, Package, Users2, History, Undo2, Archive,
     Wallet, LayoutDashboard, Wheat, ShoppingCart, Building,
-    Coins, BellRing, RefreshCw, Zap, UserCog,
+    Coins, BellRing, RefreshCw, Crown, UserCog,
     Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,22 +65,22 @@ export function AppHeader() {
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
-                    {/* Logo icon glass pill */}
+                    {/* New Zen Elite Logo */}
                     <div className={cn(
-                        "relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-300",
-                        "bg-primary/90",
-                        "border border-primary/20",
-                        "shadow-sm",
-                        "group-hover:shadow-md group-hover:scale-105",
+                        "relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-500",
+                        "bg-gradient-to-br from-primary to-amber-700",
+                        "border border-white/10",
+                        "shadow-[0_0_15px_rgba(192,120,20,0.3)]",
+                        "group-hover:shadow-[0_0_20px_rgba(192,120,20,0.5)] group-hover:scale-110",
                     )}>
-                        <Zap className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
+                        <Crown className="h-4.5 w-4.5 text-white fill-white/20" />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none">
-                        <span className="font-black text-sm gradient-text" style={{ fontFamily: 'Syne, sans-serif' }}>
-                            iPOS
+                        <span className="font-black text-sm tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+                            iPOS <span className="text-primary">Zen</span>
                         </span>
-                        <span className="text-[9px] text-muted-foreground/70 font-medium tracking-widest uppercase">
-                            Zen
+                        <span className="text-[8px] text-muted-foreground/50 font-black tracking-[0.2em] uppercase">
+                            Elite System
                         </span>
                     </div>
                 </Link>
