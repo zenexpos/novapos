@@ -1,20 +1,18 @@
-/**
- * iPOS Zen — Elite Service Worker
- * تفعيل العمل في وضع الأوفلاين وضمان استيفاء شروط التثبيت (PWA)
- */
-
 const CACHE_NAME = 'ipos-zen-cache-v2';
-const ASSETS_TO_CACHE = [
+
+// الأصول الأساسية التي يتم تخزينها مؤقتاً للعمل بدون إنترنت
+const STATIC_ASSETS = [
   '/',
-  '/icon.svg',
   '/manifest.webmanifest',
-  '/offline.html'
+  '/icon.svg',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(STATIC_ASSETS);
     })
   );
   self.skipWaiting();
@@ -35,17 +33,8 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// مستمع الـ fetch ضروري جداً لظهور زر التثبيت في المتصفح
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
-    );
-    return;
-  }
-
+  // استراتيجية Cache First مع Fallback للشبكة
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
