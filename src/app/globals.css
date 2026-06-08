@@ -137,6 +137,9 @@
         color: hsl(var(--foreground));
         font-size: 13px;
         transition: background-color 0.3s ease, color 0.3s ease;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Syne', sans-serif;
@@ -190,4 +193,12 @@
 }
 ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
+}
+
+/* Optimization for performance */
+.will-change-transform {
+  will-change: transform;
+}
+.will-change-opacity {
+  will-change: opacity;
 }

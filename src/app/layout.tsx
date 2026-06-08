@@ -2,9 +2,9 @@ import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientProviders } from '@/components/layout/ClientProviders';
-import { AppHeader } from '@/components/layout/header';
-import { BottomNavBar } from '@/components/layout/bottom-navbar';
-import { SaleInfoBar } from '@/components/layout/SaleInfoBar';
+import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
+import { BottomNavBarWrapper } from '@/components/layout/BottomNavBarWrapper';
+import { SaleInfoBarWrapper } from '@/components/layout/SaleInfoBarWrapper';
 import { AppSyncManager } from '@/components/layout/AppSyncManager';
 import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
+      { url: '/icon.svg', type: 'image/svg+xml', sizes: 'any' }
     ],
     apple: '/icons/icon-192x192.png',
   },
@@ -57,29 +57,30 @@ export default function RootLayout({
     <html lang="fr-DZ" suppressHydrationWarning>
       <head>
          <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+         <link rel="shortcut icon" href="/icon.svg" type="image/svg+xml" />
          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
          <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="antialiased">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>
               <AppSyncManager>
-                  <div className="flex h-screen flex-col bg-background overflow-hidden">
-                      <AppHeader />
-                      <SaleInfoBar />
-                      <main className="flex-1 overflow-y-auto pb-14 md:pb-0">
+                  <div className="flex h-screen flex-col bg-background overflow-hidden selection:bg-primary/20">
+                      <AppHeaderWrapper />
+                      <SaleInfoBarWrapper />
+                      <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth">
                           <div className="relative z-10">
                             <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                                <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/8 blur-[80px] animate-ambient" />
-                                <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/6 blur-[60px] animate-ambient anim-delay-400" />
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/4 blur-[100px] animate-ambient anim-delay-200" />
+                                <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/8 blur-[80px] animate-ambient will-change-transform" />
+                                <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/6 blur-[60px] animate-ambient anim-delay-400 will-change-transform" />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/4 blur-[100px] animate-ambient anim-delay-200 will-change-transform" />
                             </div>
                             {children}
                           </div>
                       </main>
-                      <BottomNavBar />
+                      <BottomNavBarWrapper />
                       <KeyboardShortcutsHelp />
                   </div>
               </AppSyncManager>
