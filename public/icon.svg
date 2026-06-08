@@ -1,26 +1,15 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Solid Rounded Background -->
-  <rect width="512" height="512" rx="120" fill="#c07814"/>
-  
-  <!-- Monitor Frame -->
-  <path d="M100 140C100 128.954 108.954 120 120 120H392C403.046 120 412 128.954 412 140V320C412 331.046 403.046 340 392 340H120C108.954 340 100 331.046 100 320V140Z" fill="white"/>
-  
-  <!-- Monitor Stand -->
-  <path d="M216 340H296V380H216V340Z" fill="white"/>
-  <path d="M180 380H332V400H180V380Z" fill="white"/>
-  
-  <!-- Screen Content (Chart) -->
-  <rect x="140" y="240" width="40" height="60" rx="4" fill="#c07814"/>
-  <rect x="200" y="200" width="40" height="100" rx="4" fill="#c07814"/>
-  <rect x="260" y="260" width="40" height="40" rx="4" fill="#c07814"/>
-  <rect x="320" y="160" width="40" height="140" rx="4" fill="#c07814"/>
-
-  <!-- Ledger / Notebook Overlay -->
-  <path d="M300 240C300 228.954 308.954 220 320 220H420C431.046 220 440 228.954 440 240V420C440 431.046 431.046 440 420 440H320C308.954 440 300 431.046 300 420V240Z" fill="#241505" stroke="white" stroke-width="8"/>
-  
-  <!-- Ledger Lines -->
-  <path d="M330 270H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <path d="M330 310H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <path d="M330 350H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <path d="M330 390H380" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <!-- Professional Design: Laptop + Ledger merged symbol -->
+  <rect x="64" y="96" width="384" height="256" rx="24" fill="#328526" />
+  <rect x="88" y="120" width="336" height="208" rx="8" fill="#FFFFFF" fill-opacity="0.9" />
+  <!-- Screen lines representing a "Ledger" or "Digital Sheet" -->
+  <rect x="112" y="152" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
+  <rect x="112" y="184" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
+  <rect x="112" y="216" width="216" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
+  <rect x="112" y="248" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
+  <!-- Laptop base -->
+  <rect x="32" y="352" width="448" height="32" rx="16" fill="#1A1A1A" />
+  <rect x="208" y="352" width="96" height="8" rx="4" fill="#333333" />
+  <!-- Stylized Z for Zen -->
+  <path d="M224 160H288L224 256H288" stroke="#328526" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
