@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 /**
  * usePwaInstall — هوك نخبوي لالتقاط حدث التثبيت المباشر.
- * يضمن ظهور زر التثبيت الذهبي في شريط التنقل.
+ * تم تحسين المنطق لضمان عدم ضياع الحدث عند إعادة التحميل.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,23 +12,28 @@ export function usePwaInstall() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع النافذة التلقائية
+            // منع النافذة التلقائية الافتراضية
             e.preventDefault();
-            // حفظ الحدث لتشغيله عند الضغط على الزر الذهبي
+            // حفظ الحدث لتشغيله يدوياً عبر زر التثبيت
             setDeferredPrompt(e);
             setIsInstallable(true);
+            console.log('iPOS Zen is ready for direct installation.');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // إخفاء الزر إذا كان التطبيق مثبتاً بالفعل
-        const checkStandalone = () => {
-            if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        // إخفاء الزر إذا كان التطبيق مثبتاً بالفعل (Standalone Mode)
+        const checkStatus = () => {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                || (window.navigator as any).standalone 
+                || document.referrer.includes('android-app://');
+            
+            if (isStandalone) {
                 setIsInstallable(false);
             }
         };
 
-        checkStandalone();
+        checkStatus();
 
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
@@ -36,10 +41,11 @@ export function usePwaInstall() {
     const install = useCallback(async () => {
         if (!deferredPrompt) return;
 
-        // إظهار واجهة تثبيت النظام
+        // إظهار واجهة تثبيت النظام الأصلية
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install: ${outcome}`);
         
         if (outcome === 'accepted') {
             setIsInstallable(false);

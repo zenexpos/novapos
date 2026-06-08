@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
     Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building, Settings, Download
+    RefreshCw, Building, Settings, Download, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -21,7 +21,7 @@ import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 /**
  * AppHeader — شريط التنقل العلوي السيادي.
- * تم دمج ميزة التثبيت المباشر (Direct Install) الذهبية.
+ * يحتوي الآن على زر التثبيت الذهبي المباشر.
  */
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -54,18 +54,18 @@ export function AppHeader() {
     if (!mounted) return null;
 
     return (
-        <header className="print-hide sticky top-0 z-40 w-full nav-solid">
-            <div className="flex h-14 items-center gap-2 px-4 shadow-sm">
+        <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14">
+            <div className="flex h-full items-center gap-2 px-4 shadow-sm">
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
-                    <div className="relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 bg-white shadow-lg group-hover:scale-105 group-hover:rotate-2">
+                    <div className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 bg-white shadow-lg group-hover:scale-105 group-hover:rotate-2">
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
-                            width={32} 
-                            height={32} 
+                            width={28} 
+                            height={28} 
                             className="drop-shadow-sm"
                         />
                     </div>
@@ -94,12 +94,12 @@ export function AppHeader() {
                                             className={cn(
                                                 'relative flex items-center justify-center rounded-xl shrink-0 transition-all duration-200',
                                                 isActive
-                                                    ? 'h-10 px-4 bg-primary text-primary-foreground shadow-md'
-                                                    : 'w-10 h-10 text-white/60 hover:bg-white/10 hover:text-white'
+                                                    ? 'h-9 px-4 bg-primary text-primary-foreground shadow-md'
+                                                    : 'w-9 h-9 text-white/60 hover:bg-white/10 hover:text-white'
                                             )}
                                         >
                                             <Icon className={cn(
-                                                'h-4.5 w-4.5',
+                                                'h-4 w-4',
                                                 isActive ? 'scale-110' : ''
                                             )} />
                                             {isActive && (
@@ -119,23 +119,17 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* زر التثبيت المباشر الذهبي */}
+                    {/* زر التثبيت الذهبي - يظهر فقط عندما يكون التطبيق جاهزاً للتثبيت */}
                     {isInstallable && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={install}
-                                    className="h-9 w-9 rounded-xl bg-accent text-accent-foreground hover:scale-110 transition-all shadow-lg animate-install"
-                                >
-                                    <Download className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-accent text-accent-foreground font-black text-[10px] uppercase">
-                                Installer iPOS Zen
-                            </TooltipContent>
-                        </Tooltip>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={install}
+                            className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2"
+                        >
+                            <Download className="h-4 w-4" />
+                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer iPOS</span>
+                        </Button>
                     )}
 
                     <div className="hidden md:block text-white/80">
@@ -162,7 +156,7 @@ export function AppHeader() {
                     {companyProfile?.companyName && (
                         <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 text-white font-black text-[10px] uppercase tracking-wider border border-white/10">
                             <Building className="h-3.5 w-3.5 text-primary" />
-                            <span className="truncate max-w-[120px]">
+                            <span className="truncate max-w-[100px]">
                                 {companyProfile.companyName}
                             </span>
                         </div>

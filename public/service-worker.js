@@ -1,17 +1,18 @@
 /**
  * iPOS Zen — Service Worker (Elite Edition)
- * مُتطلب أساسي لظهور زر التثبيت والعمل في وضع الأوفلاين.
+ * مسؤول عن تمكين العمل في وضع الأوفلاين وتحقيق شروط التثبيت (PWA).
  */
 
-const CACHE_NAME = 'ipos-zen-v2';
+const CACHE_NAME = 'ipos-zen-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/manifest.webmanifest',
+  '/index.html',
   '/icon.svg',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];
 
+// تثبيت الـ Service Worker وتخزين الملفات الأساسية
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -21,22 +22,28 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// تفعيل وتطهير الكاش القديم
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
       );
     })
   );
   self.clients.claim();
 });
 
+// مستمع الـ Fetch — ضروري جداً لظهور زر التثبيت في المتصفحات
 self.addEventListener('fetch', (event) => {
-  // مُستمع الـ fetch ضروري جداً لظهور زر التثبيت في Chrome
+  // نستجيب من الكاش أولاً، ثم من الشبكة
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
