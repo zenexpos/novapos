@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Settings, Package, Users2, History, Undo2, Archive,
     Wallet, LayoutDashboard, Wheat, ShoppingCart, Building,
-    Coins, BellRing, RefreshCw, Crown, UserCog,
+    Coins, BellRing, RefreshCw, UserCog,
     Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,9 +44,7 @@ export function AppHeader() {
     
     const isSyncing = syncStatus === 'syncing';
 
-    const [mounted, setMounted]             = useState(false);
-    const navRef                            = useRef<HTMLDivElement>(null);
-
+    const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
 
     return (
@@ -64,7 +62,7 @@ export function AppHeader() {
                     className="flex items-center gap-2 shrink-0 group"
                 >
                     <div className={cn(
-                        "relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-500",
+                        "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-500",
                         "bg-gradient-to-br from-primary/20 to-primary/5",
                         "border border-primary/20",
                         "shadow-[0_0_15px_rgba(192,120,20,0.1)]",
@@ -73,12 +71,12 @@ export function AppHeader() {
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
-                            width={24} 
-                            height={24} 
-                            className="group-hover:rotate-12 transition-transform duration-500"
+                            width={28} 
+                            height={28} 
+                            className="group-hover:rotate-6 transition-transform duration-500 filter drop-shadow-sm"
                         />
                     </div>
-                    <div className="hidden lg:flex flex-col leading-none">
+                    <div className="hidden lg:flex flex-col leading-none ml-1">
                         <span className="font-black text-sm tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
                             iPOS <span className="text-primary">Zen</span>
                         </span>
@@ -91,7 +89,7 @@ export function AppHeader() {
                 <div className="h-5 w-px bg-gradient-to-b from-transparent via-border to-transparent mx-1 shrink-0" />
 
                 <TooltipProvider delayDuration={0}>
-                    <nav ref={navRef} className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
+                    <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
                         {navLinks.map((link, idx) => {
                             const isActive = pathname.startsWith(link.href);
                             const Icon = link.icon as React.ElementType;
@@ -152,7 +150,6 @@ export function AppHeader() {
                                 <span>
                                     <Button
                                         aria-label={isSyncing ? 'Synchronisation en cours' : 'Synchroniser'}
-                                        title={isSyncing ? 'Synchronisation en cours' : 'Synchroniser'}
                                         variant="ghost"
                                         size="icon"
                                         className={cn(

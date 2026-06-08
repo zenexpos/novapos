@@ -12,9 +12,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
 const APP_NAME = "iPOS Zen";
-const APP_DEFAULT_TITLE = "iPOS Zen - Point de Vente Premium";
+const APP_DEFAULT_TITLE = "iPOS Zen - Système de Vente Elite";
 const APP_TITLE_TEMPLATE = "%s - iPOS Zen";
-const APP_DESCRIPTION = "Application de point de vente intelligente et local-first";
+const APP_DESCRIPTION = "Application de point de vente souveraine, intelligente et local-first.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -33,7 +33,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' }
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
     ],
     apple: '/icons/icon-192x192.png',
   },

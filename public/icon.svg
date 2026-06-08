@@ -1,25 +1,38 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- تدرج لوني احترافي -->
   <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="logo_grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#b45309;stop-opacity:1" />
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="10" />
-      <feOffset dx="0" dy="5" result="offsetblur" />
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.3" />
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
-  <!-- Background Shape -->
-  <rect x="64" y="64" width="384" height="384" rx="100" fill="url(#grad1)" filter="url(#shadow)" />
-  <!-- Stylized Z / Zen Path -->
-  <path d="M160 160H352L160 352H352" stroke="white" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" />
-  <!-- Small Crown Detail -->
-  <path d="M256 120L275 145H237L256 120Z" fill="white" opacity="0.8" />
+
+  <!-- خلفية الشاشة (Monitor) -->
+  <path d="M2 6C2 4.89543 2.89543 4 4 4H28C29.1046 4 30 4.89543 30 6V20C30 21.1046 29.1046 22 28 22H4C2.89543 22 2 21.1046 2 20V6Z" fill="url(#logo_grad)" opacity="0.15"/>
+  <path d="M4 5H28C28.5523 5 29 5.44772 29 6V20C29 20.5523 28.5523 21 28 21H4C3.44772 21 3 20.5523 3 20V6C3 5.44772 3.44772 5 4 5Z" stroke="url(#logo_grad)" stroke-width="1.5" stroke-linejoin="round"/>
+  
+  <!-- قاعدة الشاشة -->
+  <path d="M12 21L11 27H21L20 21" stroke="url(#logo_grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9 27H23" stroke="url(#logo_grad)" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- الدفتر (Notebook/Ledger) متداخل مع الشاشة -->
+  <g filter="url(#glow)">
+    <rect x="16" y="8" width="10" height="13" rx="1.5" fill="white" stroke="url(#logo_grad)" stroke-width="1.2"/>
+    <!-- خطوط الدفتر -->
+    <path d="M18 11H24" stroke="url(#logo_grad)" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <path d="M18 14H24" stroke="url(#logo_grad)" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <path d="M18 17H22" stroke="url(#logo_grad)" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <!-- حلقات الدفتر -->
+    <path d="M16 10H14.5" stroke="url(#logo_grad)" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M16 13H14.5" stroke="url(#logo_grad)" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M16 16H14.5" stroke="url(#logo_grad)" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M16 19H14.5" stroke="url(#logo_grad)" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+
+  <!-- نقطة الطاقة/الحالة -->
+  <circle cx="6" cy="18" r="1" fill="#10b981" />
 </svg>
