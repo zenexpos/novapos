@@ -14,7 +14,7 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "نظام محاسبي سيادي صلب وفخم",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: '/icon.svg',
     apple: '/icons/icon-192x192.png',
@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr-DZ">
+    <html lang="fr-DZ" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground overflow-hidden">
         <ServiceWorkerRegister />
         <ClientProviders>
