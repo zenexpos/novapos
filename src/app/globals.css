@@ -1,147 +1,223 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* =========================================================
+THEME ELITE SOLID (NO TRANSPARENCY)
+========================================================= */
+
 @theme inline {
-    --font-display: 'Syne', sans-serif;
-    --font-body:    'DM Sans', sans-serif;
-    --font-mono:    'JetBrains Mono', monospace;
+  --font-display: "Syne", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-    --radius-xl:  calc(var(--radius) + 4px);
-    --radius-2xl: calc(var(--radius) + 8px);
-    --radius-3xl: calc(var(--radius) + 12px);
+  --radius: 0.75rem;
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
 
-    --animate-page-enter:    page-enter 0.2s ease-out both;
-    --animate-fade-in:       fade-in 0.15s ease both;
-
-    /* Elite Solid Palette - Zero Transparency */
-    --color-primary:         65  60% 44%; /* #AFB42B */
-    --color-secondary:       217 33% 17%; /* #1E293B */
-    --color-accent:          45  65% 52%; /* #D4AF37 */
-    --color-background:      210 40% 98%; /* #F8FAFC */
-    --color-card:            0   0% 100%; /* Pure White */
-    --color-popover:         0   0% 100%; /* Pure White */
+  --animate-page-enter: page-enter 0.25s ease-out both;
+  --animate-fade-in: fade-in 0.2s ease both;
 }
+
+/* =========================================================
+COLOR PALETTE - SOLID SYSTEM
+========================================================= */
 
 @layer base {
-    :root {
-        --primary:              65  60% 44%;
-        --primary-foreground:   0   0% 100%;
-        
-        --secondary:            217 33% 17%;
-        --secondary-foreground: 210 40% 98%;
-        
-        --accent:               45  65% 52%;
-        --accent-foreground:    222 47% 11%;
-        
-        --background:           210 40% 98%;
-        --foreground:           222 47% 11%;
-        
-        --card:                  0   0% 100%;
-        --card-foreground:      222 47% 11%;
+  :root {
+    /* Main Palette - Solid Values */
+    --primary: 62 59% 44%; /* #AFB42B */
+    --primary-foreground: 0 0% 100%;
 
-        --popover:               0   0% 100%;
-        --popover-foreground:    222 47% 11%;
-        
-        --muted:                210 40% 94%; /* Solid Grey */
-        --muted-foreground:     215 16% 47%;
-        
-        --border:               214 32% 91%;
-        --input:                214 32% 91%;
-        --ring:                 65  60% 44%;
-        --radius:               0.75rem;
-        
-        --destructive:          0   84% 60%;
-        --destructive-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%; /* #1E293B */
+    --secondary-foreground: 210 40% 98%;
 
-        /* Chart Colors */
-        --chart-primary:    65 60% 44%;
-        --chart-secondary:  217 33% 17%;
-        --chart-tertiary:   45 65% 52%;
-        --chart-quaternary: 215 16% 47%;
-        --chart-quinary:    222 47% 11%;
-    }
+    --accent: 46 65% 52%; /* #D4AF37 */
+    --accent-foreground: 222 47% 11%;
 
-    .dark {
-        --background:           222 47% 6%;
-        --foreground:           210 40% 98%;
-        --card:                 222 47% 4%;
-        --card-foreground:      210 40% 98%;
-        --popover:              222 47% 4%;
-        --popover-foreground:   210 40% 98%;
-        --primary:              65  60% 55%;
-        --primary-foreground:   222 47% 11%;
-        --secondary:            217 33% 25%;
-        --secondary-foreground: 210 40% 98%;
-        --muted:                222 47% 12%;
-        --muted-foreground:     215 20% 65%;
-        --accent:               45  80% 60%;
-        --accent-foreground:    222 47% 11%;
-        --border:               222 47% 15%;
-        --input:                222 47% 15%;
-    }
+    /* Backgrounds & Surfaces */
+    --background: 210 40% 98%; /* #F8FAFC */
+    --foreground: 222 47% 11%; /* #0F172A */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* UI Components */
+    --muted: 210 40% 95%; /* Light Gray-Blue */
+    --muted-foreground: 215 16% 47%; /* #64748B */
+
+    --border: 214 32% 90%;
+    --input: 214 32% 90%;
+    --ring: 62 59% 44%;
+
+    /* States */
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Charts */
+    --chart-primary: 62 59% 44%;
+    --chart-secondary: 217 33% 17%;
+    --chart-tertiary: 46 65% 52%;
+    --chart-quaternary: 142 71% 45%;
+    --chart-quinary: 215 16% 47%;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 62 59% 55%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 32% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 46 65% 60%;
+    --accent-foreground: 210 40% 98%;
+
+    --muted: 217 32% 15%;
+    --muted-foreground: 215 20% 70%;
+
+    --border: 217 32% 18%;
+    --input: 217 32% 18%;
+    --ring: 62 59% 55%;
+  }
 }
+
+/* =========================================================
+BASE STYLES
+========================================================= */
 
 @layer base {
-    * { border-color: hsl(var(--border)); }
-    body {
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-        font-family: var(--font-body);
-        font-size: 13px;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-        overscroll-behavior-y: none;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        font-family: var(--font-display);
-        letter-spacing: -0.02em;
-    }
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  ::selection {
+    background: hsl(var(--primary));
+    color: white;
+  }
 }
+
+/* =========================================================
+SOLID COMPONENT UTILITIES (NO GLASS)
+========================================================= */
 
 @layer utilities {
-    .app-card {
-        background-color: hsl(var(--card));
-        border: 1px solid hsl(var(--border));
-        border-radius: var(--radius-2xl);
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .solid-header {
-        background-color: hsl(var(--muted));
-        border-bottom: 1px solid hsl(var(--border));
-    }
+  .app-card {
+    background: hsl(var(--card));
+    border: 2px solid hsl(var(--border));
+    border-radius: var(--radius-2xl);
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-    .gradient-text {
-        background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+  .solid-header {
+    background: hsl(var(--muted));
+    border-bottom: 2px solid hsl(var(--border));
+  }
 
-    .elite-shadow {
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
-    }
+  .solid-border {
+    border: 2px solid hsl(var(--border));
+  }
 
-    .solid-border {
-        border: 2px solid hsl(var(--border));
-    }
+  .elite-shadow {
+    box-shadow: 8px 8px 0px hsl(var(--secondary));
+  }
+
+  .gradient-text {
+    color: hsl(var(--primary));
+    font-weight: 900;
+  }
+
+  /* Remove all blurs and transparency */
+  .glass, .glass-card, .glass-stat, .glass-elevated {
+    background: hsl(var(--card)) !important;
+    backdrop-filter: none !important;
+    border: 2px solid hsl(var(--border)) !important;
+  }
 }
 
-.animate-page-enter { animation: var(--animate-page-enter); }
+/* =========================================================
+ANIMATIONS
+========================================================= */
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: hsl(var(--background)); }
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-page-enter {
+  animation: var(--animate-page-enter);
+}
+
+.animate-fade-in {
+  animation: var(--animate-fade-in);
+}
+
+/* =========================================================
+SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
 ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 10px;
+  background: hsl(var(--secondary));
+  border: 2px solid hsl(var(--muted));
+  border-radius: 999px;
 }
-::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary));
-}
+
+/* =========================================================
+PRINT
+========================================================= */
 
 @media print {
-    .print-hide { display: none !important; }
-    body { background: white !important; color: black !important; }
+  .print-hide { display: none !important; }
+  body { background: white !important; color: black !important; }
 }
