@@ -50,11 +50,11 @@ export function SaleInfoBar() {
 
     return (
         <>
-            <div className="print-hide border-b border-border bg-muted/40 text-sm z-30">
+            <div className="print-hide border-b border-border bg-muted text-sm z-30">
                 <div className="mx-auto grid w-full gap-3 px-4 py-3 sm:px-4 sm:py-4 md:grid-cols-[auto_1fr_auto] md:items-center">
                     {/* Session badge */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                        <div className="flex items-center gap-1.5 rounded-2xl border border-border bg-background/80 px-3 py-2 text-muted-foreground">
+                        <div className="flex items-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-2 text-muted-foreground">
                             <Receipt className="h-3.5 w-3.5" />
                             <div className="min-w-0">
                                 <p className="text-sm font-medium truncate">{cart.name}</p>
@@ -68,7 +68,7 @@ export function SaleInfoBar() {
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-2 md:justify-center">
-                        <div className="rounded-2xl border border-border bg-background/80 px-3 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="rounded-2xl border border-border bg-background px-3 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
                                     Total
@@ -84,7 +84,7 @@ export function SaleInfoBar() {
                             )}
                         </div>
 
-                        <div className="rounded-2xl border border-border bg-background/80 px-3 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="rounded-2xl border border-border bg-background px-3 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             {customer ? (
                                 <div className="flex items-center gap-2 min-w-0">
                                     <User className="h-4 w-4 text-primary shrink-0" />

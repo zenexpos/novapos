@@ -18,11 +18,11 @@ export function BottomNavBar() {
     const pathname = usePathname();
     return (
         <div className="print-hide fixed bottom-0 left-0 z-30 w-full md:hidden">
-            {/* Glass panel */}
+            {/* Solid panel */}
             <div className="
                 relative h-20
                 border-t border-border
-                bg-card/95
+                bg-card
                 shadow-sm
             ">
                 {/* Top highlight */}

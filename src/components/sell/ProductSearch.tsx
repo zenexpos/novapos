@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
@@ -18,7 +17,7 @@ const SearchResultItem = React.memo(({ product, onSelect }: { product: Product, 
     return (
         <div
             onClick={() => onSelect(product)}
-            className="group relative flex flex-col justify-between p-5 cursor-pointer bg-card/40 backdrop-blur-md border border-white/5 rounded-2xl transition-all duration-500 hover:bg-primary/10 hover:border-primary/30 hover:shadow-xl active:scale-95 overflow-hidden"
+            className="group relative flex flex-col justify-between p-5 cursor-pointer bg-card border border-white/5 rounded-2xl transition-all duration-500 hover:bg-primary/10 hover:border-primary/30 hover:shadow-xl active:scale-95 overflow-hidden"
         >
             <div className="absolute -right-4 -top-4 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-700">
                 <ShoppingBag className="h-24 w-24 rotate-12" />
@@ -143,8 +142,8 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const isActiveSearch = searchQuery.trim().length > 0;
 
     return (
-        <div className="flex flex-col h-full bg-card/20 backdrop-blur-sm app-card rounded-lg overflow-hidden border-white/5 shadow-sm">
-            <div className="p-6 bg-muted/20 border-b border-white/5 flex gap-4 items-center">
+        <div className="flex flex-col h-full bg-muted app-card rounded-lg overflow-hidden border-white/5 shadow-sm">
+            <div className="p-6 bg-muted border-b border-white/5 flex gap-4 items-center">
                 <div className="relative flex-grow group">
                     <Search className={cn(
                         "absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-500",
@@ -153,7 +152,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     <Input
                         ref={inputRef}
                         placeholder="Scanner ou rechercher [F3]..."
-                        className="pl-14 text-lg h-9 rounded-3xl bg-background/50 border-none shadow-inner focus-visible:ring-primary/20 font-black tracking-tight"
+                        className="pl-14 text-lg h-9 rounded-3xl bg-background border-none shadow-inner focus-visible:ring-primary/20 font-black tracking-tight"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         autoComplete="off"
@@ -174,7 +173,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     <Button 
                         variant="outline" 
                         onClick={() => onCustomItemOpenChange(true)}
-                        className="h-9 w-auto px-6 flex-shrink-0 rounded-3xl border-none bg-primary/5 hover:bg-primary/20 hover:text-primary transition-all shadow-xl group gap-3" 
+                        className="h-9 w-auto px-6 flex-shrink-0 rounded-3xl border-none bg-primary/10 hover:bg-primary/20 hover:text-primary transition-all shadow-xl group gap-3" 
                     >
                         <ShoppingBag className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:-rotate-12"/>
                         <span className="text-[10px] font-black uppercase tracking-widest">Manuel [F4]</span>
@@ -190,7 +189,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     </div>
                 ) : !isActiveSearch ? (
                     <div className="h-full flex flex-col items-center justify-center py-24 text-center space-y-8">
-                        <div className="relative p-6 rounded-3xl bg-card/40 border border-white/5 shadow-inner">
+                        <div className="relative p-6 rounded-3xl bg-card border border-white/5 shadow-inner">
                             <Search className="h-16 w-16 text-primary/10" />
                             <div className="absolute -inset-2 bg-primary/5 blur-3xl rounded-full animate-pulse"></div>
                         </div>
