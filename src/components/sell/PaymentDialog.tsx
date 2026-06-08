@@ -164,7 +164,7 @@ function PaymentDialogContent({
             <Dialog open={isOpen} onOpenChange={(open) => { if (isLoading) return; onOpenChange(open); }}>
                 <DialogContent
             onEscapeKeyDown={(e) => { if (isLoading) e.preventDefault(); }} className="sm:max-w-md p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
-                    <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
+                    <DialogHeader className="p-6 bg-muted border-b border-border">
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">
                                 <Wallet className="h-6 w-6" />
@@ -177,7 +177,7 @@ function PaymentDialogContent({
                     </DialogHeader>
 
                     <div className="p-6 space-y-6">
-                        <div className="p-6 bg-black/20 rounded-2xl border border-white/5 text-center space-y-1 shadow-inner">
+                        <div className="p-6 bg-muted rounded-2xl border border-border text-center space-y-1 shadow-inner">
                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">Total Net à Payer</p>
                             <p className="text-4xl font-black text-primary tabular-nums tracking-tighter">
                                 {formatCurrency(total)}
@@ -191,7 +191,7 @@ function PaymentDialogContent({
                                     id="amount-paid"
                                     type="text"
                                     inputMode="decimal"
-                                    className="h-14 rounded-2xl bg-muted/20 border-none shadow-inner text-2xl font-black text-center focus-visible:ring-primary/20"
+                                    className="h-14 rounded-2xl bg-muted border-none shadow-inner text-2xl font-black text-center focus-visible:ring-primary/20"
                                     value={amountPaidStr}
                                     onChange={handleAmountChange}
                                     autoFocus
@@ -203,8 +203,8 @@ function PaymentDialogContent({
                                 <div className={cn(
                                     'h-14 flex items-center justify-center rounded-2xl border-2 border-dashed text-2xl font-black tabular-nums transition-all duration-500',
                                     change >= 0.01
-                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                                        : 'bg-muted/10 border-white/5 text-muted-foreground/20',
+                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-sm'
+                                        : 'bg-muted border-border text-muted-foreground/20',
                                 )}>
                                     {change >= 0.01 ? formatCurrency(change) : '0.00'}
                                 </div>
@@ -228,7 +228,7 @@ function PaymentDialogContent({
                                 </p>
                             </div>
                             {!customer && !isFullPay && (
-                                <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px]">Paiement requis</Badge>
+                                <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px]">Pايement requis</Badge>
                             )}
                         </div>
 
@@ -268,10 +268,10 @@ function PaymentDialogContent({
                         )}
                     </div>
 
-                    <div className="p-4 bg-muted/10 border-t border-white/5 flex gap-3">
+                    <div className="p-4 bg-muted border-t border-border flex gap-3">
                         <Button
                             variant="ghost"
-                            className="flex-1 h-12 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/5"
+                            className="flex-1 h-12 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-background"
                             onClick={() => onOpenChange(false)}
                             disabled={isLoading}
                         >

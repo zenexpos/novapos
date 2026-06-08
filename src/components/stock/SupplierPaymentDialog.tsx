@@ -114,8 +114,8 @@ export function SupplierPaymentDialog({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-                <div className="bg-primary/5 p-4 border-b border-border">
-                    <DialogHeader>
+                <div className="bg-muted p-4 border-b border-border">
+                    <DialogHeader className="bg-transparent border-none p-0">
                         <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-primary text-primary-foreground">
                                 <HandCoins className="h-5 w-5" />
@@ -134,7 +134,7 @@ export function SupplierPaymentDialog({
 
                 <div className="p-4 space-y-4">
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg border bg-destructive/5">
+                        <div className="p-3 rounded-lg border bg-muted shadow-inner">
                             <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
                                 Dette actuelle
                             </p>
@@ -143,12 +143,12 @@ export function SupplierPaymentDialog({
                             </p>
                         </div>
                         <div className={cn(
-                            'p-3 rounded-lg border transition-colors',
+                            'p-3 rounded-lg border transition-colors shadow-inner',
                             isOverpaying
                                 ? 'bg-destructive/10 border-destructive/30'
                                 : isFullySettled
-                                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30'
-                                : 'bg-muted/50',
+                                ? 'bg-emerald-100 border-emerald-300'
+                                : 'bg-muted',
                         )}>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">
                                 Solde après
@@ -238,7 +238,7 @@ export function SupplierPaymentDialog({
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-border flex gap-2">
+                <div className="p-4 border-t border-border bg-muted flex gap-2">
                     <Button
                         variant="outline"
                         className="flex-1"

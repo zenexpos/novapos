@@ -15,34 +15,38 @@
     --animate-page-enter:    page-enter 0.2s ease-out both;
     --animate-fade-in:       fade-in 0.15s ease both;
 
-    /* Semantic Color Mapping - Elite Palette */
+    /* Semantic Color Mapping - Elite Solid Palette */
     --color-primary:         65  60% 44%;
     --color-secondary:       217 33% 17%;
     --color-accent:          45  65% 52%;
     --color-background:      210 40% 98%;
     --color-card:            0   0% 100%;
+    --color-popover:         0   0% 100%;
 }
 
 @layer base {
     :root {
         /* Core Palette (Solid) */
-        --primary:              65  60% 44%; /* #AFB42B - Olive Green */
+        --primary:              65  60% 44%; /* #AFB42B */
         --primary-foreground:   0   0% 100%;
         
-        --secondary:            217 33% 17%; /* #1E293B - Dark Navy */
+        --secondary:            217 33% 17%; /* #1E293B */
         --secondary-foreground: 210 40% 98%;
         
-        --accent:               45  65% 52%; /* #D4AF37 - Gold */
+        --accent:               45  65% 52%; /* #D4AF37 */
         --accent-foreground:    222 47% 11%;
         
-        --background:           210 40% 98%; /* #F8FAFC - Light Slate */
-        --foreground:           222 47% 11%; /* #0F172A - Deep Text */
+        --background:           210 40% 98%; /* #F8FAFC */
+        --foreground:           222 47% 11%; /* #0F172A */
         
-        --card:                  0   0% 100%; /* Pure White */
+        --card:                  0   0% 100%; /* Pure White - Solid */
         --card-foreground:      222 47% 11%;
+
+        --popover:               0   0% 100%; /* Pure White - Solid */
+        --popover-foreground:    222 47% 11%;
         
-        --muted:                210 40% 94%;
-        --muted-foreground:     215 16% 47%; /* #64748B - Muted Text */
+        --muted:                210 40% 94%; /* Light Grey - Solid */
+        --muted-foreground:     215 16% 47%;
         
         --border:               214 32% 91%;
         --input:                214 32% 91%;
@@ -65,6 +69,8 @@
         --foreground:           210 40% 98%;
         --card:                 222 47% 4%;
         --card-foreground:      210 40% 98%;
+        --popover:              222 47% 4%;
+        --popover-foreground:   210 40% 98%;
         --primary:              65  60% 55%;
         --primary-foreground:   222 47% 11%;
         --secondary:            217 33% 25%;
@@ -108,9 +114,9 @@
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     }
     
-    .themed-header {
-        background-color: hsl(var(--secondary));
-        color: hsl(var(--secondary-foreground));
+    .solid-header {
+        background-color: hsl(var(--muted));
+        border-bottom: 1px solid hsl(var(--border));
     }
 
     .gradient-text {
@@ -119,7 +125,6 @@
         -webkit-text-fill-color: transparent;
     }
 
-    /* Professional Glass-Free effects */
     .elite-shadow {
         box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
     }
@@ -141,7 +146,6 @@
     background: hsl(var(--primary));
 }
 
-/* Print Overrides */
 @media print {
     .print-hide { display: none !important; }
     body { background: white !important; color: black !important; }
