@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export const dynamic = 'force-static';
 
+/**
+ * iPOS Zen — Web Manifest Configuration
+ * تم ضبطه ليكون استاتيكياً بالكامل لنجاح عملية البناء (Build)
+ */
 export default function manifest(): MetadataRoute.Manifest {
     return {
         name: 'iPOS Zen Elite Ledger',
@@ -11,6 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
         display: 'standalone',
         background_color: '#F8FAFC',
         theme_color: '#AFB42B',
+        orientation: 'any',
+        scope: '/',
         icons: [
             {
                 src: '/icons/icon-192x192.png',
@@ -25,5 +31,17 @@ export default function manifest(): MetadataRoute.Manifest {
                 purpose: 'any',
             },
         ],
+        shortcuts: [
+            {
+                name: 'Vendre',
+                url: '/sell',
+                description: 'Accès rapide au point de vente'
+            },
+            {
+                name: 'Stock',
+                url: '/stock',
+                description: 'Gestion du magasin'
+            }
+        ]
     };
 }

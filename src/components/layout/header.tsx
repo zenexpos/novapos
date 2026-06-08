@@ -19,6 +19,10 @@ import { useAppStore, useAppActions } from '@/stores/appStore';
 import Image from 'next/image';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 
+/**
+ * AppHeader — شريط التنقل العلوي السيادي.
+ * تم دمج ميزة التثبيت المباشر (Direct Install) وإصلاح الـ Hydration.
+ */
 export function AppHeader() {
     const navLinks = useMemo(() => [
         { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
@@ -65,11 +69,11 @@ export function AppHeader() {
                             className="drop-shadow-sm"
                         />
                     </div>
-                    <div className="hidden lg:flex flex-col leading-none ml-1">
-                        <span className="font-black text-sm tracking-tight text-white uppercase">
+                    <div className="hidden lg:flex flex-col leading-none ml-1 text-white">
+                        <span className="font-black text-sm tracking-tight uppercase">
                             iPOS <span className="text-primary">Zen</span>
                         </span>
-                        <span className="text-[8px] text-primary/70 font-black tracking-[0.2em] uppercase">
+                        <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">
                             Elite Ledger
                         </span>
                     </div>
@@ -115,6 +119,7 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {/* زر التثبيت الذهبي - يظهر فقط عند جاهزية المتصفح */}
                     {isInstallable && (
                         <Tooltip>
                             <TooltipTrigger asChild>

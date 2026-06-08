@@ -1,40 +1,51 @@
 /**
- * iPOS Zen — Service Worker (Elite v2.0)
- * التفعيل الإلزامي لميزة التثبيت والعمل في وضع الأوفلاين
+ * iPOS Zen — Elite Service Worker
+ * تفعيل العمل في وضع الأوفلاين وضمان استيفاء شروط التثبيت (PWA)
  */
 
 const CACHE_NAME = 'ipos-zen-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/manifest.webmanifest',
   '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/manifest.webmanifest',
+  '/offline.html'
 ];
 
-// تثبيت الـ Service Worker وحفظ الأصول الأساسية
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
-// تنظيف الكاش القديم عند تفعيل الإصدار الجديد
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
       );
     })
   );
+  self.clients.claim();
 });
 
-// الاستماع لطلبات الشبكة (شرط إلزامي لظهور زر التثبيت PWA)
+// مستمع الـ fetch ضروري جداً لظهور زر التثبيت في المتصفح
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/');
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
