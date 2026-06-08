@@ -33,14 +33,14 @@ export default function manifest(): MetadataRoute.Manifest {
         ],
         shortcuts: [
             {
-                name: 'Vendre',
+                name: 'Vendre (Caisse)',
                 url: '/sell',
                 description: 'Accès rapide au point de vente'
             },
             {
-                name: 'Stock',
+                name: 'Stock & Magasin',
                 url: '/stock',
-                description: 'Gestion du magasin'
+                description: 'Gestion logistique'
             }
         ]
     };
