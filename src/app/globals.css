@@ -1,7 +1,3 @@
-/* ════════════════════════════════════════════════════════════════════════════
-   iPOS Zen v2.0 — Tailwind CSS v4 + Performance Elite
-   ════════════════════════════════════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
 @import "tailwindcss";
@@ -19,6 +15,7 @@
     --animate-page-enter:    page-enter 0.3s cubic-bezier(0.22,1,0.36,1) both;
     --animate-ambient:       ambient-orb 15s ease-in-out infinite;
     --animate-fade-in:       fade-in 0.2s ease both;
+    --animate-flash:         flash-glow 0.8s ease-out;
 
     --color-primary:         32  85% 38%;
     --color-background:      35  25% 94%;
@@ -31,16 +28,41 @@
     66% { transform: translate(-1%, 2%) scale(0.95); }
 }
 
+@keyframes flash-glow {
+    0% { background-color: transparent; }
+    50% { background-color: hsla(32, 85%, 38%, 0.1); box-shadow: 0 0 20px hsla(32, 85%, 38%, 0.2); }
+    100% { background-color: transparent; }
+}
+
 @layer base {
     :root {
         --background:           35  25% 94%;
         --foreground:           20  45% 12%;
         --card:                  0   0% 100%;
         --primary:              32  85% 38%;
+        --primary-foreground:   35  25% 94%;
+        --secondary:            35  20% 90%;
+        --secondary-foreground: 20  45% 12%;
+        --muted:                35  15% 88%;
+        --muted-foreground:     20  20% 45%;
+        --accent:               32  95% 45%;
+        --accent-foreground:    35  25% 94%;
+        --destructive:          0   84% 60%;
+        --destructive-foreground: 0 0% 100%;
         --border:               35  25% 82%;
-        --radius:               0.75rem;
+        --input:                35  25% 82%;
+        --ring:                 32  85% 38%;
+        --radius:               0.85rem;
+        
         --glass-bg:      rgba(255,255,255,0.7);
         --glass-border:  rgba(192,120,20,0.12);
+        --glass-shadow:  0 8px 32px 0 rgba(192,120,20,0.05);
+        
+        --chart-primary:    32 85% 38%;
+        --chart-secondary:  142 65% 42%;
+        --chart-tertiary:   199 89% 48%;
+        --chart-quaternary: 271 81% 56%;
+        --chart-quinary:    32 95% 55%;
     }
 
     .dark {
@@ -48,47 +70,91 @@
         --foreground:           36  60% 92%;
         --card:                 24  35%  7%;
         --primary:              40  90% 55%;
+        --primary-foreground:   24  40%  4%;
+        --secondary:            24  30%  12%;
+        --secondary-foreground: 36  60% 92%;
+        --muted:                24  25%  15%;
+        --muted-foreground:     36  30%  65%;
+        --accent:               40  90% 55%;
+        --accent-foreground:    24  40%  4%;
+        --destructive:          0   84% 60%;
+        --destructive-foreground: 0 0% 100%;
         --border:               24  30% 18%;
+        --input:                24  30% 18%;
+        --ring:                 40  90% 55%;
+        
         --glass-bg:      rgba(15,12,10,0.85);
         --glass-border:  rgba(255,180,50,0.15);
+        --glass-shadow:  0 8px 32px 0 rgba(0,0,0,0.4);
+
+        --chart-primary:    40 90% 55%;
+        --chart-secondary:  142 70% 50%;
+        --chart-tertiary:   200 95% 60%;
+        --chart-quaternary: 272 85% 65%;
+        --chart-quinary:    40 95% 65%;
     }
 }
 
 @layer base {
+    * { border-color: hsl(var(--border)); }
     body {
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
+        font-family: var(--font-body);
         font-size: 13px;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
     }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-display);
+    }
 }
 
-@layer components {
+@layer utilities {
     .glass {
         background: var(--glass-bg);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
     }
-}
 
-@layer utilities {
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        border-radius: var(--radius-2xl);
+        transition: all 0.3s;
+    }
+
+    .glass-card:hover {
+        border-color: hsla(var(--primary) / 0.3);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .gradient-text {
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        background-image: linear-gradient(to bottom right, var(--color-foreground), rgba(var(--color-foreground), 0.6));
+    }
+
     .anim-delay-200 { animation-delay: 200ms; }
     .anim-delay-400 { animation-delay: 400ms; }
     .will-change-gpu { will-change: transform, opacity; }
 }
 
-/* Optimization for rendering speed */
 .animate-page-enter { animation: var(--animate-page-enter); }
-
-/* Content visibility for large lists */
-.scroll-smooth {
-  scroll-behavior: smooth;
-}
+.animate-flash { animation: var(--animate-flash); }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.3);
     border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
 }

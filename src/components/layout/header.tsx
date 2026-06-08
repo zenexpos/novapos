@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
-    Settings, Package, Users2, History, Undo2, Archive,
-    Wallet, LayoutDashboard, Wheat, ShoppingCart, Building,
-    Coins, BellRing, RefreshCw, UserCog,
-    Smartphone
+    LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
+    Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
+    RefreshCw, Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -21,19 +20,18 @@ import Image from 'next/image';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
-        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
-        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
-        { href: '/stock',         label: 'Stock',     icon: Archive },
-        { href: '/products',      label: 'Produits',  icon: Package },
-        { href: '/customers',     label: 'Clients',   icon: Users2 },
-        { href: '/sales-history', label: 'Ventes',    icon: History },
-        { href: '/returns',       label: 'Retours',   icon: Undo2 },
-        { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
-        { href: '/bread',         label: 'Pain',      icon: Wheat },
-        { href: '/zakat',         label: 'Zakat',     icon: Coins },
-        { href: '/profile',       label: 'Profil',    icon: UserCog },
-        { href: '/install',       label: 'Installer', icon: Smartphone },
+        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard, color: 'text-blue-500' },
+        { href: '/sell',          label: 'Vendre',    icon: ShoppingCart,    color: 'text-primary' },
+        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing,        color: 'text-red-500' },
+        { href: '/stock',         label: 'Stock',     icon: Archive,         color: 'text-amber-500' },
+        { href: '/products',      label: 'Produits',  icon: Package,         color: 'text-emerald-500' },
+        { href: '/customers',     label: 'Clients',   icon: Users2,          color: 'text-violet-500' },
+        { href: '/sales-history', label: 'Ventes',    icon: History,         color: 'text-slate-500' },
+        { href: '/returns',       label: 'Retours',   icon: Undo2,           color: 'text-rose-500' },
+        { href: '/expenses',      label: 'Dépenses',  icon: Wallet,          color: 'text-orange-500' },
+        { href: '/bread',         label: 'Pain',      icon: Wheat,           color: 'text-yellow-600' },
+        { href: '/zakat',         label: 'Zakat',     icon: Coins,           color: 'text-emerald-600' },
+        { href: '/profile',       label: 'Profil',    icon: UserCog,         color: 'text-primary' },
     ], []);
     
     const pathname = usePathname();
@@ -41,11 +39,12 @@ export function AppHeader() {
     
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
-    
     const isSyncing = syncStatus === 'syncing';
 
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
+
+    if (!mounted) return null;
 
     return (
         <header className="print-hide sticky top-0 z-40 w-full">
@@ -71,9 +70,9 @@ export function AppHeader() {
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
-                            width={28} 
-                            height={28} 
-                            className="group-hover:rotate-6 transition-transform duration-500 filter drop-shadow-sm"
+                            width={32} 
+                            height={32} 
+                            className="group-hover:rotate-6 transition-transform duration-500 filter drop-shadow-md"
                         />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1">
@@ -111,6 +110,7 @@ export function AppHeader() {
                                                 <Icon className={cn(
                                                     'h-4 w-4 transition-transform duration-300',
                                                     isActive ? 'scale-110' : 'group-hover:scale-110',
+                                                    !isActive && link.color
                                                 )} />
                                                 
                                                 {isActive && (
@@ -138,66 +138,45 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                    {mounted && (
-                        <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-card/95 text-xs text-muted-foreground font-mono gap-1.5 shadow-sm">
-                            <Clock />
-                        </div>
-                    )}
-
-                    {mounted && companyProfile?.supabase_url && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span>
-                                    <Button
-                                        aria-label={isSyncing ? 'Synchronisation en cours' : 'Synchroniser'}
-                                        variant="ghost"
-                                        size="icon"
-                                        className={cn(
-                                            'h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
-                                            isSyncing
-                                                ? 'border-primary/25 bg-primary/10 text-primary'
-                                                : 'hover:bg-primary/8 hover:border-primary/15 text-muted-foreground hover:text-foreground',
-                                        )}
-                                        onClick={() => performBackgroundSync()}
-                                        disabled={isSyncing}
-                                    >
-                                        <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
-                                    </Button>
-                                </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="text-xs">
-                                {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span>
-                                <Link
-                                    href="/settings"
-                                    className={cn(
-                                        'inline-flex items-center justify-center h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
-                                        pathname.startsWith('/settings')
-                                            ? 'border-primary/25 bg-primary/12 text-primary'
-                                            : 'hover:bg-primary/8 hover:border-primary/15 text-muted-foreground hover:text-foreground',
-                                    )}
-                                >
-                                    <Settings className="h-3.5 w-3.5" />
-                                </Link>
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">Paramètres</TooltipContent>
-                    </Tooltip>
-
-                    <div className="flex items-center">
-                        <ThemeToggle />
+                    <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-card/95 text-xs text-muted-foreground font-mono gap-1.5 shadow-sm">
+                        <Clock />
                     </div>
 
-                    {mounted && companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card/95 max-w-[140px] shadow-sm">
+                    {companyProfile?.supabase_url && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span>
+                                        <Button
+                                            aria-label={isSyncing ? 'Synchronisation en cours' : 'Synchroniser'}
+                                            variant="ghost"
+                                            size="icon"
+                                            className={cn(
+                                                'h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
+                                                isSyncing
+                                                    ? 'border-primary/25 bg-primary/10 text-primary'
+                                                    : 'hover:bg-primary/8 hover:border-primary/15 text-muted-foreground hover:text-foreground',
+                                            )}
+                                            onClick={() => performBackgroundSync()}
+                                            disabled={isSyncing}
+                                        >
+                                            <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="text-xs">
+                                    {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+
+                    <ThemeToggle />
+
+                    {companyProfile?.companyName && (
+                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 max-w-[140px] shadow-sm">
                             <Building className="h-3 w-3 text-primary shrink-0" />
-                            <span className="text-xs text-foreground/80 truncate font-medium">
+                            <span className="text-[10px] font-black uppercase text-primary truncate">
                                 {companyProfile.companyName}
                             </span>
                         </div>

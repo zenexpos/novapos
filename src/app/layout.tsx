@@ -13,7 +13,7 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import { AmbientBackground } from '@/components/layout/AmbientBackground';
 
 const APP_NAME = "iPOS Zen";
-const APP_DEFAULT_TITLE = "iPOS Zen - Système de Vente Elite";
+const APP_DEFAULT_TITLE = "iPOS Zen - Elite Ledger & System";
 const APP_TITLE_TEMPLATE = "%s - iPOS Zen";
 const APP_DESCRIPTION = "Application de point de vente souveraine, intelligente et local-first.";
 
@@ -41,7 +41,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [{ media: "(prefers-color-scheme: dark)", color: "#0D0804" }, { media: "(prefers-color-scheme: light)", color: "#c07814" }],
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0D0804" }, 
+    { media: "(prefers-color-scheme: light)", color: "#c07814" }
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 3,
