@@ -352,7 +352,7 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
+                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
                         <CardHeader className="bg-muted/20 border-b border-white/5 p-4">
                             <div className="flex items-center gap-4">
                                 <div className="p-3.5 rounded-2xl bg-primary text-primary-foreground shadow-sm">
@@ -517,7 +517,7 @@ export default function SettingsPage() {
                 title="Effacer l'intégralité du système ?"
                 description={
                     <div className="space-y-6">
-                        <p className="font-medium text-foreground">Cette action va purger définitivement votre base de données locale :</p>
+                        <p className="font-medium text-foreground">Cette action va purجر définitivement votre base de données locale :</p>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 'Catalogue Produits', 'Fichiers Clients', 

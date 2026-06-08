@@ -1,29 +1,35 @@
 /**
- * iPOS Zen — Service Worker Elite (v2.0)
- * المحرك التقني لتمكين العمل دون اتصال (Offline) وتثبيت التطبيق.
+ * iPOS Zen — Service Worker (Elite Offline Engine)
+ * المحرك التقني المسؤول عن دعم وضع الأوفلاين وصلاحية التثبيت (PWA Eligibility).
  */
 
-const CACHE_NAME = 'ipos-zen-v2';
-const OFFLINE_URL = '/';
+const CACHE_NAME = 'ipos-zen-cache-v2';
+const ASSETS_TO_CACHE = [
+    '/',
+    '/icon.svg',
+    '/manifest.webmanifest',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png',
+];
 
-// 1. التثبيت الأولي وتجهيز الذاكرة المؤقتة
+// 1. التثبيت وتخزين الملفات الأساسية
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([OFFLINE_URL]);
+            return cache.addAll(ASSETS_TO_CACHE);
         })
     );
+    self.skipWaiting();
 });
 
-// 2. تنظيف الذاكرة القديمة عند التنشيط
+// 2. تنظيف الذاكرة القديمة عند التفعيل
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
+                cacheNames.map((cache) => {
+                    if (cache !== CACHE_NAME) {
+                        return caches.delete(cache);
                     }
                 })
             );
@@ -32,17 +38,12 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// 3. المحرك الأساسي: معالجة الطلبات (Fetch)
-// هذا القسم ضروري جداً لظهور زر التثبيت في المتصفحات
+// 3. مستمع الـ FETCH (إلزامي لظهور زر التثبيت)
 self.addEventListener('fetch', (event) => {
-    // معالجة الطلبات فقط من نفس النطاق وبطريقة GET
-    if (event.request.method !== 'GET') return;
-
+    // شرط إلزامي لمتصفحات Chrome و Edge لتمكين التثبيت
     event.respondWith(
         fetch(event.request).catch(() => {
-            return caches.match(event.request).then((response) => {
-                return response || caches.match(OFFLINE_URL);
-            });
+            return caches.match(event.request);
         })
     );
 });

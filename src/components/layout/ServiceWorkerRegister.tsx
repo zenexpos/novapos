@@ -12,30 +12,30 @@ export function ServiceWorkerRegister() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerSW = async () => {
         try {
-          // Enregistrement depuis la racine du domaine (public/)
+          // تسجيل ملف الخدمة من المسار العام
           const registration = await navigator.serviceWorker.register('/service-worker.js', {
             scope: '/',
           });
           
-          console.log('PWA: Service Worker enregistré avec succès scope:', registration.scope);
+          console.log('PWA: Service Worker registered successfully scope:', registration.scope);
 
-          // Force la mise à jour si un nouveau SW est disponible
+          // التحقق من وجود تحديثات
           registration.onupdatefound = () => {
             const installingWorker = registration.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('PWA: Nouvelle version détectée, rechargement suggéré.');
+                  console.log('PWA: New version available, please refresh.');
                 }
               };
             }
           };
         } catch (err) {
-          console.error('PWA: Échec de l\'enregistrement du Service Worker:', err);
+          console.error('PWA: Service Worker registration failed:', err);
         }
       };
 
-      // Attendre que la page soit complètement chargée
+      // التسجيل عند جاهزية الصفحة
       if (document.readyState === 'complete') {
         registerSW();
       } else {
