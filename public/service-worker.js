@@ -1,53 +1,24 @@
 /**
  * iPOS Zen — Service Worker (Elite Edition)
- * المحرك التقني لتمكين التثبيت والعمل في وضع الأوفلاين.
+ * المحرك التقني المسؤول عن دعم وضع الأوفلاين وصلاحية التثبيت كـ PWA.
  */
 
-const CACHE_NAME = 'ipos-zen-cache-v1';
+const CACHE_NAME = 'ipos-zen-v1';
 
-// الملفات الأساسية المطلوب تخزينها للعمل أوفلاين
-const urlsToCache = [
-  '/',
-  '/icon.svg',
-  '/manifest.webmanifest'
-];
-
-// تثبيت ملف الخدمة
+// 1. التثبيت — تخطي الانتظار لتفعيل التحديثات فوراً
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
+    self.skipWaiting();
 });
 
-// تفعيل ملف الخدمة وتنظيف الكاش القديم
+// 2. التفعيل — السيطرة على كافة النوافذ المفتوحة
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  return self.clients.claim();
+    event.waitUntil(self.clients.claim());
 });
 
-/**
- * مستمع حدث الـ fetch:
- * هذا هو الجزء الأهم لظهور زر التثبيت في Chrome/Edge.
- * المتصفح يرفض التثبيت إذا لم يجد هذا المستمع.
- */
+// 3. مستمع الـ Fetch — الشرط الإلزامي لظهور زر التثبيت في Chrome/Edge
+// حتى لو كان فارغاً، يجب وجوده ليتم اعتبار التطبيق "قابلاً للتثبيت"
 self.addEventListener('fetch', (event) => {
-  // استراتيجية: البحث في الكاش أولاً، ثم الشبكة
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+    // نظام iPOS Zen يعتمد على IndexedDB للبيانات، لذا نترك المتصفح يتعامل مع الطلبات
+    // وجود هذا المستمع يخبر المتصفح أن التطبيق يمتلك قدرات العمل المحلي
+    return;
 });
