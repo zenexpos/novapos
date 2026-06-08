@@ -1,8 +1,4 @@
-/**
- * iPOS Zen — Service Worker Elite
- * مسؤول عن تفعيل ميزة التثبيت (PWA) والعمل في وضع الأوفلاين.
- */
-
+// iPOS Zen — Elite Service Worker v2.0
 const CACHE_NAME = 'ipos-zen-v2';
 const ASSETS_TO_CACHE = [
   '/',
@@ -12,22 +8,24 @@ const ASSETS_TO_CACHE = [
   '/icons/icon-512x512.png'
 ];
 
+// Install: Cache essential assets
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
+// Activate: Cleanup old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
           }
         })
       );
@@ -36,14 +34,14 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-/**
- * مستمع حدث fetch — إلزامي لظهور زر التثبيت في Chrome/Edge.
- */
+// Fetch: MANDATORY for PWA installation trigger
 self.addEventListener('fetch', (event) => {
-  // استراتيجية التخزين: البحث في الكاش أولاً ثم الشبكة
+  // Check for extension or non-http requests
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });

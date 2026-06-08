@@ -3,13 +3,14 @@ import type { MetadataRoute } from 'next';
 export const dynamic = 'force-static';
 
 /**
- * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر وتحويل الويب إلى تطبيق مكتب.
+ * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر.
+ * يجب أن تتوافق الأيقونات مع المسارات الفعلية لنجاح التثبيت.
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {
         name: 'iPOS Zen Elite Ledger',
         short_name: 'iPOS Zen',
-        description: 'نظام محاسبي سيادي متكامل — إصدار النخبة الصلب',
+        description: 'نظام محاسبي سيادي متكامل — نسخة النخبة الصلبة',
         start_url: '/',
         display: 'standalone',
         background_color: '#F8FAFC',
@@ -21,13 +22,13 @@ export default function manifest(): MetadataRoute.Manifest {
                 src: '/icons/icon-192x192.png',
                 sizes: '192x192',
                 type: 'image/png',
-                purpose: 'maskable',
+                purpose: 'any',
             },
             {
                 src: '/icons/icon-192x192.png',
                 sizes: '192x192',
                 type: 'image/png',
-                purpose: 'any',
+                purpose: 'maskable',
             },
             {
                 src: '/icons/icon-512x512.png',

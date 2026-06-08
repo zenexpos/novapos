@@ -3,38 +3,27 @@
 import { useEffect } from 'react';
 
 /**
- * مكون مسؤول عن تسجيل الـ Service Worker بشكل آمن وتفعيل ميزات الـ PWA.
- * يضمن التوافق مع معايير التثبيت المباشر.
+ * مكون مسؤول عن تسجيل الـ Service Worker بشكل آمن.
+ * التسجيل الصحيح هو مفتاح ظهور زر التثبيت.
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // ننتظر حتى اكتمال تحميل الصفحة لضمان تسجيل هادئ وغير معطل للأداء
-      const registerSW = () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then((registration) => {
-            console.log('PWA: iPOS Zen Service Worker registered:', registration.scope);
-            
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing;
-              if (installingWorker) {
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('PWA: New content available, please refresh.');
-                  }
-                };
-              }
-            };
-          })
-          .catch((err) => {
-            console.warn('PWA: Service Worker registration failed:', err);
-          });
+      const registerSW = async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('/service-worker.js');
+          console.log('PWA: iPOS Zen Service Worker registered successfully:', registration.scope);
+        } catch (err) {
+          console.warn('PWA: Service Worker registration failed:', err);
+        }
       };
 
+      // التسجيل عند اكتمال تحميل الصفحة لضمان أداء سلس
       if (document.readyState === 'complete') {
         registerSW();
       } else {
         window.addEventListener('load', registerSW);
+        return () => window.removeEventListener('load', registerSW);
       }
     }
   }, []);
