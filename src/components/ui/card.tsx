@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } Lancaster from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
@@ -49,7 +49,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs font-medium text-muted-foreground opacity-60 tracking-tight", className)}
+    className={cn("text-xs font-medium text-muted-foreground tracking-tight", className)}
     {...props}
   />
 ))

@@ -62,7 +62,7 @@ export default function RootLayout({
          <link rel="shortcut icon" href="/icon.svg" type="image/svg+xml" />
          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body suppressHydrationWarning className="antialiased selection:bg-primary/20">
+      <body suppressHydrationWarning className="antialiased selection:bg-primary/20 bg-background text-foreground">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
@@ -72,7 +72,7 @@ export default function RootLayout({
                       <div className="relative z-10 flex flex-col h-full overflow-hidden">
                         <AppHeaderWrapper />
                         <SaleInfoBarWrapper />
-                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth">
+                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth bg-background">
                             <div className="relative z-10">
                               {children}
                             </div>

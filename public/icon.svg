@@ -1,30 +1,18 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#C07814;stop-opacity:1" />
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="15" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solid Background Circle -->
+  <rect width="128" height="128" rx="32" fill="#c07814"/>
   
-  <!-- Outer Capsule -->
-  <rect x="40" y="40" width="432" height="432" rx="100" fill="url(#goldGradient)" fill-opacity="0.1" stroke="url(#goldGradient)" stroke-width="12" />
+  <!-- Monitor/Screen Base -->
+  <rect x="25" y="30" width="78" height="55" rx="8" fill="#0D0804"/>
+  <rect x="30" y="35" width="68" height="40" rx="4" fill="#1A1108"/>
   
-  <!-- Screen Base -->
-  <path d="M120 320 L392 320 L420 380 L92 380 Z" fill="url(#goldGradient)" filter="url(#glow)" />
+  <!-- Stand -->
+  <rect x="58" y="85" width="12" height="10" fill="#0D0804"/>
+  <rect x="45" y="95" width="38" height="4" rx="2" fill="#0D0804"/>
   
-  <!-- Monitor Frame -->
-  <rect x="140" y="120" width="232" height="180" rx="15" stroke="url(#goldGradient)" stroke-width="20" fill="transparent" />
-  
-  <!-- Ledger Details (Inside Screen) -->
-  <path d="M180 160 H332 M180 200 H332 M180 240 H280" stroke="url(#goldGradient)" stroke-width="12" stroke-linecap="round" />
-  
-  <!-- Spiral of Ledger (On the left side of screen) -->
-  <circle cx="150" cy="150" r="8" fill="url(#goldGradient)" />
-  <circle cx="150" cy="190" r="8" fill="url(#goldGradient)" />
-  <circle cx="150" cy="230" r="8" fill="url(#goldGradient)" />
-  <circle cx="150" cy="270" r="8" fill="url(#goldGradient)" />
+  <!-- Ledger Notebook Shape Overlay -->
+  <rect x="60" y="45" width="45" height="60" rx="4" fill="#f0a040" stroke="#0D0804" stroke-width="3"/>
+  <path d="M68 58H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
+  <path d="M68 70H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
+  <path d="M68 82H97" stroke="#0D0804" stroke-width="4" stroke-linecap="round"/>
 </svg>
