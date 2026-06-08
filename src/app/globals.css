@@ -29,9 +29,9 @@
   :root {
     --background: 210 40% 98%;      /* #F8FAFC */
     --foreground: 222 47% 11%;      /* #0F172A */
-    --card: 0 0% 100%;               /* #FFFFFF - Solid */
+    --card: 0 0% 100%;               /* Solid White */
     --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;            /* #FFFFFF - Solid */
+    --popover: 0 0% 100%;            /* Solid White */
     --popover-foreground: 222 47% 11%;
     --primary: 62 60% 44%;           /* #AFB42B - Elite Olive */
     --primary-foreground: 0 0% 100%;
@@ -118,13 +118,13 @@
   }
 }
 
-.a4-receipt {
-  background: white;
-  color: black;
-  width: 210mm;
-  min-height: 297mm;
-  padding: 15mm;
-  margin: 0 auto;
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-install {
+  animation: bounce-subtle 2s infinite ease-in-out;
 }
 
 @keyframes flash {

@@ -1,56 +1,44 @@
-/**
- * iPOS Zen — Service Worker (Elite Edition)
- * يضمن تشغيل التطبيق في وضع الأوفلاين واستيفاء شروط PWA للتثبيت المباشر.
- */
-
 const CACHE_NAME = 'ipos-zen-v2';
-const OFFLINE_URL = '/dashboard/';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/icon.svg',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/manifest.webmanifest'
+];
 
-// أحداث التثبيت - تجهيز الكاش الأساسي
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([
-                OFFLINE_URL,
-                '/icon.svg',
-                '/icons/icon-192x192.png',
-                '/icons/icon-512x512.png'
-            ]);
-        })
-    );
-    self.skipWaiting();
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
 });
 
-// أحداث التنشيط - تنظيف الكاش القديم
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-    self.clients.claim();
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// إدارة الطلبات - يدعم العمل بدون إنترنت
 self.addEventListener('fetch', (event) => {
-    if (event.request.mode === 'navigate') {
-        event.respondWith(
-            fetch(event.request).catch(() => {
-                return caches.match(OFFLINE_URL);
-            })
-        );
-        return;
-    }
+  if (event.request.method !== 'GET') return;
 
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        })
-    );
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(event.request).catch(() => {
+        // Fallback pour les pages en cas d'échec réseau
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      });
+    })
+  );
 });

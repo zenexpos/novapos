@@ -4,7 +4,7 @@ export const dynamic = 'force-static';
 
 /**
  * iPOS Zen — Web Manifest Configuration
- * تم ضبطه ليكون استاتيكياً بالكامل لنجاح عملية البناء (Build)
+ * تم ضبطه ليكون استاتيكياً بالكامل لنجاح عملية البناء (Build) وتوافق الـ PWA
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {

@@ -21,7 +21,7 @@ import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 /**
  * AppHeader — شريط التنقل العلوي السيادي.
- * تم دمج ميزة التثبيت المباشر (Direct Install) وإصلاح الـ Hydration.
+ * تم دمج ميزة التثبيت المباشر (Direct Install) الذهبية.
  */
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -119,7 +119,7 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* زر التثبيت الذهبي - يظهر فقط عند جاهزية المتصفح */}
+                    {/* زر التثبيت المباشر الذهبي */}
                     {isInstallable && (
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -127,7 +127,7 @@ export function AppHeader() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={install}
-                                    className="h-9 w-9 rounded-xl bg-accent text-accent-foreground hover:scale-110 transition-all shadow-lg animate-bounce"
+                                    className="h-9 w-9 rounded-xl bg-accent text-accent-foreground hover:scale-110 transition-all shadow-lg animate-install"
                                 >
                                     <Download className="h-4 w-4" />
                                 </Button>
