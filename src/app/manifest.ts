@@ -5,13 +5,13 @@ export const revalidate = false;
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'iPOS Zen',
-        short_name: 'iPOS',
-        description: 'Point de Vente intelligent — Local-First',
+        name: 'iPOS Zen Elite',
+        short_name: 'iPOS Elite',
+        description: 'Point de Vente intelligent — Elite Solid System',
         start_url: '/sell/',
         display: 'standalone',
-        background_color: '#0D0804',
-        theme_color: '#c07814',
+        background_color: '#F8FAFC',
+        theme_color: '#AFB42B',
         orientation: 'landscape',
         categories: ['business', 'finance', 'productivity'],
         icons: [
@@ -30,18 +30,13 @@ export default function manifest(): MetadataRoute.Manifest {
         ],
         shortcuts: [
             {
-                name: 'Vente',
+                name: 'Vente Elite',
                 url: '/sell/',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
             {
-                name: 'Dashboard',
+                name: 'Dashboard Premium',
                 url: '/dashboard/',
-                icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
-            },
-            {
-                name: 'Produits',
-                url: '/products/',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
         ],

@@ -15,7 +15,7 @@
     --animate-page-enter:    page-enter 0.2s ease-out both;
     --animate-fade-in:       fade-in 0.15s ease both;
 
-    /* Semantic Color Mapping - Solid v2 */
+    /* Semantic Color Mapping - Elite Palette */
     --color-primary:         65  60% 44%;
     --color-secondary:       217 33% 17%;
     --color-accent:          45  65% 52%;
@@ -25,24 +25,24 @@
 
 @layer base {
     :root {
-        /* UI Color Palette based on User Specs */
-        --primary:              65  60% 44%; /* #AFB42B */
+        /* Core Palette (Solid) */
+        --primary:              65  60% 44%; /* #AFB42B - Olive Green */
         --primary-foreground:   0   0% 100%;
         
-        --secondary:            217 33% 17%; /* #1E293B */
+        --secondary:            217 33% 17%; /* #1E293B - Dark Navy */
         --secondary-foreground: 210 40% 98%;
         
-        --accent:               45  65% 52%; /* #D4AF37 */
+        --accent:               45  65% 52%; /* #D4AF37 - Gold */
         --accent-foreground:    222 47% 11%;
         
-        --background:           210 40% 98%; /* #F8FAFC */
-        --foreground:           222 47% 11%; /* #0F172A */
+        --background:           210 40% 98%; /* #F8FAFC - Light Slate */
+        --foreground:           222 47% 11%; /* #0F172A - Deep Text */
         
-        --card:                  0   0% 100%; /* #FFFFFF */
+        --card:                  0   0% 100%; /* Pure White */
         --card-foreground:      222 47% 11%;
         
         --muted:                210 40% 94%;
-        --muted-foreground:     215 16% 47%; /* #64748B */
+        --muted-foreground:     215 16% 47%; /* #64748B - Muted Text */
         
         --border:               214 32% 91%;
         --input:                214 32% 91%;
@@ -52,7 +52,7 @@
         --destructive:          0   84% 60%;
         --destructive-foreground: 0 0% 100%;
 
-        /* Chart Colors Optimized for Elite Palette */
+        /* Chart Colors */
         --chart-primary:    65 60% 44%;
         --chart-secondary:  217 33% 17%;
         --chart-tertiary:   45 65% 52%;
@@ -117,6 +117,15 @@
         background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+    }
+
+    /* Professional Glass-Free effects */
+    .elite-shadow {
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+    }
+
+    .solid-border {
+        border: 2px solid hsl(var(--border));
     }
 }
 
