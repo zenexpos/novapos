@@ -33,8 +33,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon.svg', type: 'image/svg+xml', sizes: 'any' }
+      { url: '/icon.svg', type: 'image/svg+xml' }
     ],
     apple: '/icons/icon-192x192.png',
   },
@@ -59,24 +58,24 @@ export default function RootLayout({
          <link rel="icon" href="/icon.svg" type="image/svg+xml" />
          <link rel="shortcut icon" href="/icon.svg" type="image/svg+xml" />
          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body suppressHydrationWarning className="antialiased">
+      <body suppressHydrationWarning className="antialiased selection:bg-primary/20">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>
               <AppSyncManager>
-                  <div className="flex h-screen flex-col bg-background overflow-hidden selection:bg-primary/20">
+                  <div className="flex h-screen flex-col bg-background overflow-hidden">
                       <AppHeaderWrapper />
                       <SaleInfoBarWrapper />
-                      <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth">
+                      <main className="flex-1 overflow-y-auto pb-14 md:pb-0 scroll-smooth relative">
+                          {/* Ambient Background - Static on Server, Fluid on Client */}
+                          <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-50">
+                              <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-[100px]" />
+                              <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/10 blur-[100px]" />
+                          </div>
+                          
                           <div className="relative z-10">
-                            <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                                <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/8 blur-[80px] animate-ambient will-change-transform" />
-                                <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/6 blur-[60px] animate-ambient anim-delay-400 will-change-transform" />
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/4 blur-[100px] animate-ambient anim-delay-200 will-change-transform" />
-                            </div>
                             {children}
                           </div>
                       </main>
