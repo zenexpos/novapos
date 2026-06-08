@@ -40,7 +40,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%; /* #64748B */
     --accent: 46 65% 52%;            /* #D4AF37 - Royal Gold */
-    --accent-foreground: 222 47% 11%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -58,6 +58,7 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-size: 13px;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -69,21 +70,54 @@
   background-color: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .nav-solid {
   background-color: hsl(var(--secondary));
   color: hsl(var(--secondary-foreground));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid hsl(var(--primary));
 }
 
-[role="dialog"], [role="alertdialog"] {
+/* Force Dialogs to be solid and opaque */
+[role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper] > div {
   background-color: hsl(var(--card)) !important;
   opacity: 1 !important;
+  backdrop-filter: none !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
 }
 
 .glass {
   background-color: hsl(var(--card));
   backdrop-filter: none !important;
+}
+
+.info-bar-solid {
+  background-color: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+@keyframes flash {
+  0% { background-color: transparent; }
+  50% { background-color: hsl(var(--primary) / 0.2); }
+  100% { background-color: transparent; }
+}
+
+.animate-flash {
+  animation: flash 0.5s ease-in-out;
+}
+
+.print-hide {
+  @media print {
+    display: none !important;
+  }
+}
+
+.a4-receipt {
+  background: white;
+  color: black;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  margin: 0 auto;
 }
