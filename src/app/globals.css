@@ -64,8 +64,6 @@
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 46 65% 52%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
     --border: 217 32.6% 17.5%;
     --input: 217 32.6% 17.5%;
     --ring: 62 60% 44%;
@@ -100,7 +98,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Navigation & Info Bars */
 .nav-solid {
   background-color: hsl(var(--secondary));
   color: hsl(var(--secondary-foreground));
@@ -112,14 +109,12 @@
   border-bottom: 2px solid hsl(var(--secondary));
 }
 
-/* Dialogs & Popups (No Transparency) */
 [role="dialog"], [role="alertdialog"] {
   background-color: hsl(var(--card)) !important;
   opacity: 1 !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -135,7 +130,6 @@
   background: hsl(var(--primary));
 }
 
-/* Printing */
 @media print {
   body {
     background: white !important;
