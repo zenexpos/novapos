@@ -10,7 +10,6 @@ import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
-import { AmbientBackground } from '@/components/layout/AmbientBackground';
 
 const APP_NAME = "iPOS Zen";
 const APP_DEFAULT_TITLE = "iPOS Zen - Elite Ledger & System";
@@ -70,8 +69,6 @@ export default function RootLayout({
             <KeyboardShortcutsProvider>
               <AppSyncManager>
                   <div className="flex h-screen flex-col bg-background overflow-hidden relative">
-                      <AmbientBackground />
-                      
                       <div className="relative z-10 flex flex-col h-full overflow-hidden">
                         <AppHeaderWrapper />
                         <SaleInfoBarWrapper />

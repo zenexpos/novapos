@@ -13,10 +13,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, startIcon, endIcon, ...props }, ref) => {
         const baseClass = cn(
             'flex h-11 w-full rounded-xl border border-border',
-            'bg-muted/30 backdrop-blur-md',
+            'bg-muted',
             'px-4 py-2 text-sm font-medium',
             'ring-offset-background',
-            'placeholder:text-muted-foreground/30',
+            'placeholder:text-muted-foreground/40',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'transition-all duration-200',
