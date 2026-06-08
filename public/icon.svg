@@ -1,15 +1,26 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Professional Design: Laptop + Ledger merged symbol -->
-  <rect x="64" y="96" width="384" height="256" rx="24" fill="#328526" />
-  <rect x="88" y="120" width="336" height="208" rx="8" fill="#FFFFFF" fill-opacity="0.9" />
-  <!-- Screen lines representing a "Ledger" or "Digital Sheet" -->
-  <rect x="112" y="152" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
-  <rect x="112" y="184" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
-  <rect x="112" y="216" width="216" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
-  <rect x="112" y="248" width="288" height="12" rx="4" fill="#328526" fill-opacity="0.2" />
-  <!-- Laptop base -->
-  <rect x="32" y="352" width="448" height="32" rx="16" fill="#1A1A1A" />
-  <rect x="208" y="352" width="96" height="8" rx="4" fill="#333333" />
-  <!-- Stylized Z for Zen -->
-  <path d="M224 160H288L224 256H288" stroke="#328526" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Solid Background Circle using Secondary #1E293B -->
+  <circle cx="256" cy="256" r="240" fill="#1E293B"/>
+  
+  <!-- Monitor Frame - Solid Primary #AFB42B -->
+  <rect x="120" y="140" width="272" height="180" rx="12" fill="#AFB42B"/>
+  <!-- Monitor Screen -->
+  <rect x="135" y="155" width="242" height="150" rx="4" fill="#FFFFFF"/>
+  <!-- Monitor Stand -->
+  <path d="M210 320L200 360H312L302 320H210Z" fill="#AFB42B"/>
+  <rect x="180" y="360" width="152" height="12" rx="6" fill="#AFB42B"/>
+  
+  <!-- Ledger/Notebook overlapping - Solid Accent #D4AF37 -->
+  <rect x="280" y="240" width="140" height="180" rx="8" fill="#D4AF37" stroke="#1E293B" stroke-width="4"/>
+  <!-- Notebook Lines -->
+  <line x1="300" y1="280" x2="400" y2="280" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <line x1="300" y1="310" x2="400" y2="310" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <line x1="300" y1="340" x2="400" y2="340" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <line x1="300" y1="370" x2="360" y2="370" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Binding spirals -->
+  <circle cx="280" cy="270" r="6" fill="#1E293B"/>
+  <circle cx="280" cy="310" r="6" fill="#1E293B"/>
+  <circle cx="280" cy="350" r="6" fill="#1E293B"/>
+  <circle cx="280" cy="390" r="6" fill="#1E293B"/>
 </svg>
