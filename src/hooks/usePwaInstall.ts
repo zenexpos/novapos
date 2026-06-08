@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * usePwaInstall — هوك نخبوي لالتقاط حدث التثبيت المباشر.
- * تم تحسين المنطق لضمان عدم ضياع الحدث عند إعادة التحميل.
+ * usePwaInstall — هوك مطور لالتقاط حدث التثبيت.
+ * تم تحسين المنطق لضمان عدم ضياع الحدث في تطبيقات SPA.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,21 +12,20 @@ export function usePwaInstall() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع النافذة التلقائية الافتراضية
+            // منع النافذة التلقائية الافتراضية للمتصفح
             e.preventDefault();
-            // حفظ الحدث لتشغيله يدوياً عبر زر التثبيت
+            // حفظ الحدث ليتم تفعيله عبر الزر المخصص
             setDeferredPrompt(e);
             setIsInstallable(true);
-            console.log('iPOS Zen is ready for direct installation.');
+            console.log('PWA: iPOS Zen is ready for direct installation.');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // إخفاء الزر إذا كان التطبيق مثبتاً بالفعل (Standalone Mode)
+        // التحقق مما إذا كان التطبيق مثبتاً بالفعل
         const checkStatus = () => {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                || (window.navigator as any).standalone 
-                || document.referrer.includes('android-app://');
+                || (window.navigator as any).standalone;
             
             if (isStandalone) {
                 setIsInstallable(false);
@@ -41,12 +40,10 @@ export function usePwaInstall() {
     const install = useCallback(async () => {
         if (!deferredPrompt) return;
 
-        // إظهار واجهة تثبيت النظام الأصلية
+        // إظهار نافذة التثبيت الأصلية للنظام
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install: ${outcome}`);
-        
         if (outcome === 'accepted') {
             setIsInstallable(false);
             setDeferredPrompt(null);

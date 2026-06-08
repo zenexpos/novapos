@@ -3,8 +3,7 @@ import type { MetadataRoute } from 'next';
 export const dynamic = 'force-static';
 
 /**
- * ملف المانيفست — بطاقة التعريف التقنية للـ PWA.
- * تم ضبط الخصائص لضمان قبول التثبيت كبرنامج مكتب.
+ * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر.
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {
@@ -23,6 +22,12 @@ export default function manifest(): MetadataRoute.Manifest {
                 sizes: '192x192',
                 type: 'image/png',
                 purpose: 'maskable',
+            },
+            {
+                src: '/icons/icon-192x192.png',
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'any',
             },
             {
                 src: '/icons/icon-512x512.png',
