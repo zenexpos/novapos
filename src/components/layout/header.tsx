@@ -51,35 +51,31 @@ export function AppHeader() {
 
     return (
         <header className="print-hide sticky top-0 z-40 w-full">
-            {/* Glass header panel */}
             <div className="
                 relative flex h-13 items-center gap-2 px-3
                 border-b border-border
                 bg-card/95
                 shadow-sm
             ">
-                {/* Ambient top highlight */}
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent pointer-events-none" />
 
-                {/* ── Logo ── */}
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 shrink-0 group"
                 >
-                    {/* Zen Elite SVG Logo */}
                     <div className={cn(
                         "relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-500",
-                        "bg-gradient-to-br from-primary to-amber-700",
-                        "border border-white/10",
-                        "shadow-[0_0_15px_rgba(192,120,20,0.3)]",
-                        "group-hover:shadow-[0_0_20px_rgba(192,120,20,0.5)] group-hover:scale-110",
+                        "bg-gradient-to-br from-primary/20 to-primary/5",
+                        "border border-primary/20",
+                        "shadow-[0_0_15px_rgba(192,120,20,0.1)]",
+                        "group-hover:shadow-[0_0_20px_rgba(192,120,20,0.3)] group-hover:scale-105",
                     )}>
                         <Image 
                             src="/icon.svg" 
                             alt="iPOS Zen Logo" 
                             width={24} 
                             height={24} 
-                            className="invert-0 group-hover:rotate-12 transition-transform duration-500"
+                            className="group-hover:rotate-12 transition-transform duration-500"
                         />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none">
@@ -92,10 +88,8 @@ export function AppHeader() {
                     </div>
                 </Link>
 
-                {/* Divider */}
                 <div className="h-5 w-px bg-gradient-to-b from-transparent via-border to-transparent mx-1 shrink-0" />
 
-                {/* ── Navigation ── */}
                 <TooltipProvider delayDuration={0}>
                     <nav ref={navRef} className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
                         {navLinks.map((link, idx) => {
@@ -127,7 +121,6 @@ export function AppHeader() {
                                                     </span>
                                                 )}
 
-                                                {/* Active indicator dot */}
                                                 {isActive && (
                                                     <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_var(--glow-primary)] animate-scale-in" />
                                                 )}
@@ -146,16 +139,13 @@ export function AppHeader() {
                     </nav>
                 </TooltipProvider>
 
-                {/* ── Right Controls ── */}
                 <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                    {/* Clock */}
                     {mounted && (
                         <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-card/95 text-xs text-muted-foreground font-mono gap-1.5 shadow-sm">
                             <Clock />
                         </div>
                     )}
 
-                    {/* Sync button */}
                     {mounted && companyProfile?.supabase_url && (
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -184,14 +174,11 @@ export function AppHeader() {
                         </Tooltip>
                     )}
 
-                    {/* Settings */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <span>
                                 <Link
                                     href="/settings"
-                                    aria-label="Paramètres"
-                                    title="Paramètres"
                                     className={cn(
                                         'inline-flex items-center justify-center h-8 w-8 rounded-lg border border-transparent transition-all duration-200',
                                         pathname.startsWith('/settings')
@@ -206,12 +193,10 @@ export function AppHeader() {
                         <TooltipContent side="bottom" className="text-xs">Paramètres</TooltipContent>
                     </Tooltip>
 
-                    {/* Theme toggle */}
                     <div className="flex items-center">
                         <ThemeToggle />
                     </div>
 
-                    {/* Company name chip */}
                     {mounted && companyProfile?.companyName && (
                         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card/95 max-w-[140px] shadow-sm">
                             <Building className="h-3 w-3 text-primary shrink-0" />

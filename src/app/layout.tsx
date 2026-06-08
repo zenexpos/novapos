@@ -33,8 +33,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' }
     ],
     apple: '/icons/icon-192x192.png',
   },
@@ -70,14 +69,14 @@ export default function RootLayout({
                       <AppHeader />
                       <SaleInfoBar />
                       <main className="flex-1 overflow-y-auto pb-14 md:pb-0">
-                          <>
-              <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/8 blur-[80px] animate-ambient" />
-                <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/6 blur-[60px] animate-ambient anim-delay-400" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/4 blur-[100px] animate-ambient anim-delay-200" />
-              </div>
-              {children}
-            </>
+                          <div className="relative z-10">
+                            <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                                <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/8 blur-[80px] animate-ambient" />
+                                <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-accent/6 blur-[60px] animate-ambient anim-delay-400" />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/4 blur-[100px] animate-ambient anim-delay-200" />
+                            </div>
+                            {children}
+                          </div>
                       </main>
                       <BottomNavBar />
                       <KeyboardShortcutsHelp />

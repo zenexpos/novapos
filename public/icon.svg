@@ -1,16 +1,25 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="128" fill="url(#paint0_linear)"/>
-  <path d="M128 368L160 192L256 288L352 192L384 368H128Z" fill="white" fill-opacity="0.2"/>
-  <path d="M128 368L160 192L256 288L352 192L384 368H128Z" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="160" cy="192" r="24" fill="white"/>
-  <circle cx="256" cy="288" r="24" fill="white"/>
-  <circle cx="352" cy="192" r="24" fill="white"/>
-  <circle cx="128" cy="368" r="16" fill="white"/>
-  <circle cx="384" cy="368" r="16" fill="white"/>
   <defs>
-    <linearGradient id="paint0_linear" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#C07814"/>
-      <stop offset="1" stop-color="#8B570D"/>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b45309;stop-opacity:1" />
     </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10" />
+      <feOffset dx="0" dy="5" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
+  <!-- Background Shape -->
+  <rect x="64" y="64" width="384" height="384" rx="100" fill="url(#grad1)" filter="url(#shadow)" />
+  <!-- Stylized Z / Zen Path -->
+  <path d="M160 160H352L160 352H352" stroke="white" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Small Crown Detail -->
+  <path d="M256 120L275 145H237L256 120Z" fill="white" opacity="0.8" />
 </svg>
