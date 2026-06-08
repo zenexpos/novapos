@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
     Download, Smartphone, Monitor, Laptop, Globe,
     CheckCircle2, AlertCircle, Wifi, WifiOff,
-    Share2, PlusSquare, Zap,
+    Share2, PlusSquare, Zap, LayoutGrid, ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_VERSION } from '@/lib/constants';
@@ -35,8 +35,9 @@ const steps = {
         { icon: CheckCircle2, label: 'Confirmez l\'installation',         desc: 'iPOS apparaît sur votre écran' },
     ],
     desktop: [
-        { icon: Laptop,       label: 'Icône d\'installation dans la barre d\'adresse', desc: 'Cliquez sur le ⊕' },
-        { icon: CheckCircle2, label: 'Cliquez sur "Installer"', desc: 'iPOS s\'ouvre comme une app native' },
+        { icon: PlusSquare,   label: 'Cliquez sur l\'icône d\'installation', desc: 'Située dans la barre d\'adresse (⊕)' },
+        { icon: Laptop,       label: 'Confirmez l\'installation',          desc: 'iPOS s\'ouvrira dans une fenêtre dédiée' },
+        { icon: CheckCircle2, label: 'Épinglez à la barre des tâches',     desc: 'Pour un accès instantané' },
     ],
     unknown: [
         { icon: Globe,        label: 'Ouvrez dans un navigateur moderne', desc: 'Chrome, Edge, Safari' },
@@ -52,118 +53,121 @@ export default function InstallPage() {
     useEffect(() => {
         setPlatform(detectPlatform());
         setIsOnline(navigator.onLine);
-        // Check if already installed as PWA
         setIsInstalled(window.matchMedia('(display-mode: standalone)').matches);
+        
         const online  = () => setIsOnline(true);
         const offline = () => setIsOnline(false);
         window.addEventListener('online', online);
         window.addEventListener('offline', offline);
-        return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); };
+        return () => { 
+            window.removeEventListener('online', online); 
+            window.removeEventListener('offline', offline); 
+        };
     }, []);
 
     const platformSteps = steps[platform] ?? steps.unknown;
 
     return (
-        <div className="p-4 sm:p-5 pb-24 max-w-2xl mx-auto space-y-5 animate-page-enter">
+        <div className="p-6 sm:p-4 space-y-6 max-w-4xl mx-auto pb-32 animate-in fade-in duration-1000">
             <PageHeader
-                title="Installer iPOS Zen"
-                description={`v${APP_VERSION} — Application PWA locale`}
+                title="Installation Desktop & PWA"
+                description={`v${APP_VERSION} — Convertissez iPOS Zen en application native`}
                 icon={Download}
             />
 
-            {/* Status cards */}
-            <div className="grid grid-cols-2 gap-3">
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        {isOnline
-                            ? <Wifi className="h-5 w-5 text-emerald-500" />
-                            : <WifiOff className="h-5 w-5 text-red-500" />}
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40">
-                                Connexion
-                            </p>
-                            <p className={cn('text-sm font-black', isOnline ? 'text-emerald-500' : 'text-red-500')}>
-                                {isOnline ? 'En ligne' : 'Hors ligne'}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        {isInstalled
-                            ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                            : <AlertCircle  className="h-5 w-5 text-amber-500"   />}
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40">
-                                Statut
-                            </p>
-                            <p className={cn('text-sm font-black', isInstalled ? 'text-emerald-500' : 'text-amber-500')}>
-                                {isInstalled ? 'Installée' : 'Non installée'}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Platform guide */}
-            <Card>
-                <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
-                    <CardTitle className="flex items-center gap-2 text-base font-black gradient-text">
-                        {platform === 'ios'     && <Smartphone className="h-5 w-5" />}
-                        {platform === 'android' && <Smartphone className="h-5 w-5" />}
-                        {platform === 'desktop' && <Monitor    className="h-5 w-5" />}
-                        Installation — {
-                            platform === 'ios'     ? 'iPhone / iPad' :
-                            platform === 'android' ? 'Android'        :
-                            platform === 'desktop' ? 'Ordinateur'     : 'Appareil'
-                        }
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 space-y-4">
-                    {platformSteps.map((step, i) => (
-                        <div key={i} className="flex items-start gap-4 animate-slide-up"
-                            style={{ animationDelay: `${i * 100}ms` }}>
-                            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20
-                                flex items-center justify-center shrink-0">
-                                <step.icon className="h-4 w-4 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="md:col-span-2 rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
+                    <CardHeader className="bg-primary/5 border-b border-white/5 p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">
+                                {platform === 'desktop' ? <Monitor className="h-6 w-6" /> : <Smartphone className="h-6 w-6" />}
                             </div>
-                            <div className="flex-1 pt-0.5">
-                                <p className="text-sm font-black">{step.label}</p>
-                                <p className="text-xs text-muted-foreground/50 mt-0.5">{step.desc}</p>
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-black text-primary">
-                                {i + 1}
+                            <div>
+                                <CardTitle className="text-xl font-black tracking-tight">
+                                    Guide : {
+                                        platform === 'ios'     ? 'Apple iOS' :
+                                        platform === 'android' ? 'Android OS' :
+                                        platform === 'desktop' ? 'Windows / macOS' : 'Votre Appareil'
+                                    }
+                                </CardTitle>
+                                <p className="text-[10px] font-bold uppercase text-primary/40 tracking-widest mt-1">Protocole d'installation Elite</p>
                             </div>
                         </div>
-                    ))}
-                </CardContent>
-            </Card>
-
-            {/* Features */}
-            <Card>
-                <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
-                    <CardTitle className="text-base font-black gradient-text">
-                        Avantages de l'installation
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5">
-                    <div className="grid grid-cols-2 gap-3">
-                        {[
-                            { icon: Zap,          label: 'Démarrage instantané', desc: 'Sans navigateur'   },
-                            { icon: WifiOff,      label: 'Mode hors ligne',      desc: 'Fonctionne partout' },
-                            { icon: Monitor,      label: 'Plein écran',          desc: 'Comme une app native' },
-                            { icon: CheckCircle2, label: 'Données locales',      desc: 'Privacy garantie'   },
-                        ].map(f => (
-                            <div key={f.label} className="p-3 rounded-xl bg-muted/20 border border-muted/40 space-y-1">
-                                <f.icon className="h-4 w-4 text-primary" />
-                                <p className="text-xs font-black">{f.label}</p>
-                                <p className="text-[10px] text-muted-foreground/40">{f.desc}</p>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-8">
+                        {platformSteps.map((step, i) => (
+                            <div key={i} className="flex items-start gap-6 group animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${i * 150}ms` }}>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 rounded-2xl bg-black/20 flex items-center justify-center border border-white/5 shadow-inner group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                        <step.icon className="h-5 w-5 text-primary" />
+                                    </div>
+                                    {i < platformSteps.length - 1 && <div className="w-0.5 h-12 bg-white/5" />}
+                                </div>
+                                <div className="pt-2">
+                                    <h4 className="text-base font-black tracking-tight text-foreground">{step.label}</h4>
+                                    <p className="text-xs font-medium text-muted-foreground/60 mt-1 uppercase tracking-wide">{step.desc}</p>
+                                </div>
+                                <div className="ml-auto flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-[10px] font-black text-primary border border-primary/20">
+                                    {i + 1}
+                                </div>
                             </div>
                         ))}
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+
+                <div className="space-y-6">
+                    <Card className="rounded-lg border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
+                        <CardHeader className="p-4 border-b border-white/5 bg-muted/20">
+                            <CardTitle className="text-[10px] font-bold uppercase opacity-40">Statut du Système</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    {isOnline ? <Wifi className="h-4 w-4 text-emerald-500" /> : <WifiOff className="h-4 w-4 text-destructive" />}
+                                    <span className="text-[10px] font-bold uppercase opacity-60">Réseau</span>
+                                </div>
+                                <span className={cn("text-[10px] font-black uppercase", isOnline ? "text-emerald-500" : "text-destructive")}>
+                                    {isOnline ? "En Ligne" : "Offline"}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    {isInstalled ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <AlertCircle className="h-4 w-4 text-amber-500" />}
+                                    <span className="text-[10px] font-bold uppercase opacity-60">Installation</span>
+                                </div>
+                                <span className={cn("text-[10px] font-black uppercase", isInstalled ? "text-emerald-500" : "text-amber-500")}>
+                                    {isInstalled ? "Active" : "Requise"}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="rounded-lg border-primary/20 bg-primary/5 shadow-xl overflow-hidden group">
+                        <CardHeader className="p-6 pb-2">
+                            <Zap className="h-8 w-8 text-primary mb-4 group-hover:scale-110 transition-transform" />
+                            <CardTitle className="text-lg font-black tracking-tight">Vitesse & Souveraineté</CardTitle>
+                            <p className="text-xs font-medium text-muted-foreground/60 leading-relaxed mt-2">
+                                L'installation permet un démarrage instantané sans navigateur et garantit la confidentialité totale de vos données locales.
+                            </p>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { icon: LayoutGrid, label: "Bureau" },
+                                    { icon: WifiOff, label: "Offline" },
+                                    { icon: Zap, label: "Instant" },
+                                    { icon: CheckCircle2, label: "Local" }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 p-2.5 rounded-xl bg-black/20 border border-white/5">
+                                        <item.icon className="h-3 w-3 text-primary/40" />
+                                        <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 }

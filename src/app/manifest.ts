@@ -5,11 +5,12 @@ export const revalidate = false;
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'iPOS Zen Elite',
-        short_name: 'iPOS Elite',
-        description: 'Point de Vente intelligent — Elite Solid System',
-        start_url: '/sell/',
+        name: 'iPOS Zen Elite Ledger',
+        short_name: 'iPOS Zen',
+        description: 'نظام محاسبي سيادي متكامل — نظام صلب واحترافي لسطح المكتب والجوال',
+        start_url: '/dashboard/',
         display: 'standalone',
+        display_override: ['window-controls-overlay', 'minimal-ui'],
         background_color: '#F8FAFC',
         theme_color: '#AFB42B',
         orientation: 'landscape',
@@ -30,16 +31,23 @@ export default function manifest(): MetadataRoute.Manifest {
         ],
         shortcuts: [
             {
-                name: 'Vente Elite',
+                name: 'نقطة البيع Elite',
                 url: '/sell/',
+                description: 'فتح واجهة البيع السريع',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
             {
-                name: 'Dashboard Premium',
+                name: 'لوحة التحكم',
                 url: '/dashboard/',
+                description: 'عرض الإحصائيات المالية',
                 icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
             },
+            {
+                name: 'تنبيهات الديون',
+                url: '/debt-alerts/',
+                description: 'متابعة المستحقات المتأخرة',
+                icons: [{ src: '/icons/icon-192x192.png', sizes: '96x96' }],
+            }
         ],
-        screenshots: [],
     };
 }
