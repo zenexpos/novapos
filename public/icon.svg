@@ -1,25 +1,23 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Solid Background Circle (Elite Navy) -->
-  <circle cx="256" cy="256" r="240" fill="#1E293B"/>
-  
-  <!-- Screen Frame (Elite Olive) -->
-  <rect x="100" y="140" width="312" height="200" rx="16" stroke="#AFB42B" stroke-width="24" fill="none"/>
-  
-  <!-- Screen Stand -->
-  <path d="M200 340 L180 380 L332 380 L312 340" fill="#AFB42B"/>
-  <rect x="160" y="380" width="192" height="12" rx="6" fill="#AFB42B"/>
-
-  <!-- Ledger / Notebook (Royal Gold) Overlay -->
-  <rect x="160" y="180" width="192" height="120" rx="8" fill="#D4AF37"/>
-  
-  <!-- Ledger Lines (Details) -->
-  <rect x="180" y="200" width="152" height="6" rx="3" fill="#1E293B" fill-opacity="0.3"/>
-  <rect x="180" y="215" width="152" height="6" rx="3" fill="#1E293B" fill-opacity="0.3"/>
-  <rect x="180" y="230" width="100" height="6" rx="3" fill="#1E293B" fill-opacity="0.3"/>
-  
-  <!-- Vertical Binding (Elite Navy) -->
-  <rect x="168" y="188" width="12" height="104" rx="2" fill="#1E293B"/>
-  
-  <!-- Digital Pulse / Signal -->
-  <path d="M120 240 Q150 200 180 240 T240 240" stroke="#AFB42B" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+    <!-- Background Square (The Screen) -->
+    <rect width="512" height="512" rx="100" fill="#1E293B"/>
+    
+    <!-- Screen Frame (Inner) -->
+    <rect x="40" y="40" width="432" height="320" rx="30" fill="#2C3E50" stroke="#AFB42B" stroke-width="12"/>
+    
+    <!-- The Ledger Book (Sitting in front of screen) -->
+    <path d="M120 180C120 168.954 128.954 160 140 160H392V432C392 443.046 383.046 452 372 452H140C128.954 452 120 443.046 120 432V180Z" fill="#FFFFFF"/>
+    
+    <!-- Book Spine -->
+    <path d="M120 180C120 168.954 128.954 160 140 160H160V452H140C128.954 452 120 443.046 120 432V180Z" fill="#AFB42B"/>
+    
+    <!-- Ledger Lines -->
+    <rect x="180" y="220" width="180" height="8" rx="4" fill="#E2E8F0"/>
+    <rect x="180" y="260" width="180" height="8" rx="4" fill="#E2E8F0"/>
+    <rect x="180" y="300" width="180" height="8" rx="4" fill="#E2E8F0"/>
+    <rect x="180" y="340" width="120" height="8" rx="4" fill="#D4AF37"/>
+    
+    <!-- Coin Symbol on Ledger -->
+    <circle cx="340" y="390" r="25" fill="#D4AF37"/>
+    <path d="M335 375V405M345 375V405M325 385H355" stroke="white" stroke-width="6" stroke-linecap="round"/>
 </svg>

@@ -48,26 +48,6 @@
     --ring: 62 60% 44%;
     --radius: 0.75rem;
   }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 62 60% 44%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 98%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 217 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 46 65% 52%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217 32.6% 17.5%;
-    --input: 217 32.6% 17.5%;
-    --ring: 62 60% 44%;
-  }
 }
 
 @layer base {
@@ -78,7 +58,6 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-size: 13px;
-    font-family: system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -90,12 +69,6 @@
   background-color: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
-  transition: all 0.2s ease-in-out;
-}
-
-.app-card:hover {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .nav-solid {
@@ -104,38 +77,13 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.info-bar-solid {
-  background-color: hsl(var(--card));
-  border-bottom: 2px solid hsl(var(--secondary));
-}
-
 [role="dialog"], [role="alertdialog"] {
   background-color: hsl(var(--card)) !important;
   opacity: 1 !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
-}
-
-@media print {
-  body {
-    background: white !important;
-    color: black !important;
-  }
-  .print-hide {
-    display: none !important;
-  }
+.glass {
+  background-color: hsl(var(--card));
+  backdrop-filter: none !important;
 }
