@@ -1,14 +1,22 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Computer Screen (Elite Secondary) -->
-  <rect x="64" y="64" width="384" height="280" rx="20" fill="#1E293B"/>
-  <rect x="84" y="84" width="344" height="200" rx="10" fill="#AFB42B"/>
-  <!-- Stand -->
-  <rect x="216" y="344" width="80" height="40" fill="#1E293B"/>
-  <rect x="160" y="384" width="192" height="16" rx="8" fill="#1E293B"/>
-  <!-- Ledger overlay (Solid White with Gold Accent) -->
-  <rect x="240" y="160" width="200" height="240" rx="10" fill="#FFFFFF" stroke="#D4AF37" stroke-width="8"/>
-  <line x1="260" y1="200" x2="420" y2="200" stroke="#1E293B" stroke-width="4"/>
-  <line x1="260" y1="240" x2="420" y2="240" stroke="#1E293B" stroke-width="4"/>
-  <line x1="260" y1="280" x2="420" y2="280" stroke="#1E293B" stroke-width="4"/>
-  <line x1="260" y1="320" x2="420" y2="320" stroke="#D4AF37" stroke-width="6"/>
+  <!-- الشاشة الرقمية (Secondary) -->
+  <rect x="40" y="80" width="432" height="300" rx="30" fill="#1E293B"/>
+  <rect x="60" y="100" width="392" height="230" rx="10" fill="#F8FAFC"/>
+  <!-- قاعدة الشاشة -->
+  <rect x="186" y="380" width="140" height="20" fill="#1E293B"/>
+  <rect x="146" y="400" width="220" height="15" rx="10" fill="#1E293B"/>
+  
+  <!-- الدفتر المحاسبي (Primary) -->
+  <rect x="120" y="140" width="272" height="200" rx="5" fill="#AFB42B" fill-opacity="0.9"/>
+  <!-- أوراق الدفتر -->
+  <rect x="135" y="155" width="242" height="170" rx="2" fill="white"/>
+  <!-- خطوط المحاسبة (Secondary) -->
+  <rect x="150" y="180" width="212" height="4" fill="#1E293B" opacity="0.2"/>
+  <rect x="150" y="200" width="212" height="4" fill="#1E293B" opacity="0.2"/>
+  <rect x="150" y="220" width="212" height="4" fill="#1E293B" opacity="0.2"/>
+  <rect x="150" y="240" width="212" height="4" fill="#1E293B" opacity="0.2"/>
+  
+  <!-- رمز العملة الذهبي (Accent) -->
+  <path d="M256 260C268.15 260 278 248.807 278 235C278 221.193 268.15 210 256 210C243.85 210 234 221.193 234 235C234 248.807 243.85 260 256 260Z" fill="#D4AF37"/>
+  <rect x="252" y="195" width="8" height="80" rx="4" fill="#D4AF37"/>
 </svg>

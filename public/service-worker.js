@@ -1,33 +1,24 @@
 /**
- * iPOS Zen — Service Worker (Offline & PWA Support)
+ * iPOS Zen - Elite Ledger Service Worker
+ * تفعيل خاصية الـ Offline وظهور زر التثبيت في المتصفح.
  */
 
 const CACHE_NAME = 'ipos-zen-v1';
 
+// نحن لا نحتاج لكاش معقد لأننا نستخدم Static Export، لكن وجود مستمع للـ fetch ضروري للـ PWA
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+    event.waitUntil(clients.claim());
 });
 
-/**
- * المستمع لحدث fetch ضروري جداً لظهور زر التثبيت في المتصفح.
- */
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
+    // الاستراتيجية: الشبكة أولاً، ثم الكاش (لضمان أحدث نسخة دائماً)
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
+        fetch(event.request).catch(() => {
+            return caches.match(event.request);
+        })
     );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
 });

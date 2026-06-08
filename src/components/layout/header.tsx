@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
     Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building, Settings
+    RefreshCw, Building, Settings, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAppStore, useAppActions } from '@/stores/appStore';
 import Image from 'next/image';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -37,6 +38,7 @@ export function AppHeader() {
     
     const pathname = usePathname();
     const { performBackgroundSync } = useAppActions();
+    const { isInstallable, install } = usePwaInstall();
     
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
@@ -113,6 +115,24 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {isInstallable && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={install}
+                                    className="h-9 w-9 rounded-xl bg-accent text-accent-foreground hover:scale-110 transition-all shadow-lg animate-bounce"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-accent text-accent-foreground font-black text-[10px] uppercase">
+                                Installer iPOS Zen
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+
                     <div className="hidden md:block text-white/80">
                         <Clock />
                     </div>
