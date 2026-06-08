@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 export const dynamic = 'force-static';
 
 /**
- * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر.
+ * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر وتحويل الويب إلى تطبيق مكتب.
  */
 export default function manifest(): MetadataRoute.Manifest {
     return {

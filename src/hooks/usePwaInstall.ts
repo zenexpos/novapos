@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * usePwaInstall — هوك مطور لالتقاط حدث التثبيت.
- * تم تحسين المنطق لضمان عدم ضياع الحدث في تطبيقات SPA.
+ * usePwaInstall — هوك مطور لالتقاط حدث التثبيت المباشر.
+ * تم تحسين المنطق لضمان التقاط الحدث حتى لو تأخر تحميل المكونات.
  */
 export function usePwaInstall() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,27 +12,23 @@ export function usePwaInstall() {
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: any) => {
-            // منع النافذة التلقائية الافتراضية للمتصفح
+            // منع النافذة التلقائية الافتراضية
             e.preventDefault();
-            // حفظ الحدث ليتم تفعيله عبر الزر المخصص
+            // حفظ الحدث لتفعيله يدوياً عبر زر "Installer iPOS"
             setDeferredPrompt(e);
             setIsInstallable(true);
-            console.log('PWA: iPOS Zen is ready for direct installation.');
+            console.log('PWA: Install prompt captured and ready.');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // التحقق مما إذا كان التطبيق مثبتاً بالفعل
-        const checkStatus = () => {
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                || (window.navigator as any).standalone;
-            
-            if (isStandalone) {
-                setIsInstallable(false);
-            }
-        };
-
-        checkStatus();
+        // التحقق من حالة التثبيت (إذا كان مفتوحاً كتطبيق بالفعل)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+            || (typeof window !== 'undefined' && (window.navigator as any).standalone);
+        
+        if (isStandalone) {
+            setIsInstallable(false);
+        }
 
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     }, []);
@@ -40,7 +36,7 @@ export function usePwaInstall() {
     const install = useCallback(async () => {
         if (!deferredPrompt) return;
 
-        // إظهار نافذة التثبيت الأصلية للنظام
+        // إظهار نافذة التثبيت الأصلية للمتصفح
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;
