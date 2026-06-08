@@ -1,17 +1,10 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 /**
- * Page racine utilisant un redirect client pour une compatibilité maximale 
- * avec l'exportation statique et éviter les lenteurs au démarrage.
+ * الصفحة الجذرية - توجيه سيادي صلب.
+ * يستخدم redirect() على جانب الخادم لضمان أفضل توافق مع Next.js 15 
+ * وتجنب أخطاء 404 أثناء التحميل الأولي في وضع التصدير الاستاتيكي.
  */
 export default function RootPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/dashboard/');
-  }, [router]);
-
-  return null;
+  redirect('/dashboard/');
 }

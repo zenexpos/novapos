@@ -1,23 +1,49 @@
 /**
- * iPOS Zen — Service Worker (Elite Edition)
- * ضروري لاستيفاء شروط التثبيت المباشر (PWA Install Criteria)
+ * iPOS Zen — Service Worker Elite
+ * مسؤول عن تفعيل ميزة التثبيت (PWA) والعمل في وضع الأوفلاين.
  */
 
-const CACHE_NAME = 'ipos-zen-cache-v2';
+const CACHE_NAME = 'ipos-zen-v2';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
+];
 
-// 1. التثبيت - تخطي الانتظار لتفعيل النسخة الجديدة فوراً
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
 });
 
-// 2. التفعيل - السيطرة على كافة الصفحات المفتوحة
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// 3. مستمع الـ Fetch - الشرط الإلزامي لظهور زر التثبيت في المتصفح
+/**
+ * مستمع حدث fetch — إلزامي لظهور زر التثبيت في Chrome/Edge.
+ */
 self.addEventListener('fetch', (event) => {
-    // نترك المعالجة للشبكة مباشرة لضمان حداثة البيانات (Local-First)
-    // لكن وجود هذا المستمع يخبر المتصفح أن التطبيق "قابل للعمل أوفلاين"
-    return;
+  // استراتيجية التخزين: البحث في الكاش أولاً ثم الشبكة
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
