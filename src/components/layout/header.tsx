@@ -20,18 +20,18 @@ import Image from 'next/image';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
-        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard, color: 'text-blue-500' },
-        { href: '/sell',          label: 'Vendre',    icon: ShoppingCart,    color: 'text-primary' },
-        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing,        color: 'text-red-500' },
-        { href: '/stock',         label: 'Stock',     icon: Archive,         color: 'text-amber-500' },
-        { href: '/products',      label: 'Produits',  icon: Package,         color: 'text-emerald-500' },
-        { href: '/customers',     label: 'Clients',   icon: Users2,          color: 'text-violet-500' },
-        { href: '/sales-history', label: 'Ventes',    icon: History,         color: 'text-slate-500' },
-        { href: '/returns',       label: 'Retours',   icon: Undo2,           color: 'text-rose-500' },
-        { href: '/expenses',      label: 'Dépenses',  icon: Wallet,          color: 'text-orange-500' },
-        { href: '/bread',         label: 'Pain',      icon: Wheat,           color: 'text-yellow-600' },
-        { href: '/zakat',         label: 'Zakat',     icon: Coins,           color: 'text-emerald-600' },
-        { href: '/profile',       label: 'Profil',    icon: UserCog,         color: 'text-primary' },
+        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
+        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
+        { href: '/stock',         label: 'Stock',     icon: Archive },
+        { href: '/products',      label: 'Produits',  icon: Package },
+        { href: '/customers',     label: 'Clients',   icon: Users2 },
+        { href: '/sales-history', label: 'Ventes',    icon: History },
+        { href: '/returns',       label: 'Retours',   icon: Undo2 },
+        { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
+        { href: '/bread',         label: 'Pain',      icon: Wheat },
+        { href: '/zakat',         label: 'Zakat',     icon: Coins },
+        { href: '/profile',       label: 'Profil',    icon: UserCog },
     ], []);
     
     const pathname = usePathname();
@@ -49,7 +49,7 @@ export function AppHeader() {
     return (
         <header className="print-hide sticky top-0 z-40 w-full">
             <div className="
-                relative flex h-13 items-center gap-2 px-3
+                relative flex h-14 items-center gap-2 px-4
                 border-b border-border
                 bg-card
                 shadow-sm
@@ -61,7 +61,6 @@ export function AppHeader() {
                     <div className={cn(
                         "relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300",
                         "bg-primary",
-                        "border border-primary/20",
                         "group-hover:scale-105",
                     )}>
                         <Image 
@@ -69,57 +68,49 @@ export function AppHeader() {
                             alt="iPOS Zen Logo" 
                             width={32} 
                             height={32} 
-                            className="group-hover:rotate-3 transition-transform duration-500"
                         />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1">
-                        <span className="font-black text-sm tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+                        <span className="font-black text-sm tracking-tight text-foreground uppercase" style={{ fontFamily: 'Syne, sans-serif' }}>
                             iPOS <span className="text-primary">Zen</span>
                         </span>
-                        <span className="text-[8px] text-muted-foreground/50 font-black tracking-[0.2em] uppercase">
-                            Elite System
+                        <span className="text-[8px] text-muted-foreground font-black tracking-[0.2em] uppercase">
+                            Elite Ledger
                         </span>
                     </div>
                 </Link>
 
-                <div className="h-5 w-px bg-border mx-1 shrink-0" />
+                <div className="h-6 w-px bg-border mx-2 shrink-0" />
 
                 <TooltipProvider delayDuration={0}>
                     <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
-                        {navLinks.map((link, idx) => {
+                        {navLinks.map((link) => {
                             const isActive = pathname.startsWith(link.href);
                             const Icon = link.icon as React.ElementType;
                             return (
                                 <Tooltip key={link.href}>
                                     <TooltipTrigger asChild>
-                                        <span>
-                                            <Link
-                                                href={link.href}
-                                                aria-label={link.label}
-                                                className={cn(
-                                                    'relative flex items-center justify-center rounded-xl shrink-0 group transition-all duration-200',
-                                                    isActive
-                                                        ? 'h-9 px-4 bg-primary text-primary-foreground shadow-sm w-auto'
-                                                        : 'w-9 h-9 text-muted-foreground border border-transparent hover:bg-muted hover:text-foreground'
-                                                )}
-                                            >
-                                                <Icon className={cn(
-                                                    'h-4 w-4 transition-transform duration-200',
-                                                    isActive ? 'scale-110' : 'group-hover:scale-110'
-                                                )} />
-                                                
-                                                {isActive && (
-                                                    <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                                                        {link.label}
-                                                    </span>
-                                                )}
-                                            </Link>
-                                        </span>
+                                        <Link
+                                            href={link.href}
+                                            className={cn(
+                                                'relative flex items-center justify-center rounded-xl shrink-0 transition-all duration-200',
+                                                isActive
+                                                    ? 'h-10 px-4 bg-primary text-primary-foreground shadow-sm'
+                                                    : 'w-10 h-10 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            )}
+                                        >
+                                            <Icon className={cn(
+                                                'h-4.5 w-4.5',
+                                                isActive ? 'scale-110' : ''
+                                            )} />
+                                            {isActive && (
+                                                <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                                                    {link.label}
+                                                </span>
+                                            )}
+                                        </Link>
                                     </TooltipTrigger>
-                                    <TooltipContent
-                                        side="bottom"
-                                        className="text-xs font-medium bg-card border border-border shadow-sm"
-                                    >
+                                    <TooltipContent side="bottom" className="bg-card border-border shadow-md">
                                         {link.label}
                                     </TooltipContent>
                                 </Tooltip>
@@ -128,8 +119,8 @@ export function AppHeader() {
                     </nav>
                 </TooltipProvider>
 
-                <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                    <div className="hidden md:flex items-center px-2.5 py-1 rounded-lg border border-border bg-muted text-xs text-muted-foreground font-mono gap-1.5">
+                <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <div className="hidden md:block">
                         <Clock />
                     </div>
 
@@ -138,24 +129,24 @@ export function AppHeader() {
                             variant="ghost"
                             size="icon"
                             className={cn(
-                                'h-8 w-8 rounded-lg border border-transparent transition-all',
+                                'h-9 w-9 rounded-xl transition-all',
                                 isSyncing
-                                    ? 'border-primary/25 bg-primary/10 text-primary'
-                                    : 'hover:bg-muted text-muted-foreground',
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-muted-foreground hover:bg-muted',
                             )}
                             onClick={() => performBackgroundSync()}
                             disabled={isSyncing}
                         >
-                            <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
+                            <RefreshCw className={cn('h-4 w-4', isSyncing && 'animate-spin')} />
                         </Button>
                     )}
 
                     <ThemeToggle />
 
                     {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5 shadow-sm">
-                            <Building className="h-3 w-3 text-primary shrink-0" />
-                            <span className="text-[10px] font-black uppercase text-primary truncate max-w-[150px]">
+                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-wider shadow-sm">
+                            <Building className="h-3.5 w-3.5" />
+                            <span className="truncate max-w-[120px]">
                                 {companyProfile.companyName}
                             </span>
                         </div>

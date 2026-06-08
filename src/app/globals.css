@@ -12,8 +12,8 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
 
-    --animate-page-enter:    page-enter 0.3s cubic-bezier(0.22,1,0.36,1) both;
-    --animate-fade-in:       fade-in 0.2s ease both;
+    --animate-page-enter:    page-enter 0.2s ease-out both;
+    --animate-fade-in:       fade-in 0.15s ease both;
 
     --color-primary:         32  85% 38%;
     --color-background:      35  25% 94%;
@@ -29,16 +29,16 @@
         --primary-foreground:   35  25% 94%;
         --secondary:            35  20% 90%;
         --secondary-foreground: 20  45% 12%;
-        --muted:                35  15% 88%;
+        --muted:                35  15% 86%;
         --muted-foreground:     20  20% 45%;
         --accent:               32  95% 45%;
         --accent-foreground:    35  25% 94%;
         --destructive:          0   84% 60%;
         --destructive-foreground: 0 0% 100%;
-        --border:               35  25% 82%;
-        --input:                35  25% 82%;
+        --border:               35  20% 82%;
+        --input:                35  20% 82%;
         --ring:                 32  85% 38%;
-        --radius:               0.85rem;
+        --radius:               0.75rem;
         
         --chart-primary:    32 85% 38%;
         --chart-secondary:  142 65% 42%;
@@ -64,12 +64,6 @@
         --border:               24  30% 18%;
         --input:                24  30% 18%;
         --ring:                 40  90% 55%;
-        
-        --chart-primary:    40 90% 55%;
-        --chart-secondary:  142 70% 50%;
-        --chart-tertiary:   200 95% 60%;
-        --chart-quaternary: 272 85% 65%;
-        --chart-quinary:    40 95% 65%;
     }
 }
 
@@ -82,6 +76,7 @@
         font-size: 13px;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
+        overscroll-behavior-y: none;
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-display);
@@ -89,29 +84,24 @@
 }
 
 @layer utilities {
-    /* Solid Design - No Transparency */
     .solid-card {
-        background: hsl(var(--card));
+        background-color: hsl(var(--card));
         border: 1px solid hsl(var(--border));
         border-radius: var(--radius-2xl);
-        transition: all 0.2s;
     }
-
-    .solid-card:hover {
-        border-color: hsl(var(--primary));
-        transform: translateY(-1px);
-    }
-
-    .gradient-text {
-        color: hsl(var(--foreground));
+    
+    .themed-popup-header {
+        background-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
     }
 }
 
 .animate-page-enter { animation: var(--animate-page-enter); }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
 ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
+    background: hsl(var(--muted));
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {

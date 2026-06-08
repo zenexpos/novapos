@@ -33,12 +33,12 @@ export function DatePicker({
                     disabled={disabled}
                     className={cn(
                         'w-full justify-start text-left font-normal h-10 rounded-xl',
-                        'border-[var(--glass-border)] bg-[var(--glass-bg)]',
-                        !date && 'text-muted-foreground/50',
+                        'border-border bg-card',
+                        !date && 'text-muted-foreground',
                         className,
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4 text-primary/60 shrink-0" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-primary shrink-0" />
                     <span className="flex-1 truncate">
                         {date ? format(date, 'd MMMM yyyy', { locale: fr }) : placeholder}
                     </span>
@@ -46,23 +46,22 @@ export function DatePicker({
                         <div
                             role="button"
                             aria-label="Effacer la date"
-                            className="ml-2 rounded-md p-0.5 hover:bg-muted/40 transition-colors"
+                            className="ml-2 rounded-md p-0.5 hover:bg-muted transition-colors"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setDate(undefined);
                             }}
                         >
-                            <X className="h-3 w-3 text-muted-foreground/50" />
+                            <X className="h-3 w-3 text-muted-foreground" />
                         </div>
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 glass-elevated" align="start">
+            <PopoverContent className="w-auto p-0 border-border bg-card shadow-xl" align="start">
                 <Calendar
                     mode="single"
                     selected={date}
                     onSelect={(d) => { setDate(d); setOpen(false); }}
-                    initialFocus
                     locale={fr}
                 />
             </PopoverContent>

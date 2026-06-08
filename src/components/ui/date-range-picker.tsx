@@ -38,28 +38,27 @@ export function DateRangePicker({
                     variant="outline"
                     className={cn(
                         'w-full justify-start text-left font-normal h-10 rounded-xl sm:w-[280px]',
-                        'border-[var(--glass-border)] bg-[var(--glass-bg)]',
-                        !date && 'text-muted-foreground/50',
+                        'border-border bg-card',
+                        !date && 'text-muted-foreground',
                         className,
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4 text-primary/60 shrink-0" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-primary shrink-0" />
                     <span className="flex-1 truncate text-sm">{label}</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 glass-elevated" align="end">
-                {/* Preset buttons */}
+            <PopoverContent className="w-auto p-0 border-border bg-card shadow-xl" align="end">
                 {setPreset && (
-                    <div className="flex flex-wrap gap-1.5 p-3 border-b border-[var(--glass-border)]">
+                    <div className="flex flex-wrap gap-1.5 p-3 border-b border-border bg-muted/50">
                         {DATE_PRESETS.map(preset => (
                             <button
                                 key={preset.label}
                                 onClick={() => { setPreset(preset); setOpen(false); }}
                                 className={cn(
-                                    'px-2.5 py-1 rounded-lg text-xs font-semibold tracking-tight transition-all',
+                                    'px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-tight transition-all',
                                     activePreset?.label === preset.label
-                                        ? 'bg-primary/15 text-primary border border-primary/25'
-                                        : 'text-muted-foreground/60 hover:bg-muted/40 border border-transparent',
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-muted border border-transparent',
                                 )}
                             >
                                 {preset.label}
@@ -68,7 +67,6 @@ export function DateRangePicker({
                     </div>
                 )}
                 <Calendar
-                    initialFocus
                     mode="range"
                     defaultMonth={date?.from}
                     selected={date}

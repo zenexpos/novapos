@@ -1,20 +1,26 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Solid Background Circle -->
-  <rect width="512" height="512" rx="128" fill="#c07814"/>
+  <!-- Solid Rounded Background -->
+  <rect width="512" height="512" rx="120" fill="#c07814"/>
   
-  <!-- Monitor Path -->
-  <path d="M120 160H392V340H120V160Z" fill="white"/>
-  <path d="M140 180H372V320H140V180Z" fill="#0D0804"/>
-  <rect x="220" y="340" width="72" height="40" fill="white"/>
-  <rect x="180" y="380" width="152" height="12" rx="6" fill="white"/>
+  <!-- Monitor Frame -->
+  <path d="M100 140C100 128.954 108.954 120 120 120H392C403.046 120 412 128.954 412 140V320C412 331.046 403.046 340 392 340H120C108.954 340 100 331.046 100 320V140Z" fill="white"/>
   
-  <!-- Ledger (Book) Path -->
-  <path d="M300 240H432V420C432 431.046 423.046 440 412 440H280V260C280 248.954 288.954 240 300 240Z" fill="#FFD700" stroke="#0D0804" stroke-width="8"/>
-  <path d="M300 240H320V440H300V240Z" fill="#c07814"/>
+  <!-- Monitor Stand -->
+  <path d="M216 340H296V380H216V340Z" fill="white"/>
+  <path d="M180 380H332V400H180V380Z" fill="white"/>
+  
+  <!-- Screen Content (Chart) -->
+  <rect x="140" y="240" width="40" height="60" rx="4" fill="#c07814"/>
+  <rect x="200" y="200" width="40" height="100" rx="4" fill="#c07814"/>
+  <rect x="260" y="260" width="40" height="40" rx="4" fill="#c07814"/>
+  <rect x="320" y="160" width="40" height="140" rx="4" fill="#c07814"/>
+
+  <!-- Ledger / Notebook Overlay -->
+  <path d="M300 240C300 228.954 308.954 220 320 220H420C431.046 220 440 228.954 440 240V420C440 431.046 431.046 440 420 440H320C308.954 440 300 431.046 300 420V240Z" fill="#241505" stroke="white" stroke-width="8"/>
   
   <!-- Ledger Lines -->
-  <rect x="330" y="280" width="70" height="6" rx="3" fill="#0D0804" opacity="0.3"/>
-  <rect x="330" y="305" width="70" height="6" rx="3" fill="#0D0804" opacity="0.3"/>
-  <rect x="330" y="330" width="70" height="6" rx="3" fill="#0D0804" opacity="0.3"/>
-  <rect x="330" y="355" width="70" height="6" rx="3" fill="#0D0804" opacity="0.3"/>
+  <path d="M330 270H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <path d="M330 310H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <path d="M330 350H410" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <path d="M330 390H380" stroke="white" stroke-width="6" stroke-linecap="round"/>
 </svg>
