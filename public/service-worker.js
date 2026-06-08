@@ -1,24 +1,53 @@
 /**
  * iPOS Zen — Service Worker (Elite Edition)
- * المحرك التقني المسؤول عن دعم وضع الأوفلاين وصلاحية التثبيت كـ PWA.
+ * Mandatory for PWA installability and offline support.
  */
 
-const CACHE_NAME = 'ipos-zen-v1';
+const CACHE_NAME = 'ipos-zen-v3';
 
-// 1. التثبيت — تخطي الانتظار لتفعيل التحديثات فوراً
+// Basic assets to cache for offline availability
+const PRECACHE_ASSETS = [
+  '/',
+  '/manifest.webmanifest',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
+];
+
 self.addEventListener('install', (event) => {
-    self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+  );
+  self.skipWaiting();
 });
 
-// 2. التفعيل — السيطرة على كافة النوافذ المفتوحة
 self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// 3. مستمع الـ Fetch — الشرط الإلزامي لظهور زر التثبيت في Chrome/Edge
-// حتى لو كان فارغاً، يجب وجوده ليتم اعتبار التطبيق "قابلاً للتثبيت"
+/**
+ * MANDATORY: The 'fetch' event listener is the key to PWA installability.
+ * Even a simple pass-through makes the app "installable" in Chrome/Edge.
+ */
 self.addEventListener('fetch', (event) => {
-    // نظام iPOS Zen يعتمد على IndexedDB للبيانات، لذا نترك المتصفح يتعامل مع الطلبات
-    // وجود هذا المستمع يخبر المتصفح أن التطبيق يمتلك قدرات العمل المحلي
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/'))
+    );
     return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });

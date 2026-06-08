@@ -1,10 +1,39 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
- * الصفحة الجذرية - توجيه سيادي صلب.
- * يستخدم redirect() على جانب الخادم لضمان أفضل توافق مع Next.js 15 
- * وتجنب أخطاء 404 أثناء التحميل الأولي في وضع التصدير الاستاتيكي.
+ * RootPage — Client-side redirect.
+ * Fixed for 'output: export' compatibility in Next.js 15.
+ * Prevents 404 errors on initial load in static environments.
  */
 export default function RootPage() {
-  redirect('/dashboard/');
+  const router = useRouter();
+
+  useEffect(() => {
+    // Immediate replacement to dashboard
+    router.replace('/dashboard/');
+  }, [router]);
+
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative">
+          <div className="h-16 w-16 animate-spin rounded-2xl border-4 border-primary/20 border-t-primary" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-1 text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary animate-pulse">
+            iPOS Zen
+          </p>
+          <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground opacity-40">
+            Initialisation du registre...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
