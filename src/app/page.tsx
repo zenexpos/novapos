@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 /**
  * RootPage — توجيه سيادي فوري.
  * يضمن تحويل المستخدم مباشرة إلى لوحة التحكم عند فتح التطبيق.
+ * تم تحسينه لمنع خطأ الـ 404 في وضع التصدير الاستاتيكي.
  */
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // استخدام replace بدلاً من push لمنع العودة لصفحة التحميل
-    router.replace('/dashboard/');
+    // استخدام replace لمنع تراكم الصفحات في سجل المتصفح
+    router.replace('/dashboard');
   }, [router]);
 
   return (

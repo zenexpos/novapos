@@ -84,7 +84,7 @@
   }
 }
 
-/* SOLID UI — إلغاء الشفافية لضمان استقرار وموثوقية النظام */
+/* SOLID UI — تطبيق نظام الألوان الصلبة لضمان الثبات والفخامة */
 .app-card, .glass, .glass-stat, .glass-elevated {
   background-color: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
