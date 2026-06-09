@@ -107,7 +107,7 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// A4 Receipt — Institutional Luxury Layout (Standard Algérien)
+// A4 Receipt — Monochrome & Compact (Institutional Standard)
 // ─────────────────────────────────────────────────────────────────────────────
 const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -117,134 +117,133 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
     const newBalance = oldBalance + currentDebtOfThisSale;
 
     return (
-        <div className="a4-receipt-wrapper bg-white text-black p-12 font-sans" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box', margin: '0 auto' }}>
-            {/* Header المؤسساتي */}
-            <div className="flex justify-between items-start border-b-4 border-black pb-8 mb-12">
-                <div className="space-y-2 max-w-[65%]">
-                    <h1 className="text-3xl font-black uppercase tracking-tighter text-primary">{profile?.companyName ?? 'iPOS ZEN ELITE'}</h1>
-                    <p className="text-sm font-bold opacity-80 leading-relaxed">{profile?.address || 'Adresse non configurée'}</p>
-                    <p className="text-sm font-bold opacity-80">Tél: <span className="font-mono">{profile?.phone || '—'}</span></p>
+        <div className="a4-receipt-wrapper bg-white text-black p-8 font-sans" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box', margin: '0 auto' }}>
+            {/* Header المؤسساتي المبسط */}
+            <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">
+                <div className="space-y-1 max-w-[65%]">
+                    <h1 className="text-xl font-bold uppercase tracking-tight">{profile?.companyName ?? 'iPOS ZEN ELITE'}</h1>
+                    <p className="text-xs font-medium leading-relaxed">{profile?.address || 'Adresse non configurée'}</p>
+                    <p className="text-xs font-bold">Tél: <span className="font-mono">{profile?.phone || '—'}</span></p>
                     
                     {/* Algerian Tax Details */}
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 mt-6 pt-6 border-t border-black/10">
-                       {profile?.rc_number && <p className="text-[10pt] font-mono font-bold uppercase">RC: {profile.rc_number}</p>}
-                       {profile?.nif && <p className="text-[10pt] font-mono font-bold uppercase">NIF: {profile.nif}</p>}
-                       {profile?.ai_number && <p className="text-[10pt] font-mono font-bold uppercase">AI: {profile.ai_number}</p>}
-                       {profile?.nis_number && <p className="text-[10pt] font-mono font-bold uppercase">NIS: {profile.nis_number}</p>}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-4 pt-4 border-t border-black/10 text-[9pt]">
+                       {profile?.rc_number && <p className="font-mono font-bold uppercase">RC: {profile.rc_number}</p>}
+                       {profile?.nif && <p className="font-mono font-bold uppercase">NIF: {profile.nif}</p>}
+                       {profile?.ai_number && <p className="font-mono font-bold uppercase">AI: {profile.ai_number}</p>}
+                       {profile?.nis_number && <p className="font-mono font-bold uppercase">NIS: {profile.nis_number}</p>}
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="bg-black text-white px-8 py-3 rounded-md mb-6 inline-block shadow-xl">
-                        <h2 className="text-2xl font-black uppercase tracking-widest">BON DE LIVRAISON</h2>
+                    <div className="border border-black px-4 py-1.5 rounded-sm mb-4 inline-block">
+                        <h2 className="text-sm font-bold uppercase tracking-widest">BON DE LIVRAISON</h2>
                     </div>
-                    <p className="text-3xl font-mono font-black tracking-tight mb-2">N° {sale.invoiceNumber}</p>
-                    <p className="text-sm font-black uppercase text-gray-500">Émis le : {date}</p>
+                    <p className="text-xl font-mono font-bold tracking-tight mb-1">N° {sale.invoiceNumber}</p>
+                    <p className="text-[10px] font-bold uppercase text-gray-500">Date : {date}</p>
                 </div>
             </div>
 
-            {/* Informations Client */}
-            <div className="grid grid-cols-2 gap-12 mb-12">
-                <div className="bg-gray-50 p-8 rounded-2xl border-2 border-black/5 flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Destinataire / Client</p>
-                    <p className="text-2xl font-black tracking-tight uppercase leading-tight">{customerName || 'Client de passage'}</p>
+            {/* Informations Client المبسطة */}
+            <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="p-4 rounded-md border border-black flex flex-col justify-center">
+                    <p className="text-[9px] font-bold uppercase text-gray-400 mb-1 tracking-widest">Destinataire / Client</p>
+                    <p className="text-base font-bold tracking-tight uppercase leading-tight">{customerName || 'Client de passage'}</p>
                 </div>
                 
-                <div className="p-8 border-2 border-dashed border-black/10 rounded-2xl flex flex-col items-end justify-center">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1 tracking-widest">Nature de l'opération</p>
-                    <p className="text-xl font-black uppercase text-primary">
+                <div className="p-4 border border-dashed border-black/20 rounded-md flex flex-col items-end justify-center">
+                    <p className="text-[9px] font-bold uppercase text-gray-400 mb-0.5 tracking-widest">Nature de l'opération</p>
+                    <p className="text-sm font-bold uppercase">
                         {sale.paymentStatus === 'paid' ? 'Vente au Comptant' : 'Vente à Crédit'}
                     </p>
                     {sale.dueDate && (
-                        <p className="text-xs font-bold text-destructive mt-2 uppercase tracking-wide">
-                            Échéance de paiement : {format(new Date(sale.dueDate), 'dd/MM/yyyy')}
+                        <p className="text-[10px] font-bold text-black mt-1 uppercase tracking-wide">
+                            Échéance : {format(new Date(sale.dueDate), 'dd/MM/yyyy')}
                         </p>
                     )}
                 </div>
             </div>
 
-            {/* Table des Articles */}
-            <table className="w-full border-collapse mb-12 overflow-hidden rounded-2xl">
+            {/* Table des Articles المبسطة */}
+            <table className="w-full border-collapse mb-8 text-[9pt]">
                 <thead>
-                    <tr className="bg-black text-white">
-                        <th className="p-5 text-left text-[11pt] font-black uppercase tracking-widest">Designation des Produits</th>
-                        <th className="p-5 text-center text-[11pt] font-black uppercase tracking-widest w-24">Qté</th>
-                        <th className="p-5 text-right text-[11pt] font-black uppercase tracking-widest w-40">P.U (DA)</th>
-                        <th className="p-5 text-right text-[11pt] font-black uppercase tracking-widest w-44">Total (DA)</th>
+                    <tr className="bg-gray-100 border-y border-black">
+                        <th className="p-3 text-left font-bold uppercase tracking-wider">Designation des Produits</th>
+                        <th className="p-3 text-center font-bold uppercase tracking-wider w-16">Qté</th>
+                        <th className="p-3 text-right font-bold uppercase tracking-wider w-32">P.U (DA)</th>
+                        <th className="p-3 text-right font-bold uppercase tracking-wider w-36">Total (DA)</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-gray-50 border-x-2 border-black/5">
+                <tbody className="divide-y divide-gray-100 border-x border-black/5">
                     {sale.items.map((item, idx) => (
-                        <tr key={idx} className="group hover:bg-gray-50/50">
-                            <td className="p-5 font-bold uppercase text-[10pt] leading-relaxed">{item.name}</td>
-                            <td className="p-5 text-center font-black text-[12pt]">{item.quantity}</td>
-                            <td className="p-5 text-right font-mono text-[11pt]">{fmt(item.price)}</td>
-                            <td className="p-5 text-right font-black text-[12pt]">{fmt(item.price * item.quantity)}</td>
+                        <tr key={idx}>
+                            <td className="p-3 font-medium uppercase leading-relaxed">{item.name}</td>
+                            <td className="p-3 text-center font-bold">{item.quantity}</td>
+                            <td className="p-3 text-right font-mono">{fmt(item.price)}</td>
+                            <td className="p-3 text-right font-bold">{fmt(item.price * item.quantity)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
-            {/* Récapitulatif Financier */}
-            <div className="flex justify-end mb-16">
-                <div className="w-[500px] space-y-4">
-                    <div className="flex justify-between text-[11pt] font-bold text-gray-500 px-6">
-                        <span className="uppercase tracking-widest">Sous-Total Brut</span>
-                        <span className="font-mono">{fmt(sale.subtotal)} DA</span>
+            {/* Récapitulatif Financier Monochrome */}
+            <div className="flex justify-end mb-12">
+                <div className="w-80 space-y-2">
+                    <div className="flex justify-between text-[10pt] font-medium text-gray-500 px-2">
+                        <span className="uppercase tracking-widest">Sous-Total</span>
+                        <span className="font-mono">{fmt(sale.subtotal)}</span>
                     </div>
                     
                     {safeNumber(sale.discountAmount) > 0.01 && (
-                        <div className="flex justify-between text-[11pt] font-black text-emerald-600 px-6">
-                            <span className="uppercase tracking-widest">Remise Spécialه</span>
-                            <span className="font-mono">-{fmt(safeNumber(sale.discountAmount))} DA</span>
+                        <div className="flex justify-between text-[10pt] font-bold px-2 italic">
+                            <span className="uppercase tracking-widest">Remise</span>
+                            <span className="font-mono">-{fmt(safeNumber(sale.discountAmount))}</span>
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center bg-black text-white p-8 rounded-2xl shadow-2xl">
-                        <span className="font-black uppercase text-[12pt] tracking-[0.3em]">NET A PAYER (DA)</span>
-                        <span className="text-4xl font-black tracking-tighter tabular-nums">{fmt(sale.total)}</span>
+                    <div className="flex justify-between items-center border-t-2 border-black p-4 mt-2">
+                        <span className="font-bold uppercase text-[10pt] tracking-widest">NET A PAYER</span>
+                        <span className="text-xl font-bold tracking-tighter tabular-nums">{fmt(sale.total)}</span>
                     </div>
 
-                    <div className="pt-8 mt-6 border-t-4 border-double border-gray-100 px-6 space-y-3">
-                        <div className="flex justify-between text-[11pt] font-bold">
-                            <span className="uppercase opacity-40 italic">Versement Effectué</span>
-                            <span className="text-emerald-600 font-black">-{fmt(safeNumber(sale.amountPaid))} DA</span>
+                    <div className="pt-4 mt-2 border-t border-dashed border-black/10 px-2 space-y-1 text-[10pt]">
+                        <div className="flex justify-between">
+                            <span className="uppercase opacity-50 italic">Versé (Reçu)</span>
+                            <span className="font-bold">-{fmt(safeNumber(sale.amountPaid))}</span>
                         </div>
-                        <div className="flex justify-between items-center text-3xl font-black text-red-600 pt-4 border-t border-black/5 mt-4">
-                            <span className="uppercase text-[10pt] tracking-[0.2em]">Reste à Recouvrer</span>
-                            <span className="tracking-tighter tabular-nums">{fmt(newBalance)} DA</span>
+                        <div className="flex justify-between items-center text-lg font-bold border-t border-black/5 pt-2 mt-2">
+                            <span className="uppercase text-[8pt] tracking-widest">Solde Dû</span>
+                            <span className="tracking-tighter tabular-nums">{fmt(newBalance)}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Arrêté de la facture */}
-            <div className="p-8 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 mb-16 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-3 h-full bg-primary" />
-                <p className="text-[10pt] font-black uppercase text-gray-400 mb-3 tracking-widest">Arrêtée la présente facture à la somme de :</p>
-                <p className="text-[12pt] font-black uppercase leading-relaxed text-secondary italic">
+            <div className="p-4 bg-gray-50 rounded-md border border-gray-200 mb-12">
+                <p className="text-[8px] font-bold uppercase text-gray-400 mb-1 tracking-widest">Arrêtée la présente facture à la somme de :</p>
+                <p className="text-[10pt] font-bold uppercase leading-relaxed italic">
                     {numberToFrenchWords(sale.total)}
                 </p>
             </div>
 
             {/* Zone de Signature & Cacheت */}
-            <div className="flex justify-between px-16 text-center mt-auto pt-12">
-                <div className="space-y-24">
-                    <p className="text-[11pt] font-black uppercase tracking-[0.2em] opacity-40">Cachet & Signature</p>
-                    <div className="h-32 w-32 mx-auto border-4 border-gray-50 rounded-full flex items-center justify-center opacity-5">
-                        <span className="text-[10pt] font-black">STAMP</span>
+            <div className="flex justify-between px-8 text-center mt-auto pt-8">
+                <div className="space-y-16">
+                    <p className="text-[9pt] font-bold uppercase tracking-widest opacity-40">Cachet & Signature</p>
+                    <div className="h-20 w-20 mx-auto border-2 border-gray-100 rounded-full flex items-center justify-center opacity-5">
+                        <span className="text-[8pt] font-bold">STAMP</span>
                     </div>
                 </div>
-                <div className="space-y-24">
-                    <p className="text-[11pt] font-black uppercase tracking-[0.2em] opacity-40">Accusé de Réception</p>
-                    <p className="text-[11pt] italic text-gray-300 font-medium">"Bon pour accord et réception"</p>
+                <div className="space-y-16">
+                    <p className="text-[9pt] font-bold uppercase tracking-widest opacity-40">Accusé de Réception</p>
+                    <p className="text-[9pt] italic text-gray-300 font-medium">"Bon pour accord"</p>
                 </div>
             </div>
 
-            {/* Footer السيادي */}
-            <footer className="mt-24 pt-10 border-t border-gray-100 flex justify-between items-center text-[9pt] font-bold text-gray-300 uppercase tracking-widest">
-                <span>iPOS ZEN v2.10 — SOVEREIGN LEDGER SYSTEM</span>
-                <span className="font-mono">DOC-ID: {sale.uuid.substring(0,12).toUpperCase()}</span>
-                <span>Document Original</span>
+            {/* Footer المبسط */}
+            <footer className="mt-16 pt-6 border-t border-gray-100 flex justify-between items-center text-[7pt] font-bold text-gray-300 uppercase tracking-widest">
+                <span>iPOS ZEN v2.10 — SOVEREIGN LEDGER</span>
+                <span className="font-mono">ID: {sale.uuid.substring(0,8).toUpperCase()}</span>
+                <span>Original</span>
             </footer>
         </div>
     );
