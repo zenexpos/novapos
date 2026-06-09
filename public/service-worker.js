@@ -1,33 +1,40 @@
 /**
- * iPOS Zen — Sovereign Service Worker (Elite Production)
- * المحرك الجوهري لتفعيل خاصية التثبيت والعمل بدون إنترنت.
+ * iPOS Zen — Sovereign Service Worker (Elite Edition)
+ * Provides offline capabilities and enables PWA installation.
  */
 
-const CACHE_NAME = 'ipos-zen-v2';
-const OFFLINE_URL = '/offline/';
+const CACHE_NAME = 'ipos-zen-cache-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  console.log('[iPOS Zen] Service Worker installed.');
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
       );
     })
   );
-  self.clients.claim();
+  console.log('[iPOS Zen] Service Worker activated and cache cleaned.');
 });
 
-// مستمع الـ Fetch إلزامي لمتصفح Chrome لتفعيل زر التثبيت
+/**
+ * The 'fetch' listener is mandatory for Chrome/Edge to show the install button.
+ */
 self.addEventListener('fetch', (event) => {
+  // Logic-less fetch listener to satisfy PWA criteria
+  // All assets are served normally unless offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match(OFFLINE_URL);
+        return caches.match('/offline/');
       })
     );
   }

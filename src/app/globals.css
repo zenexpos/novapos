@@ -48,7 +48,6 @@
     --ring: 62 60% 44%;
     --radius: 0.75rem;
 
-    /* Custom Glass for Light Mode */
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(15, 23, 42, 0.05);
     --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
@@ -75,7 +74,6 @@
     --input: 217 33% 17%;
     --ring: 62 60% 50%;
 
-    /* Custom Glass for Dark Mode */
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: rgba(255, 255, 255, 0.04);
     --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -83,9 +81,7 @@
 }
 
 @layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
+  * { border-color: hsl(var(--border)); }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -94,25 +90,10 @@
   }
 }
 
-/* ══════════════════════════════════════════════════════════
-   SOVEREIGN LAYOUT UTILITIES
-   ══════════════════════════════════════════════════════════ */
-
-.nav-solid {
-  background-color: hsl(var(--secondary));
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.info-bar-solid {
-  background-color: hsl(var(--card));
-  border-bottom: 1px solid hsl(var(--border));
-  box-shadow: var(--glass-shadow);
-}
-
-.dark .info-bar-solid {
-  background-color: hsl(var(--secondary));
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
+/* SOVEREIGN LAYOUT UTILITIES */
+.nav-solid { background-color: hsl(var(--secondary)); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.info-bar-solid { background-color: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); box-shadow: var(--glass-shadow); }
+.dark .info-bar-solid { background-color: hsl(var(--secondary)); border-bottom: 1px solid rgba(255,255,255,0.03); }
 
 .glass {
   background-color: var(--glass-bg) !important;
@@ -128,7 +109,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   SOVEREIGN PRINT SYSTEM
+   SOVEREIGN CENTRALIZED PRINT SYSTEM (A4 MONOCHROME)
    ══════════════════════════════════════════════════════════ */
 @media print {
   .print-hide, nav, header, main, .info-bar-solid, .fixed, button, 
@@ -136,21 +117,17 @@
   .print-hidden, [aria-hidden="true"] {
     display: none !important;
     visibility: hidden !important;
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
+    height: 0 !important; width: 0 !important; overflow: hidden !important;
   }
 
   #receipt-for-print {
     display: flex !important;
     visibility: visible !important;
     position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    left: 0 !important; top: 0 !important;
     width: 100% !important;
     min-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 !important; padding: 0 !important;
     background: white !important;
     color: black !important;
     z-index: 9999999 !important;
@@ -158,16 +135,14 @@
     align-items: flex-start !important;
   }
 
-  body {
-    background: white !important;
-    overflow: visible !important;
-  }
+  body { background: white !important; overflow: visible !important; }
 
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    background-color: transparent !important;
   }
 
   .a4-receipt {
@@ -177,20 +152,22 @@
     background: white !important;
     color: black !important;
     border: none !important;
-    font-size: 9pt !important;
+    font-size: 8.5pt !important; /* Smaller text for elite document */
   }
+
+  .a4-receipt table { width: 100% !important; border-collapse: collapse !important; }
+  .a4-receipt th, .a4-receipt td { border: 1px solid #ddd !important; padding: 6px !important; }
+  .a4-receipt th { background-color: #f9f9f9 !important; font-weight: 900 !important; }
 
   .thermal-receipt {
     width: 80mm !important;
     max-width: 80mm !important;
     margin: 0 auto !important;
     padding: 5mm !important;
+    font-family: 'Courier New', Courier, monospace !important;
   }
 
-  @page {
-    margin: 0;
-    size: auto;
-  }
+  @page { margin: 0; size: auto; }
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
