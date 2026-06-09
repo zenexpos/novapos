@@ -26,8 +26,9 @@ export function usePrint() {
     target.innerHTML = '';
     const clone = source.cloneNode(true) as HTMLElement;
     
-    // إزالة قيود الارتفاع والعرض الخاصة بالمعاينة
+    // إزالة قيود الارتفاع والعرض الخاصة بالمعاينة لضمان طباعة كاملة
     clone.style.maxHeight = 'none';
+    clone.style.height = 'auto';
     clone.style.overflow = 'visible';
     clone.style.transform = 'none';
     clone.style.margin = '0 auto';
@@ -46,12 +47,12 @@ export function usePrint() {
       document.title = options.title;
     }
     
-    // الانتظار قليلاً لضمان رندر العناصر (خاصة الصور والباركود)
+    // الانتظار قليلاً لضمان رندر كافة العناصر (خاصة الجداول الطويلة)
     setTimeout(() => {
       window.print();
       document.title = originalTitle;
       setIsPrinting(false);
-    }, 300);
+    }, 400);
   }, []);
 
   return { printElement, isPrinting };

@@ -89,12 +89,14 @@
    ══════════════════════════════════════════════════════════ */
 @media print {
   /* إخفاء كافة عناصر الواجهة بشكل قاطع ونهائي */
-  .print-hide, nav, header, main, .info-bar-solid, .fixed, button, [role="dialog"], [data-radix-popper-content-wrapper], .toaster {
+  .print-hide, nav, header, main, .info-bar-solid, .fixed, button, [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
     width: 0 !important;
     overflow: hidden !important;
+    position: absolute !important;
+    top: -9999px !important;
   }
 
   /* الحاوية الوحيدة التي تظهر هي حاوية الطباعة المخصصة */
@@ -109,7 +111,7 @@
     padding: 0 !important;
     background: white !important;
     color: black !important;
-    z-index: 9999 !important;
+    z-index: 9999999 !important;
   }
 
   #receipt-for-print * {
@@ -120,6 +122,7 @@
     background: white !important;
     overflow: visible !important;
     height: auto !important;
+    width: 100% !important;
   }
 
   @page {
@@ -135,7 +138,7 @@
   }
 
   /* منع قطع العناصر المهمة */
-  tr, img, table, .break-avoid, .receipt-section {
+  tr, img, table, .break-avoid, .receipt-section, blockquote {
     page-break-inside: avoid !important;
   }
 }

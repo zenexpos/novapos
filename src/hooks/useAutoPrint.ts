@@ -4,15 +4,13 @@ import { useCallback } from 'react';
 import type { Sale, CompanyProfile } from '@/lib/types';
 
 /**
- * useAutoPrint — hook React pour l'impression thermique 80mm.
- * Optimisé pour une mise en page "Elite" alignée sur les standards du secteur.
+ * useAutoPrint — هوك الطباعة التلقائية السريعة للطابعات الحرارية.
+ * يستخدم نافذة منبثقة مخفية لضمان عدم تعطل واجهة البيع.
  */
 export function useAutoPrint() {
     const isEnabled = useCallback((): boolean => {
         try {
-            return (
-                localStorage.getItem('ipos-autoprint-enabled') === 'true'
-            );
+            return localStorage.getItem('ipos-autoprint-enabled') === 'true';
         } catch {
             return false;
         }
@@ -28,19 +26,15 @@ export function useAutoPrint() {
 
             const rows = sale.items
                 .map(i => {
-                    const lineTotal = (
-                        Number(i.price) * Number(i.quantity)
-                    ).toLocaleString('fr-DZ', { minimumFractionDigits: 2 });
-                    
+                    const lineTotal = (Number(i.price) * Number(i.quantity)).toLocaleString('fr-DZ', { minimumFractionDigits: 2 });
                     return `<tr>
-                    <td colspan="4" style="padding-top:5px; font-weight:bold; text-transform:uppercase; font-size:8.5pt;">${String(i.name)}</td>
-                </tr>
-                <tr>
-                    <td style="width:15%"></td>
-                    <td style="text-align:center; width:20%">${i.quantity}</td>
-                    <td style="text-align:right; width:30%">${Number(i.price).toFixed(2)}</td>
-                    <td style="text-align:right; width:35%">${lineTotal}</td>
-                </tr>`;
+                        <td colspan="3" style="padding-top:5px; font-weight:bold; text-transform:uppercase; font-size:8.5pt;">${String(i.name)}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dotted #ccc">
+                        <td style="text-align:left; width:20%">${i.quantity}</td>
+                        <td style="text-align:right; width:40%">${Number(i.price).toFixed(2)}</td>
+                        <td style="text-align:right; width:40%">${lineTotal}</td>
+                    </tr>`;
                 })
                 .join('');
 
@@ -55,43 +49,41 @@ export function useAutoPrint() {
 <style>
   @page { margin:0; size:80mm auto; }
   body {
-    width:80mm; margin:0 auto;
+    width:76mm; margin:0 auto;
     font-family:'Courier New', Courier, monospace;
     font-size:9pt; color:#000; background:#fff;
-    padding:4mm 2mm;
-    line-height: 1.3;
+    padding:5mm 2mm;
+    line-height: 1.4;
   }
   .c { text-align:center; }
   .r { text-align:right; }
   .b { font-weight:bold; }
-  .lg { font-size:11pt; }
-  .xs { font-size:7pt; }
-  .sep { border-top:1px dashed #000; margin:2mm 0; }
-  .sep2 { border-top:2px solid #000; margin:2mm 0; }
-  table { width:100%; border-collapse:collapse; font-size:8.5pt; }
-  th,td { padding:1px 0; }
-  th { border-bottom:1px solid #000; font-size:7.5pt; }
+  .lg { font-size:12pt; }
+  .xs { font-size:7.5pt; }
+  .sep { border-top:1px dashed #000; margin:3mm 0; }
+  .sep2 { border-top:2px solid #000; margin:3mm 0; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:1px 0; vertical-align:top; }
 </style>
 </head>
 <body>
   <div class="c b lg">${companyName.toUpperCase()}</div>
-  ${addr  ? `<div class="c xs">${addr}</div>` : ''}
-  ${phone ? `<div class="c xs">Tél: ${phone}</div>` : ''}
+  <div class="c xs">${addr}</div>
+  <div class="c b xs">Tél: ${phone}</div>
   
   <div class="sep2"></div>
-  <div class="c b" style="text-decoration:underline; margin-bottom:2mm;">BON DE LIVRAISON</div>
+  <div class="c b" style="text-decoration:underline; margin-bottom:1mm;">BON DE LIVRAISON</div>
   <div class="xs"><b>N° FACTURE:</b> ${sale.invoiceNumber}</div>
   <div class="xs"><b>DATE:</b> ${new Date(sale.createdAt!).toLocaleString('fr-DZ')}</div>
   
   <div class="sep"></div>
   
-  <table>
+  <table style="font-size:8.5pt">
     <thead>
-      <tr>
-        <th style="text-align:left; width:15%">#</th>
-        <th style="text-align:center; width:20%">QTÉ</th>
-        <th class="r" style="width:30%">P.U</th>
-        <th class="r" style="width:35%">TOTAL</th>
+      <tr style="border-bottom:1px solid #000">
+        <th style="text-align:left">QTÉ</th>
+        <th style="text-align:right">P.U</th>
+        <th style="text-align:right">TOTAL</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -99,19 +91,18 @@ export function useAutoPrint() {
   
   <div class="sep"></div>
   
-  <div class="r b">TOTAL FACTURE: ${formatNum(sale.total)} DA</div>
-  <div class="r b" style="color:#000; background:#eee; padding:1mm;">VERSEMENT (REÇU): -${formatNum(sale.amountPaid)} DA</div>
+  <div class="r b">TOTAL NET: ${formatNum(sale.total)} DA</div>
+  <div class="r b" style="margin-top:1mm; padding:1mm; background:#eee">REÇU : ${formatNum(sale.amountPaid)} DA</div>
   
   ${remaining > 0.01 
-      ? `<div class="r b lg" style="margin-top:1mm;">RESTE À PAYER: ${formatNum(remaining)} DA</div>` 
-      : change > 0.01 
-      ? `<div class="r b">MONNAIE RENDUE: ${formatNum(change)} DA</div>`
-      : `<div class="r b" style="margin-top:1mm;">VENTE SOLDÉE</div>`
+      ? `<div class="r b lg" style="margin-top:2mm; border:1px solid #000; padding:1mm">SOLDE DU: ${formatNum(remaining)} DA</div>` 
+      : `<div class="r b lg" style="margin-top:2mm; text-align:center">*** VENTE SOLDÉE ***</div>`
   }
   
   <div class="sep2"></div>
-  <div class="c b" style="margin-top:3mm;">MERCI DE VOTRE VISITE !</div>
-  <div class="c xs" style="margin-top:4mm; opacity:0.5;">iPOS Zen Elite System</div>
+  <div class="c b" style="margin-top:4mm;">MERCI DE VOTRE VISITE !</div>
+  <div class="c xs" style="margin-top:4mm; opacity:0.3;">iPOS Zen Sovereign System</div>
+  <script>window.onload = function(){ window.print(); window.close(); }</script>
 </body>
 </html>`;
 
@@ -119,11 +110,6 @@ export function useAutoPrint() {
             if (!win) return;
             win.document.write(html);
             win.document.close();
-            win.focus();
-            setTimeout(() => {
-                win.print();
-                win.close();
-            }, 500);
         },
         [],
     );
