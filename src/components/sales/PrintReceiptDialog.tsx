@@ -10,6 +10,7 @@ import { useAppStore } from '@/stores/appStore';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { customerService } from '@/services/customer.service';
+import { usePrint } from '@/hooks/usePrint';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
@@ -30,6 +31,7 @@ export function PrintReceiptDialog({
     const [receiptType, setReceiptType] = useState<'a4' | 'thermal'>('a4'); 
     const [isGenerating, setIsGenerating] = useState(false);
     const [customer, setCustomer] = useState<Customer | null>(null);
+    const { printElement, isPrinting } = usePrint();
     
     const oldBalance = useMemo(() => {
         if (!customer || !sale) return 0;
@@ -41,9 +43,7 @@ export function PrintReceiptDialog({
     useEffect(() => {
         if (isOpen && sale?.customerUuid) {
             customerService.getCustomerByUuid(sale.customerUuid)
-                .then(c => {
-                    if (c) setCustomer(c);
-                })
+                .then(c => { if (c) setCustomer(c); })
                 .catch(() => console.warn("Echec recuperation client"));
         } else {
             setCustomer(null);
@@ -58,28 +58,10 @@ export function PrintReceiptDialog({
 
     const handlePrint = useCallback(() => {
         if (!sale) return;
-        
-        const printablePortal = document.getElementById('receipt-for-print');
-        const sourceElement = document.getElementById('receipt-render-target-inner');
-
-        if (!printablePortal || !sourceElement) {
-            toast.error("Erreur : Canal de sortie introuvable.");
-            return;
-        }
-
-        const clone = sourceElement.cloneNode(true) as HTMLDivElement;
-        clone.style.transform = 'none';
-        clone.style.margin = '0';
-        clone.style.position = 'relative';
-        clone.style.width = receiptType === 'a4' ? '210mm' : '80mm';
-        
-        printablePortal.innerHTML = '';
-        printablePortal.appendChild(clone);
-
-        setTimeout(() => {
-            window.print();
-        }, 300);
-    }, [sale, receiptType]);
+        printElement('receipt-render-target-inner', {
+            title: `Facture_${sale.invoiceNumber}`
+        });
+    }, [sale, printElement]);
 
     useKeyboardShortcuts([
         {
@@ -101,7 +83,6 @@ export function PrintReceiptDialog({
         setIsGenerating(true);
 
         try {
-            // Fix: using standard import with fallback types
             const { jsPDF } = await import('jspdf');
             const html2canvas = (await import('html2canvas')).default;
 
@@ -236,8 +217,8 @@ export function PrintReceiptDialog({
                         Exporter PDF
                     </Button>
 
-                    <Button onClick={handlePrint} className="rounded-xl h-11 font-black text-xs uppercase tracking-widest flex-1 shadow-xl transition-all active:scale-95 gap-3">
-                        <Printer className="h-5 w-5" /> 
+                    <Button onClick={handlePrint} disabled={isPrinting} className="rounded-xl h-11 font-black text-xs uppercase tracking-widest flex-1 shadow-xl transition-all active:scale-95 gap-3">
+                        {isPrinting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Printer className="h-5 w-5" />} 
                         Imprimer [P]
                     </Button>
                 </DialogFooter>

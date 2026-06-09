@@ -84,6 +84,47 @@
   }
 }
 
+/* ══════════════════════════════════════════════════════════
+   ELITE PRINT SYSTEM — التحكم السيادي في مخرجات الطباعة
+   ══════════════════════════════════════════════════════════ */
+@media print {
+  /* إخفاء واجهة التطبيق بالكامل */
+  .print-hide, nav, header, main > *:not(#receipt-for-print), .info-bar-solid, .fixed {
+    display: none !important;
+  }
+
+  #receipt-for-print {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+  }
+
+  body {
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* تحسينات النصوص */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* منع قطع الجداول */
+  tr, img, table {
+    page-break-inside: avoid !important;
+  }
+}
+
 /* SOLID UI — تطبيق نظام الألوان الصلبة لضمان الثبات والفخامة */
 .app-card, .glass, .glass-stat, .glass-elevated {
   background-color: hsl(var(--card)) !important;
