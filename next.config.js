@@ -13,15 +13,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
           cacheName: "google-fonts-webfonts",
           expiration: {
             maxEntries: 4,
-            maxAgeSeconds: 365 * 24 * 60 * 60, // 365 days
+            maxAgeSeconds: 365 * 24 * 60 * 60,
           },
-        },
-      },
-      {
-        urlPattern: /^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "google-fonts-stylesheets",
         },
       },
       {
@@ -30,8 +23,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         options: {
           cacheName: "static-font-assets",
           expiration: {
-            maxEntries: 4,
-            maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            maxEntries: 10,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
           },
         },
       },
@@ -42,7 +35,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
           cacheName: "static-image-assets",
           expiration: {
             maxEntries: 64,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+            maxAgeSeconds: 24 * 60 * 60,
           },
         },
       },
@@ -54,25 +47,14 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         },
       },
       {
-        urlPattern: /\/api\/.*/i,
+        urlPattern: /.*/i,
         handler: "NetworkFirst",
         options: {
-          cacheName: "api-cache",
+          cacheName: "offline-cache",
           networkTimeoutSeconds: 10,
           expiration: {
-            maxEntries: 16,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
-          },
-        },
-      },
-      {
-        urlPattern: /.*/i,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "others",
-          expiration: {
-            maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60,
           },
         },
       },
@@ -82,9 +64,6 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Static export pour PWA + Electron
-  // Note: Output export might conflict with next-pwa if not configured carefully.
-  // ducanh2912 fork supports output: export better than original.
   output: "export",
   trailingSlash: true,
   reactStrictMode: true,

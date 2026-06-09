@@ -15,7 +15,7 @@ import { PWAUpdateNotifier } from '@/components/pwa/PWAUpdateNotifier';
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "Système comptable souverain, puissant et flegmatique",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
