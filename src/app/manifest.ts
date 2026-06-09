@@ -1,53 +1,5 @@
-import type { MetadataRoute } from 'next';
-
-export const dynamic = 'force-static';
-
-/**
- * ملف المانيفست — ضبط نخبوي لتمكين التثبيت المباشر.
- * تم التأكد من توافق كافة المسارات والأيقونات مع معايير PWA العالمية.
- */
-export default function manifest(): MetadataRoute.Manifest {
-    return {
-        name: 'iPOS Zen Elite Ledger',
-        short_name: 'iPOS Zen',
-        description: 'نظام محاسبي سيادي متكامل — نسخة النخبة الصلبة',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#F8FAFC',
-        theme_color: '#AFB42B',
-        orientation: 'any',
-        scope: '/',
-        icons: [
-            {
-                src: '/icons/icon-192x192.png',
-                sizes: '192x192',
-                type: 'image/png',
-                purpose: 'any',
-            },
-            {
-                src: '/icons/icon-192x192.png',
-                sizes: '192x192',
-                type: 'image/png',
-                purpose: 'maskable',
-            },
-            {
-                src: '/icons/icon-512x512.png',
-                sizes: '512x512',
-                type: 'image/png',
-                purpose: 'any',
-            },
-        ],
-        shortcuts: [
-            {
-                name: 'Vendre (Caisse)',
-                url: '/sell',
-                description: 'Accès rapide au point de vente'
-            },
-            {
-                name: 'Stock & Magasin',
-                url: '/stock',
-                description: 'Gestion logistique'
-            }
-        ]
-    };
+// This file is deprecated in favor of public/manifest.json for better PWA validation.
+// Redirecting to null or removing is safer to avoid Next.js metadata conflicts.
+export default function manifest() {
+  return null;
 }

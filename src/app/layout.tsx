@@ -9,12 +9,21 @@ import { AppSyncManager } from '@/components/layout/AppSyncManager';
 import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
+import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
+import { PWAUpdateNotifier } from '@/components/pwa/PWAUpdateNotifier';
 
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
-  description: "نظام محاسبي سيادي صلب وفخم",
-  manifest: "/manifest.webmanifest",
+  description: "Système comptable souverain, puissant et flegmatique",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "iPOS Zen",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: '/icon.svg',
     apple: '/icons/icon-192x192.png',
@@ -25,6 +34,8 @@ export const viewport: Viewport = {
   themeColor: "#AFB42B",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -35,7 +46,6 @@ export default function RootLayout({
   return (
     <html lang="fr-DZ" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground overflow-hidden">
-        <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>
@@ -48,6 +58,8 @@ export default function RootLayout({
                         </main>
                         <BottomNavBarWrapper />
                         <KeyboardShortcutsHelp />
+                        <PWAInstallPrompt />
+                        <PWAUpdateNotifier />
                   </div>
               </AppSyncManager>
             </KeyboardShortcutsProvider>

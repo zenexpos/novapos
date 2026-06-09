@@ -1,21 +1,3 @@
-/**
- * iPOS Zen — Service Worker (Elite Edition)
- * المحرك الأساسي لتفعيل ميزة التثبيت والعمل دون اتصال.
- */
-
-const CACHE_NAME = 'ipos-zen-v2';
-
-// 1. التثبيت والتفعيل الفوري
-self.addEventListener('install', (event) => {
-    self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
-});
-
-// 2. مستمع الـ fetch — الشرط الإلزامي لظهور زر التثبيت في المتصفحات
-self.addEventListener('fetch', (event) => {
-    // يسمح للمتصفح بالمرور المباشر للطلبات، وجود هذا المستمع كافٍ لاعتبار التطبيق Installable
-    return;
-});
+// This manual service worker is replaced by the Workbox-generated sw.js from next-pwa.
+// It is intentionally left as a stub or can be deleted.
+console.log('iPOS Zen: Manual SW replaced by Workbox.');
