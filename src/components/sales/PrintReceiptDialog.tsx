@@ -52,7 +52,7 @@ export function PrintReceiptDialog({
         
         // ذكاء اصطناعي بسيط: اختيار A4 تلقائياً إذا كانت الفاتورة طويلة جداً
         if (isOpen && sale) {
-            setReceiptType(sale.items.length > 10 ? 'a4' : 'thermal');
+            setReceiptType(sale.items.length > 8 ? 'a4' : 'thermal');
         }
     }, [isOpen, sale]);
 
@@ -64,6 +64,7 @@ export function PrintReceiptDialog({
 
     const handlePrint = useCallback(() => {
         if (!sale) return;
+        // Launch print from the target container
         printElement('receipt-render-target-inner', {
             title: `Facture_${sale.invoiceNumber}`,
             thermal: receiptType === 'thermal'

@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import type { Sale, CompanyProfile } from '@/lib/types';
+import { numberToFrenchWords } from '@/lib/numberToWords';
 
 /**
  * useAutoPrint — نظام الطباعة التلقائية السريعة iPOS Zen.
@@ -31,12 +32,12 @@ export function useAutoPrint() {
                     const lineTotal = formatNum(Number(i.price) * Number(i.quantity));
                     return `
                     <tr style="border-bottom: 1px dotted #ccc">
-                        <td colspan="3" style="padding: 4px 0; font-weight:bold; text-transform:uppercase; font-size:8.5pt;">${String(i.name)}</td>
+                        <td colspan="3" style="padding: 6px 0; font-weight:bold; text-transform:uppercase; font-size:9pt;">${String(i.name)}</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #eee">
-                        <td style="text-align:left; width:20%">${i.quantity}</td>
-                        <td style="text-align:right; width:40%">${Number(i.price).toFixed(2)}</td>
-                        <td style="text-align:right; width:40%; font-weight:bold">${lineTotal}</td>
+                        <td style="text-align:left; width:20%; font-size:10pt; font-weight:bold;">${i.quantity}</td>
+                        <td style="text-align:right; width:40%; font-size:9pt;">${Number(i.price).toFixed(2)}</td>
+                        <td style="text-align:right; width:40%; font-weight:bold; font-size:10pt;">${lineTotal}</td>
                     </tr>`;
                 })
                 .join('');
@@ -50,41 +51,42 @@ export function useAutoPrint() {
 <style>
   @page { margin:0; size:80mm auto; }
   body {
-    width:74mm; margin:0 auto;
-    font-family:'Courier New', Courier, monospace;
-    font-size:9pt; color:#000; background:#fff;
-    padding:5mm 2mm;
-    line-height: 1.3;
+    width:72mm; margin:0 auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size:10pt; color:#000; background:#fff;
+    padding:8mm 2mm;
+    line-height: 1.2;
   }
   .c { text-align:center; }
   .r { text-align:right; }
   .b { font-weight:bold; }
-  .lg { font-size:12pt; }
-  .xs { font-size:7.5pt; }
-  .sep { border-top:1px dashed #000; margin:3mm 0; }
-  .sep2 { border-top:2px solid #000; margin:3mm 0; }
+  .lg { font-size:13pt; }
+  .xs { font-size:8pt; }
+  .sep { border-top:2px dashed #000; margin:4mm 0; }
+  .sep2 { border-top:2px solid #000; margin:4mm 0; }
   table { width:100%; border-collapse:collapse; }
   td { vertical-align:top; }
+  .total-box { background:#000; color:#fff; padding:2mm; font-size:11pt; font-weight:black; margin-top:2mm; }
 </style>
 </head>
 <body>
   <div class="c b lg">${companyName.toUpperCase()}</div>
   <div class="c xs">${addr}</div>
-  <div class="c b xs">Tél: ${phone}</div>
+  <div class="c b xs" style="margin-top:1mm">Tél: ${phone}</div>
   
   <div class="sep2"></div>
-  <div class="c b" style="text-decoration:underline; margin-bottom:1mm;">BON DE LIVRAISON</div>
-  <div class="xs"><b>N° FACTURE:</b> ${sale.invoiceNumber}</div>
+  <div class="c b" style="text-decoration:underline; font-size:11pt; margin-bottom:2mm;">BON DE LIVRAISON</div>
+  <div class="xs"><b>N° FACTURE:</b> #${sale.invoiceNumber}</div>
   <div class="xs"><b>DATE:</b> ${new Date(sale.createdAt!).toLocaleString('fr-DZ')}</div>
   
   <div class="sep"></div>
   
-  <table style="font-size:8.5pt">
+  <table>
     <thead>
-      <tr style="border-bottom:1px solid #000">
-        <th style="text-align:left">QTE</th>
-        <th style="text-align:right">P.U</th>
-        <th style="text-align:right">TOTAL</th>
+      <tr style="border-bottom:2px solid #000">
+        <th style="text-align:left; font-size:9pt;">QTE</th>
+        <th style="text-align:right; font-size:9pt;">P.U</th>
+        <th style="text-align:right; font-size:9pt;">TOTAL</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -92,27 +94,34 @@ export function useAutoPrint() {
   
   <div class="sep"></div>
   
-  <div class="r b">TOTAL NET: ${formatNum(sale.total)} DA</div>
-  <div class="r b" style="margin-top:1mm; padding:1.5mm; background:#eee">REÇU : ${formatNum(sale.amountPaid)} DA</div>
+  <div class="r">SOUS-TOTAL: <b>${formatNum(sale.subtotal)}</b></div>
+  ${sale.discountAmount && sale.discountAmount > 0.01
+      ? `<div class="r italic">REMISE: <b>-${formatNum(sale.discountAmount)}</b></div>`
+      : ''}
+  <div class="r b lg" style="margin-top:2mm; border-top:1px solid #000; padding-top:2mm">NET A PAYER: ${formatNum(sale.total)}</div>
   
-  ${remaining > 0.01 
-      ? `<div class="r b lg" style="margin-top:2mm; border:1px solid #000; padding:2mm">SOLDE DU: ${formatNum(remaining)} DA</div>` 
-      : `<div class="c b lg" style="margin-top:2mm; border:1px solid #000; padding:1.5mm">*** VENTE SOLDÉE ***</div>`
-  }
+  <div class="r b" style="margin-top:2mm; opacity:0.7">REÇU (VERS.): -${formatNum(sale.amountPaid)}</div>
+  
+  <div class="total-box">
+    <div class="flex" style="display:flex; justify-content:space-between;">
+        <span>SOLDE DÛ:</span>
+        <span>${formatNum(remaining)} DA</span>
+    </div>
+  </div>
   
   <div class="sep2"></div>
-  <div class="c b" style="margin-top:4mm;">MERCI DE VOTRE VISITE !</div>
+  <div class="c b" style="margin-top:6mm; font-size:9pt; letter-spacing:1px;">MERCI DE VOTRE CONFIANCE</div>
   <div class="c xs" style="margin-top:4mm; opacity:0.3;">iPOS Zen Sovereign Ledger</div>
   <script>
     window.onload = function(){ 
       window.print(); 
-      setTimeout(function(){ window.close(); }, 500);
+      setTimeout(function(){ window.close(); }, 700);
     }
   </script>
 </body>
 </html>`;
 
-            const win = window.open('', '_blank', 'width=450,height=600,toolbar=no');
+            const win = window.open('', '_blank', 'width=450,height=800,toolbar=no');
             if (!win) return;
             win.document.write(html);
             win.document.close();

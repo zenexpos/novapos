@@ -90,7 +90,8 @@
 @media print {
   /* عزل تام لواجهة المستخدم */
   .print-hide, nav, header, main, .info-bar-solid, .fixed, button, 
-  [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside, .no-print {
+  [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside, .no-print,
+  .print-hidden, [aria-hidden="true"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -127,11 +128,6 @@
     width: 100% !important;
   }
 
-  @page {
-    margin: 5mm;
-    size: auto;
-  }
-
   /* فرض دقة الألوان والرسوميات */
   * {
     -webkit-print-color-adjust: exact !important;
@@ -147,14 +143,28 @@
   /* إعدادات خاصة للطابعة الحرارية */
   .thermal-receipt {
     width: 80mm !important;
+    max-width: 80mm !important;
     margin: 0 auto !important;
-    padding: 2mm !important;
+    padding: 0 !important;
+    background: white !important;
   }
 
   /* إعدادات خاصة للـ A4 المؤسساتي */
   .a4-receipt {
     width: 210mm !important;
-    padding: 10mm !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    background: white !important;
+  }
+
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* Force hidden for elements with print-hide even if nested */
+  .print-hide * {
+    display: none !important;
   }
 }
 
