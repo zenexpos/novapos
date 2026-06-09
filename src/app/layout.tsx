@@ -11,10 +11,11 @@ import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { PWAUpdateNotifier } from '@/components/pwa/PWAUpdateNotifier';
+import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
-  description: "Système comptable souverain, puissant et flegmatique",
+  description: "Système محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="fr-DZ" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground overflow-hidden">
+        <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
             <KeyboardShortcutsProvider>

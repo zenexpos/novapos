@@ -8,17 +8,16 @@ import { useEffect } from 'react';
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/service-worker.js')
-          .then((reg) => {
-            console.log('[iPOS Zen] Service Worker registered:', reg.scope);
-          })
-          .catch((err) => {
-            console.error('[iPOS Zen] SW registration failed:', err);
-          });
-      });
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Use the service-worker.js directly for maximum reliability
+      navigator.serviceWorker
+        .register('/service-worker.js')
+        .then((reg) => {
+          console.log('[iPOS Zen] Service Worker registered:', reg.scope);
+        })
+        .catch((err) => {
+          console.error('[iPOS Zen] SW registration failed:', err);
+        });
     }
   }, []);
 

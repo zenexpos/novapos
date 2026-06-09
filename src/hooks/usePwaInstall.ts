@@ -43,7 +43,10 @@ export function usePwaInstall() {
     }, []);
 
     const install = useCallback(async () => {
-        if (!deferredPrompt) return;
+        if (!deferredPrompt) {
+            // If the prompt is missing but we're on iOS, this won't work, but we can't trigger it anyway.
+            return;
+        }
 
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
