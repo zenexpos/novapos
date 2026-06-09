@@ -112,7 +112,7 @@
     background: white !important;
     color: black !important;
     z-index: 9999999 !important;
-    justify-content: center !important; /* توسيط المحتوى */
+    justify-content: center !important; 
     align-items: flex-start !important;
   }
 
@@ -124,9 +124,11 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
-  /* مخرجات الـ A4 المؤسساتية (Monochrome) */
+  /* مخرجات الـ A4 الاقتصادية (Monochrome) */
   .a4-receipt {
     width: 210mm !important;
     padding: 10mm !important;
@@ -134,7 +136,6 @@
     background: white !important;
     color: black !important;
     border: none !important;
-    box-shadow: none !important;
   }
 
   /* مخرجات الـ Ticket الحراري (80mm) */

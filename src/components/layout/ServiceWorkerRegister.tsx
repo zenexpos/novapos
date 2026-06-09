@@ -14,22 +14,21 @@ export function ServiceWorkerRegister() {
       navigator.serviceWorker
         .register('/service-worker.js', { scope: '/' })
         .then((reg) => {
-          console.log('[iPOS Zen] Service Worker Active:', reg.scope);
+          console.log('[iPOS Zen] SW Active:', reg.scope);
           
-          // الكشف عن التحديثات
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[iPOS Zen] New version detected.');
+                  console.log('[iPOS Zen] Update ready.');
                 }
               };
             }
           };
         })
         .catch((err) => {
-          console.error('[iPOS Zen] SW Registration Failed:', err);
+          console.error('[iPOS Zen] SW registration failed:', err);
         });
     }
   }, []);

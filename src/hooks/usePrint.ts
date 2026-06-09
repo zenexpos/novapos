@@ -3,9 +3,8 @@
 import { useCallback, useState } from 'react';
 
 /**
- * usePrint — نظام طباعة سيادي موحد iPOS Zen.
- * معالجة متقدمة تضمن استقرار التنسيقات للأحجام المختلفة (A4 و 80mm)
- * وتوسيط المحتوى ومنع تداخل واجهة PWA مع المخرجات.
+ * usePrint — Sovereign Unified Printing Engine.
+ * Optimized for standalone PWA mode. Centering and high-fidelity rendering.
  */
 export function usePrint() {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -23,20 +22,19 @@ export function usePrint() {
 
     setIsPrinting(true);
 
-    // تنظيف الحاوية وحقن المحتوى الجديد
+    // Clean and Inject
     target.innerHTML = '';
     const clone = source.cloneNode(true) as HTMLElement;
     
-    // إزالة قيود العرض/الارتفاع للمعاينة لضمان طباعة كاملة
+    // Clear preview-only constraints
     clone.style.maxHeight = 'none';
     clone.style.height = 'auto';
     clone.style.overflow = 'visible';
     clone.style.transform = 'none';
-    clone.style.margin = '0 auto'; // التوسيط
+    clone.style.margin = '0 auto'; 
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
     
-    // تطبيق فئة الحجم المناسبة لـ CSS
     if (options.thermal) {
       clone.classList.add('thermal-receipt');
       clone.style.width = '80mm';
@@ -47,18 +45,17 @@ export function usePrint() {
 
     target.appendChild(clone);
 
-    // تعيين عنوان الوثيقة (يظهر في اسم الملف عند الحفظ كـ PDF)
     const originalTitle = document.title;
     if (options.title) {
       document.title = options.title;
     }
     
-    // انتظار رندر المتصفح (خاصة الصور والباركدود) قبل فتح الحوار
+    // Force a small delay for barcode/image rendering before browser UI takes over
     setTimeout(() => {
       window.print();
       document.title = originalTitle;
       setIsPrinting(false);
-    }, 450);
+    }, 500);
   }, []);
 
   return { printElement, isPrinting };

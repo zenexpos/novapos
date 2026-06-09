@@ -1,22 +1,29 @@
 /**
- * iPOS Zen — Sovereign Service Worker (Elite Edition)
- * Mandatory fetch listener for PWA Installation support in Chrome/Edge.
+ * iPOS Zen — Sovereign Service Worker (Elite Production)
+ * المحرك الجوهري لتفعيل خاصية التثبيت والعمل بدون إنترنت.
  */
 
 const CACHE_NAME = 'ipos-zen-v2';
-const OFFLINE_URL = '/offline/index.html';
+const OFFLINE_URL = '/offline/';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// MANDATORY: Fetch listener is required for "Install" button to appear.
+// مستمع الـ Fetch إلزامي لمتصفح Chrome لتفعيل زر التثبيت
 self.addEventListener('fetch', (event) => {
-  // Simple pass-through for static files, Network-First for others
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
