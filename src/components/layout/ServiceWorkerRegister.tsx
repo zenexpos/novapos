@@ -3,32 +3,33 @@
 import { useEffect } from 'react';
 
 /**
- * ServiceWorkerRegister — Ensures the sovereign service worker is registered
- * to satisfy PWA installation criteria in Chrome and Edge.
+ * ServiceWorkerRegister — التسجيل الموثوق لملف الخدمة.
+ * هذا المكون هو المسؤول عن إرسال ملف service-worker.js للمتصفح
+ * لتمكين ميزة التثبيت (Installation) والعمل بدون إنترنت.
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Use the service-worker.js directly for maximum reliability
+      // تسجيل ملف الخدمة اليدوي لضمان تفعيل الـ Fetch listener
       navigator.serviceWorker
         .register('/service-worker.js', { scope: '/' })
         .then((reg) => {
-          console.log('[iPOS Zen] Service Worker registered:', reg.scope);
+          console.log('[iPOS Zen] Service Worker Active:', reg.scope);
           
-          // التفتيش عن تحديثات فورية
+          // الكشف عن التحديثات
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[iPOS Zen] New content available; please refresh.');
+                  console.log('[iPOS Zen] New version detected.');
                 }
               };
             }
           };
         })
         .catch((err) => {
-          console.error('[iPOS Zen] SW registration failed:', err);
+          console.error('[iPOS Zen] SW Registration Failed:', err);
         });
     }
   }, []);

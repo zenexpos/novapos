@@ -21,7 +21,7 @@ import { usePwaInstall } from '@/hooks/usePwaInstall';
 
 /**
  * AppHeader — شريط التنقل العلوي السيادي.
- * يحتوي الآن على زر التثبيت الذهبي المباشر.
+ * يحتوي الآن على زر التثبيت الذهبي المباشر الذي يظهر فور جاهزية الـ PWA.
  */
 export function AppHeader() {
     const navLinks = useMemo(() => [
@@ -119,13 +119,13 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* زر التثبيت الذهبي - يظهر فقط عندما يكون التطبيق جاهزاً للتثبيت */}
+                    {/* زر التثبيت المباشر - يظهر عندما يكتشف المتصفح استيفاء شروط الـ PWA */}
                     {isInstallable && (
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={install}
-                            className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2"
+                            className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2 border border-white/10"
                         >
                             <Download className="h-4 w-4" />
                             <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer iPOS</span>
