@@ -1,16 +1,15 @@
 /**
  * iPOS Zen — Sovereign Service Worker
- * الأساس التقني لتفعيل زر التثبيت والعمل دون اتصال.
+ * محرك العمل أوفلاين والشرط الأساسي لتثبيت التطبيق.
  */
 
 const CACHE_NAME = 'ipos-zen-v2';
 const OFFLINE_URL = '/offline/';
 
-// تفعيل ملف الخدمة فوراً
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([OFFLINE_URL]);
+      return cache.addAll([OFFLINE_URL, '/icon.svg', '/manifest.webmanifest']);
     })
   );
   self.skipWaiting();
@@ -31,7 +30,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// مستمع الـ FETCH: ضروري جداً لظهور زر التثبيت في Chrome/Edge
+// مستمع الـ fetch ضروري جداً لكي يعتبر المتصفح التطبيق "قابل للتثبيت"
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
