@@ -81,7 +81,6 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
         ? format(new Date(sale.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr })
         : format(new Date(), 'dd/MM/yyyy HH:mm', { locale: fr });
     
-    // Solde incluant cette vente
     const newBalance = (oldBalance + sale.total) - safeNumber(sale.amountPaid);
 
     return (
@@ -94,30 +93,30 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
               padding: '10mm 4mm', 
               lineHeight: 1.2
             }}>
-            <div style={{ textAlign: 'center', marginBottom: '8mm' }}>
-                <p style={{ fontWeight: 900, fontSize: '15pt', textTransform: 'uppercase', marginBottom: '1mm' }}>
+            <div style={{ textAlign: 'center', marginBottom: '6mm' }}>
+                <p style={{ fontWeight: 900, fontSize: '14pt', textTransform: 'uppercase', marginBottom: '1mm' }}>
                     {profile?.companyName ?? 'iPOS ZEN ELITE'}
                 </p>
-                {profile?.address && <p style={{ fontSize: '8.5pt', opacity: 0.8 }}>{profile.address}</p>}
+                {profile?.address && <p style={{ fontSize: '8pt', opacity: 0.8 }}>{profile.address}</p>}
                 {profile?.phone   && <p style={{ fontSize: '9pt', fontWeight: 'bold' }}>Tél: {profile.phone}</p>}
             </div>
 
-            <div style={{ borderTop: '2px solid #000', borderBottom: '1.5px dashed #000', padding: '3mm 0', marginBottom: '5mm', textAlign: 'center' }}>
-                <p style={{ fontWeight: 900, fontSize: '12pt', textTransform: 'uppercase' }}>Bon de Livraison</p>
+            <div style={{ borderTop: '2px solid #000', borderBottom: '1.5px dashed #000', padding: '3mm 0', marginBottom: '4mm', textAlign: 'center' }}>
+                <p style={{ fontWeight: 900, fontSize: '11pt', textTransform: 'uppercase' }}>Bon de Livraison</p>
                 <p style={{ fontSize: '9pt', fontWeight: 'bold', marginTop: '1mm' }}>#{sale.invoiceNumber}</p>
             </div>
 
-            <div style={{ fontSize: '9.5pt', marginBottom: '5mm', borderLeft: '3px solid #000', paddingLeft: '3mm' }}>
+            <div style={{ fontSize: '9pt', marginBottom: '4mm', borderLeft: '3px solid #000', paddingLeft: '2mm' }}>
                 <p><strong>Date :</strong> {date}</p>
                 <p><strong>Client :</strong> {customerName}</p>
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', marginBottom: '5mm' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', marginBottom: '4mm' }}>
                 <thead>
                     <tr style={{ borderBottom: '1.5px solid #000' }}>
                         <th style={{ textAlign: 'left', padding: '3px 0' }}>DESIGNATION</th>
-                        <th style={{ textAlign: 'center', padding: '3px 0', width: '40px' }}>QTE</th>
-                        <th style={{ textAlign: 'right', padding: '3px 0', width: '80px' }}>TOTAL</th>
+                        <th style={{ textAlign: 'center', padding: '3px 0', width: '35px' }}>QTE</th>
+                        <th style={{ textAlign: 'right', padding: '3px 0', width: '70px' }}>TOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,14 +130,14 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                 </tbody>
             </table>
 
-            <div style={{ borderTop: '2px solid #000', marginTop: '4mm', paddingTop: '3mm' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, fontSize: '12pt', marginBottom: '1mm' }}>
+            <div style={{ borderTop: '2px solid #000', marginTop: '3mm', paddingTop: '3mm' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, fontSize: '11pt', marginBottom: '1mm' }}>
                     <span>TOTAL FACTURE:</span>
                     <span>{fmt(sale.total)}</span>
                 </div>
                 
                 {safeNumber(sale.amountPaid) > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10pt', marginBottom: '1mm' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9.5pt', marginBottom: '1mm' }}>
                         <span>VERSEMENT :</span>
                         <span>-{fmt(safeNumber(sale.amountPaid))}</span>
                     </div>
@@ -148,21 +147,21 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     fontWeight: 900, 
-                    fontSize: '12pt', 
+                    fontSize: '11pt', 
                     backgroundColor: '#000', 
                     color: '#fff', 
                     padding: '2mm 3mm', 
-                    marginTop: '3mm',
-                    borderRadius: '2mm'
+                    marginTop: '2mm',
+                    borderRadius: '1mm'
                 }}>
                     <span>SOLDE DU :</span>
                     <span>{fmt(newBalance)} DA</span>
                 </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '10mm', borderTop: '1px dashed #000', paddingTop: '5mm', fontSize: '8pt' }}>
+            <div style={{ textAlign: 'center', marginTop: '8mm', borderTop: '1px dashed #000', paddingTop: '4mm', fontSize: '7.5pt' }}>
                 <p style={{ fontWeight: 'bold', letterSpacing: '1px' }}>MERCI DE VOTRE CONFIANCE</p>
-                <p style={{ opacity: 0.4, marginTop: '2mm' }}>Logiciel de Gestion iPOS Zen Elite</p>
+                <p style={{ opacity: 0.4, marginTop: '1mm' }}>Logiciel السيادي iPOS Zen</p>
             </div>
         </div>
     );
@@ -177,36 +176,36 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
     const newBalance = (oldBalance + sale.total) - safeNumber(sale.amountPaid);
 
     return (
-        <div className="a4-receipt-wrapper bg-white text-black p-16 break-avoid shadow-none" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto' }}>
-            <div className="flex justify-between items-start border-b-4 border-black pb-10 mb-12">
-                <div className="space-y-2">
-                    <h1 className="text-4xl font-black uppercase tracking-tighter text-primary">{profile?.companyName ?? 'iPOS ZEN ELITE'}</h1>
+        <div className="a4-receipt-wrapper bg-white text-black p-12 break-avoid shadow-none" style={{ width: '210mm', minHeight: '297mm', margin: '0 auto', boxSizing: 'border-box' }}>
+            {/* Header المؤسساتي */}
+            <div className="flex justify-between items-start border-b-4 border-black pb-8 mb-10">
+                <div className="space-y-1.5">
+                    <h1 className="text-3xl font-black uppercase tracking-tighter text-primary">{profile?.companyName ?? 'iPOS ZEN ELITE'}</h1>
                     <p className="text-sm font-bold opacity-80">{profile?.address}</p>
                     <p className="text-sm font-bold opacity-80">Tél: <span className="font-mono">{profile?.phone}</span></p>
-                    {(profile?.nif || profile?.rc_number) && (
-                        <div className="flex gap-4 mt-3 pt-3 border-t border-black/10">
-                           {profile?.nif && <p className="text-[10px] font-mono font-bold">NIF: {profile.nif}</p>}
-                           {profile?.rc_number && <p className="text-[10px] font-mono font-bold">RC: {profile.rc_number}</p>}
-                        </div>
-                    )}
+                    <div className="flex gap-4 mt-2 pt-2 border-t border-black/5">
+                       {profile?.nif && <p className="text-[10px] font-mono font-bold">NIF: {profile.nif}</p>}
+                       {profile?.rc_number && <p className="text-[10px] font-mono font-bold">RC: {profile.rc_number}</p>}
+                    </div>
                 </div>
                 <div className="text-right">
-                    <div className="bg-black text-white px-8 py-3 rounded-xl mb-4 inline-block">
-                        <h2 className="text-2xl font-black uppercase tracking-widest">Facture</h2>
+                    <div className="bg-black text-white px-6 py-2 rounded-lg mb-3 inline-block">
+                        <h2 className="text-xl font-black uppercase tracking-widest">Facture / BL</h2>
                     </div>
                     <p className="text-2xl font-mono font-black tracking-tight">N° {sale.invoiceNumber}</p>
-                    <p className="text-sm font-bold uppercase text-gray-500 mt-1">Date d'émission: {date}</p>
+                    <p className="text-sm font-bold uppercase text-gray-500 mt-1">Date: {date}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-12 mb-12">
-                <div className="bg-gray-50 p-8 rounded-3xl border-2 border-black/5 flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire / Client</p>
-                    <p className="text-3xl font-black tracking-tight">{customerName}</p>
+            {/* Informations Client */}
+            <div className="grid grid-cols-2 gap-10 mb-10">
+                <div className="bg-gray-50 p-6 rounded-2xl border-2 border-black/5 flex flex-col justify-center">
+                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1 tracking-widest">Destinataire / Client</p>
+                    <p className="text-2xl font-black tracking-tight">{customerName}</p>
                 </div>
                 
-                <div className="p-8 border-2 border-dashed border-black/10 rounded-3xl flex flex-col items-end justify-center">
-                    <p className="text-[10px] font-black uppercase text-gray-400 mb-1 tracking-widest">Condition de Règlement</p>
+                <div className="p-6 border-2 border-dashed border-black/10 rounded-2xl flex flex-col items-end justify-center">
+                    <p className="text-[10px] font-black uppercase text-gray-400 mb-0.5 tracking-widest">Condition de Règlement</p>
                     <p className="text-lg font-black uppercase">{sale.paymentStatus === 'paid' ? 'Au Comptant' : 'À Crédit'}</p>
                     {sale.dueDate && (
                         <p className="text-xs font-bold text-destructive mt-1 uppercase">Échéance : {format(new Date(sale.dueDate), 'dd/MM/yyyy')}</p>
@@ -214,83 +213,88 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                 </div>
             </div>
 
-            <table className="w-full border-collapse mb-12">
+            {/* Table des Articles */}
+            <table className="w-full border-collapse mb-10">
                 <thead>
                     <tr className="bg-black text-white">
-                        <th className="p-5 text-left text-xs font-black uppercase tracking-widest rounded-l-xl">Désignation</th>
-                        <th className="p-5 text-center text-xs font-black uppercase tracking-widest w-24">Qté</th>
-                        <th className="p-5 text-right text-xs font-black uppercase tracking-widest w-40">P.U (DA)</th>
-                        <th className="p-5 text-right text-xs font-black uppercase tracking-widest w-44 rounded-r-xl">Total (DA)</th>
+                        <th className="p-4 text-left text-xs font-black uppercase tracking-widest rounded-l-lg">Désignation</th>
+                        <th className="p-4 text-center text-xs font-black uppercase tracking-widest w-20">Qté</th>
+                        <th className="p-4 text-right text-xs font-black uppercase tracking-widest w-36">P.U (DA)</th>
+                        <th className="p-4 text-right text-xs font-black uppercase tracking-widest w-40 rounded-r-lg">Total (DA)</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-gray-100">
+                <tbody className="divide-y-2 divide-gray-50">
                     {sale.items.map((item, idx) => (
                         <tr key={idx} className="group hover:bg-gray-50 transition-colors">
-                            <td className="p-5 font-bold uppercase text-sm">{item.name}</td>
-                            <td className="p-5 text-center font-black text-base">{item.quantity}</td>
-                            <td className="p-5 text-right font-mono text-sm">{fmt(item.price)}</td>
-                            <td className="p-5 text-right font-black text-base">{fmt(item.price * item.quantity)}</td>
+                            <td className="p-4 font-bold uppercase text-xs">{item.name}</td>
+                            <td className="p-4 text-center font-black text-sm">{item.quantity}</td>
+                            <td className="p-4 text-right font-mono text-xs">{fmt(item.price)}</td>
+                            <td className="p-4 text-right font-black text-sm">{fmt(item.price * item.quantity)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
-            <div className="flex justify-end mb-16">
-                <div className="w-[450px] space-y-4">
-                    <div className="flex justify-between text-sm font-bold text-gray-500 px-4">
-                        <span className="uppercase tracking-widest">Sous-Total Hors Taxe</span>
+            {/* Récapitulatif Financier */}
+            <div className="flex justify-end mb-12">
+                <div className="w-[400px] space-y-3">
+                    <div className="flex justify-between text-xs font-bold text-gray-500 px-3">
+                        <span className="uppercase tracking-widest">Sous-Total</span>
                         <span className="font-mono">{fmt(sale.subtotal)} DA</span>
                     </div>
                     
                     {safeNumber(sale.discountAmount) > 0.01 && (
-                        <div className="flex justify-between text-sm font-black text-emerald-600 px-4">
-                            <span className="uppercase tracking-widest">Remise Accordée</span>
+                        <div className="flex justify-between text-xs font-black text-emerald-600 px-3">
+                            <span className="uppercase tracking-widest">Remise</span>
                             <span className="font-mono">-{fmt(safeNumber(sale.discountAmount))} DA</span>
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center bg-black text-white p-6 rounded-2xl shadow-xl">
-                        <span className="font-black uppercase text-xs tracking-[0.2em]">Total Net à Payer (TTC)</span>
-                        <span className="text-3xl font-black tracking-tighter tabular-nums">{fmt(sale.total)} DA</span>
+                    <div className="flex justify-between items-center bg-black text-white p-5 rounded-xl shadow-lg">
+                        <span className="font-black uppercase text-[10px] tracking-widest">Total Net à Payer</span>
+                        <span className="text-2xl font-black tracking-tighter tabular-nums">{fmt(sale.total)} DA</span>
                     </div>
 
-                    <div className="pt-6 mt-4 border-t-2 border-dashed border-gray-200 px-4 space-y-3">
-                        <div className="flex justify-between text-sm font-bold">
-                            <span className="uppercase opacity-50">Versé ce jour</span>
+                    <div className="pt-4 mt-3 border-t-2 border-dashed border-gray-100 px-3 space-y-2">
+                        <div className="flex justify-between text-xs font-bold">
+                            <span className="uppercase opacity-50">Versé</span>
                             <span className="text-emerald-600 font-black">-{fmt(safeNumber(sale.amountPaid))} DA</span>
                         </div>
-                        <div className="flex justify-between items-center text-xl font-black text-destructive pt-2">
-                            <span className="uppercase text-xs tracking-widest">Nouveau Solde Dû</span>
+                        <div className="flex justify-between items-center text-lg font-black text-red-600 pt-1">
+                            <span className="uppercase text-[9px] tracking-widest">Nouveau Solde</span>
                             <span className="tracking-tighter tabular-nums">{fmt(newBalance)} DA</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="p-8 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 mb-16 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
-                <p className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Arrêtée la présente facture à la somme de :</p>
-                <p className="text-base font-black uppercase leading-relaxed text-secondary italic">
+            {/* Arrêté de la facture */}
+            <div className="p-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 mb-12 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+                <p className="text-[9px] font-black uppercase text-gray-400 mb-2 tracking-widest">Arrêtée la présente facture à la somme de :</p>
+                <p className="text-sm font-black uppercase leading-relaxed text-secondary italic">
                     {numberToWordsFR(sale.total)}
                 </p>
             </div>
 
-            <div className="flex justify-between px-10 text-center">
-                <div className="space-y-24">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Cachet & Signature Établissement</p>
-                    <div className="h-28 w-28 mx-auto border-4 border-gray-50 rounded-full flex items-center justify-center opacity-10">
-                        <span className="text-[10px] font-black">STAMP HERE</span>
+            {/* Signatures */}
+            <div className="flex justify-between px-8 text-center">
+                <div className="space-y-16">
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Cachet & Signature Établissement</p>
+                    <div className="h-24 w-24 mx-auto border-2 border-gray-100 rounded-full flex items-center justify-center opacity-5">
+                        <span className="text-[10px] font-black">STAMP</span>
                     </div>
                 </div>
-                <div className="space-y-24">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Accusé de Réception Client</p>
-                    <p className="text-xs italic text-gray-300 font-medium">"Bon pour accord et réception"</p>
+                <div className="space-y-16">
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Accusé de Réception Client</p>
+                    <p className="text-[10px] italic text-gray-300 font-medium">"Bon pour accord et réception"</p>
                 </div>
             </div>
 
-            <footer className="mt-auto pt-12 border-t border-gray-100 flex justify-between items-center text-[9px] font-bold text-gray-300 uppercase tracking-widest">
+            {/* Footer */}
+            <footer className="mt-auto pt-10 border-t border-gray-100 flex justify-between items-center text-[8px] font-bold text-gray-200 uppercase tracking-widest">
                 <span>iPOS ZEN v2.9 — SOVEREIGN LEDGER SYSTEM</span>
-                <span>Document Original — Ne pas jeter</span>
+                <span>Document Original</span>
             </footer>
         </div>
     );
