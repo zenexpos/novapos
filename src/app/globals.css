@@ -88,8 +88,9 @@
    ELITE PRINT SYSTEM — التحكم السيادي في مخرجات الطباعة
    ══════════════════════════════════════════════════════════ */
 @media print {
-  /* إخفاء كافة عناصر الواجهة بشكل قاطع ونهائي */
-  .print-hide, nav, header, main, .info-bar-solid, .fixed, button, [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside {
+  /* عزل تام لواجهة المستخدم */
+  .print-hide, nav, header, main, .info-bar-solid, .fixed, button, 
+  [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside, .no-print {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -99,7 +100,7 @@
     top: -9999px !important;
   }
 
-  /* الحاوية الوحيدة التي تظهر هي حاوية الطباعة المخصصة */
+  /* الحاوية السيادية الوحيدة المسموح لها بالظهور */
   #receipt-for-print {
     display: block !important;
     visibility: visible !important;
@@ -112,6 +113,7 @@
     background: white !important;
     color: black !important;
     z-index: 9999999 !important;
+    overflow: visible !important;
   }
 
   #receipt-for-print * {
@@ -126,7 +128,7 @@
   }
 
   @page {
-    margin: 0;
+    margin: 5mm;
     size: auto;
   }
 
@@ -137,9 +139,22 @@
     color-adjust: exact !important;
   }
 
-  /* منع قطع العناصر المهمة */
+  /* تحسين سلوك الجداول والصفحات */
   tr, img, table, .break-avoid, .receipt-section, blockquote {
     page-break-inside: avoid !important;
+  }
+
+  /* إعدادات خاصة للطابعة الحرارية */
+  .thermal-receipt {
+    width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+  }
+
+  /* إعدادات خاصة للـ A4 المؤسساتي */
+  .a4-receipt {
+    width: 210mm !important;
+    padding: 10mm !important;
   }
 }
 

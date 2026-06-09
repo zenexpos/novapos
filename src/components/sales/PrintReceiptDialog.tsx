@@ -33,6 +33,7 @@ export function PrintReceiptDialog({
     const [customer, setCustomer] = useState<Customer | null>(null);
     const { printElement, isPrinting } = usePrint();
     
+    // حساب الرصيد السابق للعميل عند إجراء هذه البيعة
     const oldBalance = useMemo(() => {
         if (!customer || !sale) return 0;
         const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
@@ -49,9 +50,9 @@ export function PrintReceiptDialog({
             setCustomer(null);
         }
         
-        // Choisir intelligemment le type de reçu
+        // ذكاء اصطناعي بسيط: اختيار A4 تلقائياً إذا كانت الفاتورة طويلة جداً
         if (isOpen && sale) {
-            setReceiptType(sale.items.length > 8 ? 'a4' : 'thermal');
+            setReceiptType(sale.items.length > 10 ? 'a4' : 'thermal');
         }
     }, [isOpen, sale]);
 
@@ -95,6 +96,7 @@ export function PrintReceiptDialog({
             const element = document.getElementById('receipt-render-target-inner');
             if (!element) throw new Error("Source de rendu introuvable");
 
+            // تحسين الجودة للتصدير
             const canvas = await html2canvas(element, {
                 scale: 3, 
                 useCORS: true,
@@ -124,18 +126,17 @@ export function PrintReceiptDialog({
                     await navigator.share({
                         files: [file],
                         title: `Facture #${sale.invoiceNumber}`,
-                        text: `Bonjour, voici votre facture #${sale.invoiceNumber} de ${profile?.companyName || 'iPOS'}. Total: ${sale.total} DA.`
+                        text: `Bonjour, voici votre facture #${sale.invoiceNumber} de ${profile?.companyName || 'iPOS'}.`
                     });
-                    toast.success("Partage effectué.");
                 } catch (e: any) {
                     if (e.name !== 'AbortError') {
                         pdf.save(fileName);
-                        toast.info("Partage indisponible. Fichier téléchargé.");
+                        toast.info("Partage indisponible, fichier téléchargé.");
                     }
                 }
             } else {
                 pdf.save(fileName);
-                toast.success("PDF généré.");
+                toast.success("Document PDF généré.");
             }
         } catch (error: any) {
             console.error("PDF Error:", error);
@@ -164,7 +165,7 @@ export function PrintReceiptDialog({
                         <div className="flex items-center gap-4 bg-background/50 p-2 rounded-2xl border border-primary/10">
                             <div className={cn("flex items-center gap-3 px-4 py-2 rounded-xl transition-all", receiptType === 'thermal' ? "bg-primary text-primary-foreground shadow-lg" : "opacity-30")}>
                                 <Smartphone className="h-4 w-4" />
-                                <span className="text-[10px] font-black uppercase">80mm</span>
+                                <span className="text-[10px] font-black uppercase">Ticket 80mm</span>
                             </div>
                             <Switch
                                 checked={receiptType === 'a4'}
@@ -173,7 +174,7 @@ export function PrintReceiptDialog({
                             />
                             <div className={cn("flex items-center gap-3 px-4 py-2 rounded-xl transition-all", receiptType === 'a4' ? "bg-primary text-primary-foreground shadow-lg" : "opacity-30")}>
                                 <FileText className="h-4 w-4" />
-                                <span className="text-[10px] font-black uppercase">Format A4</span>
+                                <span className="text-[10px] font-black uppercase">Standard A4</span>
                             </div>
                         </div>
                     </div>
@@ -181,7 +182,7 @@ export function PrintReceiptDialog({
 
                 <div className="flex-grow overflow-y-auto bg-muted/30 p-8 custom-scrollbar flex justify-center">
                     <div id="receipt-render-target" className={cn("transition-all duration-500 origin-top h-auto mb-20", receiptType === 'a4' ? "scale-[0.8] lg:scale-100" : "scale-100")}>
-                        <div id="receipt-render-target-inner" className="bg-white shadow-2xl rounded-sm overflow-hidden">
+                        <div id="receipt-render-target-inner" className="bg-white shadow-2xl rounded-sm overflow-hidden border border-gray-100">
                             <Receipt sale={sale} profile={profile} receiptType={receiptType} customerName={resolvedCustomerName} oldBalance={oldBalance} />
                         </div>
                     </div>
@@ -192,17 +193,17 @@ export function PrintReceiptDialog({
                         <X className="mr-2 h-4 w-4" /> Fermer
                     </Button>
                     <div className="flex-grow" />
-                    <Button variant="outline" onClick={() => handleGeneratePDF(false)} disabled={isGenerating} className="rounded-2xl h-12 font-bold border-primary/20 bg-primary/5 text-primary">
+                    <Button variant="outline" onClick={() => handleGeneratePDF(false)} disabled={isGenerating} className="rounded-2xl h-12 font-bold border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all">
                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         <span className="ml-2 uppercase text-[10px]">PDF</span>
                     </Button>
-                    <Button variant="outline" onClick={() => handleGeneratePDF(true)} disabled={isGenerating} className="rounded-2xl h-12 font-bold border-emerald-500/20 bg-emerald-500/5 text-emerald-600">
+                    <Button variant="outline" onClick={() => handleGeneratePDF(true)} disabled={isGenerating} className="rounded-2xl h-12 font-bold border-emerald-500/20 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all">
                         <MessageCircle className="h-4 w-4" />
-                        <span className="ml-2 uppercase text-[10px]">WhatsApp</span>
+                        <span className="ml-2 uppercase text-[10px]">Partager</span>
                     </Button>
                     <Button onClick={handlePrint} disabled={isPrinting} className="rounded-2xl h-12 font-black text-xs uppercase tracking-[0.2em] px-12 shadow-2xl transition-all active:scale-95 gap-3">
                         {isPrinting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Printer className="h-5 w-5" />} 
-                        Imprimer [P]
+                        Lancer Impression [P]
                     </Button>
                 </DialogFooter>
             </DialogContent>
