@@ -89,7 +89,7 @@
    ══════════════════════════════════════════════════════════ */
 @media print {
   /* إخفاء واجهة التطبيق بالكامل */
-  .print-hide, nav, header, main > *:not(#receipt-for-print), .info-bar-solid, .fixed {
+  .print-hide, nav, header, main > *:not(#receipt-for-print), .info-bar-solid, .fixed, button, [role="dialog"] > button {
     display: none !important;
   }
 
@@ -101,11 +101,22 @@
     width: 100%;
     background: white !important;
     color: black !important;
+    visibility: visible !important;
   }
 
   body {
     background: white !important;
     overflow: visible !important;
+    visibility: hidden; /* يخفي كل شيء ما عدا المستهدف */
+  }
+
+  #receipt-for-print * {
+    visibility: visible;
+  }
+
+  @page {
+    margin: 0;
+    size: auto;
   }
 
   /* تحسينات النصوص */
@@ -114,14 +125,15 @@
     print-color-adjust: exact !important;
   }
 
-  @page {
-    margin: 0;
-    size: auto;
+  /* منع قطع الجداول */
+  tr, img, table, .break-avoid {
+    page-break-inside: avoid !important;
   }
 
-  /* منع قطع الجداول */
-  tr, img, table {
-    page-break-inside: avoid !important;
+  /* دعم الاتجاه العربي في الطباعة */
+  [dir="rtl"] .print-area {
+    direction: rtl !important;
+    text-align: right !important;
   }
 }
 

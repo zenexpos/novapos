@@ -59,9 +59,10 @@ export function PrintReceiptDialog({
     const handlePrint = useCallback(() => {
         if (!sale) return;
         printElement('receipt-render-target-inner', {
-            title: `Facture_${sale.invoiceNumber}`
+            title: `Facture_${sale.invoiceNumber}`,
+            thermal: receiptType === 'thermal'
         });
-    }, [sale, printElement]);
+    }, [sale, receiptType, printElement]);
 
     useKeyboardShortcuts([
         {
@@ -204,17 +205,7 @@ export function PrintReceiptDialog({
                         className="rounded-xl h-11 font-bold border-emerald-500/20 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all gap-2"
                     >
                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
-                        Partager WhatsApp
-                    </Button>
-
-                    <Button 
-                        variant="outline"
-                        onClick={() => handleGeneratePDF(false)} 
-                        disabled={isGenerating}
-                        className="rounded-xl h-11 font-bold border-primary/20 hover:bg-primary/5 transition-all gap-2"
-                    >
-                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        Exporter PDF
+                        WhatsApp
                     </Button>
 
                     <Button onClick={handlePrint} disabled={isPrinting} className="rounded-xl h-11 font-black text-xs uppercase tracking-widest flex-1 shadow-xl transition-all active:scale-95 gap-3">
