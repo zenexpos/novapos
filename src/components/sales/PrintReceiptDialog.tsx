@@ -50,7 +50,7 @@ export function PrintReceiptDialog({
             setCustomer(null);
         }
         
-        // ذكاء اصطناعي بسيط: اختيار A4 تلقائياً إذا كانت الفاتورة طويلة جداً
+        // اختيار التنسيق التلقائي بناءً على حجم الفاتورة
         if (isOpen && sale) {
             setReceiptType(sale.items.length > 8 ? 'a4' : 'thermal');
         }
@@ -183,7 +183,7 @@ export function PrintReceiptDialog({
 
                 <div className="flex-grow overflow-y-auto bg-muted/30 p-8 custom-scrollbar flex justify-center">
                     <div id="receipt-render-target" className={cn("transition-all duration-500 origin-top h-auto mb-20", receiptType === 'a4' ? "scale-[0.8] lg:scale-100" : "scale-100")}>
-                        <div id="receipt-render-target-inner" className="bg-white shadow-2xl rounded-sm overflow-hidden border border-gray-100">
+                        <div id="receipt-render-target-inner" className="bg-white shadow-2xl rounded-sm overflow-hidden border border-gray-100 mx-auto">
                             <Receipt sale={sale} profile={profile} receiptType={receiptType} customerName={resolvedCustomerName} oldBalance={oldBalance} />
                         </div>
                     </div>

@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 /**
  * usePrint — نظام طباعة سيادي موحد iPOS Zen.
  * معالجة متقدمة تضمن استقرار التنسيقات للأحجام المختلفة (A4 و 80mm)
- * ومنع تداخل واجهة PWA مع المخرجات.
+ * وتوسيط المحتوى ومنع تداخل واجهة PWA مع المخرجات.
  */
 export function usePrint() {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -32,7 +32,7 @@ export function usePrint() {
     clone.style.height = 'auto';
     clone.style.overflow = 'visible';
     clone.style.transform = 'none';
-    clone.style.margin = '0 auto';
+    clone.style.margin = '0 auto'; // التوسيط
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
     

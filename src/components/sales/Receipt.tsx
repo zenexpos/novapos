@@ -117,7 +117,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
     const newBalance = oldBalance + currentDebtOfThisSale;
 
     return (
-        <div className="a4-receipt-wrapper bg-white text-black p-12 font-sans" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
+        <div className="a4-receipt-wrapper bg-white text-black p-12 font-sans" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box', margin: '0 auto' }}>
             {/* Header المؤسساتي */}
             <div className="flex justify-between items-start border-b-4 border-black pb-8 mb-12">
                 <div className="space-y-2 max-w-[65%]">
@@ -194,7 +194,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                     
                     {safeNumber(sale.discountAmount) > 0.01 && (
                         <div className="flex justify-between text-[11pt] font-black text-emerald-600 px-6">
-                            <span className="uppercase tracking-widest">Remise Spéciale</span>
+                            <span className="uppercase tracking-widest">Remise Spécialه</span>
                             <span className="font-mono">-{fmt(safeNumber(sale.discountAmount))} DA</span>
                         </div>
                     )}
@@ -226,7 +226,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                 </p>
             </div>
 
-            {/* Zone de Signature & Cachet */}
+            {/* Zone de Signature & Cacheت */}
             <div className="flex justify-between px-16 text-center mt-auto pt-12">
                 <div className="space-y-24">
                     <p className="text-[11pt] font-black uppercase tracking-[0.2em] opacity-40">Cachet & Signature</p>

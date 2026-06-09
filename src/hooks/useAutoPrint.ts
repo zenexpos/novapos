@@ -6,7 +6,7 @@ import { numberToFrenchWords } from '@/lib/numberToWords';
 
 /**
  * useAutoPrint — نظام الطباعة التلقائية السريعة iPOS Zen.
- * يحاكي تصميم ThermalReceipt الموحد لضمان اتساق المخرجات.
+ * محاكي لتنسيق Receipt السيادي الموحد لضمان اتساق المخرجات وتوسيطها.
  */
 export function useAutoPrint() {
     const isEnabled = useCallback((): boolean => {
@@ -56,9 +56,11 @@ export function useAutoPrint() {
     font-size:10pt; color:#000; background:#fff;
     padding:8mm 2mm;
     line-height: 1.2;
+    text-align: center;
   }
   .c { text-align:center; }
   .r { text-align:right; }
+  .l { text-align:left; }
   .b { font-weight:bold; }
   .lg { font-size:13pt; }
   .xs { font-size:8pt; }
@@ -66,7 +68,7 @@ export function useAutoPrint() {
   .sep2 { border-top:2px solid #000; margin:4mm 0; }
   table { width:100%; border-collapse:collapse; }
   td { vertical-align:top; }
-  .total-box { background:#000; color:#fff; padding:2mm; font-size:11pt; font-weight:black; margin-top:2mm; }
+  .total-box { background:#000; color:#fff; padding:2mm; font-size:11pt; font-weight:black; margin-top:2mm; text-align:left; }
 </style>
 </head>
 <body>
@@ -76,8 +78,8 @@ export function useAutoPrint() {
   
   <div class="sep2"></div>
   <div class="c b" style="text-decoration:underline; font-size:11pt; margin-bottom:2mm;">BON DE LIVRAISON</div>
-  <div class="xs"><b>N° FACTURE:</b> #${sale.invoiceNumber}</div>
-  <div class="xs"><b>DATE:</b> ${new Date(sale.createdAt!).toLocaleString('fr-DZ')}</div>
+  <div class="l xs"><b>N° FACTURE:</b> #${sale.invoiceNumber}</div>
+  <div class="l xs"><b>DATE:</b> ${new Date(sale.createdAt!).toLocaleString('fr-DZ')}</div>
   
   <div class="sep"></div>
   
