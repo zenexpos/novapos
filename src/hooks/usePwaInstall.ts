@@ -22,18 +22,18 @@ if (typeof window !== 'undefined') {
 export function usePwaInstall() {
     const [isInstallable, setIsInstallable] = useState(false);
 
+    const checkStatus = useCallback(() => {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+            || (window.navigator as any).standalone === true;
+
+        if (isStandalone) {
+            setIsInstallable(false);
+        } else if (deferredPrompt) {
+            setIsInstallable(true);
+        }
+    }, []);
+
     useEffect(() => {
-        const checkStatus = () => {
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                || (window.navigator as any).standalone === true;
-
-            if (isStandalone) {
-                setIsInstallable(false);
-            } else if (deferredPrompt) {
-                setIsInstallable(true);
-            }
-        };
-
         checkStatus();
 
         const handleReady = () => setIsInstallable(true);
@@ -46,7 +46,7 @@ export function usePwaInstall() {
             window.removeEventListener('pwa-install-ready', handleReady);
             window.removeEventListener('trigger-pwa-install', handleInstallTrigger);
         };
-    }, []);
+    }, [checkStatus]);
 
     const install = useCallback(async () => {
         if (!deferredPrompt) return;

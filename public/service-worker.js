@@ -1,29 +1,43 @@
 /**
  * iPOS Zen — Sovereign Service Worker
- * This file is essential for PWA installability in Chrome and Edge.
- * It provides a fetch handler and basic offline capabilities.
+ * الأساس التقني لتفعيل زر التثبيت والعمل دون اتصال.
  */
 
-const CACHE_NAME = 'ipos-zen-cache-v1';
+const CACHE_NAME = 'ipos-zen-v2';
+const OFFLINE_URL = '/offline/';
 
-// We don't necessarily need to cache everything manually if using next-pwa,
-// but we MUST have a fetch listener to satisfy the installability criteria.
-
+// تفعيل ملف الخدمة فوراً
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([OFFLINE_URL]);
+    })
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
-
-self.addEventListener('fetch', (event) => {
-  // Respond with cache or network
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
+  self.clients.claim();
 });
 
-// Handle push notifications or background sync if needed in the future
+// مستمع الـ FETCH: ضروري جداً لظهور زر التثبيت في Chrome/Edge
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+  }
+});
