@@ -85,10 +85,9 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   ELITE PRINT SYSTEM — التحكم السيادي في مخرجات الطباعة
+   SOVEREIGN PRINT SYSTEM — الإنتاج النهائي (Next.js 15)
    ══════════════════════════════════════════════════════════ */
 @media print {
-  /* عزل تام لواجهة المستخدم */
   .print-hide, nav, header, main, .info-bar-solid, .fixed, button, 
   [role="dialog"], [data-radix-popper-content-wrapper], .toaster, aside, .no-print,
   .print-hidden, [aria-hidden="true"] {
@@ -97,11 +96,9 @@
     height: 0 !important;
     width: 0 !important;
     overflow: hidden !important;
-    position: absolute !important;
-    top: -9999px !important;
   }
 
-  /* الحاوية السيادية الوحيدة المسموح لها بالظهور */
+  /* الحاوية السيادية المركزية */
   #receipt-for-print {
     display: flex !important;
     visibility: visible !important;
@@ -115,109 +112,51 @@
     background: white !important;
     color: black !important;
     z-index: 9999999 !important;
-    overflow: visible !important;
-    justify-content: center !important;
-  }
-
-  #receipt-for-print > div {
-    visibility: visible !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    justify-content: center !important; /* توسيط المحتوى */
+    align-items: flex-start !important;
   }
 
   body {
     background: white !important;
     overflow: visible !important;
-    height: auto !important;
-    width: 100% !important;
   }
 
-  /* فرض دقة الألوان والرسوميات */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
-  /* تحسين سلوك الجداول والصفحات */
-  tr, img, table, .break-avoid, .receipt-section, blockquote {
-    page-break-inside: avoid !important;
+  /* مخرجات الـ A4 المؤسساتية (Monochrome) */
+  .a4-receipt {
+    width: 210mm !important;
+    padding: 10mm !important;
+    margin: 0 auto !important;
+    background: white !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
-  /* إعدادات خاصة للطابعة الحرارية */
+  /* مخرجات الـ Ticket الحراري (80mm) */
   .thermal-receipt {
     width: 80mm !important;
     max-width: 80mm !important;
     margin: 0 auto !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-
-  /* إعدادات خاصة للـ A4 المؤسساتي (Monochrome & Compact) */
-  .a4-receipt {
-    width: 210mm !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
-    background: white !important;
-    color: black !important;
-  }
-
-  /* إزالة أي خلفيات ملونة في وضع الـ A4 لتقليل استهلاك الحبر */
-  .a4-receipt-wrapper * {
-    background-color: transparent !important;
-    background-image: none !important;
-    color: black !important;
-    border-color: #000 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    padding: 5mm !important;
   }
 
   @page {
     margin: 0;
     size: auto;
   }
-
-  .print-hide * {
-    display: none !important;
-  }
 }
 
-/* SOLID UI — تطبيق نظام الألوان الصلبة لضمان الثبات والفخامة */
-.app-card, .glass, .glass-stat, .glass-elevated {
+.app-card, .glass, .glass-stat {
   background-color: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-  opacity: 1 !important;
   backdrop-filter: none !important;
 }
 
-.nav-solid {
-  background-color: hsl(var(--secondary)) !important;
-  color: hsl(var(--secondary-foreground)) !important;
-  border-bottom: 2px solid hsl(var(--primary)) !important;
-}
-
-[role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper] > div {
-  background-color: hsl(var(--card)) !important;
-  opacity: 1 !important;
-  backdrop-filter: none !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid hsl(var(--border)) !important;
-}
-
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-.animate-install {
-  animation: bounce-subtle 2s infinite ease-in-out;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

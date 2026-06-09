@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
 
 /**
- * iPOS Zen — Manifest Configuration (Elite Edition)
- * FIX: Next.js 15 static export requires manifest to be forced static.
+ * iPOS Zen — Manifest Configuration (Elite Production Edition)
+ * Next.js 15 static export requires manifest to be forced static.
  */
 export const dynamic = "force-static";
 
@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'iPOS Zen — Elite Ledger',
     short_name: 'iPOS Zen',
-    description: 'نظام محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون - تجربة native كاملة',
+    description: 'نظام محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون - تجربة مكتبية كاملة',
     start_url: '/',
     display: 'standalone',
     background_color: '#F8FAFC',
