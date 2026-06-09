@@ -119,7 +119,7 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* زر التثبيت المباشر - يظهر عندما يكتشف المتصفح استيفاء شروط الـ PWA */}
+                    {/* زر التثبيت المباشر - يظهر باللون الذهبي فور جاهزية الـ PWA */}
                     {isInstallable && (
                         <Button
                             variant="ghost"

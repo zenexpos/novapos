@@ -116,7 +116,7 @@
     color: black !important;
     z-index: 9999999 !important;
     overflow: visible !important;
-    justify-content: center !important; /* مركز المحتوى */
+    justify-content: center !important;
   }
 
   #receipt-for-print > div {
@@ -153,12 +153,23 @@
     background: white !important;
   }
 
-  /* إعدادات خاصة للـ A4 المؤسساتي */
+  /* إعدادات خاصة للـ A4 المؤسساتي (Monochrome & Compact) */
   .a4-receipt {
     width: 210mm !important;
     padding: 0 !important;
     margin: 0 auto !important;
     background: white !important;
+    color: black !important;
+  }
+
+  /* إزالة أي خلفيات ملونة في وضع الـ A4 لتقليل استهلاك الحبر */
+  .a4-receipt-wrapper * {
+    background-color: transparent !important;
+    background-image: none !important;
+    color: black !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   @page {
@@ -166,7 +177,6 @@
     size: auto;
   }
 
-  /* Force hidden for elements with print-hide even if nested */
   .print-hide * {
     display: none !important;
   }
