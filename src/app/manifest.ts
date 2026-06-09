@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 /**
- * iPOS Zen — Manifest Configuration
+ * iPOS Zen — Manifest Configuration (Elite Edition)
  * FIX: Next.js 15 static export requires manifest to be forced static.
  */
 export const dynamic = "force-static";
@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'iPOS Zen — Elite Ledger',
     short_name: 'iPOS Zen',
-    description: 'نظام محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون',
+    description: 'نظام محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون - تجربة native كاملة',
     start_url: '/',
     display: 'standalone',
     background_color: '#F8FAFC',
@@ -56,21 +56,21 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     screenshots: [
       {
-        src: 'https://picsum.photos/seed/ipos1/1280/720',
+        src: 'https://picsum.photos/seed/ipos-desk/1280/720',
         sizes: '1280x720',
         type: 'image/png',
         form_factor: 'wide',
-        label: 'Dashboard Elite',
+        label: 'Tableau de bord iPOS Zen',
       },
       {
-        src: 'https://picsum.photos/seed/ipos2/720/1280',
+        src: 'https://picsum.photos/seed/ipos-mob/720/1280',
         sizes: '720x1280',
         type: 'image/png',
         form_factor: 'narrow',
-        label: 'Vente Mobile Zen',
+        label: 'Interface de vente mobile',
       },
     ],
-    categories: ['business', 'finance'],
+    categories: ['business', 'finance', 'productivity'],
     lang: 'fr-DZ',
     dir: 'ltr',
   };

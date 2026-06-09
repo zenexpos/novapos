@@ -1,70 +1,29 @@
 /**
  * iPOS Zen — Sovereign Service Worker
- * محرك التشغيل المستقل لضمان العمل دون اتصال وتفعيل التثبيت المباشر.
+ * This file is essential for PWA installability in Chrome and Edge.
+ * It provides a fetch handler and basic offline capabilities.
  */
 
-const CACHE_NAME = 'ipos-zen-v2';
-const OFFLINE_URL = '/offline/';
+const CACHE_NAME = 'ipos-zen-cache-v1';
 
-const ASSETS_TO_CACHE = [
-  '/',
-  '/offline/',
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
-];
+// We don't necessarily need to cache everything manually if using next-pwa,
+// but we MUST have a fetch listener to satisfy the installability criteria.
 
-// تثبيت ملف الخدمة وتخزين الأصول الأساسية
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
-// تنظيف الكاش القديم عند التحديث
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil(clients.claim());
 });
 
-/**
- * مستمع حدث Fetch — الشرط الأساسي لظهور زر التثبيت في Chrome/Edge.
- * يضمن تشغيل التطبيق في وضع الأوفلاين (Offline-first).
- */
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(OFFLINE_URL) || caches.match('/');
-      })
-    );
-    return;
-  }
-
+  // Respond with cache or network
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
 
-// استقبال رسالة التحديث الفوري
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
+// Handle push notifications or background sync if needed in the future
