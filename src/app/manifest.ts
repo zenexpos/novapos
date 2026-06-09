@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
 
 /**
+ * iPOS Zen — Manifest Configuration
  * FIX: Next.js 15 static export requires manifest to be forced static.
- * This file generates the /manifest.webmanifest route.
  */
 export const dynamic = "force-static";
 
@@ -42,22 +42,10 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
-        src: '/icons/icon-152x152.png',
-        sizes: '152x152',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
         src: '/icons/icon-192x192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
-      },
-      {
-        src: '/icons/icon-384x384.png',
-        sizes: '384x384',
-        type: 'image/png',
-        purpose: 'any',
       },
       {
         src: '/icons/icon-512x512.png',
@@ -72,7 +60,7 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '1280x720',
         type: 'image/png',
         form_factor: 'wide',
-        label: 'Tableau de bord Elite',
+        label: 'Dashboard Elite',
       },
       {
         src: 'https://picsum.photos/seed/ipos2/720/1280',

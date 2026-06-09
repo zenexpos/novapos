@@ -11,9 +11,21 @@ export function ServiceWorkerRegister() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // Use the service-worker.js directly for maximum reliability
       navigator.serviceWorker
-        .register('/service-worker.js')
+        .register('/service-worker.js', { scope: '/' })
         .then((reg) => {
           console.log('[iPOS Zen] Service Worker registered:', reg.scope);
+          
+          // التفتيش عن تحديثات فورية
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            if (installingWorker) {
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[iPOS Zen] New content available; please refresh.');
+                }
+              };
+            }
+          };
         })
         .catch((err) => {
           console.error('[iPOS Zen] SW registration failed:', err);

@@ -18,32 +18,10 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         },
       },
       {
-        urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
-        handler: "CacheFirst",
-        options: {
-          cacheName: "static-font-assets",
-          expiration: {
-            maxEntries: 10,
-            maxAgeSeconds: 7 * 24 * 60 * 60,
-          },
-        },
-      },
-      {
         urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
         handler: "StaleWhileRevalidate",
         options: {
           cacheName: "static-image-assets",
-          expiration: {
-            maxEntries: 64,
-            maxAgeSeconds: 24 * 60 * 60,
-          },
-        },
-      },
-      {
-        urlPattern: /\/_next\/static\/.*/i,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "static-next-assets",
         },
       },
       {
@@ -52,10 +30,6 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         options: {
           cacheName: "offline-cache",
           networkTimeoutSeconds: 10,
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60,
-          },
         },
       },
     ],
