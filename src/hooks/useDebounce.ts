@@ -80,37 +80,31 @@ export function useAsyncDebounce<T, Args extends unknown[]>(
 /**
  * useDebouncedAbortSignal - FIXED for React 19 Performance
  * 
- * CRITICAL FIX: The previous version returned a new object literal every render,
- * triggering infinite loops in components that used the result as a dependency.
- * Now it uses state for the controller to ensure the returned signal is stable
- * and only invalidates when a new debounced cycle is actually ready.
+ * CRITICAL FIX: Stabilized the return object identity to prevent infinite render loops.
+ * The signal is now tied strictly to the debounced cycle completion.
  */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
   signal: AbortSignal;
 } {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  // We use state for the controller so the object reference only changes when we want it to
-  const [controller, setController] = useState<AbortController>(new AbortController());
+  const [signal, setSignal] = useState<AbortSignal>(new AbortController().signal);
 
   useEffect(() => {
+    const controller = new AbortController();
     const handler = setTimeout(() => {
       setDebouncedValue(value);
+      setSignal(controller.signal);
     }, delay);
 
     return () => {
       clearTimeout(handler);
-      // Abort previous cycle
       controller.abort();
-      // Prepare a fresh controller for the NEXT keystroke render
-      // This will trigger a re-render but with the correct signal reference
-      setController(new AbortController());
     };
   }, [value, delay]);
 
-  // Only return a new object when debouncedValue or controller actually changes
   return useMemo(() => ({
     debouncedValue,
-    signal: controller.signal,
-  }), [debouncedValue, controller]);
+    signal,
+  }), [debouncedValue, signal]);
 }

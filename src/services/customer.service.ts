@@ -406,7 +406,7 @@ class CustomerService {
         });
     }
 
-    async executeImport(confirmedData: { toAdd: any[]; toUpdate: any[] }): Promise<void> {
+    async executeImport(confirmedData: { toAdd: Partial<Customer>[]; toUpdate: Partial<Customer>[] }): Promise<void> {
         const now = new Date();
 
         const toAdd = confirmedData.toAdd.map(c => {
@@ -421,7 +421,7 @@ class CustomerService {
                 isBreadClient: false,
                 createdAt: now,
                 updatedAt: now,
-            };
+            } as Customer;
         });
 
         const toUpdate = confirmedData.toUpdate.map(c => ({
@@ -429,7 +429,7 @@ class CustomerService {
             initialBalance: roundFinancial(safeNumber(c.initialBalance)),
             searchName: `${c.firstName} ${c.lastName}`.toLowerCase().trim(),
             updatedAt: now,
-        }));
+        }) as Customer);
 
         await db.transaction('rw', [db.customers], async () => {
             if (toAdd.length > 0)    await db.customers.bulkAdd(toAdd);
