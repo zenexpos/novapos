@@ -1,24 +1,24 @@
-# iPOS Smart - Système de Vente Local-First
+# iPOS Zen — Sovereign Ledger & Elite POS
 
-**iPOS Smart** est une application de point de vente (POS) sophistiquée conçue pour fonctionner entièrement dans le navigateur, privilégiant la confidentialité des données et la rapidité des performances. Le système adopte la philosophie **Local-First**, où toutes les données sont stockées et traitées localement pour garantir la continuité du travail même en cas de coupure Internet.
+**iPOS Zen** هو نظام نقطة بيع (POS) سيادي وفخم، مصمم ليعمل بالكامل داخل المتصفح مع فلسفة **الأوفلاين أولاً (Offline-First)**. يوفر النظام تجربة مستخدم "Zen" فائقة السرعة مع خصوصية مطلقة للبيانات، حيث تتم معالجة كافة العمليات التجارية محلياً دون الحاجة لاتصال دائم بالإنترنت.
 
-## 🚀 Fonctionnalités Clés
+## 🚀 المميزات السيادية
 
-*   **Moteur de Vente Multitâche :** Support de plusieurs paniers simultanés (Brouillons) avec possibilité de suspendre et reprendre les ventes.
-*   **Gestion des Dettes et Crédits :** Suivi précis de la mémorisation des clients avec recalcul dynamique du solde basé sur (Ventes - Paiements - Retours).
-*   **Système Logistique du Pain :** Fonctionnalité unique pour gérer les commandes récurrentes (quotidiennes ou planifiées) et les convertir automatiquement en dettes enregistrées.
-*   **Contrôle Strict des Stocks :** Historique complet (Audit Trail) de chaque mouvement de stock, prévenant les manipulations et garantissant l'exactitude des quantités.
-*   **Intelligence Artificielle Intégrée (OCR) :** Numérisation des factures fournisseurs et conversion immédiate en données numériques via Claude AI API.
-*   **Précision Financière Absolue :** Utilisation de calculs d'entiers étendus pour éviter les erreurs de virgule flottante dans les opérations arithmétiques.
-*   **Synchronisation Cloud Souveraine :** Possibilité de lier l'application à votre propre Supabase pour la sauvegarde et la synchronisation multi-appareils.
+*   **محرك بيع متعدد المهام:** دعم سلال تسوق متعددة (بصيغة مسودات) مع إمكانية تعليق واستئناف البيع فوراً.
+*   **سيادة الأوفلاين المطلقة:** بفضل ملف الخدمة (Service Worker) اليدوي، يعمل التطبيق كبرمجية محلية صلبة حتى في حال انقطاع الشبكة كلياً.
+*   **إدارة الديون والائتمان:** تتبع دقيق لثغرات العملاء مع نظام تنبيهات ذكي للديون المتأخرة والحدود الائتمانية.
+*   **نظام لوجستيات الخبز:** ميزة فريدة لإدارة الاشتراكات اليومية المجدولة وتحويلها آلياً إلى قيود مالية.
+*   **رقابة صارمة على المخزون:** سجل مراجعة (Audit Trail) كامل لكل حركة مخزنية، يمنع التلاعب ويضمن دقة الكميات.
+*   **ذكاء اصطناعي مدمج (OCR):** مسح فواتير الموردين ضوئياً وتحويلها فوراً إلى بيانات رقمية عبر محرك Tesseract المتقدم.
+*   **مزامنة سحابية اختيارية:** ربط التطبيق بقاعدة بياناتك الخاصة على Supabase للنسخ الاحتياطي والمزامنة بين الأجهزة.
 
-## 🛠 Technologies Utilisées
+## 🛠 التكنولوجيا المستخدمة
 
-*   **Framework :** Next.js 14 (App Router).
-*   **Database :** IndexedDB (via Dexie.js) - Stockage local complet.
-*   **State Management :** Zustand (avec persistance).
-*   **UI Engine :** Tailwind CSS & ShadCN UI (optimisé pour écrans 1360x768).
-*   **Sync :** Supabase (Optionnel).
+*   **Framework:** Next.js 15 (React 19) — وضع التصدير الاستاتيكي.
+*   **Database:** IndexedDB (via Dexie.js) — تخزين محلي فائق السرعة.
+*   **UI Engine:** Tailwind CSS v4 & ShadCN UI — واجهة محسنة لشاشات POS القياسية.
+*   **State Management:** Zustand (مع خاصية الاستمرارية Persistence).
+*   **Desktop:** Electron — لتحويل النظام إلى تطبيق مكتب للويندوز.
 
-## 💻 Compatibilité Appareils
-L'interface utilisateur a été soigneusement conçue pour s'adapter aux terminaux POS standards, avec des marges réduites et une densité de données accrue pour garantir une visibilité globale sans défilement inutile.
+## 💻 التوافق والأداء
+تم تصميم الواجهة بعناية لتناسب أجهزة POS القياسية (دقة 1360x768)، مع التركيز على كثافة البيانات وتقليل الحاجة للتمرير (Zero-Scroll Policy) لضمان رؤية شاملة للعملية التجارية.
