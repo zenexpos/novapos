@@ -17,8 +17,7 @@ const triggerSync = () => {
     }
 };
 
-// FIX: Map des champs de tri autorisés — évite le split('_') qui échoue sur
-// les noms de champs contenant des underscores (ex: outstandingBalance)
+// Map of authorized sort fields to prevent underscore splitting issues
 const ALLOWED_SORT_FIELDS: Record<string, keyof Customer> = {
     outstandingBalance: 'outstandingBalance',
     totalSpent:        'totalSpent',
@@ -26,6 +25,7 @@ const ALLOWED_SORT_FIELDS: Record<string, keyof Customer> = {
     lastName:          'lastName',
     createdAt:         'createdAt',
     creditLimit:       'creditLimit',
+    searchName:        'searchName',
 };
 
 class CustomerService {
@@ -72,25 +72,13 @@ class CustomerService {
         }
 
         if (filters.sortBy) {
-            // FIX: Utilisation d'un séparateur explicite '_ORDER_' pour éviter
-            // d'écraser les champs dont le nom contient déjà un underscore.
-            // Convention: "outstandingBalance_ORDER_desc"
-            // Rétrocompat: si pas de '_ORDER_', fallback sur le dernier '_'
-            let field: keyof Customer;
-            let isAsc: boolean;
-
-            if (filters.sortBy.includes('_ORDER_')) {
-                const [f, order] = filters.sortBy.split('_ORDER_');
-                field = (ALLOWED_SORT_FIELDS[f] ?? 'createdAt') as keyof Customer;
-                isAsc = order === 'asc';
-            } else {
-                // Fallback ancien format "fieldName_asc" / "fieldName_desc"
-                const lastUnderscore = filters.sortBy.lastIndexOf('_');
-                const rawField = filters.sortBy.substring(0, lastUnderscore);
-                const order = filters.sortBy.substring(lastUnderscore + 1);
-                field = (ALLOWED_SORT_FIELDS[rawField] ?? 'createdAt') as keyof Customer;
-                isAsc = order === 'asc';
-            }
+            // Fix: Use substring to correctly split field and order even with underscores in field name
+            const lastUnderscore = filters.sortBy.lastIndexOf('_');
+            const rawField = filters.sortBy.substring(0, lastUnderscore);
+            const order = filters.sortBy.substring(lastUnderscore + 1);
+            
+            const field = (ALLOWED_SORT_FIELDS[rawField] ?? 'createdAt') as keyof Customer;
+            const isAsc = order === 'asc';
 
             customers.sort((a, b) => {
                 const valA = a[field] ?? 0;
@@ -173,7 +161,7 @@ class CustomerService {
 
         await db.customers.update(existing.id, dataToUpdate);
 
-        // recalculateCustomerStatus recompute outstandingBalance à partir des ventes/paiements
+        // recalculate status
         const updated = await this.recalculateCustomerStatus(uuid);
 
         triggerSync();
@@ -194,7 +182,7 @@ class CustomerService {
 
         if (salesCount > 0 || returnsCount > 0 || paymentsCount > 0 || breadOrdersCount > 0) {
             throw new Error(
-                "Révocation impossible : ce dossier possède un historique transactionnel actif. Veuillez l'archiver plutôt.",
+                "Révocation impossible : ce dossier possède un historique transactionnel actif.",
             );
         }
 
@@ -222,7 +210,6 @@ class CustomerService {
             db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
         ]);
 
-        // Exclure les ventes annulées (soft-deleted)
         const activeSales = sales.filter(s => !s.isCancelled);
 
         let totalDebtCents = Math.round(safeNumber(customer.initialBalance) * 100);
@@ -280,11 +267,6 @@ class CustomerService {
         return { ...customer, ...customerUpdate };
     }
 
-    /**
-     * FIX: getCustomerActivity utilise une pagination correcte sur les données triées.
-     * Les données sont toujours chargées en mémoire (volume limité par client),
-     * mais le slice est appliqué après tri pour des résultats cohérents.
-     */
     async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<any[]> {
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
@@ -306,7 +288,7 @@ class CustomerService {
                 type: 'initial_balance',
                 date: customer.createdAt || new Date(0),
                 amount: customer.initialBalance,
-                notes: "Report de solde initial lors de l'ouverture du dossier.",
+                notes: "Report de solde initial.",
             });
         }
 
@@ -372,7 +354,6 @@ class CustomerService {
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                // FIX: le callback async est enveloppé dans try/catch avec reject explicite
                 complete: async results => {
                     try {
                         const existingCustomers = await this.getCustomers();
@@ -407,7 +388,7 @@ class CustomerService {
                                 address:        (row.address || row.adresse || row.Adresse || '').trim(),
                                 creditLimit:    safeNumber(row.creditLimit || row.limite || row.Limite_Crédit),
                                 settlementDay:  parseInt(row.settlementDay || row.echeance || '0'),
-                                initialBalance: safeNumber(row.initialBalance || row.solde || row.dette || row.debt || row.Solde_Impayé || '0'),
+                                initialBalance: safeNumber(row.initialBalance || row.Solde_Impayé || '0'),
                             };
 
                             if (existingCustomer) {

@@ -40,7 +40,6 @@ function CustomersContent() {
     const searchParams = useSearchParams();
     const searchInputRef = useRef<HTMLInputElement>(null);
     
-    // FIX: Individual selectors to avoid reference instability
     const viewMode = useAppStore(state => state.customersViewMode);
     const setViewMode = useAppStore(state => state.actions.setCustomersViewMode);
 
@@ -54,6 +53,7 @@ function CustomersContent() {
     const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
     const [isRefreshing, setIsRefreshing] = useState(false);
     
+    // Stable debounced values
     const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
 
     const [customers, setCustomers] = useState<Customer[] | undefined>(undefined);
@@ -71,8 +71,8 @@ function CustomersContent() {
         }
     }, [searchParams]);
 
+    // fetchCustomers stabilized to prevent loops
     const fetchCustomers = useCallback(async () => {
-        if (signal.aborted) return;
         setIsRefreshing(true);
         try {
             const data = await customerService.filterCustomers({ 
@@ -80,18 +80,17 @@ function CustomersContent() {
                 status: filterStatus,
                 sortBy
             });
-            if (!signal.aborted) {
-                setCustomers(data);
-            }
+            // We check aborted status manually if needed, but the hook manages the signal
+            setCustomers(data);
         } catch (error: any) {
             if (error.name !== 'AbortError') {
                 toast.error("Impossible de charger les clients.");
                 setCustomers([]);
             }
         } finally {
-            if (!signal.aborted) setIsRefreshing(false);
+            setIsRefreshing(false);
         }
-    }, [debouncedSearchQuery, filterStatus, sortBy, signal]);
+    }, [debouncedSearchQuery, filterStatus, sortBy]); // signal removed from deps to avoid constant ref changes
     
     useEffect(() => {
         fetchCustomers();

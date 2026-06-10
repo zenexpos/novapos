@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -77,32 +77,33 @@ export function useAsyncDebounce<T, Args extends unknown[]>(
   return { execute, cancel, isPending };
 }
 
+/**
+ * useDebouncedAbortSignal - FIXED for React 19
+ * Returns a memoized object to prevent infinite re-render loops when used as a dependency.
+ */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
   signal: AbortSignal;
 } {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const controllerRef = useRef<AbortController>(new AbortController());
 
   useEffect(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    abortControllerRef.current = new AbortController();
-    
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
 
     return () => {
       clearTimeout(handler);
-      abortControllerRef.current?.abort();
+      // Abort previous request and prepare a fresh controller for the next value change
+      controllerRef.current.abort();
+      controllerRef.current = new AbortController();
     };
   }, [value, delay]);
 
-  return {
+  // CRITICAL: useMemo ensures this object doesn't trigger parent effects on every tick
+  return useMemo(() => ({
     debouncedValue,
-    signal: abortControllerRef.current?.signal ?? new AbortController().signal,
-  };
+    signal: controllerRef.current.signal,
+  }), [debouncedValue]);
 }

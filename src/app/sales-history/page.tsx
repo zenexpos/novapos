@@ -53,7 +53,7 @@ import { Badge } from '@/components/ui/badge';
 
 type SalesStatus = 'all' | 'paid' | 'partial' | 'unpaid';
 
-// Type unifié pour le registre (Ventes et Paiements)
+// Registry item type
 export type HistoryItem = 
     | { type: 'sale'; data: Sale; date: Date }
     | { type: 'payment'; data: Payment; date: Date };
@@ -66,14 +66,13 @@ export default function SalesHistoryPage() {
         setIsMounted(true);
     }, []);
 
-    // FIX: Individual selectors to avoid reference loop in React 19
     const viewMode = useAppStore(state => state.salesViewMode);
     const setViewMode = useAppStore(state => state.actions.setSalesViewMode);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<SalesStatus>('all');
     const { dateRange, setDate } = useDateRange(29);
-    const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
+    const { debouncedValue: debouncedSearchQuery } = useDebouncedAbortSignal(searchQuery, 300);
     
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -82,7 +81,7 @@ export default function SalesHistoryPage() {
     const [isPrintOpen, setIsPrintOpen] = useState(false);
     const [isBulkCancelConfirmOpen, setIsBulkCancelConfirmOpen] = useState(false);
 
-    // Source de données unifiée (Ventes + Règlements de dettes)
+    // Optimized live query - only depends on debounced values and ranges
     const historyDataResult = useLiveQuery<HistoryItem[] | undefined>(async () => {
         if (!isMounted) return undefined;
 
@@ -93,42 +92,37 @@ export default function SalesHistoryPage() {
             to: dateRange?.to
         };
 
-        // 1. Récupération des ventes
+        // 1. Fetch sales
         const sales = await salesService.filterSales(filters);
 
-        // 2. Récupération des paiements autonomes (Encaissements de dettes)
+        // 2. Fetch payments
         let paymentsQuery = db.payments.toCollection();
         if (dateRange?.from) {
             paymentsQuery = db.payments.where('paymentDate').between(startOfDay(dateRange.from), endOfDay(dateRange.to || new Date()), true, true);
         }
         const rawPayments = await paymentsQuery.toArray();
 
-        // 3. Filtrage des paiements par recherche (nom client)
+        // 3. Filter payments
         let filteredPayments = rawPayments;
         if (debouncedSearchQuery) {
             const q = debouncedSearchQuery.toLowerCase().trim();
-            const customers = await db.customers.toArray();
-            const matchingCustomerUuids = new Set(
-                customers
-                    .filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(q))
-                    .map(c => c.uuid)
-            );
+            const matchingCustomers = await db.customers.filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(q)).toArray();
+            const matchingCustomerUuids = new Set(matchingCustomers.map(c => c.uuid));
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
         }
 
-        // Si filtre par statut, les paiements ne sont affichés que pour 'all' ou 'paid'
         if (filterStatus !== 'all' && filterStatus !== 'paid') {
             filteredPayments = [];
         }
 
-        // Fusion et tri chronologique
         const combined: HistoryItem[] = [
             ...sales.map(s => ({ type: 'sale' as const, data: s, date: safeToDate(s.createdAt!) })),
             ...filteredPayments.map(p => ({ type: 'payment' as const, data: p, date: safeToDate(p.paymentDate) }))
         ];
 
         return combined.sort((a, b) => b.date.getTime() - a.date.getTime());
-    }, [isMounted, debouncedSearchQuery, filterStatus, dateRange, signal]);
+    }, [isMounted, debouncedSearchQuery, filterStatus, dateRange]); // Removed 'signal' to avoid loops
+
     const historyData = historyDataResult.value;
 
     const customersResult = useLiveQuery<Customer[]>(() => db.customers.toArray());
@@ -137,13 +131,13 @@ export default function SalesHistoryPage() {
 
     const isLoading = historyDataResult.isLoading || !isMounted;
 
-    // FIX: Pagination — load 50 records at a time instead of rendering all at once.
+    // Pagination logic
     const PAGE_SIZE = 50;
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setVisibleCount(PAGE_SIZE); // Reset on filter change
+        setVisibleCount(PAGE_SIZE); 
     }, [historyData]);
 
     useEffect(() => {
@@ -165,7 +159,6 @@ export default function SalesHistoryPage() {
         [historyData, visibleCount]
     );
 
-    // Statistiques intelligentes (Bilan des Flux) — computed over FULL data, not just visible
     const stats = useMemo(() => {
         if (!historyData) return { totalRevenue: 0, totalReceived: 0, totalDebt: 0, count: 0 };
         
@@ -179,7 +172,6 @@ export default function SalesHistoryPage() {
                 receivedCents += Math.round(safeNumber(item.data.amountPaid) * 100);
                 saleCount++;
             } else {
-                // Les règlements augmentent uniquement les encaissements sans impacter le chiffre d'affaires
                 receivedCents += Math.round(safeNumber(item.data.amount) * 100);
             }
         });
@@ -240,7 +232,6 @@ export default function SalesHistoryPage() {
         let successCount = 0;
         for (const uuid of uuids) {
             try { 
-                // Seules les ventes peuvent être annulées via cette action groupée
                 await salesService.processSaleCancellation(uuid); 
                 successCount++; 
             } catch (e) {}
@@ -294,7 +285,7 @@ export default function SalesHistoryPage() {
                             </div>
                             <div className="grid grid-cols-1 gap-3 pt-2">
                                 <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 shadow-inner group hover:bg-emerald-500/10 transition-all">
-                                    <p className="text-[9px] font-semibold uppercase text-emerald-600 mb-1">Total Encaissé (Revenu + Dettes)</p>
+                                    <p className="text-[9px] font-semibold uppercase text-emerald-600 mb-1">Total Encaissé</p>
                                     <p className="font-bold text-xl text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10 shadow-inner group hover:bg-destructive/10 transition-all">
@@ -459,6 +450,7 @@ export default function SalesHistoryPage() {
             <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => setSelectedItems(new Set())} />
             <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'Client de passage'} />
             <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action définitive : réintégration du stock et ajustement des soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
+            <div ref={sentinelRef} className="h-10 w-full" />
         </div>
     );
 }
