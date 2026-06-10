@@ -1,3 +1,6 @@
 'use client';
-// ARCHITECTURAL CLEANUP - COMPONENT REMOVED (UNUSED)
+/**
+ * @fileOverview Composant RadioGroup.
+ * Statut : Supprimé car inutilisé dans le flux actuel (Dead Code).
+ */
 export {};

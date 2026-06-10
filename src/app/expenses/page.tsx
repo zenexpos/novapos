@@ -42,10 +42,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/appStore';
-import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
+import Papa from 'papaparse';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
     <Card className="app-card h-full glass rounded-lg group overflow-hidden">
@@ -211,6 +212,7 @@ export default function ExpensesPage() {
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
 
+        const format = (await import('date-fns')).format;
         const dateStr = dateRange?.from ? `${format(dateRange.from, 'dd/MM/yyyy')} au ${format(dateRange.to!, 'dd/MM/yyyy')}` : 'Toutes les dates';
 
         const html = `

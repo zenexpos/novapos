@@ -1,3 +1,6 @@
 'use client';
-// DEPRECATED COMPONENT - REMOVED FOR CLEANUP
+/**
+ * @fileOverview Composant de fond d'ambiance.
+ * Statut : Supprimé car obsolète (Dead Code).
+ */
 export function AmbientBackground() { return null; }

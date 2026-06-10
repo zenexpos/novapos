@@ -29,10 +29,6 @@ export function NewIntakeForm() {
     const [items, setItems] = useState<StockIntakeItem[]>([]);
     const [isSubmitting, setIsSaving] = useState(false);
 
-    /**
-     * Moteur de calcul de la valeur totale en centimes pour une précision absolue
-     * et éviter toute perte lors de la répartition des frais de transport.
-     */
     const itemsTotalValue = useMemo(() => {
         const totalCents = items.reduce((sum, item) => {
             const qty = safeNumber(item.quantity);
@@ -42,9 +38,6 @@ export function NewIntakeForm() {
         return totalCents / 100;
     }, [items]);
 
-    /**
-     * Facteur de transport : pourcentage des frais additionnels à imputer sur chaque unité monétaire d'achat.
-     */
     const shippingFactor = useMemo(() => {
         return itemsTotalValue > 0 ? shippingCost / itemsTotalValue : 0;
     }, [itemsTotalValue, shippingCost]);
@@ -105,13 +98,11 @@ export function NewIntakeForm() {
     };
 
     const handleOcrResult = useCallback((result: { rawText: string, lines: string[] }) => {
-        // 1. Détection du numéro de facture (Patterns: N°, Facture, Ref...)
         const invMatch = result.rawText.match(/(?:N°|Facture|Ref|Invoice|Nº)[:\s]*([A-Z0-9-]+)/i);
         if (invMatch && invMatch[1]) {
             setInvoiceNumber(invMatch[1]);
         }
 
-        // 2. Détection de la date
         const dateMatch = result.rawText.match(/(\d{2}[/-]\d{2}[/-]\d{2,4})/);
         if (dateMatch) {
             const parsedDate = new Date(dateMatch[0].replace(/-/g, '/'));
@@ -120,9 +111,7 @@ export function NewIntakeForm() {
             }
         }
 
-        // 3. Heuristique pour le fournisseur (souvent sur la première ou deuxième ligne)
         if (result.lines.length > 0 && !supplierName) {
-            // On ignore les lignes trop courtes ou purement numériques
             const potentialName = result.lines.find(l => l.length > 3 && !/^\d+$/.test(l));
             if (potentialName) setSupplierName(potentialName);
         }
@@ -285,7 +274,7 @@ export function NewIntakeForm() {
                                                                 type="number" 
                                                                 step="0.01"
                                                                 value={item.price || ''} 
-                                                                onChange={item.id, 'price', e.target.value)}
+                                                                onChange={e => updateItem(item.id, 'price', e.target.value)}
                                                                 onFocus={e => e.target.select()}
                                                                 className={cn(
                                                                     "w-24 h-9 text-right bg-black/20 border-none shadow-inner font-mono font-black ml-auto focus-visible:ring-primary/20 pr-6",
@@ -336,7 +325,6 @@ export function NewIntakeForm() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
-                        {/* OCR Scanner Section */}
                         <div className="p-4 bg-primary/5 rounded-2xl border border-dashed border-primary/20 space-y-3">
                             <div className="flex items-center gap-2 text-primary">
                                 <ScanLine className="h-4 w-4" />
