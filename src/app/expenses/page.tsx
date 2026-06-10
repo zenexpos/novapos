@@ -9,7 +9,6 @@ import {
     Plus, 
     FileUp, 
     Search, 
-    RefreshCw, 
     Wallet, 
     FilterX, 
     PieChart,
@@ -44,8 +43,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/appStore';
 import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -315,7 +312,7 @@ export default function ExpensesPage() {
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
             <PageHeader
                 title="Registre des Charges"
-                description="Pilotage souverain des flux sortants et de la trésorerie"
+                description="Pilotage souverain des flux flux sortants et de la trésorerie"
             >
                 <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" onClick={handlePrintSummary} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5 transition-all">

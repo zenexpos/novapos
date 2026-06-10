@@ -285,7 +285,7 @@ export function NewIntakeForm() {
                                                                 type="number" 
                                                                 step="0.01"
                                                                 value={item.price || ''} 
-                                                                onChange={e => updateItem(item.id, 'price', e.target.value)}
+                                                                onChange={item.id, 'price', e.target.value)}
                                                                 onFocus={e => e.target.select()}
                                                                 className={cn(
                                                                     "w-24 h-9 text-right bg-black/20 border-none shadow-inner font-mono font-black ml-auto focus-visible:ring-primary/20 pr-6",
