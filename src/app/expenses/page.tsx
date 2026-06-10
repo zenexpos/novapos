@@ -14,12 +14,10 @@ import {
     FilterX, 
     PieChart,
     CalendarDays,
-    BarChart3,
     Trash2,
     X,
     Printer,
     SortAsc,
-    Sparkles,
     TrendingDown,
     Filter,
     LayoutGrid,
@@ -29,7 +27,6 @@ import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { ExpenseTable } from '@/components/expenses/ExpenseTable';
 import ExpenseDialog from '@/components/expenses/ExpenseDialog';
 import { DeleteExpenseDialog } from '@/components/expenses/DeleteExpenseDialog';
-import { DeleteMultipleExpensesDialog } from '@/components/expenses/DeleteMultipleExpensesDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,7 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, cn, safeNumber } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -55,14 +52,6 @@ import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-
-const COLORS = [
-    'hsl(var(--primary))', 
-    'hsl(var(--chart-secondary))', 
-    'hsl(var(--chart-tertiary))', 
-    'hsl(var(--chart-quaternary))', 
-    'hsl(var(--chart-quinary))'
-];
 
 const sortOptions = {
     'date_desc': 'Plus récents',
@@ -89,7 +78,6 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
 export default function ExpensesPage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
     
-    // FIX: Individual selectors to avoid reference instability in React 19
     const viewMode = useAppStore(state => state.expensesViewMode);
     const setViewMode = useAppStore(state => state.actions.setExpensesViewMode);
     const profile = useAppStore(state => state.companyProfile);
@@ -101,14 +89,11 @@ export default function ExpensesPage() {
     
     const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
     
     const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
     const [selectedExpenses, setSelectedExpenses] = useState<Set<string>>(new Set());
     
     const { dateRange, setDate, isMounted } = useDateRange(29);
-
-    // ─── LIVE DATA ──────────────────────────────────────────
 
     const allExpensesResult = useLiveQuery<Expense[]>(async () => {
         if (!isMounted || !dateRange?.from) return [];
@@ -152,7 +137,6 @@ export default function ExpensesPage() {
     const stats = useMemo(() => {
         if (allExpenses.length === 0) return { total: 0, count: 0, topCategory: '-', chartData: [], dailyAverage: 0 };
         
-        // Calcul précision Elite
         let totalCents = 0;
         const catMapCents = new Map<string, number>();
 

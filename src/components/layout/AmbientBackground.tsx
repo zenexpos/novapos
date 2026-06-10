@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * AmbientBackground - Deprecated for non-transparent mode.
- * Returns null to maintain solid backgrounds as requested.
+ * AmbientBackground - Deprecated.
+ * Returns null to maintain solid backgrounds.
  */
 export function AmbientBackground() {
     return null;

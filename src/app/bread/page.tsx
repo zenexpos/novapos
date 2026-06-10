@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { formatDateToYYYYMMDD } from '@/lib/utils';
-import { addDays, format, startOfDay } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -11,18 +11,14 @@ import { BreadOrderTable } from '@/components/bread/BreadOrderTable';
 import { BreadOrderForm } from '@/components/bread/BreadOrderForm';
 import { 
     Loader2, 
-    RefreshCw, 
     ChevronLeft, 
     ChevronRight, 
-    CalendarDays, 
     Plus,
     Search,
-    FilterX,
     Clock
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
@@ -121,7 +117,7 @@ export default function BreadPage() {
                 </div>
             </PageHeader>
 
-            <BreadStats date={formattedDate} />
+            <BreadStats currentDate={formattedDate} />
 
             <div className="flex flex-col lg:flex-row gap-4">
                 <div className="relative flex-grow">

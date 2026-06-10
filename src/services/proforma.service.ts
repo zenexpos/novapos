@@ -24,7 +24,6 @@ class ProformaService {
     /**
      * Génère un numéro de proforma unique séquentiel (PF-XXXXXX).
      */
-    // FIX: private — must only be called inside a db.transaction() to prevent race conditions
     private async generateProformaNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
         const currentCounter = profile?.proforma_counter || 1;
@@ -50,7 +49,6 @@ class ProformaService {
         }
 
         const now = new Date();
-        // FIX: proformaNumber will be generated INSIDE transaction for atomicity
         let proformaNumber = '';
 
         // Calcul précision Elite en centimes
@@ -78,7 +76,7 @@ class ProformaService {
 
         const newProforma: ProformaInvoice = {
             uuid: uuidv4(),
-            proformaNumber,
+            proformaNumber: '', // Will be set inside transaction
             items,
             subtotal: subtotalCents / 100,
             total: totalCents / 100,
@@ -86,10 +84,10 @@ class ProformaService {
             status: 'draft',
             createdAt: now,
             updatedAt: now,
+            syncStatus: 'pending',
+            version: 1
         };
 
-        // FIX: proformaNumber generated INSIDE transaction — prevents race condition
-        // where two tabs get the same proformaNumber.
         await db.transaction('rw', [db.proforma_invoices, db.inventory_logs, db.company_profile], async () => {
             proformaNumber = await this.generateProformaNumber();
             newProforma.proformaNumber = proformaNumber;
@@ -105,31 +103,14 @@ class ProformaService {
                 relatedUuid: newProforma.uuid,
                 createdAt: now,
                 updatedAt: now,
+                syncStatus: 'pending',
+                version: 1
             });
         });
 
         this.triggerSync();
         return newProforma;
     }
-
-    async getProformaByUuid(uuid: string): Promise<ProformaInvoice | undefined> {
-        return db.proforma_invoices.where('uuid').equals(uuid).first();
-    }
-    /**
-     * FIX: Marks proforma as 'converted' after it has been turned into a real sale.
-     * Prevents double-conversion of the same proforma.
-     */
-    async markAsConverted(uuid: string): Promise<void> {
-        const proforma = await db.proforma_invoices.where('uuid').equals(uuid).first();
-        if (!proforma?.id) throw new Error('Devis introuvable.');
-        if (proforma.status === 'converted') throw new Error('Ce devis a déjà été converti en vente.');
-        await db.proforma_invoices.update(proforma.id, {
-            status: 'converted' as any,
-            updatedAt: new Date(),
-        });
-    }
-
-
 }
 
 export const proformaService = new ProformaService();

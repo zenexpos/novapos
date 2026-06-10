@@ -62,11 +62,6 @@ export function preciseMultiply(a: number, b: number): number {
     return Math.round(safeNumber(a) * safeNumber(b) * 10000) / 10000;
 }
 
-export function safeDivide(a: number, b: number): number {
-    if (b === 0 || Math.abs(b) < FINANCIAL_EPSILON) return 0;
-    return a / b;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // CALCULS TVA & MARGES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,10 +76,6 @@ export function htToTtc(priceHT: number, tvaRate: number = TVA_RATE_STANDARD): n
 
 export function ttcToHt(priceTTC: number, tvaRate: number = TVA_RATE_STANDARD): number {
     return roundFinancial(priceTTC / (1 + tvaRate / 100));
-}
-
-export function calculateMargin(salePrice: number, purchasePrice: number): number {
-    return roundFinancial(safeNumber(salePrice) - safeNumber(purchasePrice));
 }
 
 export function calculateMarginRate(salePrice: number, purchasePrice: number): number {

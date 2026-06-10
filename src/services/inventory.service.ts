@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { InventoryLog, InventoryLogReason, Product } from '@/lib/types';
+import type { InventoryLog, InventoryLogReason } from '@/lib/types';
 import { db } from '@/lib/db';
 import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
 
@@ -32,7 +32,6 @@ class InventoryService {
 
             const currentQty = safeNumber(product.quantity);
             const change     = roundFinancial(safeNumber(quantityChange));
-            // FIX: roundFinancial(3) assure précision stockage (ex: 0.333 Kg)
             const newQty     = Number((currentQty + change).toFixed(3));
 
             await db.products.update(product.id, {
@@ -50,51 +49,15 @@ class InventoryService {
                 relatedUuid,
                 createdAt:   new Date(),
                 updatedAt:   new Date(),
+                syncStatus:  'pending',
+                version:     1
             };
             await db.inventory_logs.add(log);
         });
     }
 
     /**
-     * Ajustement manuel de stock (valeur absolue).
-     * FIX: calcule le delta réel pour log cohérent.
-     */
-    async setStock(
-        productUuid: string,
-        newAbsoluteQty: number,
-        reason: InventoryLogReason = 'manual_adjustment',
-        relatedUuid?: string,
-    ): Promise<void> {
-        await db.transaction('rw', [db.products, db.inventory_logs], async () => {
-            const product = await db.products.where('uuid').equals(productUuid).first();
-            if (!product?.id) return;
-
-            const currentQty = safeNumber(product.quantity);
-            const newQty     = Number(safeNumber(newAbsoluteQty).toFixed(3));
-            const change     = roundFinancial(newQty - currentQty);
-
-            await db.products.update(product.id, {
-                quantity:    newQty,
-                stockStatus: calculateStockStatus(newQty, product.minStockLevel),
-                updatedAt:   new Date(),
-            });
-
-            await db.inventory_logs.add({
-                uuid:        uuidv4(),
-                productUuid,
-                change,
-                newQuantity: newQty,
-                reason,
-                relatedUuid,
-                createdAt:   new Date(),
-                updatedAt:   new Date(),
-            } as InventoryLog);
-        });
-    }
-
-    /**
      * Récupère les logs avec jointure produit.
-     * FIX: utilise l'index Dexie createdAt pour les plages de dates (évite full scan).
      */
     async getLogs(filters: {
         query?: string;
