@@ -72,7 +72,7 @@ export default function SalesHistoryPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<SalesStatus>('all');
     const { dateRange, setDate } = useDateRange(29);
-    const { debouncedValue: debouncedSearchQuery } = useDebouncedAbortSignal(searchQuery, 300);
+    const debounced = useDebouncedAbortSignal(searchQuery, 300);
     
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -86,7 +86,7 @@ export default function SalesHistoryPage() {
         if (!isMounted) return undefined;
 
         const filters = {
-            query: debouncedSearchQuery,
+            query: debounced.debouncedValue,
             status: filterStatus,
             from: dateRange?.from,
             to: dateRange?.to
@@ -104,8 +104,8 @@ export default function SalesHistoryPage() {
 
         // 3. Filter payments
         let filteredPayments = rawPayments;
-        if (debouncedSearchQuery) {
-            const q = debouncedSearchQuery.toLowerCase().trim();
+        if (debounced.debouncedValue) {
+            const q = debounced.debouncedValue.toLowerCase().trim();
             const matchingCustomers = await db.customers.filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(q)).toArray();
             const matchingCustomerUuids = new Set(matchingCustomers.map(c => c.uuid));
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
@@ -121,7 +121,7 @@ export default function SalesHistoryPage() {
         ];
 
         return combined.sort((a, b) => b.date.getTime() - a.date.getTime());
-    }, [isMounted, debouncedSearchQuery, filterStatus, dateRange]); // Removed 'signal' to avoid loops
+    }, [isMounted, debounced.debouncedValue, filterStatus, dateRange]);
 
     const historyData = historyDataResult.value;
 

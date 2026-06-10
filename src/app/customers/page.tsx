@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useState, useCallback, useEffect, Suspense, useRef } from 'react';
+import { useState, useCallback, useEffect, Suspense, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Customer, ImportAnalysis } from '@/lib/types';
@@ -53,8 +53,8 @@ function CustomersContent() {
     const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
     const [isRefreshing, setIsRefreshing] = useState(false);
     
-    // Stable debounced values
-    const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
+    // Stable debounced state
+    const debounced = useDebouncedAbortSignal(searchQuery, 300);
 
     const [customers, setCustomers] = useState<Customer[] | undefined>(undefined);
     const isLoading = customers === undefined;
@@ -71,16 +71,15 @@ function CustomersContent() {
         }
     }, [searchParams]);
 
-    // fetchCustomers stabilized to prevent loops
+    // fetchCustomers stabilized to prevent infinite loops in React 19
     const fetchCustomers = useCallback(async () => {
         setIsRefreshing(true);
         try {
             const data = await customerService.filterCustomers({ 
-                query: debouncedSearchQuery, 
+                query: debounced.debouncedValue, 
                 status: filterStatus,
                 sortBy
             });
-            // We check aborted status manually if needed, but the hook manages the signal
             setCustomers(data);
         } catch (error: any) {
             if (error.name !== 'AbortError') {
@@ -90,7 +89,7 @@ function CustomersContent() {
         } finally {
             setIsRefreshing(false);
         }
-    }, [debouncedSearchQuery, filterStatus, sortBy]); // signal removed from deps to avoid constant ref changes
+    }, [debounced.debouncedValue, filterStatus, sortBy]);
     
     useEffect(() => {
         fetchCustomers();
@@ -98,7 +97,7 @@ function CustomersContent() {
 
     useEffect(() => {
         setSelectedCustomers(new Set());
-    }, [filterStatus, sortBy, debouncedSearchQuery]);
+    }, [filterStatus, sortBy, debounced.debouncedValue]);
 
     const handleEditCustomer = useCallback((customer: Customer) => {
         setSelectedCustomer(customer);
@@ -395,7 +394,7 @@ function CustomersContent() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="rounded-xl h-11 border-none shadow-sm bg-card hover:bg-primary/5 min-w-[140px] font-medium">
                                 <Users className="mr-2 h-4 w-4 opacity-50" />
-                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'Plafوند dépassé' : 'Clients de Pain'}
+                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'PlafOND dépassé' : 'Clients de Pain'}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-xl border-none shadow-xl min-w-[200px]">
