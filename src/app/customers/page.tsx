@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useState, useCallback, useEffect, Suspense, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Customer, ImportAnalysis } from '@/lib/types';
@@ -54,7 +54,7 @@ function CustomersContent() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     
     // Stable debounced state
-    const debounced = useDebouncedAbortSignal(searchQuery, 300);
+    const { debouncedValue, signal } = useDebouncedAbortSignal(searchQuery, 300);
 
     const [customers, setCustomers] = useState<Customer[] | undefined>(undefined);
     const isLoading = customers === undefined;
@@ -71,12 +71,12 @@ function CustomersContent() {
         }
     }, [searchParams]);
 
-    // fetchCustomers stabilized to prevent infinite loops in React 19
+    // FIX: fetchCustomers stabilized to prevent infinite loops in React 19
     const fetchCustomers = useCallback(async () => {
         setIsRefreshing(true);
         try {
             const data = await customerService.filterCustomers({ 
-                query: debounced.debouncedValue, 
+                query: debouncedValue, 
                 status: filterStatus,
                 sortBy
             });
@@ -89,7 +89,7 @@ function CustomersContent() {
         } finally {
             setIsRefreshing(false);
         }
-    }, [debounced.debouncedValue, filterStatus, sortBy]);
+    }, [debouncedValue, filterStatus, sortBy]);
     
     useEffect(() => {
         fetchCustomers();
@@ -97,7 +97,7 @@ function CustomersContent() {
 
     useEffect(() => {
         setSelectedCustomers(new Set());
-    }, [filterStatus, sortBy, debounced.debouncedValue]);
+    }, [filterStatus, sortBy, debouncedValue]);
 
     const handleEditCustomer = useCallback((customer: Customer) => {
         setSelectedCustomer(customer);
