@@ -5,14 +5,23 @@ import type { Supplier, SupplierPayment } from '@/lib/types';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/stores/appStore';
 
+const triggerSync = () => {
+    if (typeof window !== 'undefined') {
+        const state = useAppStore.getState();
+        if (state && state.actions) {
+            state.actions.triggerSmartSync();
+        }
+    }
+};
+
 class SupplierService {
 
     async getSuppliers(): Promise<Supplier[]> {
-        return db.suppliers.orderBy('name').toArray();
+        return db.suppliers.filter(s => !s.deletedAt).orderBy('name').toArray();
     }
 
     async getSupplierByUuid(uuid: string): Promise<Supplier | undefined> {
-        return db.suppliers.where('uuid').equals(uuid).first();
+        return db.suppliers.where('uuid').equals(uuid).filter(s => !s.deletedAt).first();
     }
 
     async findOrCreateSupplier(name: string, uuid?: string): Promise<Supplier> {
@@ -21,41 +30,42 @@ class SupplierService {
             if (existing) return existing;
         }
 
-        const existingByName = await db.suppliers.where('name').equals(name).first();
+        const existingByName = await db.suppliers.where('name').equals(name).filter(s => !s.deletedAt).first();
         if (existingByName) return existingByName;
 
         const now = new Date();
         const newSupplier: Supplier = {
             uuid: uuidv4(),
-            name: name,
+            name: name.trim(),
             balance: 0,
             createdAt: now,
             updatedAt: now,
+            syncStatus: 'pending',
+            version: 1
         };
-        const id = await db.suppliers.add(newSupplier);
-        newSupplier.id = id;
 
-        // Trigger Cloud Sync
-        useAppStore.getState().actions.triggerSmartSync();
+        await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
+            const id = await db.suppliers.add(newSupplier);
+            newSupplier.id = id;
+            await db.sync_queue.add({ table: 'suppliers', operation: 'CREATE', payload: newSupplier, timestamp: Date.now() });
+        });
 
+        triggerSync();
         return newSupplier;
     }
 
     async updateSupplierBalance(uuid: string, amountChange: number): Promise<void> {
-        const supplier = await this.getSupplierByUuid(uuid);
-        if (!supplier || !supplier.id) throw new Error("Fournisseur non trouvé.");
+        const supplier = await db.suppliers.where('uuid').equals(uuid).first();
+        if (!supplier?.id) return;
         
         const newBalance = supplier.balance + amountChange;
-        await db.suppliers.update(supplier.id, { balance: newBalance, updatedAt: new Date() });
-
-        // Trigger Cloud Sync (debounced)
-        useAppStore.getState().actions.triggerSmartSync();
+        await db.suppliers.update(supplier.id, { balance: newBalance, updatedAt: new Date(), syncStatus: 'pending' });
     }
 
-    async processSupplierPayment(paymentData: Omit<SupplierPayment, 'uuid' | 'createdAt' | 'updatedAt'>): Promise<void> {
-        await db.transaction('rw', [db.suppliers, db.supplier_payments], async () => {
-            const supplier = await this.getSupplierByUuid(paymentData.supplierUuid);
-            if (!supplier || !supplier.id) throw new Error("Fournisseur non trouvé.");
+    async processSupplierPayment(paymentData: Omit<SupplierPayment, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<void> {
+        await db.transaction('rw', [db.suppliers, db.supplier_payments, db.sync_queue], async () => {
+            const supplier = await db.suppliers.where('uuid').equals(paymentData.supplierUuid).first();
+            if (!supplier?.id) throw new Error("Fournisseur non trouvé.");
 
             const now = new Date();
             const newPayment: SupplierPayment = {
@@ -63,65 +73,50 @@ class SupplierService {
                 uuid: uuidv4(),
                 createdAt: now,
                 updatedAt: now,
+                syncStatus: 'pending',
+                version: 1
             };
 
             await db.supplier_payments.add(newPayment);
             await db.suppliers.update(supplier.id, { 
                 balance: supplier.balance - paymentData.amount,
-                updatedAt: now
+                updatedAt: now,
+                syncStatus: 'pending'
             });
+
+            await db.sync_queue.add({ table: 'supplier_payments', operation: 'CREATE', payload: newPayment, timestamp: Date.now() });
         });
 
-        // Trigger Cloud Sync
-        useAppStore.getState().actions.triggerSmartSync();
-    }
-
-    async getSupplierActivity(supplierUuid: string): Promise<any[]> {
-        const [intakes, payments] = await Promise.all([
-            db.stock_intakes.where('supplierUuid').equals(supplierUuid).toArray(),
-            db.supplier_payments.where('supplierUuid').equals(supplierUuid).toArray()
-        ]);
-
-        const activity = [
-            ...intakes.map(i => ({ ...i, type: 'intake', date: i.createdAt })),
-            ...payments.map(p => ({ ...p, type: 'payment', date: p.paymentDate })),
-        ];
-
-        return activity.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
+        triggerSync();
     }
 
     async updateSupplier(uuid: string, data: Partial<Supplier>): Promise<void> {
-        const supplier = await this.getSupplierByUuid(uuid);
-        if (supplier?.id) {
-            await db.suppliers.update(supplier.id, { ...data, updatedAt: new Date() });
-            // Trigger Cloud Sync
-            useAppStore.getState().actions.triggerSmartSync();
-        }
+        const supplier = await db.suppliers.where('uuid').equals(uuid).first();
+        if (!supplier?.id) return;
+
+        const update = { ...data, updatedAt: new Date(), syncStatus: 'pending' as const };
+        await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
+            await db.suppliers.update(supplier.id!, update);
+            await db.sync_queue.add({ table: 'suppliers', operation: 'UPDATE', payload: { ...supplier, ...update }, timestamp: Date.now() });
+        });
+        triggerSync();
     }
 
     async deleteSupplier(uuid: string): Promise<void> {
-        const supplier = await this.getSupplierByUuid(uuid);
+        const supplier = await db.suppliers.where('uuid').equals(uuid).first();
         if (!supplier?.id) return;
 
-        const intakesCount = await db.stock_intakes.where('supplierUuid').equals(uuid).count();
-        if (intakesCount > 0) {
-            throw new Error(`Impossible de supprimer "${supplier.name}" : ce fournisseur a des factures enregistrées.`);
+        if (Math.abs(supplier.balance) > 0.01) {
+            throw new Error("Révocation impossible : le solde n'est pas nul.");
         }
 
-        if (supplier.balance !== 0) {
-            throw new Error(`Impossible de supprimer "${supplier.name}" : le solde du fournisseur n'est pas nul.`);
-        }
-
-        await db.suppliers.delete(supplier.id);
+        const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
+        await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
+            await db.suppliers.update(supplier.id!, update);
+            await db.sync_queue.add({ table: 'suppliers', operation: 'DELETE', payload: { uuid }, timestamp: Date.now() });
+        });
         
-        // Trigger Cloud Sync
-        useAppStore.getState().actions.triggerSmartSync();
-    }
-
-    async bulkDelete(uuids: string[]): Promise<void> {
-        for (const uuid of uuids) {
-            await this.deleteSupplier(uuid);
-        }
+        triggerSync();
     }
 }
 

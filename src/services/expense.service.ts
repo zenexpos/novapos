@@ -24,12 +24,13 @@ class ExpenseService {
         to?: Date;
         query?: string;
     }): Promise<Expense[]> {
-        let collection = db.expenses.toCollection();
+        let collection = db.expenses.filter(e => !e.deletedAt);
 
         if (params.from) {
-            collection = db.expenses
-                .where('expenseDate')
-                .between(startOfDay(params.from), endOfDay(params.to ?? params.from), true, true);
+            collection = collection.filter(e => {
+                const date = new Date(e.expenseDate);
+                return date >= startOfDay(params.from!) && date <= endOfDay(params.to ?? params.from!);
+            });
         }
 
         if (params.category && params.category !== 'all') {
@@ -51,62 +52,51 @@ class ExpenseService {
         );
     }
 
-    async getCategories(): Promise<string[]> {
-        const expenses = await db.expenses.toArray();
-        return Array.from(new Set(expenses.map(e => e.category))).sort();
-    }
-
-    /** Statistiques par catégorie */
-    async getCategoryStats(from?: Date, to?: Date): Promise<{ category: ExpenseCategory; total: number; count: number }[]> {
-        const expenses = await this.filter({ from, to });
-        const map = new Map<string, { total: number; count: number }>();
-        for (const e of expenses) {
-            const cur = map.get(e.category) ?? { total: 0, count: 0 };
-            cur.total += safeNumber(e.amount);
-            cur.count += 1;
-            map.set(e.category, cur);
-        }
-        return Array.from(map.entries())
-            .map(([category, stats]) => ({ category, ...stats }))
-            .sort((a, b) => b.total - a.total);
-    }
-
-    async addExpense(data: Omit<Expense, 'uuid' | 'createdAt' | 'updatedAt'>): Promise<Expense> {
+    async addExpense(data: Omit<Expense, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<Expense> {
+        const now = new Date();
         const expense: Expense = {
             ...data,
             uuid:      uuidv4(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: now,
+            updatedAt: now,
+            syncStatus: 'pending',
+            version: 1
         };
-        const id = await db.expenses.add(expense);
-        expense.id = id;
+
+        await db.transaction('rw', [db.expenses, db.sync_queue], async () => {
+            const id = await db.expenses.add(expense);
+            expense.id = id;
+            await db.sync_queue.add({ table: 'expenses', operation: 'CREATE', payload: expense, timestamp: Date.now() });
+        });
+
         triggerSync();
         return expense;
     }
 
-    async updateExpense(uuid: string, data: Partial<Expense>): Promise<Expense> {
+    async updateExpense(uuid: string, data: Partial<Expense>): Promise<void> {
         const existing = await db.expenses.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Dépense introuvable');
-        await db.expenses.update(existing.id, { ...data, updatedAt: new Date() });
+        
+        const update = { ...data, updatedAt: new Date(), syncStatus: 'pending' as const };
+        await db.transaction('rw', [db.expenses, db.sync_queue], async () => {
+            await db.expenses.update(existing.id!, update);
+            await db.sync_queue.add({ table: 'expenses', operation: 'UPDATE', payload: { ...existing, ...update }, timestamp: Date.now() });
+        });
+
         triggerSync();
-        return { ...existing, ...data, updatedAt: new Date() };
     }
 
     async deleteExpense(uuid: string): Promise<void> {
         const existing = await db.expenses.where('uuid').equals(uuid).first();
-        if (!existing?.id) throw new Error('Dépense introuvable');
-        await db.expenses.delete(existing.id);
-        triggerSync();
-    }
+        if (!existing?.id) return;
 
-    async deleteMultiple(uuids: string[]): Promise<void> {
-        await db.expenses.where('uuid').anyOf(uuids).delete();
-        triggerSync();
-    }
+        const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
+        await db.transaction('rw', [db.expenses, db.sync_queue], async () => {
+            await db.expenses.update(existing.id!, update);
+            await db.sync_queue.add({ table: 'expenses', operation: 'DELETE', payload: { uuid }, timestamp: Date.now() });
+        });
 
-    async getTotal(from?: Date, to?: Date): Promise<number> {
-        const expenses = await this.filter({ from, to });
-        return expenses.reduce((s, e) => s + safeNumber(e.amount), 0);
+        triggerSync();
     }
 }
 
