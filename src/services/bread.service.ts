@@ -2,7 +2,7 @@
 
 import { parseISO, format, startOfDay, isBefore, subHours } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { BreadOrder, BreadOrderWithCustomer, InventoryLog } from '@/lib/types';
+import type { BreadOrder, BreadOrderWithCustomer, InventoryLog, InventoryLogReason } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
@@ -238,11 +238,15 @@ class BreadService {
                     quantity: order.quantity, // Using quantity as reference
                     cartQuantity: order.quantity,
                     minStockLevel: 0,
-                }],
+                    syncStatus: 'pending',
+                    version: 1,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                } as any],
                 discountType: 'fixed',
                 discountValue: 0,
                 amountPaid: order.amountPaid,
-                customerUuid: order.customerUuid,
+                customerUuid: order.customerUuid || undefined,
             });
 
             await db.bread_orders.update(order.id!, {
@@ -259,8 +263,6 @@ class BreadService {
 
     private async settleDebt(order: BreadOrder): Promise<void> {
         if (!order.debtId) return;
-        // In iPOSZen, we add a payment for the sale
-        // This logic would normally use paymentService
         const sale = await db.sales.where('uuid').equals(order.debtId).first();
         if (sale && sale.paymentStatus !== 'paid') {
              await db.sales.update(sale.id!, {
@@ -269,7 +271,6 @@ class BreadService {
                 paymentStatus: 'paid',
                 updatedAt: new Date()
              });
-             // Recalculate customer
              if (order.customerUuid) {
                 const { customerService } = await import('./customer.service');
                 await customerService.recalculateCustomerStatus(order.customerUuid);
