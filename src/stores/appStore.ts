@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import type { CompanyProfile, ReturnItem, StockIntakeItem, StockIntakeStoredItem, ViewMode, SyncStatus } from '@/lib/types';
+import type { CompanyProfile, ReturnItem, StockIntakeItem, StockIntakeStoredItem, ViewMode, SyncStatus, NetworkStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { db } from '@/lib/db';
@@ -19,6 +19,7 @@ interface AppState {
     companyProfile:          CompanyProfile | null;
     isCompanyProfileLoading: boolean;
     syncStatus:              SyncStatus;
+    networkStatus:           NetworkStatus;
     lastSyncDate:            Date | null;
 
     productViewMode:   ViewMode;
@@ -36,6 +37,7 @@ interface AppState {
 interface AppActions {
     fetchCompanyProfile:  () => Promise<void>;
     updateCompanyProfile: (profileData: Partial<CompanyProfile>) => Promise<void>;
+    setNetworkStatus:     (status: NetworkStatus) => void;
 
     performCloudSync:      (mode: 'push' | 'pull') => Promise<void>;
     performBackgroundSync: () => Promise<void>;
@@ -73,6 +75,7 @@ const initialState: Omit<AppState, 'actions'> = {
     companyProfile:          null,
     isCompanyProfileLoading: true,
     syncStatus:              'idle',
+    networkStatus:           'online',
     lastSyncDate:            null,
     productViewMode:         'grid',
     stockViewMode:           'grid',
@@ -101,13 +104,16 @@ export const useAppStore = create<AppState>()(
 
                 updateCompanyProfile: async (profileData) => {
                     try {
-                        await companyProfileService.upsertProfile(profileData);
+                        await companyProfileService.upsertProfile({ ...profileData, syncStatus: 'pending' });
                         const updated = await companyProfileService.getProfile();
                         set({ companyProfile: updated });
+                        get().actions.triggerSmartSync();
                     } catch (err: any) {
                         toast.error('Échec de mise à jour du profil', { description: err.message });
                     }
                 },
+
+                setNetworkStatus: (status) => set({ networkStatus: status }),
 
                 performCloudSync: async (mode) => {
                     const currentSync = get().syncStatus;
@@ -141,6 +147,7 @@ export const useAppStore = create<AppState>()(
                     const profile = get().companyProfile;
                     if (!profile?.supabase_url || !profile?.supabase_key) return;
                     if (get().syncStatus === 'syncing') return;
+                    if (get().networkStatus === 'offline') return;
 
                     set({ syncStatus: 'syncing' });
                     try {
@@ -156,15 +163,15 @@ export const useAppStore = create<AppState>()(
                     const profile = get().companyProfile;
                     if (!profile?.supabase_url || !profile?.supabase_key) return;
                     
-                    // Simple debounce to prevent sync spamming
+                    // Throttle background sync
                     setTimeout(() => {
                         get().actions.performBackgroundSync();
-                    }, 2000);
+                    }, 5000);
                 },
 
                 processReturn: async (returnData) => {
                     try {
-                        await returnService.addReturn(returnData);
+                        await returnService.addReturn({ ...returnData, syncStatus: 'pending' as any });
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
@@ -185,6 +192,7 @@ export const useAppStore = create<AppState>()(
                             db.suppliers,
                             db.stock_intakes,
                             db.inventory_logs,
+                            db.sync_queue
                         ], async () => {
                             const supplier = await supplierService.findOrCreateSupplier(
                                 intakeData.supplierName,
@@ -222,6 +230,8 @@ export const useAppStore = create<AppState>()(
                                         stockStatus:   'out_of_stock',
                                         createdAt:     new Date(),
                                         updatedAt:     new Date(),
+                                        syncStatus:    'pending',
+                                        version:       1
                                     });
                                 }
 
@@ -245,7 +255,7 @@ export const useAppStore = create<AppState>()(
 
                             const finalTotalValue = (itemsTotalValueCents + shippingCostCents) / 100;
 
-                            await db.stock_intakes.add({
+                            const newIntake = {
                                 uuid:          intakeUuid,
                                 supplierUuid:  supplier.uuid,
                                 invoiceNumber: intakeData.invoiceNumber,
@@ -255,9 +265,19 @@ export const useAppStore = create<AppState>()(
                                 totalValue:    finalTotalValue,
                                 createdAt:     new Date(),
                                 updatedAt:     new Date(),
-                            });
+                                syncStatus:    'pending' as const,
+                                version:       1
+                            };
 
+                            await db.stock_intakes.add(newIntake);
                             await supplierService.updateSupplierBalance(supplier.uuid, finalTotalValue);
+                            
+                            await db.sync_queue.add({
+                                table: 'stock_intakes',
+                                operation: 'CREATE',
+                                payload: newIntake,
+                                timestamp: Date.now()
+                            });
                         });
 
                         get().actions.triggerSmartSync();

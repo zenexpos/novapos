@@ -2,15 +2,18 @@
 
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
+import type { SyncStatus } from '@/lib/types';
 
 /**
- * Service de synchronisation souverain pour iPOS Zen.
+ * Service de synchronisation TITANIUM OFFLINE.
  * Gère le transfert bidirectionnel intelligent entre IndexedDB et Supabase.
+ * Architecture local-first : le succès local est immédiat, le cloud est asynchrone.
  */
 class SupabaseSyncService {
 
     private isSyncing = false;
 
+    // Ordre de synchronisation pour respecter les contraintes d'intégrité (FK)
     private readonly tableSyncOrder = [
         { name: 'company_profile',   table: db.company_profile },
         { name: 'suppliers',         table: db.suppliers },
@@ -27,126 +30,102 @@ class SupabaseSyncService {
         { name: 'proforma_invoices', table: db.proforma_invoices },
     ];
 
-    private readonly ABBREVIATION_WHITELIST = new Set([
-        'nif', 'nis', 'tva', 'rc', 'ai', 'url', 'ccp', 'pdf', 'csv', 'pwa',
-    ]);
-
-    private camelToSnake(str: string): string {
-        return str
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-            .toLowerCase();
-    }
-
-    private snakeToCamel(str: string): string {
-        if (this.ABBREVIATION_WHITELIST.has(str)) return str;
-        return str.replace(/(_[a-z])/g, m => m[1].toUpperCase());
-    }
-
-    private sanitizeForCloud(data: any): any {
-        if (data === null || data === undefined) return data;
-        if (data instanceof Date) return data.toISOString();
-        if (Array.isArray(data)) return data.map(i => this.sanitizeForCloud(i));
-        
-        if (typeof data === 'object' && !(data instanceof Date)) {
-            const clean: any = {};
-            for (const key in data) {
-                if (key === 'id') continue;
-                const snakeKey = this.camelToSnake(key);
-                clean[snakeKey] = this.sanitizeForCloud(data[key]);
-            }
-            return clean;
-        }
-        return data;
-    }
-
-    private mapToLocal(record: Record<string, any>): any {
-        if (!record) return record;
-        const clean: any = {};
-        for (const key in record) {
-            if (key === 'id') continue;
-            const camelKey = this.snakeToCamel(key);
-            let value = record[key];
-
-            const dateFields = [
-                'created_at', 'updated_at', 'expense_date', 'invoice_date', 
-                'payment_date', 'due_date', 'date_expiration', 'date_maj_prix', 'last_sync_at'
-            ];
-
-            if (typeof value === 'string' && (dateFields.includes(key) || key.endsWith('_at') || key.endsWith('_date'))) {
-                const d = new Date(value);
-                if (!isNaN(d.getTime())) {
-                    value = d;
-                }
-            }
-
-            clean[camelKey] = value;
-        }
-        return clean;
-    }
-
-    private async withRetry<T>(
-        fn: () => PromiseLike<T>,
-        attempts = 3,
-        delayMs = 800,
-    ): Promise<T> {
-        let lastError: any;
-        for (let i = 0; i < attempts; i++) {
-            try {
-                return await fn();
-            } catch (err) {
-                lastError = err;
-                if (i < attempts - 1)
-                    await new Promise(r => setTimeout(r, delayMs * (i + 1)));
-            }
-        }
-        throw lastError;
-    }
-
+    /**
+     * Teste la connexion au Cloud Saphir.
+     */
     async testConnection(url: string, key: string): Promise<boolean> {
         try {
             const supabase = getSupabaseClient(url, key);
             if (!supabase) return false;
-            const { error } = await supabase
-                .from('company_profile')
-                .select('uuid')
-                .limit(1);
-            if (error && error.code !== 'PGRST116') return false;
-            return true;
+            const { error } = await supabase.from('company_profile').select('uuid').limit(1);
+            return !error || error.code === 'PGRST116';
         } catch {
             return false;
         }
     }
 
-    private async pushAllDataInternal(supabase: any): Promise<void> {
+    /**
+     * Synchronisation Intelligente (Pull → Merge → Push).
+     */
+    async smartSync(url: string, key: string): Promise<void> {
+        if (this.isSyncing) return;
+        this.isSyncing = true;
+
+        const supabase = getSupabaseClient(url, key);
+        if (!supabase) {
+            this.isSyncing = false;
+            return;
+        }
+
+        try {
+            // 1. PULL & MERGE ( جلب التحديثات من السحاب )
+            await this.pullAndMerge(supabase);
+
+            // 2. PUSH ( رفع العمليات المحلية المعلقة )
+            await this.pushPendingOperations(supabase);
+            
+            // 3. Update Last Sync Date in Profile
+            const profile = await db.company_profile.toCollection().first();
+            if (profile?.id) {
+                await db.company_profile.update(profile.id, {
+                    last_sync_at: new Date(),
+                    syncStatus: 'synced'
+                });
+            }
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    private async pullAndMerge(supabase: any): Promise<void> {
         for (const item of this.tableSyncOrder) {
-            const records = await item.table.toArray();
-            if (records.length === 0) continue;
-            const dataToSync = this.sanitizeForCloud(records);
-            await this.withRetry(async () => {
-                const { error } = await supabase.from(item.name).upsert(dataToSync, { onConflict: 'uuid' });
-                if (error) throw new Error(`Échec de transfert [${item.name}]: ${error.message}`);
+            const { data: remoteRecords, error } = await supabase
+                .from(item.name)
+                .select('*')
+                .order('updated_at', { ascending: false });
+
+            if (error || !remoteRecords) continue;
+
+            await db.transaction('rw', item.table, async () => {
+                for (const remote of remoteRecords) {
+                    const local = await item.table.where('uuid').equals(remote.uuid).first();
+                    const sanitizedRemote = this.mapToLocal(remote);
+
+                    if (!local) {
+                        // Nouveau record depuis le Cloud
+                        await item.table.add({ ...sanitizedRemote, syncStatus: 'synced' });
+                    } else {
+                        // Conflit : Last Updated Wins
+                        const localUpdate = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+                        const remoteUpdate = sanitizedRemote.updatedAt ? sanitizedRemote.updatedAt.getTime() : 0;
+
+                        if (remoteUpdate > localUpdate) {
+                            await item.table.update(local.id!, { ...sanitizedRemote, syncStatus: 'synced' });
+                        }
+                    }
+                }
             });
         }
     }
 
-    private async pullAllDataInternal(supabase: any): Promise<void> {
+    private async pushPendingOperations(supabase: any): Promise<void> {
         for (const item of this.tableSyncOrder) {
-            const { data, error } = await this.withRetry<{data: any[] | null, error: any}>(() => supabase.from(item.name).select('*'));
-            if (error) continue;
-            if (data && data.length > 0) {
+            // Identifier les records locaux non synchronisés
+            const pending = await item.table.where('syncStatus').equals('pending').toArray();
+            if (pending.length === 0) continue;
+
+            const dataToPush = pending.map(p => this.sanitizeForCloud(p));
+
+            const { error } = await supabase
+                .from(item.name)
+                .upsert(dataToPush, { onConflict: 'uuid' });
+
+            if (!error) {
+                // Marquer comme synchronisé
                 await db.transaction('rw', item.table, async () => {
-                    for (const remoteRecord of data) {
-                        const sanitizedLocal = this.mapToLocal(remoteRecord);
-                        const localRecord = await item.table.where('uuid').equals(sanitizedLocal.uuid).first();
-                        if (localRecord) {
-                            const localUpdate = localRecord.updatedAt ? new Date(localRecord.updatedAt).getTime() : 0;
-                            const remoteUpdate = remoteRecord.updated_at ? new Date(remoteRecord.updated_at).getTime() : 0;
-                            if (remoteUpdate > localUpdate && localRecord.id != null) {
-                                await item.table.update(localRecord.id, sanitizedLocal);
-                            }
-                        } else {
-                            await item.table.add(sanitizedLocal);
+                    for (const record of pending) {
+                        if (record.id) {
+                            await item.table.update(record.id, { syncStatus: 'synced' });
                         }
                     }
                 });
@@ -154,58 +133,50 @@ class SupabaseSyncService {
         }
     }
 
-    async pushAllData(url: string, key: string): Promise<void> {
-        if (this.isSyncing) return;
-        this.isSyncing = true;
-        const supabase = getSupabaseClient(url, key);
-        if (!supabase) {
-            this.isSyncing = false;
-            throw new Error('Supabase non configuré.');
-        }
-        try {
-            await this.pushAllDataInternal(supabase);
-        } finally {
-            this.isSyncing = false;
-        }
+    private camelToSnake(str: string): string {
+        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     }
 
-    async pullAllData(url: string, key: string): Promise<void> {
-        if (this.isSyncing) return;
-        this.isSyncing = true;
-        const supabase = getSupabaseClient(url, key);
-        if (!supabase) {
-            this.isSyncing = false;
-            throw new Error('Supabase non configuré.');
-        }
-        try {
-            await this.pullAllDataInternal(supabase);
-        } finally {
-            this.isSyncing = false;
-        }
+    private snakeToCamel(str: string): string {
+        return str.replace(/(_[a-z])/g, m => m[1].toUpperCase());
     }
 
-    async smartSync(url: string, key: string): Promise<void> {
-        if (this.isSyncing) return;
-        this.isSyncing = true;
-        const supabase = getSupabaseClient(url, key);
-        if (!supabase) {
-            this.isSyncing = false;
-            throw new Error('Supabase non configuré.');
+    private sanitizeForCloud(data: any): any {
+        if (!data) return data;
+        const clean: any = {};
+        for (const key in data) {
+            if (key === 'id') continue; // ID local auto-increment non nécessaire sur Cloud
+            const snakeKey = this.camelToSnake(key);
+            let value = data[key];
+            if (value instanceof Date) value = value.toISOString();
+            clean[snakeKey] = value;
         }
-        try {
-            await this.pullAllDataInternal(supabase);
-            await this.pushAllDataInternal(supabase);
-        } finally {
-            this.isSyncing = false;
-        }
+        return clean;
     }
 
+    private mapToLocal(record: Record<string, any>): any {
+        const clean: any = {};
+        for (const key in record) {
+            const camelKey = this.snakeToCamel(key);
+            let value = record[key];
+            // Conversion dates
+            if (typeof value === 'string' && (key.endsWith('_at') || key.endsWith('_date'))) {
+                const d = new Date(value);
+                if (!isNaN(d.getTime())) value = d;
+            }
+            clean[camelKey] = value;
+        }
+        return clean;
+    }
+    
     async pull(url: string, key: string): Promise<void> {
-        return this.pullAllData(url, key);
+        const supabase = getSupabaseClient(url, key);
+        if (supabase) await this.pullAndMerge(supabase);
     }
 
     async push(url: string, key: string): Promise<void> {
-        return this.pushAllData(url, key);
+        const supabase = getSupabaseClient(url, key);
+        if (supabase) await this.pushPendingOperations(supabase);
     }
 }
 

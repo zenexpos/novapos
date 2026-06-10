@@ -1,4 +1,3 @@
-
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -6,13 +5,14 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeToDate, safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
+import { safeToDate, safeNumber, preciseMultiply } from '@/lib/utils';
 import { startOfDay, endOfDay } from 'date-fns';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * Service de gestion des ventes Elite.
+ * Service de gestion des ventes Elite — TITANIUM OFFLINE.
  * Gère le cycle de vie complet d'une transaction commerciale de manière ATOMIQUE.
+ * 100% Local-First.
  */
 class SalesService {
 
@@ -43,7 +43,7 @@ class SalesService {
         }
 
         let sales = await collection.toArray();
-        sales = sales.filter(s => !s.isCancelled);
+        sales = sales.filter(s => !s.deletedAt && !s.isCancelled);
 
         if (filters.status && filters.status !== 'all') {
             sales = sales.filter(s => s.paymentStatus === filters.status);
@@ -67,6 +67,7 @@ class SalesService {
             await db.company_profile.update(profile.id, {
                 invoice_counter: currentCounter + 1,
                 updatedAt: new Date(),
+                syncStatus: 'pending'
             });
         }
         return invoiceNumber;
@@ -74,8 +75,6 @@ class SalesService {
 
     /**
      * Crée une vente de manière atomique.
-     * Cette méthode est critique : elle verrouille toutes les tables nécessaires
-     * pour garantir qu'aucune donnée n'est perdue ou incohérente.
      */
     async createSale(saleData: {
         items: CartItem[];
@@ -87,7 +86,6 @@ class SalesService {
     }): Promise<Sale> {
         const now = new Date();
         
-        // Pré-calculs de précision Elite
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -124,7 +122,6 @@ class SalesService {
             invoiceNumber: '',
             items: saleItems,
             subtotal: subtotalCents / 100,
-            discountType: saleData.discountType,
             discountAmount: discountCents / 100,
             total: totalCents / 100,
             amountPaid: amountPaidCents / 100,
@@ -134,13 +131,14 @@ class SalesService {
             createdAt: now,
             updatedAt: now,
             dueDate: saleData.dueDate,
+            syncStatus: 'pending',
+            version: 1
         };
 
-        // TRANSACTION TOTALE ET ATOMIQUE — Verrouillage de l'ensemble du domaine de données
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.payments, db.product_returns,
-            db.bread_orders
+            db.bread_orders, db.sync_queue
         ], async () => {
             newSale.invoiceNumber = await this.generateInvoiceNumber();
             await db.sales.add(newSale);
@@ -154,6 +152,13 @@ class SalesService {
             if (newSale.customerUuid) {
                 await customerService.recalculateCustomerStatus(newSale.customerUuid);
             }
+
+            await db.sync_queue.add({
+                table: 'sales',
+                operation: 'CREATE',
+                payload: newSale,
+                timestamp: Date.now()
+            });
         });
 
         this.triggerSync();
@@ -162,17 +167,20 @@ class SalesService {
 
     async processSaleCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [
-            db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns
+            db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns, db.sync_queue
         ], async () => {
             const sale = await this.getSaleByUuid(uuid);
             if (!sale || !sale.id) throw new Error('Vente non trouvée.');
             if (sale.isCancelled) return;
 
-            await db.sales.update(sale.id, {
+            const update = {
                 isCancelled: true,
                 cancelledAt: new Date(),
                 updatedAt: new Date(),
-            });
+                syncStatus: 'pending' as const
+            };
+
+            await db.sales.update(sale.id, update);
 
             for (const item of sale.items) {
                 if (item.productUuid) {
@@ -183,6 +191,13 @@ class SalesService {
             if (sale.customerUuid) {
                 await customerService.recalculateCustomerStatus(sale.customerUuid);
             }
+
+            await db.sync_queue.add({
+                table: 'sales',
+                operation: 'UPDATE',
+                payload: { ...sale, ...update },
+                timestamp: Date.now()
+            });
         });
 
         this.triggerSync();
