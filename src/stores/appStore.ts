@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import type { CompanyProfile, ReturnItem, StockIntakeItem, ViewMode, SyncStatus } from '@/lib/types';
+import type { CompanyProfile, ReturnItem, StockIntakeItem, StockIntakeStoredItem, ViewMode, SyncStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { db } from '@/lib/db';
@@ -178,7 +178,7 @@ export const useAppStore = create<AppState>()(
                         const intakeUuid = uuidv4();
                         const shippingCostCents = Math.round(safeNumber(intakeData.shippingCost) * 100);
                         let itemsTotalValueCents = 0;
-                        const finalItems = [];
+                        const finalItems: StockIntakeStoredItem[] = [];
 
                         await db.transaction('rw', [
                             db.products,
