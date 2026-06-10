@@ -1,38 +1,28 @@
-/**
- * iPOS Zen — Sovereign Offline Engine (v2.1)
- * يضمن هذا الملف عمل التطبيق بدون إنترنت كلياً عبر تخزين كافة الأصول والصفحات.
- */
-
-const CACHE_NAME = 'ipos-zen-fortress-v2';
-const OFFLINE_URL = '/offline/';
-
+const CACHE_NAME = 'ipos-zen-fortress-v3';
 const ASSETS_TO_CACHE = [
   '/',
-  '/offline/',
+  '/index.html',
   '/manifest.webmanifest',
+  '/icon.svg',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  '/icon.svg'
+  // Static assets are handled by Next.js build and added via build scripts normally
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
     })
   );
@@ -40,34 +30,29 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // للطلبات التي تخص التنقل (Navigation)، نحاول الشبكة أولاً ثم الكاش
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request) || caches.match(OFFLINE_URL) || caches.match('/');
-      })
-    );
-    return;
-  }
+  // Offline-First Strategy
+  // Skip cross-origin and Supabase calls (handled by Sync Engine)
+  if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // للأصول الثابتة (JS, CSS, Images)، نستخدم استراتيجية الكاش أولاً
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) return response;
-
-      return fetch(event.request).then((fetchResponse) => {
-        // تخزين الملفات الجديدة تلقائياً في الكاش لزيادة سرعة المرات القادمة
-        if (event.request.url.match(/\.(js|css|png|jpg|jpeg|svg|woff2)$/)) {
-          const responseToCache = fetchResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+      
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
         }
-        return fetchResponse;
+        
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+        
+        return networkResponse;
       }).catch(() => {
-        // إذا فشل كل شيء، نعرض أيقونة افتراضية للصور
-        if (event.request.destination === 'image') {
-          return caches.match('/icons/icon-192x192.png');
+        // Fallback for navigation
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
         }
       });
     })

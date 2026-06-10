@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
     Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building, Settings, Download, Sparkles
+    RefreshCw, Building, Settings, Download, Wifi, WifiOff, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -18,11 +18,8 @@ import { cn } from '@/lib/utils';
 import { useAppStore, useAppActions } from '@/stores/appStore';
 import Image from 'next/image';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
+import { useNetwork } from '@/hooks/useNetwork';
 
-/**
- * AppHeader — شريط التنقل العلوي السيادي.
- * يحتوي الآن على زر التثبيت الذهبي المباشر الذي يظهر فور جاهزية الـ PWA.
- */
 export function AppHeader() {
     const navLinks = useMemo(() => [
         { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
@@ -43,6 +40,7 @@ export function AppHeader() {
     const pathname = usePathname();
     const { performBackgroundSync } = useAppActions();
     const { isInstallable, install } = usePwaInstall();
+    const { status: networkStatus, isOnline } = useNetwork();
     
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
@@ -74,15 +72,30 @@ export function AppHeader() {
                             iPOS <span className="text-primary">Zen</span>
                         </span>
                         <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">
-                            Elite Ledger
+                            Titanium Offline
                         </span>
                     </div>
                 </Link>
 
                 <div className="h-6 w-px bg-white/10 mx-2 shrink-0" />
 
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 border border-white/5">
+                    {isOnline ? (
+                        <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter", 
+                            networkStatus === 'degraded' ? "text-amber-400" : "text-emerald-400")}>
+                            <Wifi className="h-3 w-3" />
+                            {networkStatus === 'degraded' ? 'Connexion Lente' : 'Souverain Cloud'}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-destructive animate-pulse">
+                            <WifiOff className="h-3 w-3" />
+                            Fortress Offline
+                        </div>
+                    )}
+                </div>
+
                 <TooltipProvider delayDuration={0}>
-                    <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
+                    <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide px-2">
                         {navLinks.map((link) => {
                             const isActive = pathname.startsWith(link.href);
                             const Icon = link.icon as React.ElementType;
@@ -119,7 +132,6 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {/* زر التثبيت المباشر - يظهر باللون الذهبي فور جاهزية الـ PWA */}
                     {isInstallable && (
                         <Button
                             variant="ghost"
@@ -136,7 +148,7 @@ export function AppHeader() {
                         <Clock />
                     </div>
 
-                    {companyProfile?.supabase_url && (
+                    {companyProfile?.supabase_url && isOnline && (
                         <Button
                             variant="ghost"
                             size="icon"
@@ -152,15 +164,6 @@ export function AppHeader() {
                     )}
 
                     <ThemeToggle />
-
-                    {companyProfile?.companyName && (
-                        <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 text-white font-black text-[10px] uppercase tracking-wider border border-white/10">
-                            <Building className="h-3.5 w-3.5 text-primary" />
-                            <span className="truncate max-w-[100px]">
-                                {companyProfile.companyName}
-                            </span>
-                        </div>
-                    )}
                 </div>
             </div>
         </header>
