@@ -87,23 +87,6 @@ export function calculateMarginRate(salePrice: number, purchasePrice: number): n
     return roundFinancial(((safeNumber(salePrice) - pp) / pp) * 100);
 }
 
-export function calculateMarkupRate(salePrice: number, purchasePrice: number): number {
-    const sp = safeNumber(salePrice);
-    if (sp <= 0) return 0;
-    return roundFinancial(((sp - safeNumber(purchasePrice)) / sp) * 100);
-}
-
-export function applyCoefficient(purchasePrice: number, coefficient: number): number {
-    return roundFinancial(preciseMultiply(purchasePrice, coefficient));
-}
-
-export function priceFromMarginRate(purchasePrice: number, targetMarginRate: number): number {
-    const pp = safeNumber(purchasePrice);
-    const rate = safeNumber(targetMarginRate);
-    if (rate >= 100) return 0;
-    return roundFinancial(pp / (1 - rate / 100));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // CALCULS PANIER & REMISES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,13 +112,6 @@ export function calculateCartTotals(cart: CalculableCart) {
     return { subtotal, discountAmount: discountAmountCents / 100, total: totalCents / 100 };
 }
 
-export function calculateDiscount(subtotal: number, type: 'fixed' | 'percentage', value: number): number {
-    const sub = safeNumber(subtotal);
-    const val = safeNumber(value);
-    if (type === 'percentage') return roundFinancial(Math.min(sub, sub * val / 100));
-    return roundFinancial(Math.min(sub, val));
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // CALCULS STOCK & ZAKAT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,10 +125,6 @@ export function calculateStockStatus(
     if (qty <= 0) return 'out_of_stock';
     if (min > 0 && qty <= min) return 'low_stock';
     return 'in_stock';
-}
-
-export function calculateStockValue(quantity: number, purchasePrice: number): number {
-    return roundFinancial(preciseMultiply(safeNumber(quantity), safeNumber(purchasePrice)));
 }
 
 export function calculateNisab(goldPricePerGram: number): number {
@@ -188,39 +160,4 @@ export function formatPercent(value: number, decimals = 1): string {
 
 export function formatDateToYYYYMMDD(date: Date): string {
     return date.toISOString().split('T')[0];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DATES
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function isToday(date: Date | string | null | undefined): boolean {
-    if (!date) return false;
-    const d = safeToDate(date);
-    const now = new Date();
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-}
-
-export function startOfDayLocal(date: Date): Date {
-    const d = new Date(date); d.setHours(0, 0, 0, 0); return d;
-}
-
-export function endOfDayLocal(date: Date): Date {
-    const d = new Date(date); d.setHours(23, 59, 59, 999); return d;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// UTILITAIRES
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function shortId(length = 6): string {
-    return Math.random().toString(36).slice(2, 2 + length).toUpperCase();
-}
-
-export function normalizeSearch(text: string): string {
-    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-export function clamp(value: number, min: number, max: number): number {
-    return Math.min(max, Math.max(min, value));
 }

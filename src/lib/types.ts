@@ -1,7 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// iPOS Zen v2.0 — Types TypeScript complets
-// Mise à jour: ajout ViewMode, SortConfig, Pagination, KpiCard, Notification,
-//              AppSettings, SearchResult, DatePreset, StockAlert, AuditEntry
+// iPOS Zen v2.0 — Types TypeScript complets (OPERATION OMEGA SANITIZED)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -31,81 +29,6 @@ export type InventoryLogReason =
 export type ExpenseCategory =
     | 'Loyer' | 'Salaires' | 'Fournisseurs' | 'Services Publics'
     | 'Marketing' | 'Maintenance' | 'Autre' | string;
-
-// ══════════════════════════════════════════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════════════════════════════════════════
-
-export interface SortConfig<T = string> {
-    key: T;
-    direction: SortDirection;
-}
-
-export interface PaginationState {
-    page:     number;
-    pageSize: number;
-    total:    number;
-}
-
-export interface DatePreset {
-    label: string;
-    days:  number;
-}
-
-export interface KpiCard {
-    title:         string;
-    value:         string;
-    icon:          React.ElementType;
-    change?:       number;
-    positiveIsGood?: boolean;
-    href?:         string;
-    color?:        'primary' | 'emerald' | 'red' | 'blue' | 'violet' | 'amber';
-    isLoading?:    boolean;
-}
-
-export interface Notification {
-    id:        string;
-    type:      'info' | 'warning' | 'error' | 'success';
-    title:     string;
-    message?:  string;
-    createdAt: Date;
-    read:      boolean;
-    href?:     string;
-}
-
-export interface SearchResult {
-    uuid:     string;
-    type:     'product' | 'customer' | 'sale' | 'supplier';
-    label:    string;
-    subtitle: string;
-    href:     string;
-}
-
-export interface AppSettings {
-    autoprint:        boolean;
-    receiptFormat:    ReceiptFormat;
-    theme:            ThemeMode;
-    language:         'fr' | 'ar' | 'en';
-    lowStockAlert:    boolean;
-    debtAlertEnabled: boolean;
-}
-
-export interface StockAlert {
-    product:  Pick<Product, 'uuid' | 'name' | 'quantity' | 'minStockLevel' | 'unite'>;
-    type:     'low_stock' | 'out_of_stock' | 'expiring_soon';
-    daysUntilExpiry?: number;
-}
-
-export interface AuditEntry {
-    id?:        number;
-    uuid:       string;
-    entityType: 'sale' | 'product' | 'customer' | 'expense' | 'payment';
-    entityUuid: string;
-    action:     'create' | 'update' | 'delete' | 'cancel';
-    before?:    unknown;
-    after?:     unknown;
-    createdAt:  Date;
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PRODUITS

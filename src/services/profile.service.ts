@@ -4,6 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/db';
 import type { CompanyProfile } from '@/lib/types';
 
+/**
+ * Service de gestion du profil institutionnel.
+ * Gère le cycle de vie du singleton CompanyProfile dans IndexedDB.
+ */
 class CompanyProfileService {
 
     async getProfile(): Promise<CompanyProfile | null> {
@@ -50,24 +54,6 @@ class CompanyProfileService {
         const id = await db.company_profile.add(newProfile);
         newProfile.id = id;
         return newProfile;
-    }
-
-    async updateGoldPrice(goldPricePerGram: number): Promise<void> {
-        const profile = await this.getProfile();
-        if (profile?.id) {
-            await db.company_profile.update(profile.id, { goldPricePerGram, updatedAt: new Date() });
-        }
-    }
-
-    async updateSupabaseConfig(url: string, key: string): Promise<void> {
-        const profile = await this.getProfile();
-        if (profile?.id) {
-            await db.company_profile.update(profile.id, {
-                supabase_url: url.trim(),
-                supabase_key: key.trim(),
-                updatedAt: new Date(),
-            });
-        }
     }
 }
 
