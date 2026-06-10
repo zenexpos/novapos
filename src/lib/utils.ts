@@ -63,10 +63,6 @@ export function calculateTVA(priceHT: number, tvaRate: number = TVA_RATE_STANDAR
     return roundFinancial(preciseMultiply(priceHT, tvaRate / 100));
 }
 
-export function htToTtc(priceHT: number, tvaRate: number = TVA_RATE_STANDARD): number {
-    return roundFinancial(priceHT * (1 + tvaRate / 100));
-}
-
 export function ttcToHt(priceTTC: number, tvaRate: number = TVA_RATE_STANDARD): number {
     return roundFinancial(priceTTC / (1 + tvaRate / 100));
 }

@@ -12,8 +12,6 @@ import {
     LayoutGrid, 
     List, 
     FileUp, 
-    RefreshCw, 
-    FilterX, 
     X
 } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
