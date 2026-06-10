@@ -3,7 +3,6 @@ import React from 'react';
 
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Product, Supplier, ProductImportAnalysis } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -86,16 +85,16 @@ function ProductsContent() {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
-    const { debouncedValue: debouncedSearchQuery } = useDebouncedAbortSignal(searchQuery, 300);
+    const debounced = useDebouncedAbortSignal(searchQuery, 300);
 
     const productsResult = useLiveQuery<Product[]>(
         () => productService.filterProducts({ 
-            query: debouncedSearchQuery, 
+            query: debounced.debouncedValue, 
             supplierUuid: selectedSupplier,
             stockStatus, 
             sortBy 
         }),
-        [debouncedSearchQuery, selectedSupplier, stockStatus, sortBy]
+        [debounced.debouncedValue, selectedSupplier, stockStatus, sortBy]
     );
     const products = productsResult.value ?? [];
 
@@ -131,11 +130,12 @@ function ProductsContent() {
     
     useEffect(() => {
         setSelectedProducts(new Set());
-    }, [stockStatus, selectedSupplier, debouncedSearchQuery]);
+    }, [stockStatus, selectedSupplier, debounced.debouncedValue]);
 
-    const onDialogSuccess = () => {
+    const onDialogSuccess = useCallback(() => {
         fetchMeta();
-    }
+        productsResult.refresh();
+    }, [fetchMeta, productsResult]);
 
     const handleEditProduct = useCallback((product: Product) => {
         setSelectedProduct(product);
@@ -171,22 +171,22 @@ function ProductsContent() {
         else setSelectedProducts(new Set(products.map(p => p.uuid)));
     }, [products, selectedProducts.size]);
 
-    const handleConfirmDeleteProduct = async () => {
+    const handleConfirmDeleteProduct = useCallback(async () => {
         if (!selectedProduct) return;
         await productService.deleteProduct(selectedProduct.uuid);
         setIsDeleteDialogOpen(false);
         productsResult.refresh();
         fetchMeta();
-    };
+    }, [selectedProduct, productsResult, fetchMeta]);
 
-    const handleConfirmDeleteMultipleProducts = async () => {
+    const handleConfirmDeleteMultipleProducts = useCallback(async () => {
         if (selectedProducts.size === 0) return;
         await productService.bulkDelete(Array.from(selectedProducts));
         setIsBulkDeleteDialogOpen(false);
         setSelectedProducts(new Set());
         productsResult.refresh();
         fetchMeta();
-    };
+    }, [selectedProducts, productsResult, fetchMeta]);
 
     const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -218,7 +218,7 @@ function ProductsContent() {
         }
     };
 
-    const handleExportCsv = () => {
+    const handleExportCsv = useCallback(() => {
         if (!products || products.length === 0) return;
         const dataToExport = selectedProducts.size > 0 
             ? products.filter(p => selectedProducts.has(p.uuid))
@@ -238,7 +238,7 @@ function ProductsContent() {
         link.download = `ipos-produits-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         toast.success("Exportation terminée.");
-    };
+    }, [products, selectedProducts]);
 
     const resetFilters = () => {
         setSearchQuery('');
@@ -325,7 +325,7 @@ function ProductsContent() {
                         <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-10 w-10" onClick={() => setViewMode('list')}><List className="h-5 w-5"/></Button>
                     </div>
 
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40" onClick={fetchMeta} disabled={isRefreshing}>
+                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40" onClick={onDialogSuccess} disabled={isRefreshing}>
                         <RefreshCw className={cn("h-5 w-5 text-primary", isRefreshing && "animate-spin")} />
                     </Button>
                 </div>
@@ -364,7 +364,7 @@ function ProductsContent() {
                 </div>
             )}
             
-            <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="min-h-[600px] animate-in fade-in duration-500">
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (

@@ -26,6 +26,11 @@ interface CartItemRowProps {
     onSelect: () => void;
 }
 
+/**
+ * Optimized Cart Item Row
+ * - Uses memoization to prevent sibling re-renders
+ * - Shortcuts are isolated to the ACTIVE row only
+ */
 const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const priceInputRef = useRef<HTMLInputElement>(null);
     const qtyInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +55,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
     };
 
+    // CRITICAL PERFORMANCE: Shortcuts are only 'active' if this row is selected
     useKeyboardShortcuts([
         {
             key: '+',
@@ -161,6 +167,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
             <div className="flex flex-col items-center">
                 <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
                     <button 
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, Number((item.cartQuantity - 1).toFixed(3)))); }}
                         className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
@@ -178,6 +185,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                         )}
                     />
                     <button 
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Number((item.cartQuantity + 1).toFixed(3))); }}
                         className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
@@ -234,6 +242,7 @@ export function CartDisplay() {
         setIsMounted(true);
     }, []);
 
+    // Global cart navigation shortcuts
     useKeyboardShortcuts([
         {
             key: 'ArrowDown',

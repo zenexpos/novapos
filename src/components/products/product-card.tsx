@@ -40,6 +40,10 @@ const stockConfig = {
     out: { label: 'Rupture',    bg: 'bg-red-500/10',     text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
 };
 
+/**
+ * Highly Optimized Product Card
+ * - Uses React.memo with exhaustive checks to prevent jank during selection/search.
+ */
 const ProductCardComponent = ({
     product, onEdit, onDuplicate, onHistory, onDelete,
     isSelected, onToggleSelection, isSelectionActive,
@@ -67,11 +71,12 @@ const ProductCardComponent = ({
     }, [isMounted, product.updatedAt]);
 
     const handleCardClick = (e: React.MouseEvent) => {
+        // Prevent click if we target an interactive element inside the card
         if ((e.target as HTMLElement).closest('button, input, [role="menuitem"]')) return;
         if (isSelectionActive) { onToggleSelection(); } else { onEdit(product); }
     };
 
-    // Progress bar de stock (% par rapport au seuil minimum × 3)
+    // Progress bar for stock (relative to alert threshold)
     const stockPercent = product.minStockLevel > 0
         ? Math.min(100, (product.quantity / (product.minStockLevel * 3)) * 100)
         : Math.min(100, product.quantity * 10);
@@ -88,7 +93,7 @@ const ProductCardComponent = ({
                     : 'border-[var(--glass-border)] hover:border-primary/30 hover:shadow-sm',
             )}
         >
-            {/* ── Colored top accent bar ── */}
+            {/* Colored top accent bar */}
             <div className={cn(
                 'absolute inset-x-0 top-0 h-0.5 transition-all duration-300',
                 stockState === 'ok'  && 'bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent',
@@ -96,9 +101,7 @@ const ProductCardComponent = ({
                 stockState === 'out' && 'bg-gradient-to-r from-transparent via-red-500/60 to-transparent',
             )} />
 
-            {/* ── Top row: badge + checkbox + menu ── */}
             <div className="flex items-start justify-between p-4 pb-2">
-                {/* Stock badge */}
                 <span className={cn(
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border',
                     stock.bg, stock.text, stock.border,
@@ -107,7 +110,6 @@ const ProductCardComponent = ({
                     {stock.label}
                 </span>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                     <div className={cn(
                         'flex items-center justify-center w-7 h-7 rounded-lg border transition-all',
@@ -148,7 +150,6 @@ const ProductCardComponent = ({
                 </div>
             </div>
 
-            {/* ── Product name & metadata ── */}
             <div className="px-4 pb-3 flex-1">
                 <h3 className="font-black text-base leading-tight tracking-tight line-clamp-2 group-hover:text-primary transition-colors mb-1.5">
                     {product.name}
@@ -184,19 +185,17 @@ const ProductCardComponent = ({
                 </div>
             </div>
 
-            {/* ── Stock bar ── */}
             <div className="px-4 pb-3">
                 <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1.5">
                         <Package className={cn('h-3 w-3', stock.text)} />
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Stock</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">Stock</span>
                     </div>
                     <span className={cn('text-sm font-black tabular-nums', stock.text)}>
                         {product.quantity}
                         <span className="text-[9px] font-semibold text-muted-foreground/40 ml-1">{product.unite ?? 'u'}</span>
                     </span>
                 </div>
-                {/* Progress bar */}
                 <div className="h-1 w-full bg-muted/40 rounded-full overflow-hidden">
                     <div
                         className={cn(
@@ -215,7 +214,6 @@ const ProductCardComponent = ({
                 )}
             </div>
 
-            {/* ── Pricing footer ── */}
             <div className="border-t border-[var(--glass-border)] bg-muted/5 px-4 py-3">
                 <div className="flex items-end justify-between">
                     <div>
@@ -228,7 +226,6 @@ const ProductCardComponent = ({
                         </p>
                     </div>
 
-                    {/* Margin badge */}
                     <div className={cn(
                         'flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[11px] font-black',
                         isGoodMargin
@@ -252,4 +249,14 @@ const ProductCardComponent = ({
     );
 };
 
-export const ProductCard = React.memo(ProductCardComponent);
+// CRITICAL PERFORMANCE: Exhaustive memoization for list stability
+export const ProductCard = React.memo(ProductCardComponent, (prev, next) => {
+    return (
+        prev.isSelected === next.isSelected &&
+        prev.isSelectionActive === next.isSelectionActive &&
+        prev.product.uuid === next.product.uuid &&
+        prev.product.quantity === next.product.quantity &&
+        prev.product.price === next.product.price &&
+        prev.product.updatedAt?.getTime() === next.product.updatedAt?.getTime()
+    );
+});
