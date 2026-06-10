@@ -11,15 +11,13 @@ import {
     Search, 
     Wallet, 
     FilterX, 
-    PieChart,
-    CalendarDays,
-    Trash2,
-    X,
-    Printer,
-    TrendingDown,
-    Filter,
-    LayoutGrid,
-    List
+    PieChart, 
+    CalendarDays, 
+    Printer, 
+    TrendingDown, 
+    Filter, 
+    LayoutGrid, 
+    List 
 } from 'lucide-react';
 import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { ExpenseTable } from '@/components/expenses/ExpenseTable';
@@ -212,7 +210,6 @@ export default function ExpensesPage() {
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
 
-        const format = (await import('date-fns')).format;
         const dateStr = dateRange?.from ? `${format(dateRange.from, 'dd/MM/yyyy')} au ${format(dateRange.to!, 'dd/MM/yyyy')}` : 'Toutes les dates';
 
         const html = `

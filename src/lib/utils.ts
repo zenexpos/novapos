@@ -32,13 +32,6 @@ export function safeToDate(date: Date | string | undefined | null): Date {
     return isNaN(d.getTime()) ? new Date(0) : d;
 }
 
-export function safeToDateOrUndefined(date: Date | string | undefined | null): Date | undefined {
-    if (!date) return undefined;
-    if (date instanceof Date) return isNaN(date.getTime()) ? undefined : date;
-    const d = new Date(date);
-    return isNaN(d.getTime()) ? undefined : d;
-}
-
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) ? 0 : val;
     if (val === null || val === undefined || val === '') return 0;
@@ -94,7 +87,6 @@ interface CalculableCart {
 }
 
 export function calculateCartTotals(cart: CalculableCart) {
-    // Audit Fix: Calculate using integer cents to ensure 100% precision
     const subtotalCents = cart.items.reduce((acc, item) => {
         return acc + Math.round(safeNumber(item.price) * safeNumber(item.cartQuantity) * 100);
     }, 0);
@@ -108,9 +100,7 @@ export function calculateCartTotals(cart: CalculableCart) {
         discountAmountCents = Math.round(safeNumber(cart.discount.value) * 100);
     }
     
-    // Ensure discount doesn't exceed subtotal
     discountAmountCents = Math.min(discountAmountCents, subtotalCents);
-    
     const totalCents = Math.max(0, subtotalCents - discountAmountCents);
     
     return { 

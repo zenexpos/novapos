@@ -14,7 +14,6 @@ import {
     FileUp, 
     RefreshCw, 
     FilterX, 
-    Trash2, 
     X
 } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -42,7 +41,6 @@ import { returnService } from '@/services/return.service';
 export default function ReturnsPage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
     
-    // FIX: Individual selectors to avoid hydration loop in React 19
     const viewMode = useAppStore(state => state.returnsViewMode);
     const setViewMode = useAppStore(state => state.actions.setReturnsViewMode);
 
@@ -56,9 +54,7 @@ export default function ReturnsPage() {
     const [isCancelOpen, setIsCancelOpen] = useState(false);
     const [isBulkCancelConfirmOpen, setIsBulkCancelConfirmOpen] = useState(false);
 
-    // ─── LIVE QUERIES ──────────────────────────────────────────
-
-const returnsResult = useLiveQuery<ProductReturn[]>(async () => {
+    const returnsResult = useLiveQuery<ProductReturn[]>(async () => {
        if (!isMounted || !dateRange?.from) return [];
        const start = startOfDay(dateRange.from);
        const end = endOfDay(dateRange.to || new Date());
@@ -193,7 +189,7 @@ const returnsResult = useLiveQuery<ProductReturn[]>(async () => {
                         {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 animate-pulse" />)}
                     </div>
                 ) : returns.length === 0 ? (
-                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Ajustez vos filtres." : "Commencez par enregistrer un retour."} />
+                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Ajustez vos filtres." : "Commenceز par enregistrer un retour."} />
                 ) : (
                     viewMode === 'list' ? (
                         <ReturnTable 
