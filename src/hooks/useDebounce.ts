@@ -19,10 +19,8 @@ export function useDebounce<T>(value: T, delay: number): T {
 }
 
 /**
- * useDebouncedAbortSignal - FIXED for React 19 Performance
- * 
- * CRITICAL FIX: Stabilized the return object identity to prevent infinite render loops.
- * The signal is now tied strictly to the debounced cycle completion.
+ * useDebouncedAbortSignal - تم تحسينه لـ React 19 لضمان استقرار المراجع.
+ * يحل مشكلة "تجمد الواجهة" عبر منع الحلقات اللانهائية في Dependency Arrays.
  */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
@@ -35,6 +33,7 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
     const newController = new AbortController();
     const handler = setTimeout(() => {
       setDebouncedValue(value);
+      // نغير الكنترولر فقط عند استقرار القيمة
       setController(newController);
     }, delay);
 
@@ -44,6 +43,7 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
     };
   }, [value, delay]);
 
+  // استخدام useMemo لضمان عدم تغيير الكائن المعاد إلا عند تغير الحالة فعلياً
   return useMemo(() => ({
     debouncedValue,
     signal: controller.signal,
