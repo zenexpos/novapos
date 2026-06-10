@@ -64,8 +64,8 @@ export default function BreadPage() {
         setIsProcessingTransfers(true);
         try {
             const count = await breadService.processEndOfDayTransfers();
-            if (count > 0) toast.success(`${count} طلبات محولة للحسابات بنجاح.`);
-            else toast.info("لا توجد طلبات معلقة للتحويل حالياً.");
+            if (count > 0) toast.success(`${count} ordres transférés aux comptes.`);
+            else toast.info("Aucun ordre en attente de transfert.");
         } finally {
             setIsProcessingTransfers(false);
         }
@@ -80,7 +80,7 @@ export default function BreadPage() {
     return (
         <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
             <PageHeader 
-                title="نظام إدارة طلبات الخبز Elite"
+                title="Gestion des Commandes de Pain Elite"
                 description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
             >
                 <div className="flex items-center gap-4">
@@ -92,7 +92,7 @@ export default function BreadPage() {
                         className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
                     >
                         {isProcessingTransfers ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
-                        تشغيل الأتمتة الليلية
+                        Lancer l'automatisation nocturne
                     </Button>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5 shadow-inner">
@@ -112,7 +112,7 @@ export default function BreadPage() {
                     </div>
                     
                     <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-bold shadow-lg gap-2">
-                        <Plus className="h-4 w-4" /> طلب جديد [N]
+                        <Plus className="h-4 w-4" /> Nouvelle commande [N]
                     </Button>
                 </div>
             </PageHeader>
@@ -123,7 +123,7 @@ export default function BreadPage() {
                 <div className="relative flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
                     <Input 
-                        placeholder="Rechercher par client ou N° طلب..."
+                        placeholder="Rechercher par client ou N° commande..."
                         className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}

@@ -1,5 +1,7 @@
+'use client';
+
 /**
- * @fileOverview Unused RadioGroup component.
- * Part of architectural cleanup.
+ * RadioGroup - Inutilisé.
+ * Composant retiré de l'architecture active.
  */
 export {};

@@ -17,7 +17,6 @@ import {
     Trash2,
     X,
     Printer,
-    SortAsc,
     TrendingDown,
     Filter,
     LayoutGrid,
@@ -33,9 +32,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
@@ -52,13 +49,6 @@ import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-
-const sortOptions = {
-    'date_desc': 'Plus récents',
-    'date_asc': 'Plus anciens',
-    'amount_desc': 'Montant (Max)',
-    'amount_asc': 'Montant (Min)',
-};
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
     <Card className="app-card h-full glass rounded-lg group overflow-hidden">

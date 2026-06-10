@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, Calculator, Coins, Sparkles, BadgePercent, AlertTriangle, TrendingUp, ScanLine } from 'lucide-react';
+import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, Calculator, Coins, Sparkles, BadgePercent, AlertTriangle, ScanLine } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import type { Product, StockIntakeItem } from '@/lib/types';
