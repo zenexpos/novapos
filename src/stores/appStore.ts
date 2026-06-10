@@ -1,6 +1,7 @@
 'use client';
+
 import { create } from 'zustand';
-import type { SaleItem, CompanyProfile, ReturnItem, StockIntakeItem, ViewMode, SyncStatus } from '@/lib/types';
+import type { CompanyProfile, ReturnItem, StockIntakeItem, ViewMode, SyncStatus } from '@/lib/types';
 import { toast } from 'sonner';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { db } from '@/lib/db';
@@ -11,13 +12,8 @@ import { returnService }         from '@/services/return.service';
 import { inventoryService }      from '@/services/inventory.service';
 import { supplierService }       from '@/services/supplier.service';
 import { productService }        from '@/services/product.service';
-import { customerService }       from '@/services/customer.service';
 import { supabaseSyncService }   from '@/services/supabase.service';
-import { preciseMultiply, safeNumber, roundFinancial } from '@/lib/utils';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
+import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 interface AppState {
     companyProfile:          CompanyProfile | null;
@@ -32,7 +28,6 @@ interface AppState {
     expensesViewMode:  ViewMode;
     salesViewMode:     ViewMode;
 
-    // Nouvelle: barre de recherche globale
     globalSearchOpen: boolean;
 
     actions: AppActions;
@@ -88,17 +83,12 @@ const initialState: Omit<AppState, 'actions'> = {
     globalSearchOpen:        false,
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Store
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const useAppStore = create<AppState>()(
     persist(
         (set, get) => ({
             ...initialState,
 
             actions: {
-                // ── Profil ──────────────────────────────────────────────────
                 fetchCompanyProfile: async () => {
                     set({ isCompanyProfileLoading: true });
                     try {
@@ -115,32 +105,34 @@ export const useAppStore = create<AppState>()(
                         const updated = await companyProfileService.getProfile();
                         set({ companyProfile: updated });
                     } catch (err: any) {
-                        toast.error('Mise à jour du profil échouée', { description: err.message });
+                        toast.error('Échec de mise à jour du profil', { description: err.message });
                     }
                 },
 
-                // ── Sync ────────────────────────────────────────────────────
                 performCloudSync: async (mode) => {
-                    if (get().syncStatus === 'syncing') return;
+                    const currentSync = get().syncStatus;
+                    if (currentSync === 'syncing') return;
+
                     const profile = get().companyProfile;
                     if (!profile?.supabase_url || !profile?.supabase_key) {
-                        toast.error('Supabase non configuré');
+                        toast.error('Cloud Saphir non configuré');
                         return;
                     }
+
                     set({ syncStatus: 'syncing' });
                     try {
                         if (mode === 'pull') {
                             await supabaseSyncService.pull(profile.supabase_url, profile.supabase_key);
-                            toast.success('Données téléchargées depuis le cloud');
+                            toast.success('Données récupérées avec succès');
                         } else {
                             await supabaseSyncService.push(profile.supabase_url, profile.supabase_key);
-                            toast.success('Données envoyées vers le cloud');
+                            toast.success('Données sauvegardées avec succès');
                         }
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
                         setTimeout(() => set({ syncStatus: 'idle' }), 3000);
                     } catch (err: any) {
                         set({ syncStatus: 'error' });
-                        toast.error('Échec de la synchronisation', { description: err.message });
+                        toast.error('Échec de synchronisation', { description: err.message });
                         setTimeout(() => set({ syncStatus: 'idle' }), 5000);
                     }
                 },
@@ -149,6 +141,7 @@ export const useAppStore = create<AppState>()(
                     const profile = get().companyProfile;
                     if (!profile?.supabase_url || !profile?.supabase_key) return;
                     if (get().syncStatus === 'syncing') return;
+
                     set({ syncStatus: 'syncing' });
                     try {
                         await supabaseSyncService.smartSync(profile.supabase_url, profile.supabase_key);
@@ -162,40 +155,30 @@ export const useAppStore = create<AppState>()(
                 triggerSmartSync: () => {
                     const profile = get().companyProfile;
                     if (!profile?.supabase_url || !profile?.supabase_key) return;
-                    // Debounce: avoid spamming sync on rapid operations
-                    if (get().syncStatus === 'syncing') return;
+                    
+                    // Simple debounce to prevent sync spamming
                     setTimeout(() => {
                         get().actions.performBackgroundSync();
-                    }, 1500);
+                    }, 2000);
                 },
 
-                // ── Retours ─────────────────────────────────────────────────
                 processReturn: async (returnData) => {
                     try {
                         await returnService.addReturn(returnData);
-                        toast.success('Retour enregistré avec succès');
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        toast.error('Échec du retour', { description: err.message });
+                        toast.error('Erreur lors du retour', { description: err.message });
                         return false;
                     }
                 },
 
-                // ── Stock Intake ─────────────────────────────────────────────
                 processStockIntake: async (intakeData) => {
                     try {
                         const intakeUuid = uuidv4();
                         const shippingCostCents = Math.round(safeNumber(intakeData.shippingCost) * 100);
                         let itemsTotalValueCents = 0;
-                        const finalItems: Array<{
-                            productUuid: string;
-                            productName: string;
-                            quantityReceived: number;
-                            quantityDamaged: number;
-                            purchasePrice: number;
-                            landingCost: number;
-                        }> = [];
+                        const finalItems = [];
 
                         await db.transaction('rw', [
                             db.products,
@@ -209,23 +192,16 @@ export const useAppStore = create<AppState>()(
                             );
 
                             for (const item of intakeData.items) {
-                                const qty             = safeNumber(item.quantity);
-                                const damaged         = safeNumber(item.quantityDamaged);
-                                const netQty          = qty - damaged;
+                                const qty = safeNumber(item.quantity);
                                 const purchasePriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
-                                const itemTotalCents  = purchasePriceCents * qty;
-                                itemsTotalValueCents += itemTotalCents;
+                                itemsTotalValueCents += (purchasePriceCents * qty);
 
-                                const totalQtyCents = qty > 0 ? qty : 1;
                                 const shippingPerItemCents = Math.round(shippingCostCents / intakeData.items.length);
-                                const landingCost = roundFinancial(
-                                    (purchasePriceCents + shippingPerItemCents / totalQtyCents) / 100
-                                );
+                                const landingCost = roundFinancial((purchasePriceCents + (shippingPerItemCents / (qty || 1))) / 100);
 
-                                let productUuid: string | undefined;
+                                let productUuid = item.productUuid;
 
                                 if (item.productUuid) {
-                                    productUuid = item.productUuid;
                                     await productService.updateProductFromIntake(item.productUuid, {
                                         purchasePrice: safeNumber(item.purchasePrice),
                                         price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined,
@@ -249,9 +225,9 @@ export const useAppStore = create<AppState>()(
                                     });
                                 }
 
-                                if (productUuid && netQty > 0) {
+                                if (productUuid && qty > 0) {
                                     await inventoryService.adjustStock(
-                                        productUuid, netQty, 'stock_intake', intakeUuid,
+                                        productUuid, qty, 'stock_intake', intakeUuid,
                                     );
                                 }
 
@@ -260,7 +236,7 @@ export const useAppStore = create<AppState>()(
                                         productUuid,
                                         productName:      item.name,
                                         quantityReceived: qty,
-                                        quantityDamaged:  damaged,
+                                        quantityDamaged:  item.quantityDamaged,
                                         purchasePrice:    safeNumber(item.purchasePrice),
                                         landingCost,
                                     });
@@ -271,7 +247,7 @@ export const useAppStore = create<AppState>()(
 
                             await db.stock_intakes.add({
                                 uuid:          intakeUuid,
-                                supplierUuid:  intakeData.supplierUuid,
+                                supplierUuid:  supplier.uuid,
                                 invoiceNumber: intakeData.invoiceNumber,
                                 invoiceDate:   intakeData.invoiceDate,
                                 shippingCost:  intakeData.shippingCost,
@@ -281,23 +257,17 @@ export const useAppStore = create<AppState>()(
                                 updatedAt:     new Date(),
                             });
 
-                            await supplierService.updateSupplierBalance(
-                                intakeData.supplierUuid ?? '',
-                                (itemsTotalValueCents + shippingCostCents) / 100,
-                            );
+                            await supplierService.updateSupplierBalance(supplier.uuid, finalTotalValue);
                         });
 
-                        toast.success('Réception de stock enregistrée');
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        console.error('Intake Error:', err);
-                        toast.error('Échec de la réception de stock', { description: err.message });
+                        toast.error('Erreur de réception de stock', { description: err.message });
                         return false;
                     }
                 },
 
-                // ── View modes ───────────────────────────────────────────────
                 setProductViewMode:   mode => set({ productViewMode:   mode }),
                 setStockViewMode:     mode => set({ stockViewMode:     mode }),
                 setReturnsViewMode:   mode => set({ returnsViewMode:   mode }),
@@ -322,8 +292,4 @@ export const useAppStore = create<AppState>()(
     ),
 );
 
-export const useAppActions       = () => useAppStore(s => s.actions);
-export const useCompanyProfile   = () => useAppStore(s => s.companyProfile);
-export const useSyncStatus       = () => useAppStore(s => s.syncStatus);
-export const useLastSyncDate     = () => useAppStore(s => s.lastSyncDate);
-export const useGlobalSearchOpen = () => useAppStore(s => s.globalSearchOpen);
+export const useAppActions = () => useAppStore(state => state.actions);

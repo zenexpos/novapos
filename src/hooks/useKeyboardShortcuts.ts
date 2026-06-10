@@ -15,33 +15,36 @@ export interface ShortcutConfig {
 }
 
 /**
- * FIX: Extended input focus detection.
- * Now catches: INPUT, TEXTAREA, SELECT, combobox, contenteditable,
- * role=spinbutton (number inputs), and nested contenteditable elements.
+ * Enhanced input focus detection for accessible UI components.
+ * Catches native elements and Radix-based primitives (Combobox, Select, Spinbuttons).
  */
 const isInputFocused = (): boolean => {
     if (typeof document === 'undefined') return false;
     const el = document.activeElement;
     if (!el) return false;
+    
     const tag = el.tagName;
     const role = el.getAttribute('role');
-    // FIX: Added spinbutton (number inputs) and isContentEditable (nested editable)
+    const type = el.getAttribute('type');
+    
     return (
         tag === 'INPUT' ||
         tag === 'TEXTAREA' ||
         tag === 'SELECT' ||
         role === 'combobox' ||
+        role === 'searchbox' ||
         role === 'spinbutton' ||
+        role === 'textbox' ||
+        type === 'number' ||
         el.getAttribute('contenteditable') === 'true' ||
         (el as HTMLElement).isContentEditable
     );
 };
 
 /**
- * FIX: Singleton keyboard dispatcher.
- * Instead of N listeners on window (one per useKeyboardShortcuts instance),
- * we maintain a single global listener that dispatches to all registered handlers.
- * This eliminates the O(N) listener accumulation when many cart rows or shortcuts are active.
+ * Singleton Keyboard Dispatcher
+ * A single listener on window prevents memory leaks and ensures 
+ * predictable shortcut execution across hundreds of components.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -50,13 +53,12 @@ function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
+    // Iterate through registered buckets
     for (const shortcuts of Array.from(_registry.values())) {
         for (const config of shortcuts) {
             if (!config.key) continue;
 
-            // FIX: Use event.code for function keys (F1-F12) and special keys to avoid
-            // locale-dependent mismatch on non-QWERTY keyboards.
-            // For alphanumeric keys, keep toLowerCase() comparison.
+            // Match keys (Alphanumeric case-insensitive, special keys exact)
             const matchKey = config.key.toLowerCase() === pressedKey.toLowerCase();
             const matchCtrl  = !!config.ctrl  === (event.ctrlKey  || event.metaKey);
             const matchShift = !!config.shift === event.shiftKey;
@@ -64,15 +66,22 @@ function _globalHandler(event: KeyboardEvent) {
 
             if (matchKey && matchCtrl && matchShift && matchAlt) {
                 const focused = isInputFocused();
+                
+                // Universal keys (Esc, Ctrl+Enter) always fire unless explicitly ignored
                 const isUniversal =
                     pressedKey === 'Escape' ||
                     (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
-                if (!isUniversal && focused && !config.ignoreInputFocus) continue;
+                if (!isUniversal && focused && !config.ignoreInputFocus) {
+                    continue;
+                }
 
-                if (config.preventDefault !== false) event.preventDefault();
+                if (config.preventDefault !== false) {
+                    event.preventDefault();
+                }
+                
                 config.action();
-                return; // First matching shortcut wins
+                return; // Singleton execution: first matching shortcut wins
             }
         }
     }
@@ -85,8 +94,9 @@ function _ensureListener() {
 }
 
 /**
- * Hook to register keyboard shortcuts using the global singleton dispatcher.
- * Multiple instances share a single window listener — no O(N) accumulation.
+ * useKeyboardShortcuts
+ * Registers a set of shortcuts in the global dispatcher.
+ * Automatically handles registration in the Shortcut Help Overlay.
  */
 export function useKeyboardShortcuts(
     shortcuts: ShortcutConfig[],
@@ -97,7 +107,7 @@ export function useKeyboardShortcuts(
     const shortcutsRef = useRef(shortcuts);
     shortcutsRef.current = shortcuts;
 
-    // Register in the help overlay context
+    // Update help overlay context
     useEffect(() => {
         if (active && actions) {
             actions.registerShortcuts(id, shortcutsRef.current);
@@ -105,14 +115,16 @@ export function useKeyboardShortcuts(
         }
     }, [id, active, actions]);
 
-    // Register in singleton dispatcher
+    // Update singleton registry
     useEffect(() => {
         if (!active) {
             _registry.delete(id);
             return;
         }
+        
         _ensureListener();
-        // Use a proxy object so the registry always has the latest shortcuts ref
+        
+        // Proxy ensures registry always points to latest shortcut references
         _registry.set(
           id,
           new Proxy([] as ShortcutConfig[], {
@@ -127,6 +139,7 @@ export function useKeyboardShortcuts(
             }
           })
         );
+        
         return () => {
             _registry.delete(id);
         };
