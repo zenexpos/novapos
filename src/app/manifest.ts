@@ -53,21 +53,27 @@ export default function manifest(): MetadataRoute.Manifest {
         type: 'image/png',
         purpose: 'any',
       },
+      {
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any',
+      }
     ],
     screenshots: [
       {
-        src: 'https://picsum.photos/seed/ipos-desk/1280/720',
+        src: 'https://picsum.photos/seed/ipos-dashboard-preview/1280/720',
         sizes: '1280x720',
         type: 'image/png',
         form_factor: 'wide',
-        label: 'Tableau de bord iPOS Zen',
+        label: 'لوحة التحكم iPOS Zen - نظرة شاملة على النشاط',
       },
       {
-        src: 'https://picsum.photos/seed/ipos-mob/720/1280',
+        src: 'https://picsum.photos/seed/ipos-mobile-sell/720/1280',
         sizes: '720x1280',
         type: 'image/png',
         form_factor: 'narrow',
-        label: 'Interface de vente mobile',
+        label: 'واجهة البيع السريعة - iPOS Zen Mobile',
       },
     ],
     categories: ['business', 'finance', 'productivity'],

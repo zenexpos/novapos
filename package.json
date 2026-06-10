@@ -115,7 +115,7 @@
           ]
         }
       ],
-      "icon": "public/icons/icon.ico",
+      "icon": "public/icon.svg",
       "signAndEditExecutable": false
     },
     "mac": {
