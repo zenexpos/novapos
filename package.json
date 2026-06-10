@@ -115,8 +115,11 @@
           ]
         }
       ],
+      "icon": "public/icons/icon.ico",
       "signAndEditExecutable": false
     },
-    "icon": "public/icons/icon.ico"
+    "mac": {
+      "icon": "public/icons/icon-512x512.png"
+    }
   }
 }
