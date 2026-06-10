@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+/**
+ * useDebounce - تأخير تحديث القيمة لتقليل عمليات المعالجة.
+ */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -21,6 +24,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 /**
  * useDebouncedAbortSignal - تم تحسينه لـ React 19 لضمان استقرار المراجع.
  * يحل مشكلة "تجمد الواجهة" عبر منع الحلقات اللانهائية في Dependency Arrays.
+ * يعيد كائناً مستقراً لا يتغير إلا عند استقرار القيمة المدخلة.
  */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
@@ -30,20 +34,22 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   const [controller, setController] = useState(() => new AbortController());
 
   useEffect(() => {
+    // إنشاء كنترولر جديد لكل عملية بحث جديدة
     const newController = new AbortController();
+    
     const handler = setTimeout(() => {
       setDebouncedValue(value);
-      // نغير الكنترولر فقط عند استقرار القيمة
       setController(newController);
     }, delay);
 
     return () => {
       clearTimeout(handler);
+      // إلغاء العملية السابقة فوراً عند كتابة حرف جديد
       newController.abort();
     };
   }, [value, delay]);
 
-  // استخدام useMemo لضمان عدم تغيير الكائن المعاد إلا عند تغير الحالة فعلياً
+  // التغليف بـ useMemo هو المفتاح لمنع حلقات التكرار اللانهائية
   return useMemo(() => ({
     debouncedValue,
     signal: controller.signal,

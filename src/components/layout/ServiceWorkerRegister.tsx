@@ -10,24 +10,25 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // تسجيل ملف الخدمة اليدوي لضمان تفعيل الـ Fetch listener والعمل أوفلاين كلياً
+      // تم تغيير المسار ليتوافق مع الملف اليدوي في public/service-worker.js
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((reg) => {
-          console.log('[iPOS Zen] Offline Engine Active:', reg.scope);
+          console.log('[iPOS Zen] Offline Fortress Active:', reg.scope);
           
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[iPOS Zen] New content available, please refresh.');
+                  console.log('[iPOS Zen] System update detected, ready for Zen refresh.');
                 }
               };
             }
           };
         })
         .catch((err) => {
-          console.error('[iPOS Zen] Service Worker registration failed:', err);
+          console.error('[iPOS Zen] Offline Engine Registration Error:', err);
         });
     }
   }, []);

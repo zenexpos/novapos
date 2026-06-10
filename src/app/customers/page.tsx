@@ -53,7 +53,7 @@ function CustomersContent() {
     const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
     const [isRefreshing, setIsRefreshing] = useState(false);
     
-    // Stable debounced state
+    // استخدام الهوك المحسن والمستقر
     const { debouncedValue, signal } = useDebouncedAbortSignal(searchQuery, 300);
 
     const [customers, setCustomers] = useState<Customer[] | undefined>(undefined);
@@ -71,7 +71,7 @@ function CustomersContent() {
         }
     }, [searchParams]);
 
-    // FIX: fetchCustomers stabilized to prevent infinite loops in React 19
+    // تثبيت الوظيفة لمنع حلقات التكرار في React 19
     const fetchCustomers = useCallback(async () => {
         setIsRefreshing(true);
         try {
