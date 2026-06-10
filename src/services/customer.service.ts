@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn } from '@/lib/types';
+import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfDay } from 'date-fns';
@@ -40,7 +40,7 @@ class CustomerService {
 
     async filterCustomers(filters: {
         query?: string;
-        status?: string;
+        status?: 'all' | 'has_debt' | 'overdue' | 'over_limit' | 'is_bread_client';
         sortBy?: string;
     }): Promise<Customer[]> {
         let collection = db.customers.toCollection();
@@ -72,7 +72,6 @@ class CustomerService {
         }
 
         if (filters.sortBy) {
-            // Fix: Use substring to correctly split field and order even with underscores in field name
             const lastUnderscore = filters.sortBy.lastIndexOf('_');
             const rawField = filters.sortBy.substring(0, lastUnderscore);
             const order = filters.sortBy.substring(lastUnderscore + 1);
@@ -160,8 +159,6 @@ class CustomerService {
         }
 
         await db.customers.update(existing.id, dataToUpdate);
-
-        // recalculate status
         const updated = await this.recalculateCustomerStatus(uuid);
 
         triggerSync();
@@ -267,7 +264,7 @@ class CustomerService {
         return { ...customer, ...customerUpdate };
     }
 
-    async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<any[]> {
+    async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<Array<any>> {
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),
@@ -374,20 +371,20 @@ class CustomerService {
                             const lastName  = (row.lastName  || row.nom   || row.Nom   || '').trim();
 
                             if (!firstName || !lastName) {
-                                analysis.errorRows.push({ ...row, error: 'Identité incomplète' });
+                                analysis.errorRows.push({ rowNumber: 0, data: row, errors: ['Identité incomplète'] } as ImportRow);
                                 continue;
                             }
 
                             const searchName = `${firstName} ${lastName}`.toLowerCase().trim();
                             const existingCustomer = existingMap.get(searchName);
 
-                            const customerData = {
+                            const customerData: Partial<Customer> = {
                                 firstName,
                                 lastName,
                                 phone:          (row.phone || row.telephone || row.Téléphone || '').trim(),
                                 address:        (row.address || row.adresse || row.Adresse || '').trim(),
                                 creditLimit:    safeNumber(row.creditLimit || row.limite || row.Limite_Crédit),
-                                settlementDay:  parseInt(row.settlementDay || row.echeance || '0'),
+                                settlementDay:  parseInt(row.settlementDay || row.echeance || '0', 10),
                                 initialBalance: safeNumber(row.initialBalance || row.Solde_Impayé || '0'),
                             };
 

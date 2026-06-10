@@ -1,9 +1,10 @@
-
 'use client';
 
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
 import { toast } from 'sonner';
+
+type SyncMode = 'push' | 'pull' | 'smart';
 
 /**
  * Service de synchronisation souverain pour iPOS Zen.
@@ -50,7 +51,7 @@ class SupabaseSyncService {
         if (data instanceof Date) return data.toISOString();
         if (Array.isArray(data)) return data.map(i => this.sanitizeForCloud(i));
         
-        if (typeof data === 'object') {
+        if (typeof data === 'object' && !(data instanceof Date)) {
             const clean: any = {};
             for (const key in data) {
                 if (key === 'id') continue;
@@ -62,7 +63,7 @@ class SupabaseSyncService {
         return data;
     }
 
-    private mapToLocal(record: any): any {
+    private mapToLocal(record: Record<string, any>): any {
         if (!record) return record;
         const clean: any = {};
         for (const key in record) {
@@ -134,7 +135,7 @@ class SupabaseSyncService {
 
     private async pullAllDataInternal(supabase: any): Promise<void> {
         for (const item of this.tableSyncOrder) {
-            const { data, error } = await this.withRetry<any>(() => supabase.from(item.name).select('*'));
+            const { data, error } = await this.withRetry<{data: any[] | null, error: any}>(() => supabase.from(item.name).select('*'));
             if (error) continue;
             if (data && data.length > 0) {
                 await db.transaction('rw', item.table, async () => {
