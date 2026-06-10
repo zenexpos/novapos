@@ -2,96 +2,69 @@
 import { useMemo } from 'react';
 import type { BreadOrder } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, Wallet } from 'lucide-react';
-import { Skeleton } from '../ui/skeleton';
-import { Progress } from '../ui/progress';
-import { cn } from '@/lib/utils';
+import { Package, Truck, Wallet, Landmark, AlertCircle } from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
+import { Skeleton } from '../ui/skeleton';
 
 interface BreadStatsProps {
     date: string;
-    isLoading?: boolean;
 }
 
-const StatCard = ({ title, value, icon: Icon, colorClass, subtitle, progress }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string, progress?: number }) => (
-    <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-            <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground group-hover:text-primary transition-all duration-500">{title}</CardTitle>
-            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
-                <Icon className="h-5 w-5" />
+const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
+    <Card className="app-card bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
+            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
+            <div className={cn("p-2.5 rounded-xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
+                <Icon className="h-4 w-4" />
             </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-            <div className="text-xl font-semibold tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left mb-1">{value}</div>
-            {subtitle && <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/40">{subtitle}</p>}
-            {progress !== undefined && (
-                <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-[8px] font-semibold uppercase tracking-wide text-muted-foreground/60">
-                        <span>Progression</span>
-                        <span>{progress}%</span>
-                    </div>
-                    <Progress value={progress} className="h-1 bg-white/5 [&>div]:bg-primary shadow-sm" />
-                </div>
-            )}
+            <div className="text-xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
 );
 
-export function BreadStats({ date, isLoading: externalLoading }: BreadStatsProps) {
-    // Live query for specific date bread orders to update stats instantly
-    const ordersResult = useLiveQuery<BreadOrder[]>(() => db.bread_orders.where('date').equals(date).toArray(), [date]);
-    const orders = ordersResult.value ?? [];
+export function BreadStats({ date }: BreadStatsProps) {
+    const ordersResult = useLiveQuery<BreadOrder[]>(() => 
+        db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray(), [date]
+    );
 
     const stats = useMemo(() => {
-        if (!orders) return { totalQuantity: 0, deliveredQuantity: 0, paidQuantity: 0, unpaidQuantity: 0, totalOrders: 0 };
-        return {
-            totalOrders: orders.length,
-            totalQuantity: orders.reduce((sum, o) => sum + o.quantite, 0),
-            deliveredQuantity: orders.filter(o => o.est_livre).reduce((sum, o) => sum + o.quantite, 0),
-            paidQuantity: orders.filter(o => !!o.venteUuid).reduce((sum, o) => sum + o.quantite, 0),
-            unpaidQuantity: orders.filter(o => !o.venteUuid).reduce((sum, o) => sum + o.quantite, 0),
+        if (!ordersResult.value) return { 
+            count: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
+            unreceived: 0, transferred: 0, debts: 0 
         };
-    }, [orders]);
+        const orders = ordersResult.value;
 
-    const deliveryPercentage = stats.totalQuantity > 0 
-        ? Math.round((stats.deliveredQuantity / stats.totalQuantity) * 100) 
-        : 0;
+        return {
+            count: orders.length,
+            totalVal: orders.reduce((s, o) => s + o.totalAmount, 0),
+            paidVal: orders.reduce((s, o) => s + o.amountPaid, 0),
+            unpaidVal: orders.reduce((s, o) => s + o.remainingAmount, 0),
+            unreceived: orders.filter(o => o.pickupStatus === 'unreceived').length,
+            transferred: orders.filter(o => o.transferredToCustomerAccount).length,
+            debts: orders.filter(o => o.transferredToCustomerAccount).reduce((s, o) => s + o.remainingAmount, 0)
+        };
+    }, [ordersResult.value]);
 
-    if (ordersResult.value === undefined || externalLoading) {
-        return (
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />
-                ))}
-            </div>
-        )
+    if (ordersResult.isLoading) {
+        return <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+            {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
+        </div>;
     }
 
     return (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-            <StatCard 
-                title="Volume de Production" 
-                value={String(stats.totalQuantity)} 
-                icon={Package} 
-                colorClass="bg-primary/10 text-primary" 
-                subtitle={`Répartis sur ${stats.totalOrders} bons`} 
-            />
-            <StatCard 
-                title="Taux de Livraison" 
-                value={String(stats.deliveredQuantity)} 
-                icon={Truck} 
-                colorClass="bg-emerald-500/10 text-emerald-500" 
-                subtitle="Unités expédiées" 
-                progress={deliveryPercentage}
-            />
-            <StatCard 
-                title="Encaissement Pain" 
-                value={String(stats.paidQuantity)} 
-                icon={Wallet} 
-                colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle={`${stats.unpaidQuantity} unités en attente`} 
-            />
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7 animate-in fade-in duration-500">
+            <StatCard title="إجمالي الطلبات" value={String(stats.count)} icon={Package} colorClass="bg-primary/10 text-primary" />
+            <StatCard title="قيمة المبيعات" value={formatCurrency(stats.totalVal)} icon={Landmark} colorClass="bg-emerald-500/10 text-emerald-500" />
+            <StatCard title="إجمالي المحصل" value={formatCurrency(stats.paidVal)} icon={Wallet} colorClass="bg-emerald-500/10 text-emerald-500" />
+            <StatCard title="مستحقات معلقة" value={formatCurrency(stats.unpaidVal)} icon={AlertCircle} colorClass="bg-destructive/10 text-destructive" />
+            <StatCard title="غير مستلم" value={String(stats.unreceived)} icon={Truck} colorClass="bg-amber-500/10 text-amber-500" />
+            <StatCard title="محول للحساب" value={String(stats.transferred)} icon={Landmark} colorClass="bg-blue-500/10 text-blue-500" />
+            <StatCard title="ديون الطلبات" value={formatCurrency(stats.debts)} icon={Wallet} colorClass="bg-purple-500/10 text-purple-500" />
         </div>
     );
 }

@@ -119,6 +119,9 @@ export interface InventoryLog extends BaseEntity {
     newQuantity: number;
     reason:      InventoryLogReason;
     relatedUuid?: string;
+    details?: string;
+    oldValue?: any;
+    newValue?: any;
 }
 
 export type InventoryLogReason = 
@@ -127,7 +130,9 @@ export type InventoryLogReason =
     | 'stock_intake' 
     | 'cancellation' 
     | 'manual_adjustment' 
-    | 'create_proforma_from_pos';
+    | 'create_proforma_from_pos'
+    | 'bread_order_status_change'
+    | 'bread_order_transfer';
 
 export interface SyncQueueItem {
     id?:         number;
@@ -158,6 +163,7 @@ export interface CompanyProfile extends BaseEntity {
     invoice_prefix?:    string;
     invoice_counter:    number;
     proforma_counter?:  number;
+    bread_counter?:     number;
     goldPricePerGram?:  number;
     prix_pain?:         number;
     zakat_use_sale_price?: boolean;
@@ -167,15 +173,28 @@ export interface CompanyProfile extends BaseEntity {
 }
 
 export interface BreadOrder extends BaseEntity {
+    orderNumber:        string;
     customerUuid:       string | null;
     customName?:        string;
-    date:               string;
-    quantite:           number;
-    quantite_origine?:  number;
-    est_paye:           boolean;
-    est_livre:          boolean;
-    is_manual?:         boolean;
-    venteUuid:          string | null;
+    date:               string; // YYYY-MM-DD
+    pickupDate:         Date;
+    pickupTime?:        string;
+    quantity:           number;
+    unitPrice:          number;
+    totalAmount:        number;
+    amountPaid:         number;
+    remainingAmount:    number;
+    paymentStatus:      'unpaid' | 'partial' | 'paid';
+    pickupStatus:       'unreceived' | 'partial' | 'received';
+    notes?:             string;
+    transferredToCustomerAccount: boolean;
+    transferredAt?:     Date | null;
+    debtId?:            string | null; // UUID of generated Sale/Debt
+    venteUuid:          string | null; // Keep for compatibility
+}
+
+export interface BreadOrderWithCustomer extends BreadOrder {
+    customer: Customer | null;
 }
 
 export interface StockIntake extends BaseEntity {

@@ -1,0 +1,179 @@
+'use client';
+
+import React from 'react';
+import type { BreadOrderWithCustomer } from '@/lib/types';
+import {
+    Table, TableBody, TableCell, TableHead,
+    TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { 
+    CheckCircle2, 
+    XCircle, 
+    Trash2, 
+    User, 
+    Hash, 
+    Info, 
+    CreditCard, 
+    Truck,
+    CloudUpload
+} from 'lucide-react';
+import { formatCurrency, cn } from '@/lib/utils';
+import { breadService } from '@/services/bread.service';
+import { toast } from 'sonner';
+import { ConfirmAlertDialog } from '../ui/ConfirmAlertDialog';
+import { useState } from 'react';
+
+interface BreadOrderTableProps {
+    orders: BreadOrderWithCustomer[];
+}
+
+export function BreadOrderTable({ orders }: BreadOrderTableProps) {
+    const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+
+    const handleTogglePayment = async (order: BreadOrderWithCustomer) => {
+        const newStatus = order.paymentStatus === 'paid' ? 'unpaid' : 'paid';
+        await breadService.updateStatuses(order.uuid, { paymentStatus: newStatus });
+        toast.success(newStatus === 'paid' ? 'Commande marquée comme payée' : 'Paiement annulé');
+    };
+
+    const handleTogglePickup = async (order: BreadOrderWithCustomer) => {
+        const newStatus = order.pickupStatus === 'received' ? 'unreceived' : 'received';
+        await breadService.updateStatuses(order.uuid, { pickupStatus: newStatus });
+        toast.success(newStatus === 'received' ? 'Article livré' : 'Livraison annulée');
+    };
+
+    const handleDelete = async () => {
+        if (!orderToDelete) return;
+        try {
+            await breadService.deleteOrder(orderToDelete);
+            toast.success("Commande supprimée.");
+        } catch (e: any) {
+            toast.error(e.message);
+        } finally {
+            setOrderToDelete(null);
+        }
+    };
+
+    return (
+        <>
+        <div className="overflow-x-auto">
+            <Table>
+                <TableHeader className="bg-muted/50 border-b border-white/5">
+                    <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[120px] p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">N° الطلب</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">العميل</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">الكمية</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">الإجمالي</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">حالة الدفع</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">حالة الاستلام</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">الحساب الجاري</TableHead>
+                        <TableHead className="w-[100px]"></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {orders.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={8} className="h-60 text-center opacity-20 italic">Aucune commande trouvée.</TableCell>
+                        </TableRow>
+                    ) : orders.map((order) => (
+                        <TableRow key={order.uuid} className="group border-b border-white/5 hover:bg-primary/5 transition-all">
+                            <TableCell className="p-4">
+                                <div className="flex items-center gap-2">
+                                    <Hash className="h-3 w-3 opacity-30" />
+                                    <span className="font-mono text-[10px] font-bold tracking-tighter">{order.orderNumber}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                                        <User className="h-3.5 w-3.5" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-sm tracking-tight">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
+                                        {order.notes && <span className="text-[9px] text-muted-foreground/50 truncate max-w-[150px]">{order.notes}</span>}
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell className="p-4 text-center">
+                                <Badge variant="outline" className="rounded-xl font-bold bg-muted/20 px-3">
+                                    {order.quantity} pcs
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="p-4 text-right font-black text-sm tabular-nums">
+                                {formatCurrency(order.totalAmount)}
+                            </TableCell>
+                            <TableCell className="p-4 text-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <Badge className={cn(
+                                        "text-[8px] font-black uppercase px-2 py-0.5 border-none",
+                                        order.paymentStatus === 'paid' ? "bg-emerald-500 text-white" : 
+                                        order.paymentStatus === 'partial' ? "bg-amber-500 text-white" : "bg-destructive text-white"
+                                    )}>
+                                        {order.paymentStatus === 'paid' ? 'Payé' : order.paymentStatus === 'partial' ? 'Partiel' : 'Impayé'}
+                                    </Badge>
+                                    <Switch 
+                                        checked={order.paymentStatus === 'paid'} 
+                                        onCheckedChange={() => handleTogglePayment(order)}
+                                        className="data-[state=checked]:bg-emerald-500"
+                                    />
+                                </div>
+                            </TableCell>
+                            <TableCell className="p-4 text-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <Badge className={cn(
+                                        "text-[8px] font-black uppercase px-2 py-0.5 border-none",
+                                        order.pickupStatus === 'received' ? "bg-emerald-500 text-white" : 
+                                        order.pickupStatus === 'partial' ? "bg-amber-500 text-white" : "bg-destructive text-white"
+                                    )}>
+                                        {order.pickupStatus === 'received' ? 'Reçu' : order.pickupStatus === 'partial' ? 'Partiel' : 'En attente'}
+                                    </Badge>
+                                    <Switch 
+                                        checked={order.pickupStatus === 'received'} 
+                                        onCheckedChange={() => handleTogglePickup(order)}
+                                        className="data-[state=checked]:bg-emerald-500"
+                                    />
+                                </div>
+                            </TableCell>
+                            <TableCell className="p-4 text-center">
+                                {order.transferredToCustomerAccount ? (
+                                    <Badge variant="outline" className="gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20 text-[8px] font-black uppercase px-2">
+                                        <CloudUpload className="h-2.5 w-2.5" /> تم التحويل
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="outline" className="text-muted-foreground/30 text-[8px] font-black uppercase px-2">
+                                        محلي
+                                    </Badge>
+                                )}
+                            </TableCell>
+                            <TableCell className="p-4 text-right">
+                                {!order.transferredToCustomerAccount && (
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="text-destructive/20 hover:text-destructive hover:bg-destructive/5"
+                                        onClick={() => setOrderToDelete(order.uuid)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+
+        <ConfirmAlertDialog 
+            isOpen={!!orderToDelete}
+            onOpenChange={(open) => !open && setOrderToDelete(null)}
+            title="حذف طلب الخبز؟"
+            description="هل أنت متأكد من حذف طلب الخبز؟ لا يمكن التراجع عن هذه العملية ولا يمكن حذف الطلبات المحولة للحسابات الجارية."
+            onConfirm={handleDelete}
+            confirmText="Supprimer définitivement"
+        />
+        </>
+    );
+}

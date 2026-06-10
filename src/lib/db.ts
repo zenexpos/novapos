@@ -12,7 +12,7 @@ import type {
  * Soft Deletes & Sync Status implemented for absolute sovereignty.
  */
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 class iPOSDatabase extends Dexie {
     products!:           EntityTable<Product,        'id'>;
@@ -33,7 +33,7 @@ class iPOSDatabase extends Dexie {
     constructor() {
         super('iPOSDatabase');
 
-        // VERSION 5 — TITANIUM OFFLINE SCHEMA
+        // VERSION 6 — TITANIUM OFFLINE SCHEMA
         // All tables indexed by UUID for conflict-free multi-device sync
         this.version(DB_VERSION).stores({
             products:           '++id, &uuid, name, *barcodes, supplierUuid, syncStatus, deletedAt, dateExpiration',
@@ -42,7 +42,7 @@ class iPOSDatabase extends Dexie {
             expenses:           '++id, &uuid, category, expenseDate, syncStatus, deletedAt',
             suppliers:          '++id, &uuid, &name, syncStatus, deletedAt',
             payments:           '++id, &uuid, customerUuid, paymentDate, syncStatus, deletedAt',
-            bread_orders:       '++id, &uuid, date, customerUuid, venteUuid, syncStatus, deletedAt',
+            bread_orders:       '++id, &uuid, orderNumber, date, customerUuid, paymentStatus, pickupStatus, transferredToCustomerAccount, deletedAt',
             company_profile:    '++id, &uuid, syncStatus',
             inventory_logs:     '++id, &uuid, productUuid, relatedUuid, reason, createdAt',
             stock_intakes:      '++id, &uuid, invoiceNumber, supplierUuid, createdAt',

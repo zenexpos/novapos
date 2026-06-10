@@ -1,11 +1,12 @@
-
 'use client';
 
 import { useAppStore, useAppActions } from '@/stores/appStore';
 import { useEffect, useRef } from 'react';
+import { breadService } from '@/services/bread.service';
 
 /**
  * مكون مسؤول عن إدارة عمليات المزامنة وضمان استقرار التطبيق في وضع الأوفلاين.
+ * يقوم أيضاً بتشغيل مهام الأتمتة المجدولة لطلبات الخبز.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
@@ -18,13 +19,17 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         fetchCompanyProfile();
     }, [fetchCompanyProfile]);
 
-    // المزامنة الأولية عند التوفر
+    // المزامنة الأولية عند التوفر وتشغيل أتمتة الخبز
     useEffect(() => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
         if (isSyncing || initialSyncTriggered.current) return;
 
         initialSyncTriggered.current = true;
+        
+        // تشغيل أتمتة الخبز عند البدء
+        breadService.processEndOfDayTransfers();
+
         const timeoutId = setTimeout(async () => {
             try {
                 await performBackgroundSync();
@@ -40,20 +45,21 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         const handleOnline = () => {
             if (companyProfile?.supabase_url && companyProfile?.supabase_key) {
                 performBackgroundSync();
+                breadService.processEndOfDayTransfers();
             }
         };
         window.addEventListener('online', handleOnline);
         return () => window.removeEventListener('online', handleOnline);
     }, [performBackgroundSync, companyProfile]);
 
-    // التفاعل مع استعادة نشاط الصفحة
+    // التفاعل مع استعادة نشاط الصفحة (Check tasks at 23:00 approx)
     useEffect(() => {
         const handleVisibility = () => {
-            if (document.visibilityState === 'visible' &&
-                companyProfile?.supabase_url &&
-                companyProfile?.supabase_key &&
-                navigator.onLine) {
-                performBackgroundSync();
+            if (document.visibilityState === 'visible') {
+                breadService.processEndOfDayTransfers();
+                if (companyProfile?.supabase_url && companyProfile?.supabase_key && navigator.onLine) {
+                    performBackgroundSync();
+                }
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
@@ -69,6 +75,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
             if (typeof navigator !== 'undefined' && navigator.onLine) {
                 performBackgroundSync();
             }
+            breadService.processEndOfDayTransfers();
         }, SYNC_INTERVAL);
         return () => clearInterval(intervalId);
     }, [performBackgroundSync, companyProfile]);

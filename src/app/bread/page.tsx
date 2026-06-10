@@ -1,164 +1,156 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { formatDateToYYYYMMDD } from '@/lib/utils';
-import { addDays, format } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { BreadClientList } from '@/components/bread/BreadClientList';
-import { BreadDayView } from '@/components/bread/BreadDayView';
 import { BreadStats } from '@/components/bread/BreadStats';
-import { Loader2, RefreshCw, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { BreadOrderTable } from '@/components/bread/BreadOrderTable';
+import { BreadOrderForm } from '@/components/bread/BreadOrderForm';
+import { 
+    Loader2, 
+    RefreshCw, 
+    ChevronLeft, 
+    ChevronRight, 
+    CalendarDays, 
+    Plus,
+    Search,
+    FilterX,
+    Clock
+} from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
-import { db } from '@/lib/db';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 /**
- * Page de gestion de la logistique du pain.
+ * Page de gestion avancée du pain (Système Elite).
  */
 export default function BreadPage() {
-    const [currentDate, setCurrentDate] = useState<Date | null>(null);
-    const [isMounted, setIsMounted] = useState(false);
+    const [currentDate, setCurrentDate] = useState<Date>(new Date());
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isProcessingTransfers, setIsProcessingTransfers] = useState(false);
 
-    useEffect(() => {
-        setIsMounted(true);
-        setCurrentDate(new Date());
-    }, []);
+    const formattedDate = formatDateToYYYYMMDD(currentDate);
 
-    const formattedDate = currentDate ? formatDateToYYYYMMDD(currentDate) : '';
-
-    const checkAndGenerate = useCallback(async (date: string) => {
-        if (!date) return;
-        const count = await db.bread_orders.where('date').equals(date).count();
-        if (count === 0) {
-            await breadService.generateAndGetOrdersForDate(date);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (isMounted && formattedDate) {
-            checkAndGenerate(formattedDate);
-        }
-    }, [isMounted, formattedDate, checkAndGenerate]);
-
-    const orders = useLiveQuery<BreadOrderWithCustomer[] | undefined>(
-        async () => {
-            if (!isMounted || !formattedDate) return undefined;
-            return await breadService.generateAndGetOrdersForDate(formattedDate);
-        },
-        [isMounted, formattedDate],
-        undefined,
+    const ordersResult = useLiveQuery<BreadOrderWithCustomer[] | undefined>(
+        async () => await breadService.generateAndGetOrdersForDate(formattedDate),
+        [formattedDate],
+        undefined
     );
 
+    const filteredOrders = useMemo(() => {
+        if (!ordersResult.value) return [];
+        let list = ordersResult.value;
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            list = list.filter(o => 
+                o.orderNumber.toLowerCase().includes(q) ||
+                (o.customer && (o.customer.firstName + ' ' + o.customer.lastName).toLowerCase().includes(q)) ||
+                (o.customName && o.customName.toLowerCase().includes(q))
+            );
+        }
+        return list;
+    }, [ordersResult.value, searchQuery]);
+
     const handleDateChange = useCallback((days: number) => {
-        setCurrentDate(prev => prev ? addDays(prev, days) : null);
+        setCurrentDate(prev => addDays(prev, days));
     }, []);
 
-    const isToday = isMounted && currentDate && formatDateToYYYYMMDD(new Date()) === formattedDate;
-    const isLoading = orders.value === undefined || !isMounted || !currentDate;
-
-    // Raccourcis pour la navigation par jour
-    useKeyboardShortcuts([
-        {
-            key: 'ArrowLeft',
-            action: () => handleDateChange(-1),
-            description: 'Jour précédent',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'ArrowRight',
-            action: () => handleDateChange(1),
-            description: 'Jour suivant',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'h',
-            action: () => setCurrentDate(new Date()),
-            description: 'Retour à aujourd\'hui',
-            ignoreInputFocus: false
+    const runAutomatedTask = async () => {
+        setIsProcessingTransfers(true);
+        try {
+            const count = await breadService.processEndOfDayTransfers();
+            if (count > 0) toast.success(`${count} طلبات محولة للحسابات بنجاح.`);
+            else toast.info("لا توجد طلبات معلقة للتحويل حالياً.");
+        } finally {
+            setIsProcessingTransfers(false);
         }
-    ], 'Distribution');
+    };
+
+    useKeyboardShortcuts([
+        { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
+        { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
+        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouveau طلب', ignoreInputFocus: false }
+    ], 'Pain');
 
     return (
-        <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
+        <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
             <PageHeader 
-                title="Logistique du Pain Elite"
-                description={isMounted && currentDate ? format(currentDate, 'EEEE d MMMM yyyy', { locale: fr }) : 'Synchronisation...'}
+                title="نظام إدارة طلبات الخبز Elite"
+                description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
             >
                 <div className="flex items-center gap-4">
-                    <div className="flex gap-1.5 bg-black/20 p-1.5 rounded-2xl border border-white/5 shadow-inner">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDateChange(-1)}
-                            className="rounded-xl h-10 w-10 hover:bg-white/5"
-                        >
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={runAutomatedTask}
+                        disabled={isProcessingTransfers}
+                        className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
+                    >
+                        {isProcessingTransfers ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                        تشغيل الأتمتة الليلية
+                    </Button>
+
+                    <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5 shadow-inner">
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9">
                             <ChevronLeft className="h-5 w-5 text-primary" />
                         </Button>
                         <Button 
-                            variant={isToday ? "secondary" : "ghost"} 
+                            variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} 
                             onClick={() => setCurrentDate(new Date())} 
-                            disabled={isToday || !isMounted}
-                            className={cn(
-                                "rounded-xl h-10 px-6 font-semibold text-[10px] uppercase transition-all",
-                                isToday ? "bg-primary text-primary-foreground shadow-lg" : "hover:text-primary"
-                            )}
+                            className="rounded-xl h-9 px-4 text-[10px] uppercase font-bold"
                         >
-                            <CalendarDays className="mr-2 h-3.5 w-3.5" /> Aujourd'hui [H]
+                            Aujourd'hui
                         </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDateChange(1)}
-                            className="rounded-xl h-10 w-10 hover:bg-white/5"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9">
                             <ChevronRight className="h-5 w-5 text-primary" />
                         </Button>
                     </div>
                     
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        onClick={() => formattedDate && checkAndGenerate(formattedDate)}
-                        disabled={isLoading}
-                        className="rounded-2xl h-9 w-14 border-white/5 bg-card hover:bg-primary/10 group transition-all duration-500"
-                    >
-                        <RefreshCw className={cn("h-6 w-6 text-primary transition-all duration-1000", isLoading && "animate-spin")} />
+                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-bold shadow-lg gap-2">
+                        <Plus className="h-4 w-4" /> طلب جديد [N]
                     </Button>
                 </div>
             </PageHeader>
 
-            <div className="animate-in slide-in-from-top-4 duration-700">
-                <BreadStats date={formattedDate} isLoading={isLoading}/>
-            </div>
+            <BreadStats date={formattedDate} />
 
-            <div className="grid lg:grid-cols-12 gap-4 items-stretch flex-grow min-h-0">
-                <div className="lg:col-span-9 flex flex-col animate-in slide-in-from-left-4 duration-700 delay-200">
-                    {isLoading ? (
-                        <div className="flex flex-col justify-center items-center h-[600px] bg-card/40 backdrop-blur-sm rounded-lg border border-white/5 animate-pulse">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse rounded-full"></div>
-                                <Loader2 className="relative h-12 w-12 animate-spin text-primary opacity-40" />
-                            </div>
-                            <p className="mt-6 text-[10px] font-semibold uppercase text-muted-foreground opacity-30">Initialisation du registre...</p>
-                        </div>
-                    ) : (
-                        <BreadDayView 
-                            orders={orders.value || []} 
-                            currentDate={formattedDate}
-                            onOrdersChange={() => {}} 
-                        />
-                    )}
-                </div>
-
-                <div className="lg:col-span-3 flex flex-col animate-in slide-in-from-right-4 duration-700 delay-300">
-                    <BreadClientList onListChange={() => {}} />
+            <div className="flex flex-col lg:flex-row gap-4">
+                <div className="relative flex-grow">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                    <Input 
+                        placeholder="Rechercher par client ou N° طلب..."
+                        className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
                 </div>
             </div>
+
+            <div className="bg-card/40 backdrop-blur-sm rounded-lg border border-white/5 overflow-hidden min-h-[500px]">
+                {ordersResult.isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-[500px] opacity-20">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        <p className="mt-4 font-bold uppercase tracking-widest">Chargement du registre...</p>
+                    </div>
+                ) : (
+                    <BreadOrderTable orders={filteredOrders} />
+                )}
+            </div>
+
+            <BreadOrderForm 
+                isOpen={isFormOpen} 
+                onOpenChange={setIsFormOpen} 
+                currentDate={formattedDate}
+            />
         </div>
     );
 }
