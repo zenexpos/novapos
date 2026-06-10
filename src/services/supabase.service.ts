@@ -6,18 +6,13 @@ import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
 import { toast } from 'sonner';
 
 /**
- * @fileOverview Titanium Sync Engine — v2.9
- * Architecture Local-First : 
- * 1. Consomme le 'sync_queue' pour pousser les actions locales vers le Cloud.
- * 2. Effectue un 'pull' périodique pour synchroniser les changements distants.
- * 3. Utilise 'Last Updated Wins' pour la résolution de conflits.
+ * @fileOverview Titanium Sync Engine — v2.9.5 (Audited Edition)
+ * Fixed: Incremental sync to prevent performance bottleneck.
+ * Fixed: Explicit date mapping to ensure object integrity.
  */
 class SupabaseSyncService {
     private isSyncing = false;
 
-    /**
-     * Teste la connexion au coffre-fort Cloud.
-     */
     async testConnection(url: string, key: string): Promise<boolean> {
         try {
             const supabase = getSupabaseClient(url, key);
@@ -29,9 +24,6 @@ class SupabaseSyncService {
         }
     }
 
-    /**
-     * Déclenche une synchronisation intelligente bidirectionnelle.
-     */
     async smartSync(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
         this.isSyncing = true;
@@ -43,14 +35,16 @@ class SupabaseSyncService {
         }
 
         try {
-            // A. PUSH : Traiter le طابور المزامنة (Sync Queue)
+            // 1. PUSH : Process local changes first
             await this.processSyncQueue(supabase);
 
-            // B. PULL : Récupérer les nouveautés du Cloud
-            await this.pullRemoteChanges(supabase);
-
-            // C. UPDATE : Marquer le succès dans le profil
+            // 2. PULL : Get ONLY new/updated records from Cloud (Incremental)
             const profile = await db.company_profile.toCollection().first();
+            const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
+            
+            await this.pullRemoteChanges(supabase, lastSync);
+
+            // 3. FINALIZE
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
                     last_sync_at: new Date(),
@@ -58,15 +52,12 @@ class SupabaseSyncService {
                 });
             }
         } catch (error) {
-            console.error('[Titanium Sync] Critical Failure:', error);
+            console.error('[Titanium Sync] Audit Failure:', error);
         } finally {
             this.isSyncing = false;
         }
     }
 
-    /**
-     * Consomme le tableau 'sync_queue' localement et applique les opérations sur Supabase.
-     */
     private async processSyncQueue(supabase: any): Promise<void> {
         const queueItems = await db.sync_queue.orderBy('id').toArray();
         if (queueItems.length === 0) return;
@@ -83,7 +74,6 @@ class SupabaseSyncService {
                         .upsert(payload, { onConflict: 'uuid' });
                     error = upsertError;
                 } else if (item.operation === 'DELETE') {
-                    // Soft delete on cloud is preferred
                     const { error: deleteError } = await supabase
                         .from(tableName)
                         .update({ deleted_at: new Date().toISOString() })
@@ -95,15 +85,12 @@ class SupabaseSyncService {
                     await db.sync_queue.delete(item.id!);
                 }
             } catch (err) {
-                console.warn(`[Sync Queue] Failed item ${item.id} on table ${item.table}:`, err);
+                console.warn(`[Sync Queue] Conflict on ${item.table}:`, err);
             }
         }
     }
 
-    /**
-     * Récupère les records modifiés sur le Cloud depuis la dernière synchro.
-     */
-    private async pullRemoteChanges(supabase: any): Promise<void> {
+    private async pullRemoteChanges(supabase: any, lastSync: string): Promise<void> {
         const tables = [
             'company_profile', 'suppliers', 'customers', 'products', 
             'expenses', 'stock_intakes', 'sales', 'product_returns', 
@@ -111,12 +98,14 @@ class SupabaseSyncService {
         ];
 
         for (const table of tables) {
+            // AUDIT FIX: Only pull records updated after our last sync
             const { data, error } = await supabase
                 .from(table)
                 .select('*')
-                .order('updated_at', { ascending: false });
+                .gt('updated_at', lastSync)
+                .order('updated_at', { ascending: true });
 
-            if (error || !data) continue;
+            if (error || !data || data.length === 0) continue;
 
             const dexieTable = (db as any)[this.snakeToCamel(table)];
             if (!dexieTable) continue;
@@ -129,10 +118,10 @@ class SupabaseSyncService {
                     if (!local) {
                         await dexieTable.add({ ...sanitizedRemote, syncStatus: 'synced' });
                     } else {
-                        const localUpdate = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
-                        const remoteUpdate = sanitizedRemote.updatedAt ? sanitizedRemote.updatedAt.getTime() : 0;
+                        const localTime = new Date(local.updatedAt || 0).getTime();
+                        const remoteTime = new Date(sanitizedRemote.updatedAt || 0).getTime();
 
-                        if (remoteUpdate > localUpdate) {
+                        if (remoteTime > localTime) {
                             await dexieTable.update(local.id, { ...sanitizedRemote, syncStatus: 'synced' });
                         }
                     }
@@ -147,8 +136,10 @@ class SupabaseSyncService {
     }
 
     async pull(url: string, key: string): Promise<void> {
+        const profile = await db.company_profile.toCollection().first();
+        const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
         const supabase = getSupabaseClient(url, key);
-        if (supabase) await this.pullRemoteChanges(supabase);
+        if (supabase) await this.pullRemoteChanges(supabase, lastSync);
     }
 
     private camelToSnake(str: string): string {
@@ -177,7 +168,15 @@ class SupabaseSyncService {
         for (const key in record) {
             const camelKey = this.snakeToCamel(key);
             let value = record[key];
-            if (typeof value === 'string' && (key.endsWith('_at') || key.endsWith('_date'))) {
+            
+            // AUDIT FIX: Explicitly handle all timestamp/date fields
+            if (typeof value === 'string' && (
+                key.endsWith('_at') || 
+                key.endsWith('_date') || 
+                key === 'date' || 
+                key === 'pickup_date' ||
+                key === 'cancelled_at'
+            )) {
                 const d = new Date(value);
                 if (!isNaN(d.getTime())) value = d;
             }

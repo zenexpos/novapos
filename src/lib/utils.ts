@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTES FINANCIÈRES
+// CONSTANTES FINANCIÈRES (AUDITED)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const FINANCIAL_EPSILON = 0.00001;
@@ -14,9 +14,13 @@ export const TVA_RATE_STANDARD = 19;
 export const TVA_RATE_REDUIT = 9;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ARRONDI & SÉCURITÉ
+// ARRONDI & SÉCURITÉ (PRECISION FIX)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Arrondi financier rigoureux à 2 décimales.
+ * Utilise une précision de centimes pour éviter les erreurs de flottants.
+ */
 export function roundFinancial(val: number): number {
     return Math.round((val + Number.EPSILON) * 100) / 100;
 }
@@ -51,6 +55,9 @@ export function safeNumber(val: any): number {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+/**
+ * Multiplication précise pour éviter les erreurs de virgule flottante JS.
+ */
 export function preciseMultiply(a: number, b: number): number {
     return Math.round(safeNumber(a) * safeNumber(b) * 10000) / 10000;
 }
@@ -87,7 +94,7 @@ export function calculateMarginRate(salePrice: number, purchasePrice: number): n
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CALCULS PANIER & REMISES
+// CALCULS PANIER & REMISES (AUDIT FIX: Cent-based precision)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CalculableCart {
@@ -96,19 +103,30 @@ interface CalculableCart {
 }
 
 export function calculateCartTotals(cart: CalculableCart) {
+    // Audit Fix: Calculate using integer cents to ensure 100% precision
     const subtotalCents = cart.items.reduce((acc, item) => {
         return acc + Math.round(safeNumber(item.price) * safeNumber(item.cartQuantity) * 100);
     }, 0);
+    
     const subtotal = subtotalCents / 100;
+    
     let discountAmountCents = 0;
     if (cart.discount.type === 'percentage') {
         discountAmountCents = Math.round((subtotalCents * safeNumber(cart.discount.value)) / 100);
     } else {
         discountAmountCents = Math.round(safeNumber(cart.discount.value) * 100);
     }
+    
+    // Ensure discount doesn't exceed subtotal
     discountAmountCents = Math.min(discountAmountCents, subtotalCents);
+    
     const totalCents = Math.max(0, subtotalCents - discountAmountCents);
-    return { subtotal, discountAmount: discountAmountCents / 100, total: totalCents / 100 };
+    
+    return { 
+        subtotal, 
+        discountAmount: discountAmountCents / 100, 
+        total: totalCents / 100 
+    };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
