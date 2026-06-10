@@ -1,6 +1,6 @@
 'use client';
 
-import type { DashboardData, TopCustomer, SalesByDay, RecentSale, RecentReturn, DashboardStats } from '@/lib/types';
+import type { DashboardData, TopCustomer, SalesByDay, RecentSale, RecentReturn, DashboardStats, TopProduct, LowStockProduct } from '@/lib/types';
 import { eachDayOfInterval, format, startOfDay, endOfDay } from 'date-fns';
 import { db } from '@/lib/db';
 import { preciseMultiply, safeNumber } from '@/lib/utils';
@@ -19,16 +19,13 @@ interface DayValueCents {
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
         try {
-            // Dates normalisées pour l'inclusion totale
             const startDate = startOfDay(from);
             const endDate = endOfDay(to);
 
-            // Calcul de la période de comparaison (précédente)
             const duration = endDate.getTime() - startDate.getTime();
             const prevEndDate = new Date(startDate.getTime() - 1);
             const prevStartDate = new Date(prevEndDate.getTime() - duration);
 
-            // Récupération globale des flux
             const [allSales, allExpenses, allReturns, allCustomers, allProducts] =
                 await Promise.all([
                     db.sales.where('createdAt').between(prevStartDate, endDate, true, true).filter(s => !s.isCancelled).toArray(),
@@ -41,7 +38,6 @@ class DashboardService {
             const productPurchaseMap = new Map<string, number>(allProducts.map(p => [p.uuid, safeNumber(p.purchasePrice)]));
             const customerMap = new Map<string, string>(allCustomers.map(c => [c.uuid, `${c.firstName} ${c.lastName}`]));
 
-            // Calcul en centimes pour éviter les erreurs décimales
             let currRevCents = 0; let currCogsCents = 0; let currExpCents = 0; let currRetValCents = 0; let currRetCogsCents = 0; let currCount = 0;
             let prevRevCents = 0; let prevCogsCents = 0; let prevExpCents = 0; let prevRetValCents = 0; let prevRetCogsCents = 0; let prevCount = 0;
 
@@ -49,12 +45,10 @@ class DashboardService {
             const customerSpendingMapCents = new Map<string, number>();
             const dailyMapCents = new Map<string, DayValueCents>();
 
-            // Préparation du graphe
             eachDayOfInterval({ start: startDate, end: endDate }).forEach(day => {
                 dailyMapCents.set(format(day, 'yyyy-MM-dd'), { totalCents: 0, profitCents: 0, count: 0 });
             });
 
-            // 1. Analyse des Ventes
             allSales.forEach(sale => {
                 const saleDate = new Date(sale.createdAt!);
                 const isCurrent = saleDate >= startDate;
@@ -97,7 +91,6 @@ class DashboardService {
                 }
             });
 
-            // 2. Analyse des Retours
             allReturns.forEach(ret => {
                 const retDate = new Date(ret.createdAt!);
                 const isCurrent = retDate >= startDate;
@@ -130,14 +123,12 @@ class DashboardService {
                 }
             });
 
-            // 3. Analyse des Charges
             allExpenses.forEach(exp => {
                 const valCents = Math.round(safeNumber(exp.amount) * 100);
                 if (new Date(exp.expenseDate) >= startDate) currExpCents += valCents;
                 else prevExpCents += valCents;
             });
 
-            // 4. Calculs Finaux (Net)
             const netRevenue = (currRevCents - currRetValCents) / 100;
             const prevNetRevenue = (prevRevCents - prevRetValCents) / 100;
             
@@ -166,7 +157,7 @@ class DashboardService {
 
             return {
                 stats,
-                salesByDay: Array.from(dailyMapCents.entries()).map(([date, v]) => ({ date, total: v.totalCents / 100, profit: v.profitCents / 100, count: v.count } as SalesByDay)),
+                salesByDay: Array.from(dailyMapCents.entries()).map(([date, v]) => ({ date, total: v.totalCents / 100, profit: v.profitCents / 100, count: v.count })),
                 recentSales: allSales
                     .filter(s => new Date(s.createdAt!) >= startDate)
                     .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
@@ -205,7 +196,7 @@ class DashboardService {
                             quantitySold: pStats.quantity,
                             revenueGenerated: pStats.revenueCents / 100,
                             marginTotal,
-                        };
+                        } as TopProduct;
                     }),
                 topCustomers: Array.from(customerSpendingMapCents.entries())
                     .sort((a, b) => b[1] - a[1])
@@ -222,7 +213,14 @@ class DashboardService {
                 lowStockProducts: allProducts
                     .filter(p => { const qty = safeNumber(p.quantity); const min = safeNumber(p.minStockLevel); return qty <= 0 || (min > 0 && qty <= min); })
                     .sort((a, b) => safeNumber(a.quantity) - safeNumber(b.quantity))
-                    .slice(0, 5),
+                    .slice(0, 5)
+                    .map(p => ({
+                        uuid: p.uuid,
+                        name: p.name,
+                        quantity: p.quantity,
+                        minStockLevel: p.minStockLevel,
+                        unite: p.unite
+                    } as LowStockProduct)),
             };
         } catch (error) {
             console.error('Audit Analytics Error:', error);

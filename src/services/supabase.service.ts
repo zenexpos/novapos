@@ -2,9 +2,6 @@
 
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
-import { toast } from 'sonner';
-
-type SyncMode = 'push' | 'pull' | 'smart';
 
 /**
  * Service de synchronisation souverain pour iPOS Zen.
