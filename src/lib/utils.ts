@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { Product } from './types';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -119,7 +118,7 @@ export function calculateCartTotals(cart: CalculableCart) {
 export function calculateStockStatus(
     quantity: number | string,
     minStockLevel: number | string,
-): Product['stockStatus'] {
+): 'in_stock' | 'low_stock' | 'out_of_stock' {
     const qty = safeNumber(quantity);
     const min = safeNumber(minStockLevel);
     if (qty <= 0) return 'out_of_stock';

@@ -482,3 +482,17 @@ export interface ZakatData {
     zakatAmount?:        number;
     zakatDue?:           boolean;
 }
+
+export interface DatePreset {
+    label: string;
+    days:  number;
+}
+
+export interface Notification {
+    id:        string;
+    title:     string;
+    message:   string;
+    type:      'info' | 'success' | 'warning' | 'error';
+    read:      boolean;
+    createdAt: Date;
+}
