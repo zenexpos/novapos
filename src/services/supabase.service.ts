@@ -2,36 +2,21 @@
 
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
-import type { SyncStatus } from '@/lib/types';
+import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
+import { toast } from 'sonner';
 
 /**
- * Service de synchronisation TITANIUM OFFLINE.
- * Gère le transfert bidirectionnel intelligent entre IndexedDB et Supabase.
- * Architecture local-first : le succès local est immédiat, le cloud est asynchrone.
+ * @fileOverview Titanium Sync Engine — v2.9
+ * Architecture Local-First : 
+ * 1. Consomme le 'sync_queue' pour pousser les actions locales vers le Cloud.
+ * 2. Effectue un 'pull' périodique pour synchroniser les changements distants.
+ * 3. Utilise 'Last Updated Wins' pour la résolution de conflits.
  */
 class SupabaseSyncService {
-
     private isSyncing = false;
 
-    // Ordre de synchronisation pour respecter les contraintes d'intégrité (FK)
-    private readonly tableSyncOrder = [
-        { name: 'company_profile',   table: db.company_profile },
-        { name: 'suppliers',         table: db.suppliers },
-        { name: 'customers',         table: db.customers },
-        { name: 'products',          table: db.products },
-        { name: 'expenses',          table: db.expenses },
-        { name: 'stock_intakes',     table: db.stock_intakes },
-        { name: 'sales',             table: db.sales },
-        { name: 'product_returns',   table: db.product_returns },
-        { name: 'payments',          table: db.payments },
-        { name: 'bread_orders',      table: db.bread_orders },
-        { name: 'inventory_logs',    table: db.inventory_logs },
-        { name: 'supplier_payments', table: db.supplier_payments },
-        { name: 'proforma_invoices', table: db.proforma_invoices },
-    ];
-
     /**
-     * Teste la connexion au Cloud Saphir.
+     * Teste la connexion au coffre-fort Cloud.
      */
     async testConnection(url: string, key: string): Promise<boolean> {
         try {
@@ -45,7 +30,7 @@ class SupabaseSyncService {
     }
 
     /**
-     * Synchronisation Intelligente (Pull → Merge → Push).
+     * Déclenche une synchronisation intelligente bidirectionnelle.
      */
     async smartSync(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
@@ -58,13 +43,13 @@ class SupabaseSyncService {
         }
 
         try {
-            // 1. PULL & MERGE ( جلب التحديثات من السحاب )
-            await this.pullAndMerge(supabase);
+            // A. PUSH : Traiter le طابور المزامنة (Sync Queue)
+            await this.processSyncQueue(supabase);
 
-            // 2. PUSH ( رفع العمليات المحلية المعلقة )
-            await this.pushPendingOperations(supabase);
-            
-            // 3. Update Last Sync Date in Profile
+            // B. PULL : Récupérer les nouveautés du Cloud
+            await this.pullRemoteChanges(supabase);
+
+            // C. UPDATE : Marquer le succès dans le profil
             const profile = await db.company_profile.toCollection().first();
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
@@ -72,35 +57,83 @@ class SupabaseSyncService {
                     syncStatus: 'synced'
                 });
             }
+        } catch (error) {
+            console.error('[Titanium Sync] Critical Failure:', error);
         } finally {
             this.isSyncing = false;
         }
     }
 
-    private async pullAndMerge(supabase: any): Promise<void> {
-        for (const item of this.tableSyncOrder) {
-            const { data: remoteRecords, error } = await supabase
-                .from(item.name)
+    /**
+     * Consomme le tableau 'sync_queue' localement et applique les opérations sur Supabase.
+     */
+    private async processSyncQueue(supabase: any): Promise<void> {
+        const queueItems = await db.sync_queue.orderBy('id').toArray();
+        if (queueItems.length === 0) return;
+
+        for (const item of queueItems) {
+            try {
+                const tableName = this.camelToSnake(item.table);
+                const payload = this.sanitizeForCloud(item.payload);
+
+                let error;
+                if (item.operation === 'CREATE' || item.operation === 'UPDATE') {
+                    const { error: upsertError } = await supabase
+                        .from(tableName)
+                        .upsert(payload, { onConflict: 'uuid' });
+                    error = upsertError;
+                } else if (item.operation === 'DELETE') {
+                    // Soft delete on cloud is preferred
+                    const { error: deleteError } = await supabase
+                        .from(tableName)
+                        .update({ deleted_at: new Date().toISOString() })
+                        .eq('uuid', item.payload.uuid);
+                    error = deleteError;
+                }
+
+                if (!error) {
+                    await db.sync_queue.delete(item.id!);
+                }
+            } catch (err) {
+                console.warn(`[Sync Queue] Failed item ${item.id} on table ${item.table}:`, err);
+            }
+        }
+    }
+
+    /**
+     * Récupère les records modifiés sur le Cloud depuis la dernière synchro.
+     */
+    private async pullRemoteChanges(supabase: any): Promise<void> {
+        const tables = [
+            'company_profile', 'suppliers', 'customers', 'products', 
+            'expenses', 'stock_intakes', 'sales', 'product_returns', 
+            'payments', 'bread_orders', 'inventory_logs', 'supplier_payments'
+        ];
+
+        for (const table of tables) {
+            const { data, error } = await supabase
+                .from(table)
                 .select('*')
                 .order('updated_at', { ascending: false });
 
-            if (error || !remoteRecords) continue;
+            if (error || !data) continue;
 
-            await db.transaction('rw', item.table, async () => {
-                for (const remote of remoteRecords) {
-                    const local = await item.table.where('uuid').equals(remote.uuid).first();
+            const dexieTable = (db as any)[this.snakeToCamel(table)];
+            if (!dexieTable) continue;
+
+            await db.transaction('rw', dexieTable, async () => {
+                for (const remote of data) {
+                    const local = await dexieTable.where('uuid').equals(remote.uuid).first();
                     const sanitizedRemote = this.mapToLocal(remote);
 
                     if (!local) {
-                        // Nouveau record depuis le Cloud
-                        await item.table.add({ ...sanitizedRemote, syncStatus: 'synced' });
+                        await dexieTable.add({ ...sanitizedRemote, syncStatus: 'synced' });
                     } else {
-                        // Conflit : Last Updated Wins
                         const localUpdate = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
                         const remoteUpdate = sanitizedRemote.updatedAt ? sanitizedRemote.updatedAt.getTime() : 0;
 
                         if (remoteUpdate > localUpdate) {
-                            await item.table.update(local.id!, { ...sanitizedRemote, syncStatus: 'synced' });
+                            await dexieTable.update(local.id, { ...sanitizedRemote, syncStatus: 'synced' });
                         }
                     }
                 }
@@ -108,29 +141,14 @@ class SupabaseSyncService {
         }
     }
 
-    private async pushPendingOperations(supabase: any): Promise<void> {
-        for (const item of this.tableSyncOrder) {
-            // Identifier les records locaux non synchronisés
-            const pending = await item.table.where('syncStatus').equals('pending').toArray();
-            if (pending.length === 0) continue;
+    async push(url: string, key: string): Promise<void> {
+        const supabase = getSupabaseClient(url, key);
+        if (supabase) await this.processSyncQueue(supabase);
+    }
 
-            const dataToPush = pending.map(p => this.sanitizeForCloud(p));
-
-            const { error } = await supabase
-                .from(item.name)
-                .upsert(dataToPush, { onConflict: 'uuid' });
-
-            if (!error) {
-                // Marquer comme synchronisé
-                await db.transaction('rw', item.table, async () => {
-                    for (const record of pending) {
-                        if (record.id) {
-                            await item.table.update(record.id, { syncStatus: 'synced' });
-                        }
-                    }
-                });
-            }
-        }
+    async pull(url: string, key: string): Promise<void> {
+        const supabase = getSupabaseClient(url, key);
+        if (supabase) await this.pullRemoteChanges(supabase);
     }
 
     private camelToSnake(str: string): string {
@@ -145,7 +163,7 @@ class SupabaseSyncService {
         if (!data) return data;
         const clean: any = {};
         for (const key in data) {
-            if (key === 'id') continue; // ID local auto-increment non nécessaire sur Cloud
+            if (key === 'id') continue;
             const snakeKey = this.camelToSnake(key);
             let value = data[key];
             if (value instanceof Date) value = value.toISOString();
@@ -159,7 +177,6 @@ class SupabaseSyncService {
         for (const key in record) {
             const camelKey = this.snakeToCamel(key);
             let value = record[key];
-            // Conversion dates
             if (typeof value === 'string' && (key.endsWith('_at') || key.endsWith('_date'))) {
                 const d = new Date(value);
                 if (!isNaN(d.getTime())) value = d;
@@ -167,16 +184,6 @@ class SupabaseSyncService {
             clean[camelKey] = value;
         }
         return clean;
-    }
-    
-    async pull(url: string, key: string): Promise<void> {
-        const supabase = getSupabaseClient(url, key);
-        if (supabase) await this.pullAndMerge(supabase);
-    }
-
-    async push(url: string, key: string): Promise<void> {
-        const supabase = getSupabaseClient(url, key);
-        if (supabase) await this.pushPendingOperations(supabase);
     }
 }
 

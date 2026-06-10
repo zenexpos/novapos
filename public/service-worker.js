@@ -1,28 +1,33 @@
-const CACHE_NAME = 'ipos-zen-fortress-v3';
+/**
+ * @fileOverview Titanium Service Worker — iPOS Zen
+ * Stratégie : Cache First for Assets, Network First for Documents.
+ * Garantit le démarrage instantané offline.
+ */
+
+const CACHE_NAME = 'ipos-zen-fortress-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.webmanifest',
   '/icon.svg',
+  '/manifest.webmanifest',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  // Static assets are handled by Next.js build and added via build scripts normally
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
       );
     })
   );
@@ -30,28 +35,32 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Offline-First Strategy
-  // Skip cross-origin and Supabase calls (handled by Sync Engine)
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip cross-origin and API requests (Sync handled by services)
+  if (url.origin !== self.location.origin || url.pathname.includes('/api/')) {
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(request).then((response) => {
       if (response) return response;
-      
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+
+      return fetch(request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
-        
+
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+          cache.put(request, responseToCache);
         });
-        
+
         return networkResponse;
       }).catch(() => {
-        // Fallback for navigation
-        if (event.request.mode === 'navigate') {
+        // Offline fallback
+        if (request.mode === 'navigate') {
           return caches.match('/');
         }
       });

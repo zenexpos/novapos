@@ -10,7 +10,6 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // تسجيل ملف الخدمة اليدوي لضمان تفعيل الـ Fetch listener والعمل أوفلاين كلياً
-      // تم تغيير المسار ليتوافق مع الملف اليدوي في public/service-worker.js
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((reg) => {
