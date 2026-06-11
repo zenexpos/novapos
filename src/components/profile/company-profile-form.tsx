@@ -109,7 +109,7 @@ export function CompanyProfileForm() {
                             <Input id="companyName" value={formState.companyName || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg focus-visible:ring-primary/20" required disabled={isSaving}/>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="legal_form" className="text-[10px] font-bold uppercase ml-1 opacity-40">Formه Juridique</Label>
+                            <Label htmlFor="legal_form" className="text-[10px] font-bold uppercase ml-1 opacity-40">Forme Juridique</Label>
                             <Input id="legal_form" value={formState.legal_form || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold focus-visible:ring-primary/20" placeholder="Ex: SARL, EURL, EI, Auto-entrepreneur..." disabled={isSaving}/>
                         </div>
                     </div>

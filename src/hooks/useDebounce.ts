@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 /**
- * useDebounce - تأخير تحديث القيمة لتقليل عمليات المعالجة.
+ * useDebounce - Retarde la mise à jour d'une valeur pour réduire les traitements.
  */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -22,9 +22,9 @@ export function useDebounce<T>(value: T, delay: number): T {
 }
 
 /**
- * useDebouncedAbortSignal - تم تحسينه لـ React 19 لضمان استقرار المراجع.
- * يحل مشكلة "تجمد الواجهة" عبر منع الحلقات اللانهائية في Dependency Arrays.
- * يعيد كائناً مستقراً لا يتغير إلا عند استقرار القيمة المدخلة.
+ * useDebouncedAbortSignal - Optimisé pour React 19 pour assurer la stabilité des références.
+ * Résout le problème de gel de l'interface en évitant les boucles infinies dans les tableaux de dépendances.
+ * Retourne un objet stable qui ne change que lorsque la valeur d'entrée se stabilise.
  */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
@@ -34,7 +34,7 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   const [controller, setController] = useState(() => new AbortController());
 
   useEffect(() => {
-    // إنشاء كنترولر جديد لكل عملية بحث جديدة
+    // Créer un nouveau contrôleur pour chaque nouvelle recherche
     const newController = new AbortController();
     
     const handler = setTimeout(() => {
@@ -44,12 +44,12 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
 
     return () => {
       clearTimeout(handler);
-      // إلغاء العملية السابقة فوراً عند كتابة حرف جديد
+      // Annuler l'opération précédente immédiatement lors de la saisie d'un nouveau caractère
       newController.abort();
     };
   }, [value, delay]);
 
-  // التغليف بـ useMemo هو المفتاح لمنع حلقات التكرار اللانهائية
+  // L'encapsulation dans useMemo est la clé pour éviter les boucles de rendu infinies
   return useMemo(() => ({
     debouncedValue,
     signal: controller.signal,

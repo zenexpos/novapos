@@ -53,20 +53,20 @@ export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: external
         const intakeCount = await db.stock_intakes.count();
 
         // Dexie ne propose pas de SUM direct -> on calcule uniquement à partir du minimum nécessaire.
-        // لتجنب تحميل كل السجلات، نجمع القيمة على دفعات صغيرة باستخدام الفهرس المتاح.
+        // Pour éviter de charger tous les enregistrements, nous cumulons la valeur par petits lots en utilisant l'index disponible.
         let totalValCents = 0;
         const supplierUuidSet = new Set<string>();
 
-        // نقرأ فقط محددات المفاتيح (id) على دفعات بدون تحميل كامل الجدول.
-        // ملاحظة: stock_intakes id هو ++id رقمية في المخطط.
+        // Nous lisons uniquement les identifiants (id) par lots sans charger toute la table.
+        // Note: l'ID de stock_intakes est un auto-incrément (++id) numérique dans le schéma.
         const cursor = db.stock_intakes
             .orderBy('id')
             .offset(0)
             .limit(1);
 
-        // Dexie v4 يدعم where().above/below + offset/limit، لكن لا توجد primaryKeys بشكل موحد في كل الإصدارات.
-        // سنعتمد بدل ذلك على cursor batching عبر قراءة حقول id فقط (باستخدام .toArray() على batch صغير).
-        // chunkCount هو عدد الدُفعات، وليس عدد السجلات الكلي.
+        // Dexie v4 supporte where().above/below + offset/limit, mais les primaryKeys ne sont pas uniformes sur toutes les versions.
+        // Nous allons plutôt nous appuyer sur le batching par curseur en lisant uniquement les champs id (en utilisant .toArray() sur un petit lot).
+        // chunkCount est le nombre de lots, pas le nombre total d'enregistrements.
         const chunkSize = 200;
         let offset = 0;
 
@@ -85,7 +85,7 @@ export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: external
             }
 
             offset += batch.length;
-            // عند الوصول لنهاية الجدول نكسر.
+            // Arrêter lorsqu'on atteint la fin de la table.
             if (batch.length < chunkSize) break;
         }
 

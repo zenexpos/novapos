@@ -187,7 +187,7 @@ export default function ReturnsPage() {
                         {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 animate-pulse" />)}
                     </div>
                 ) : returns.length === 0 ? (
-                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Ajustez vos filtres." : "Commenceز par enregistrer un retour."} />
+                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Ajustez vos filtres." : "Commencez par enregistrer un retour."} />
                 ) : (
                     viewMode === 'list' ? (
                         <ReturnTable 

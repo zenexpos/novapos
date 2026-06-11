@@ -59,6 +59,7 @@ export function ProformaDialog({ isOpen, onOpenChange, proforma, profile, custom
             const element = document.getElementById('proforma-render-inner');
             if (!element) return null;
 
+            // Optimisation de la qualité pour l'exportation
             const canvas = await html2canvas(element, { 
                 scale: customScale, 
                 backgroundColor: "#ffffff",

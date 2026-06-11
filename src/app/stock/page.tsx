@@ -418,7 +418,7 @@ export default function StockPage() {
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers?.length === 0 ? (
-                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commenceز par ajouter votre premier fournisseur."} />
+                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commencez par ajouter votre premier fournisseur."} />
                             ) : (
                                 <SupplierTable 
                                     suppliers={filteredSuppliers!} 

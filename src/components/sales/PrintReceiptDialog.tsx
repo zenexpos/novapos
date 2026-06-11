@@ -33,7 +33,7 @@ export function PrintReceiptDialog({
     const [customer, setCustomer] = useState<Customer | null>(null);
     const { printElement, isPrinting } = usePrint();
     
-    // حساب الرصيد السابق للعميل عند إجراء هذه البيعة
+    // Calcul du solde précédent du client lors de cette vente
     const oldBalance = useMemo(() => {
         if (!customer || !sale) return 0;
         const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
@@ -50,7 +50,7 @@ export function PrintReceiptDialog({
             setCustomer(null);
         }
         
-        // اختيار التنسيق التلقائي بناءً على حجم الفاتورة
+        // Sélection automatique du format basée sur la taille de la facture
         if (isOpen && sale) {
             setReceiptType(sale.items.length > 8 ? 'a4' : 'thermal');
         }
@@ -97,7 +97,7 @@ export function PrintReceiptDialog({
             const element = document.getElementById('receipt-render-target-inner');
             if (!element) throw new Error("Source de rendu introuvable");
 
-            // تحسين الجودة للتصدير
+            // Optimisation de la qualité pour l'exportation
             const canvas = await html2canvas(element, {
                 scale: 3, 
                 useCORS: true,
