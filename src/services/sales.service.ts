@@ -5,11 +5,12 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeNumber, preciseMultiply } from '@/lib/utils';
+import { safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
  * Service de gestion des ventes Enterprise.
+ * Toutes les opérations sont encapsulées dans des transactions pour garantir l'intégrité du stock.
  */
 class SalesService {
 
@@ -38,7 +39,7 @@ class SalesService {
         const now = new Date();
         const profile = await db.company_profile.toCollection().first();
         
-        // Calcul des totaux en centimes pour précision absolue
+        // Calcul des totaux en centimes pour une précision absolue
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -86,7 +87,7 @@ class SalesService {
             isCancelled: false
         };
 
-        // TRANSACTION ATOMIQUE ELITE
+        // TRANSACTION ATOMIQUE : Vente + Ajustement Stock + Solde Client + Sync Queue
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,
@@ -130,6 +131,7 @@ class SalesService {
                 syncStatus: 'pending' 
             });
 
+            // Réintégration systématique du stock
             for (const item of sale.items) {
                 if (item.productUuid) {
                     await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);

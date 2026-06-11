@@ -1,20 +1,26 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 8.0 - Supporte la traçabilité complète et les types de ventes avancés.
+ * Version 9.0 - Optimisé pour les performances de recherche et la traçabilité.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 8;
+export const DB_VERSION = 9;
 
 export const DB_SCHEMA = {
-    products:           '++id, &uuid, name, *barcodes, supplierUuid, syncStatus, deletedAt',
-    customers:          '++id, &uuid, searchName, syncStatus, deletedAt',
-    sales:              '++id, &uuid, invoiceNumber, customerUuid, createdAt, syncStatus, isCancelled, deletedAt',
+    // Indexation par barcodes pour le scan rapide, et supplierUuid pour le filtrage
+    products:           '++id, &uuid, name, *barcodes, supplierUuid, stockStatus, syncStatus, deletedAt',
+    // Indexation par searchName pour la recherche CRM rapide
+    customers:          '++id, &uuid, searchName, outstandingBalance, debtStatus, syncStatus, deletedAt',
+    // Indexation chronologique et par statut pour le journal
+    sales:              '++id, &uuid, invoiceNumber, customerUuid, paymentStatus, createdAt, syncStatus, isCancelled, deletedAt',
+    // Indexation par catégorie pour les rapports financiers
     expenses:           '++id, &uuid, category, expenseDate, syncStatus, deletedAt',
     suppliers:          '++id, &uuid, &name, syncStatus, deletedAt',
     payments:           '++id, &uuid, customerUuid, paymentDate, syncStatus, deletedAt',
+    // Indexation par date pour la distribution journalière
     bread_orders:       '++id, &uuid, orderNumber, date, customerUuid, paymentStatus, pickupStatus, transferredToCustomerAccount, deletedAt',
     company_profile:    '++id, &uuid, syncStatus',
+    // Indexation par produit pour l'historique spécifique
     inventory_logs:     '++id, &uuid, productUuid, relatedUuid, reason, createdAt',
     stock_intakes:      '++id, &uuid, invoiceNumber, supplierUuid, createdAt',
     product_returns:    '++id, &uuid, originalInvoiceNumber, customerUuid, createdAt',

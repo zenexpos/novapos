@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Dernier rempart contre le crash complet du système.
+ * Dernier rempart contre le crash complet du système iPOS Zen.
+ * Conçu pour protéger les données locales même en cas d'erreur Next.js fatale.
  */
 export default function GlobalError({
   error,
@@ -27,17 +28,20 @@ export default function GlobalError({
           </div>
           <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">Erreur Système</h1>
           <p className="text-slate-500 font-medium max-w-md mx-auto mb-10 leading-relaxed">
-            Une erreur critique est survenue. Vos données sont en sécurité dans votre appareil. 
-            Veuillez essayer de redémarrer le système.
+            Une erreur critique est survenue. Vos données commerciales sont en sécurité dans votre appareil. 
+            Veuillez essayer de redémarrer le système pour rétablir la connexion.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-            <Button onClick={() => reset()} size="lg" className="flex-1 rounded-2xl shadow-xl gap-2">
+            <Button onClick={() => reset()} size="lg" className="flex-1 rounded-2xl shadow-xl gap-2 font-black uppercase text-xs">
               <RefreshCcw className="h-5 w-5" /> Réessayer
             </Button>
-            <Button variant="outline" onClick={() => window.location.href = '/'} size="lg" className="flex-1 rounded-2xl border-slate-200 bg-white gap-2">
+            <Button variant="outline" onClick={() => window.location.href = '/'} size="lg" className="flex-1 rounded-2xl border-slate-200 bg-white gap-2 font-black uppercase text-xs">
               <Home className="h-5 w-5" /> Accueil
             </Button>
           </div>
+          <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.3em]">
+            iPOS Zen Sovereign Engine • Sécurité Maximale
+          </p>
         </div>
       </body>
     </html>

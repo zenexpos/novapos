@@ -2,14 +2,14 @@ import { MetadataRoute } from 'next';
 
 /**
  * Manifeste PWA Enterprise.
- * Définit l'identité de l'application pour l'installation native.
+ * Définit l'identité de l'application et garantit l'installabilité native.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: 'ipos-zen-app',
-    name: 'iPOS Zen — Gestion Simple',
+    name: 'iPOS Zen — Gestion de Vente Simple',
     short_name: 'iPOS Zen',
-    description: 'Système de vente simple et efficace pour commerces',
+    description: 'Système de point de vente rapide et efficace pour commerces de proximité',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -38,13 +38,13 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: 'Vendre',
+        name: 'Nouvelle Vente',
         url: '/sell',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       },
       {
-        name: 'Inventaire',
-        url: '/products',
+        name: 'Journal des Flux',
+        url: '/sales-history',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       }
     ]
