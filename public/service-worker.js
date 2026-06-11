@@ -1,26 +1,18 @@
-/**
- * iPOS Zen — Titanium Offline Fortress v2.9
- * محرك الأوفلاين السيادي لضمان استمرارية العمل بدون إنترنت كلياً.
- */
+const CACHE_NAME = 'ipos-zen-v2';
+const OFFLINE_URL = '/offline/offline.html';
 
-const CACHE_NAME = 'ipos-zen-v2.9-offline';
-
-// القائمة الأساسية للأصول المطلوبة للتشغيل بدون إنترنت
-const STATIC_ASSETS = [
+const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
-  '/manifest.webmanifest',
+  OFFLINE_URL,
   '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  // سيقوم Next.js بإضافة ملفات الـ JS والـ CSS آلياً أثناء البناء
+  '/manifest.webmanifest',
+  'https://picsum.photos/seed/ipos-pwa-1/1280/720'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[iPOS SW] Building Offline Fortress...');
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
   self.skipWaiting();
@@ -32,7 +24,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[iPOS SW] Purging obsolete defenses:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -42,37 +33,30 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// استراتيجية Stale-While-Revalidate لضمان السرعة القصوى مع دعم الأوفلاين
 self.addEventListener('fetch', (event) => {
-  // تجاهل طلبات الـ API الخارجية (Supabase) للتعامل معها برمجياً
-  if (event.request.url.includes('supabase.co')) return;
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // تحديث الكاش في الخلفية عند توفر الإنترنت
-        if (navigator.onLine) {
-          fetch(event.request).then((networkResponse) => {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
-          });
-        }
-        return cachedResponse;
-      }
-
-      return fetch(event.request).catch(() => {
-        // إذا فشل كل شيء، قم بتقديم صفحة الأوفلاين إذا كانت صفحة HTML
-        if (event.request.mode === 'navigate') {
-          return caches.match('/offline');
-        }
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).then((fetchResponse) => {
+        if (event.request.url.includes('supabase.co')) return fetchResponse;
+        
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, fetchResponse.clone());
+          return fetchResponse;
+        });
       });
+    }).catch(() => {
+      if (event.request.destination === 'image') {
+        return caches.match('/icon.svg');
+      }
     })
   );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
 });

@@ -1,0 +1,51 @@
+{
+  "name": "iPOS Zen — Elite Ledger",
+  "short_name": "iPOS Zen",
+  "description": "Sovereign POS & Inventory Management System - Offline-First Luxury Edition",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#AFB42B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vendre",
+      "url": "/sell/",
+      "description": "Ouvrir l'interface de vente rapide",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Stock",
+      "url": "/stock/",
+      "description": "Gérer l'inventaire",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://picsum.photos/seed/ipos-pwa-1/1280/720",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
