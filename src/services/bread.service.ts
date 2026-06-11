@@ -1,6 +1,6 @@
 'use client';
 
-import { parseISO, format, startOfDay, isBefore, subHours } from 'date-fns';
+import { parseISO, format, startOfDay } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, InventoryLog, InventoryLogReason } from '@/lib/types';
 import { db } from '@/lib/db';
@@ -178,7 +178,6 @@ class BreadService {
         const oldValue = { ...order };
         const newUpdates: Partial<BreadOrder> = { ...updates, updatedAt: new Date() };
 
-        // Real-time calculations for payment
         if (updates.paymentStatus === 'paid') {
             newUpdates.amountPaid = order.totalAmount;
             newUpdates.remainingAmount = 0;
@@ -187,7 +186,6 @@ class BreadService {
             newUpdates.remainingAmount = order.totalAmount;
         }
 
-        // Logic if already transferred to account
         if (order.transferredToCustomerAccount && updates.paymentStatus === 'paid') {
             await this.settleDebt(order);
         } else if (order.transferredToCustomerAccount && updates.paymentStatus === 'unpaid') {
@@ -199,14 +197,9 @@ class BreadService {
         triggerSync();
     }
 
-    /**
-     * Simulation task: Transfer pending orders to account (Run daily or on demand)
-     * Requirement: Daily at 23:00. In PWA we check on start/interaction.
-     */
     async processEndOfDayTransfers(): Promise<number> {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         
-        // Find orders from before today or today after 23:00
         const pendingOrders = await db.bread_orders
             .filter(o => 
                 !o.deletedAt && 
@@ -228,14 +221,13 @@ class BreadService {
 
     private async transferToAccount(order: BreadOrder): Promise<void> {
         await db.transaction('rw', [db.bread_orders, db.sales, db.customers, db.inventory_logs, db.products, db.payments, db.sync_queue, db.company_profile], async () => {
-            // Create a pseudo-sale to represent the debt
             const sale = await salesService.createSale({
                 items: [{
                     uuid: 'BREAD_DEBT',
                     name: `Reliquat Pain #${order.orderNumber}`,
                     price: order.unitPrice,
                     purchasePrice: 0,
-                    quantity: order.quantity, // Using quantity as reference
+                    quantity: order.quantity, 
                     cartQuantity: order.quantity,
                     minStockLevel: 0,
                     syncStatus: 'pending',

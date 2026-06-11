@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from 'react';
 import type { StockIntake, Supplier, InventoryLog } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Archive, LayoutGrid, List, History, ArrowUpDown, RefreshCw, Building, Wallet, UserPlus, Trash2, X, FileUp, FilterX } from 'lucide-react';
+import { Search, Plus, Archive, LayoutGrid, List, History, ArrowUpDown, RefreshCw, Building, Wallet, UserPlus, Trash2, X, FileUp } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
 import { StockIntakeCard } from '@/components/stock/stock-intake-card';
@@ -39,7 +39,6 @@ export default function StockPage() {
     const router = useRouter();
     const searchInputRef = useRef<HTMLInputElement>(null);
     
-    // FIX: Individual selectors for React 19 stability
     const viewMode = useAppStore(state => state.stockViewMode);
     const setViewMode = useAppStore(state => state.actions.setStockViewMode);
 
@@ -58,8 +57,6 @@ export default function StockPage() {
     const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
     const [isDeleteSupplierOpen, setIsDeleteSupplierOpen] = useState(false);
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
-
-    // ─── LIVE QUERIES (Elite Reliability) ──────────────────────
 
     const suppliersResult = useLiveQuery<Supplier[]>(() => db.suppliers.orderBy('name').toArray());
     const suppliers = suppliersResult.value ?? [];
@@ -126,8 +123,6 @@ export default function StockPage() {
         if (!suppliers) return 0;
         return suppliers.reduce((sum, s) => sum + Math.round(safeNumber(s.balance) * 100), 0) / 100;
     }, [suppliers]);
-
-    // ─── ACTIONS ───────────────────────────────────────────────
 
     const handleViewDetails = (intake: StockIntake) => {
         setSelectedIntake(intake);
