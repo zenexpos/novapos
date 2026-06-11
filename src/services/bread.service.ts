@@ -66,6 +66,7 @@ class BreadService {
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
 
+        // On ne génère jamais de commandes dans le futur lointain ou si pas de clients
         const activeBreadClientsCount = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
             .count();
@@ -93,6 +94,11 @@ class BreadService {
         const ordersToCreate: BreadOrder[] = [];
 
         for (const client of activeBreadClients) {
+            // SÉCURITÉ : Ne pas générer si la date demandée est antérieure à la date de début d'abonnement
+            if (client.bread_date_debut && date < client.bread_date_debut) {
+                continue;
+            }
+
             if (client.bread_type_recurrence === 'aucun') continue;
 
             let quantity = 0;
