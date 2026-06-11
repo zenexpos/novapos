@@ -96,7 +96,7 @@ export function calculateNisab(goldPrice: number): number {
 export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
     const nisab = calculateNisab(goldPrice);
     const assets = safeNumber(netAssets);
-    const isEligible = assets >= nisab && nisab > 0;
+    const isEligible = nisab > 0 && assets >= nisab;
     return {
         due: isEligible,
         amount: isEligible ? roundFinancial(assets * 0.025) : 0

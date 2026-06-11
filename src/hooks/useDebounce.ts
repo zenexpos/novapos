@@ -34,7 +34,6 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   const [controller, setController] = useState(() => new AbortController());
 
   useEffect(() => {
-    // Créer un nouveau contrôleur pour chaque nouvelle recherche
     const newController = new AbortController();
     
     const handler = setTimeout(() => {
@@ -44,12 +43,10 @@ export function useDebouncedAbortSignal<T>(value: T, delay: number): {
 
     return () => {
       clearTimeout(handler);
-      // Annuler l'opération précédente immédiatement lors de la saisie d'un nouveau caractère
       newController.abort();
     };
   }, [value, delay]);
 
-  // L'encapsulation dans useMemo est la clé pour éviter les boucles de rendu infinies
   return useMemo(() => ({
     debouncedValue,
     signal: controller.signal,

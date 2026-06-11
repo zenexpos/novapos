@@ -13,7 +13,7 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import { Metadata, Viewport } from 'next';
 
 /**
- * RootLayout - Server Component.
+ * RootLayout - Server Component (Enterprise Standard).
  * Utilise l'API Metadata pour éviter les erreurs d'hydratation et optimiser le SEO.
  */
 export const metadata: Metadata = {
