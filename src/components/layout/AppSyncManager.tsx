@@ -29,7 +29,11 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         
         // Exécution des tâches métier prioritaires au démarrage
         const triggerAutomation = async () => {
-             await breadService.processEndOfDayTransfers();
+             try {
+                await breadService.processEndOfDayTransfers();
+             } catch (e) {
+                console.warn("[SyncManager] Bread automation skipped", e);
+             }
         };
         triggerAutomation();
 
