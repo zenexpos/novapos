@@ -21,27 +21,9 @@ export default function manifest(): MetadataRoute.Manifest {
     dir: 'ltr',
     icons: [
       {
-        src: '/icons/icon-72x72.png',
-        sizes: '72x72',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-96x96.png',
-        sizes: '96x96',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-128x128.png',
-        sizes: '128x128',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icons/icon-144x144.png',
-        sizes: '144x144',
-        type: 'image/png',
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
         purpose: 'any',
       },
       {
@@ -55,12 +37,6 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
-      },
-      {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
-        purpose: 'any',
       }
     ],
     shortcuts: [
@@ -69,14 +45,14 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: 'Vendre',
         description: 'Ouvrir l\'interface de vente rapide',
         url: '/sell',
-        icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+        icons: [{ src: '/icon.svg', sizes: 'any' }]
       },
       {
         name: 'État du Stock',
         short_name: 'Stock',
         description: 'Vérifier l\'inventaire',
         url: '/products',
-        icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+        icons: [{ src: '/icon.svg', sizes: 'any' }]
       }
     ],
     screenshots: [

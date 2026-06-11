@@ -17,7 +17,20 @@ export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "iPOS Zen" },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }
+    ],
+  },
+  appleWebApp: { 
+    capable: true, 
+    statusBarStyle: "default", 
+    title: "iPOS Zen",
+  },
 };
 
 export const viewport: Viewport = {
