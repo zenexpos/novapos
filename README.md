@@ -1,24 +1,37 @@
 # iPOS Zen — Sovereign Ledger & Elite POS
 
-**iPOS Zen** est un système de point de vente (POS) souverain et luxueux, conçu pour fonctionner entièrement dans le navigateur avec une philosophie **Hors-Ligne d'abord (Offline-First)**. Le système offre une expérience utilisateur "Zen" ultra-rapide avec une confidentialité absolue des données, où toutes les opérations commerciales sont traitées localement sans nécessiter de connexion internet permanente.
+**iPOS Zen** هو نظام نقطة بيع (POS) سيادي وفاخر، مصمم ليعمل بالكامل داخل المتصفح وبفلسفة **العمل دون اتصال أولاً (Offline-First)**. يوفر النظام تجربة مستخدم "Zen" فائقة السرعة مع خصوصية مطلقة للبيانات.
 
-## 🚀 Caractéristiques Souveraines
+## 🏗 هيكل المشروع (Detailed Trunk)
 
-*   **Moteur de vente multi-tâches :** Prise en charge de plusieurs paniers d'achat (sous forme de brouillons) avec possibilité de suspendre et de reprendre les ventes instantanément.
-*   **Souveraineté Hors-ligne Absolue :** Grâce à un fichier de service (Service Worker) manuel, l'application fonctionne comme un logiciel local solide même en cas de déconnexion réseau totale.
-*   **Gestion des Dettes et Crédits :** Suivi précis des comptes clients avec un système d'alertes intelligent pour les dettes en retard et les limites de crédit.
-*   **Système Logistique du Pain :** Une fonctionnalité unique pour gérer les abonnements quotidiens programmés et les convertir automatiquement en écritures comptables.
-*   **Contrôle Strict du Stock :** Un journal d'audit complet pour chaque mouvement de stock, empêchant les manipulations et garantissant la précision des quantités.
-*   **Intelligence Artificielle Intégrée (OCR) :** Scannez les factures fournisseurs et convertissez-les instantanément en données numériques via le moteur Tesseract avancé.
-*   **Synchronisation Cloud Optionnelle :** Connectez l'application à votre propre base de données Supabase pour la sauvegarde et la synchronisation entre appareils.
+النظام مبني على معايير هندسية متقدمة لضمان القابلية للتوسع والأداء العالي:
 
-## 🛠 Technologie Utilisée
+### 1. `src/services/` (Business Logic)
+- **Domain Driven:** تقسيم الخدمات حسب النطاق (Sales, Inventory, Finance).
+- **Service Layer:** فصل منطق الأعمال عن واجهة المستخدم لسهولة الاختبار والصيانة.
 
-*   **Framework :** Next.js 15 (React 19) — Mode d'exportation statique.
-*   **Base de données :** IndexedDB (via Dexie.js) — Stockage local ultra-rapide.
-*   **UI Engine :** Tailwind CSS v4 & ShadCN UI — Interface optimisée pour les écrans POS standards.
-*   **Gestion d'état :** Zustand (avec persistance).
-*   **Bureau :** Electron — Pour transformer le système en application de bureau pour Windows.
+### 2. `src/stores/` (State Management)
+- **Atomic State:** استخدام Zustand لتقسيم الحالة إلى متاجر صغيرة (Atomic) لتقليل عمليات إعادة الرندر (Re-renders) وزيادة السرعة.
+- **Persistence:** حفظ الحالة تلقائياً في التخزين المحلي لضمان استمرارية العمل.
 
-## 💻 Compatibilité et Performance
-L'interface a été soigneusement conçue pour s'adapter aux terminaux POS standards (résolution 1360x768), en mettant l'accent sur la densité des données et en réduisant le besoin de défilement (Politique Zero-Scroll) pour garantir une vue d'ensemble de l'opération commerciale.
+### 3. `src/lib/` (Core Utilities)
+- **Math Engine:** محرك حسابات مالية مخصص يعالج مشاكل الفواصل العشرية (Floating Point) بدقة محاسبية.
+- **Database Layer:** محرك Dexie.js لإدارة IndexedDB مع Schema منظم يدعم المزامنة السحابية.
+
+### 4. `public/` (Fortress Offline)
+- **PWA Assets:** نظام أيقونات ومانيفست متطور يدعم التثبيت على كافة أنظمة التشغيل.
+- **Zen Fallback:** صفحة Offline مخصصة تضمن بقاء المستخدم داخل بيئة التطبيق حتى عند الانهيار التام للشبكة.
+
+### 5. `electron/` (Native Desktop)
+- **Hardware Bridge:** التواصل المباشر مع الطابعات الحرارية ودرج النقد عبر منافذ USB/Serial.
+- **Security Policy:** سياسات أمان صارمة (CSP) لعزل واجهة الويب عن عمليات النظام الحساسة.
+
+## 🛠 التكنولوجيا المستخدمة
+
+*   **Framework :** Next.js 15 (React 19) — وضع التصدير الثابت (Static Export).
+*   **Database :** IndexedDB (via Dexie.js) — تخزين محلي فائق السرعة.
+*   **UI Engine :** Tailwind CSS v4 & ShadCN UI — واجهة مصممة لشاشات الـ POS.
+*   **Sync :** Titanium Sync Engine — مزامنة ذكية مع Supabase.
+
+## 💻 التوافق والأداء
+تم تصميم الواجهة بعناية لتناسب أطراف البيع القياسية (دقة 1360x768)، مع التركيز على كثافة البيانات وتقليل الحاجة للتمرير (Zero-Scroll Policy) لضمان رؤية شاملة للعملية التجارية.
