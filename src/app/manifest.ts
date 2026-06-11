@@ -1,17 +1,19 @@
 import { MetadataRoute } from 'next';
 
 /**
- * Manifeste PWA optimisé pour une installation rapide.
+ * Manifeste PWA optimisé pour l'installation Enterprise.
+ * Assure la visibilité du bouton d'installation sur tous les navigateurs.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: 'ipos-zen-v2',
-    name: 'iPOS Zen — Gestion Simple',
+    id: 'ipos-zen-enterprise',
+    name: 'iPOS Zen — Gestion de Vente',
     short_name: 'iPOS Zen',
-    description: 'Système simple et efficace pour la gestion des ventes et du stock',
+    description: 'Système de gestion simple et efficace pour commerces',
     start_url: '/',
     scope: '/',
     display: 'standalone',
+    orientation: 'any',
     background_color: '#F8FAFC',
     theme_color: '#AFB42B',
     icons: [
@@ -25,17 +27,23 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icon.svg',
         sizes: '512x512',
         type: 'image/svg+xml',
+        purpose: 'any',
+      },
+      {
+        src: '/icon.svg',
+        sizes: '512x512',
+        type: 'image/svg+xml',
         purpose: 'maskable',
       }
     ],
     shortcuts: [
       {
-        name: 'Faire une vente',
+        name: 'Nouvelle Vente',
         url: '/sell',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       },
       {
-        name: 'Voir le stock',
+        name: 'Inventaire',
         url: '/products',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       }
