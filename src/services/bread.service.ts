@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, InventoryLog, InventoryLogReason } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
+import { customerService } from './customer.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 import { roundFinancial } from '@/lib/utils';
@@ -247,7 +248,17 @@ class BreadService {
     }
 
     private async transferToAccount(order: BreadOrder): Promise<void> {
-        await db.transaction('rw', [db.bread_orders, db.sales, db.customers, db.inventory_logs, db.products, db.payments, db.sync_queue, db.company_profile], async () => {
+        await db.transaction('rw', [
+            db.bread_orders, 
+            db.sales, 
+            db.customers, 
+            db.inventory_logs, 
+            db.products, 
+            db.payments, 
+            db.product_returns, // Ajout crucial ici pour recalculateCustomerStatus
+            db.sync_queue, 
+            db.company_profile
+        ], async () => {
             const sale = await salesService.createSale({
                 items: [{
                     uuid: 'BREAD_DEBT',
@@ -291,7 +302,6 @@ class BreadService {
                 updatedAt: new Date()
              });
              if (order.customerUuid) {
-                const { customerService } = await import('./customer.service');
                 await customerService.recalculateCustomerStatus(order.customerUuid);
              }
         }
@@ -308,7 +318,6 @@ class BreadService {
                 updatedAt: new Date()
              });
              if (order.customerUuid) {
-                const { customerService } = await import('./customer.service');
                 await customerService.recalculateCustomerStatus(order.customerUuid);
              }
         }
