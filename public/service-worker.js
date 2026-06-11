@@ -1,26 +1,24 @@
 /**
- * iPOS Zen — Sovereign Offline Fortress
- * High-performance Service Worker for enterprise-grade POS stability.
+ * iPOS Zen — Titanium Offline Service Worker
+ * Specialized for Local-First POS operations.
  */
 
-const CACHE_NAME = 'ipos-zen-v2.1';
+const CACHE_NAME = 'ipos-zen-fortress-v2';
 const OFFLINE_URL = '/offline/offline.html';
 
-// Assets that must be available even on the first offline load
-const PRECACHE_ASSETS = [
+const ASSETS_TO_CACHE = [
   '/',
   OFFLINE_URL,
-  '/offline/offline.css',
   '/icon.svg',
-  '/favicon.ico',
   '/manifest.webmanifest',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching fortress assets...');
-      return cache.addAll(PRECACHE_ASSETS);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
   self.skipWaiting();
@@ -32,7 +30,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Purging stale cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -43,35 +40,32 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for internal assets
-  if (event.request.method !== 'GET') return;
+  // Navigation requests: Try Network, fallback to Offline page
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+    return;
+  }
+
+  // Strategy: Stale-while-revalidate for assets, Network-only for API
+  if (event.request.url.includes('supabase.co')) {
+    return; // Don't intercept Supabase API calls, let them handle sync
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request)
-        .then((response) => {
-          // Don't cache external APIs like Supabase here (handled by NetworkFirst strategy in config)
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).then((fetchResponse) => {
+        return caches.open(CACHE_NAME).then((cache) => {
+          // Cache static images and fonts
+          if (event.request.url.match(/\.(png|jpg|jpeg|svg|woff2|woff|ttf)$/)) {
+            cache.put(event.request, fetchResponse.clone());
           }
-
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-
-          return response;
-        })
-        .catch(() => {
-          // Fallback to offline page for document requests
-          if (event.request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL);
-          }
+          return fetchResponse;
         });
+      });
     })
   );
 });

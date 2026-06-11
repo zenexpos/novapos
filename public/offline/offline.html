@@ -3,19 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPOS Zen — Mode Hors-ligne</title>
-    <link rel="stylesheet" href="/offline/offline.css">
+    <title>iPOS Zen — Zone Hors-Ligne</title>
+    <style>
+        :root {
+            --primary: #AFB42B;
+            --background: #F8FAFC;
+            --foreground: #0F172A;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            padding: 40px;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        }
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            background: var(--background);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+        p {
+            color: #64748B;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body>
-    <div class="fortress-container">
-        <div class="logo-wrapper">
-            <img src="/icon.svg" alt="iPOS Zen" width="80" height="80">
+    <div class="container">
+        <div class="icon-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#AFB42B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
         </div>
-        <h1>Forteresse iPOS</h1>
-        <p>Connexion perdue. Le système continue de protéger vos données localement.</p>
-        <div class="status-badge">Mode Souverain Actif</div>
-        <button onclick="window.location.reload()" class="retry-btn">Tenter de se reconnecter</button>
-        <div class="footer">iPOS Zen — Sovereign Ledger</div>
+        <h1>Zone Hors-Ligne</h1>
+        <p>Il semble que vous soyez déconnecté. iPOS Zen peut fonctionner sans internet, mais cette page spécifique n'a pas encore été mise في الكاش.</p>
+        <a href="/dashboard/" class="btn">Retour au Dashboard</a>
     </div>
 </body>
 </html>

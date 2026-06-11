@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
-
-# iPOS Zen — Access Restricted to Authorized Terminals
-Disallow: /api/
+Disallow: /profile/
+Disallow: /settings/
 Disallow: /_next/
+
 Sitemap: /sitemap.xml
