@@ -1,6 +1,6 @@
 'use client';
 
-import { parseISO, format, startOfDay } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, InventoryLog, InventoryLogReason } from '@/lib/types';
 import { db } from '@/lib/db';
@@ -137,6 +137,23 @@ class BreadService {
         unitPrice: number;
         pickupTime?: string;
     }): Promise<BreadOrder> {
+        // Verification d'unicité pour la même date
+        const existing = await db.bread_orders
+            .where('date').equals(params.date)
+            .filter(o => {
+                if (o.deletedAt) return false;
+                // Si client enregistré
+                if (params.customerUuid && o.customerUuid === params.customerUuid) return true;
+                // Si client passager (comparaison insensible à la casse)
+                if (params.customName && o.customName?.trim().toLowerCase() === params.customName.trim().toLowerCase()) return true;
+                return false;
+            })
+            .first();
+
+        if (existing) {
+            throw new Error(`Une commande existe déjà pour "${params.customName || 'ce client'}" à cette date.`);
+        }
+
         const total = roundFinancial(params.quantity * params.unitPrice);
         const newOrder: BreadOrder = {
             uuid: uuidv4(),
