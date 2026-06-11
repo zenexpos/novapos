@@ -1,5 +1,5 @@
 /**
- * @fileOverview Unused ShadCN component.
- * Project relies on 'sonner' and 'AlertDialog'. Ready for manual deletion.
+ * @fileOverview Composant ShadCN inutilisé. Préférer 'sonner' pour les notifications 
+ * ou 'AlertDialog' pour les confirmations critiques.
  */
 export {};

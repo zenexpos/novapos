@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Fichier déprécié. Utilisez @/hooks/useDebounce.ts
+ * @fileOverview Fichier supprimé. Utilisez le hook centralisé : src/hooks/useDebounce.ts
  */
 export * from '../useDebounce';

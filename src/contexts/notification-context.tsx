@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Fichier déprécié. Utilisez @/contexts/NotificationContext.tsx
+ * @fileOverview Fichier supprimé. Utilisez src/contexts/NotificationContext.tsx
  */
 export * from './NotificationContext';

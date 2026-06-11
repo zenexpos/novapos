@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Fichier déprécié. Utilisez @/hooks/useKeyboardShortcuts.ts
+ * @fileOverview Fichier supprimé. Utilisez le hook centralisé : src/hooks/useKeyboardShortcuts.ts
  */
 export * from '../useKeyboardShortcuts';

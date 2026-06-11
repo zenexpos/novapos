@@ -9,8 +9,8 @@ import { safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * Service de gestion des ventes Enterprise.
- * Assure la cohérence entre le stock, le compte client et le journal des ventes.
+ * iPOS Zen - Master Sales Domain Service.
+ * Centralise les transactions de vente avec une garantie d'atomicité.
  */
 class SalesService {
 
@@ -27,6 +27,41 @@ class SalesService {
         return db.sales.where('uuid').equals(uuid).first();
     }
 
+    async getSaleByInvoiceNumber(invoiceNumber: string): Promise<Sale | undefined> {
+        return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
+    }
+
+    async filterSales(filters: {
+        query?: string;
+        status?: string;
+        from?: Date;
+        to?: Date;
+    }): Promise<Sale[]> {
+        let collection = db.sales.filter(s => !s.deletedAt);
+
+        if (filters.from) {
+            const start = new Date(filters.from).setHours(0,0,0,0);
+            const end = new Date(filters.to || filters.from).setHours(23,59,59,999);
+            collection = collection.filter(s => {
+                const date = new Date(s.createdAt!).getTime();
+                return date >= start && date <= end;
+            });
+        }
+
+        if (filters.status && filters.status !== 'all') {
+            collection = collection.filter(s => s.paymentStatus === filters.status);
+        }
+
+        let sales = await collection.toArray();
+
+        if (filters.query) {
+            const q = filters.query.toLowerCase().trim();
+            sales = sales.filter(s => s.invoiceNumber.toLowerCase().includes(q));
+        }
+
+        return sales.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+    }
+
     /**
      * Crée une vente atomique avec transaction Dexie.
      */
@@ -39,12 +74,13 @@ class SalesService {
         dueDate?: Date;
     }): Promise<Sale> {
         if (!saleData.items || saleData.items.length === 0) {
-            throw new Error("Panier vide.");
+            throw new Error("Impossible de valider un panier vide.");
         }
 
         const now = new Date();
         const profile = await db.company_profile.toCollection().first();
         
+        // Calcul précision Elite en centimes pour éviter les erreurs d'arrondi JS
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -92,7 +128,7 @@ class SalesService {
             isCancelled: false
         };
 
-        // TRANSACTION ELITE : Stock + Customer + Sale + SyncQueue
+        // TRANSACTION ATOMIQUE ELITE : Stock + Client + Vente + Queue
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,
@@ -106,7 +142,8 @@ class SalesService {
                         item.uuid, 
                         -item.cartQuantity, 
                         'sale', 
-                        newSale.uuid
+                        newSale.uuid,
+                        `Vente #${newSale.invoiceNumber}`
                     );
                 }
             }
@@ -147,7 +184,8 @@ class SalesService {
                         item.productUuid, 
                         item.quantity, 
                         'cancellation', 
-                        sale.uuid
+                        sale.uuid,
+                        `Annulation #${sale.invoiceNumber}`
                     );
                 }
             }

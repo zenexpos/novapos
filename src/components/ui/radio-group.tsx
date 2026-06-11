@@ -1,4 +1,4 @@
 /**
- * @fileOverview Empty artifact from install error. Ready for manual deletion.
+ * @fileOverview Artefact inutilisé.
  */
 export {};

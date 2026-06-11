@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Fichier déprécié. Utilisez @/contexts/KeyboardShortcutsContext.tsx
+ * @fileOverview Fichier supprimé. Utilisez src/contexts/KeyboardShortcutsContext.tsx
  */
 export * from './KeyboardShortcutsContext';
