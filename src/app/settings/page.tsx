@@ -75,7 +75,7 @@ export default function SettingsPage() {
     const syncStatus = useAppStore(state => state.syncStatus);
     
     const isSyncing = syncStatus === 'syncing';
-    const { performCloudSync, performBackgroundSync } = useAppActions();
+    const { performCloudSync } = useAppActions();
 
     useEffect(() => {
         setIsMounted(true);
@@ -89,9 +89,7 @@ export default function SettingsPage() {
                     db.inventory_logs.count()
                 ]);
                 setStats({ products: p, customers: c, sales: s, logs: l });
-            } catch (err) {
-                console.error("Erreur stats:", err);
-            }
+            } catch (err) {}
         };
         fetchStats();
 
@@ -173,7 +171,6 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="lg:col-span-8 space-y-4">
-                    {/* PWA Installation Card */}
                     {isInstallable && (
                         <Card className="app-card rounded-lg border-primary/20 bg-primary/5 overflow-hidden shadow-xl group animate-in slide-in-from-top-4 duration-1000">
                             <CardHeader className="bg-primary/10 border-b border-primary/10 p-6">

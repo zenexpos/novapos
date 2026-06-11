@@ -20,9 +20,5 @@ export const DATE_PRESETS: DatePreset[] = [
 ];
 
 // ── App ──────────────────────────────────────────────────────────────────────
-export const APP_NAME    = 'iPOS Zen';
 export const APP_VERSION = '2.0.0';
-
-export const DB_KEY      = 'ipos-app-store';
-export const CART_KEY    = 'ipos-cart-store';
 export const THEME_KEY   = 'ipos-theme';

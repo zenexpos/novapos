@@ -1,18 +1,5 @@
 'use client';
-
-import { useEffect } from 'react';
-import { useAppStore } from '@/stores/appStore';
-
 /**
- * AppBootstrap — initialisation silencieuse au montage de l'app.
- * Charge le profil entreprise depuis IndexedDB sans bloquer le rendu.
+ * @fileOverview Dead code eliminated. Logic moved to AppSyncManager.
  */
-export function AppBootstrap({ children }: { children?: React.ReactNode }) {
-    const fetchCompanyProfile = useAppStore(s => s.actions.fetchCompanyProfile);
-
-    useEffect(() => {
-        fetchCompanyProfile();
-    }, [fetchCompanyProfile]);
-
-    return <>{children}</>;
-}
+export const AppBootstrap = ({ children }: { children?: React.ReactNode }) => <>{children}</>;

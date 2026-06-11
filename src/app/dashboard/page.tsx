@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -48,7 +48,6 @@ const StatCard = React.memo(({
 
     const card = (
         <div className="glass-stat group h-full p-5 flex flex-col gap-4 cursor-default">
-            {/* Top row */}
             <div className="flex items-start justify-between">
                 <div className={cn(
                     'flex items-center justify-center w-10 h-10 rounded-xl',
@@ -73,7 +72,6 @@ const StatCard = React.memo(({
                 )}
             </div>
 
-            {/* Value */}
             <div>
                 {isLoading ? (
                     <Skeleton className="h-8 w-28 rounded-lg mb-1" />
@@ -91,7 +89,6 @@ const StatCard = React.memo(({
                 </p>
             </div>
 
-            {/* Shimmer line */}
             <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
     );
@@ -140,7 +137,6 @@ const SalesChart = React.memo(({ data, isLoading }: { data: SalesByDay[]; isLoad
                                 <stop offset="5%"  stopColor="hsl(var(--chart-tertiary))" stopOpacity={0.3} />
                                 <stop offset="95%" stopColor="hsl(var(--chart-tertiary))" stopOpacity={0} />
                             </linearGradient>
-                            {/* Glow filter */}
                             <filter id="glow">
                                 <feGaussianBlur stdDeviation="2" result="blur" />
                                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
@@ -385,13 +381,11 @@ const StockBar = React.memo(({
                     <Skeleton className="h-5 w-full rounded-full" />
                 ) : (
                     <>
-                        {/* Stacked bar */}
                         <div className="flex h-3 w-full rounded-full overflow-hidden gap-0.5">
                             {pOk  > 0 && <div style={{ width: `${pOk}%`  }} className="bg-emerald-500 transition-all duration-700 rounded-l-full" />}
                             {pLow > 0 && <div style={{ width: `${pLow}%` }} className="bg-amber-500  transition-all duration-700" />}
                             {pOut > 0 && <div style={{ width: `${pOut}%` }} className="bg-red-500    transition-all duration-700 rounded-r-full" />}
                         </div>
-                        {/* Legend */}
                         <div className="flex items-center justify-between">
                             {[
                                 { label: 'En stock', count: ok,         pct: pOk,  cls: 'bg-emerald-500' },
@@ -457,7 +451,6 @@ export default function DashboardPage() {
 
     return (
         <div className="p-4 sm:p-5 pb-24 max-w-[1800px] mx-auto space-y-5 animate-page-enter">
-            {/* Header */}
             <PageHeader
                 title="Dashboard"
                 description="Vue souveraine des indicateurs de performance"
@@ -466,14 +459,12 @@ export default function DashboardPage() {
                 <DateRangePicker date={dateRange} setDate={setDate} />
             </PageHeader>
 
-            {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3 stagger-children">
                 {statCards.map(card => (
                     <StatCard key={card.title} {...card} isLoading={isLoading} />
                 ))}
             </div>
 
-            {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <SalesChart data={dashboardData?.salesByDay ?? []} isLoading={isLoading} />
                 <RecentActivity
@@ -483,7 +474,6 @@ export default function DashboardPage() {
                 />
             </div>
 
-            {/* Stock insight row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <ProfitRing
                     margin={dashboardData?.stats.profitMargin ?? 0}
@@ -497,16 +487,14 @@ export default function DashboardPage() {
                 />
             </div>
 
-            {/* Bottom row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Top Products */}
                 <Card className="overflow-hidden">
                     <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
                         <CardTitle className="text-base font-black gradient-text">Top Produits</CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 space-y-1.5 max-h-64 overflow-y-auto">
                         {isLoading ? (
-                            [...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)
+                            [...Array(4)].map((_, i) => <Skeleton className="h-10 w-full rounded-lg" />)
                         ) : (dashboardData?.topProducts ?? []).map((p, i) => (
                             <div key={p.productUuid}
                                 style={{ animationDelay: `${i * 40}ms` }}
@@ -527,14 +515,13 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Top Customers */}
                 <Card className="overflow-hidden">
                     <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
                         <CardTitle className="text-base font-black gradient-text">Top Clients</CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 space-y-1.5 max-h-64 overflow-y-auto">
                         {isLoading ? (
-                            [...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)
+                            [...Array(4)].map((_, i) => <Skeleton className="h-10 w-full rounded-lg" />)
                         ) : (dashboardData?.topCustomers ?? []).map((c, i) => (
                             <Link key={c.customerUuid}
                                 href={`/customers/detail?uuid=${c.customerUuid}`}
@@ -557,7 +544,6 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Low Stock */}
                 <LowStockPanel products={dashboardData?.lowStockProducts ?? []} isLoading={isLoading} />
             </div>
         </div>
