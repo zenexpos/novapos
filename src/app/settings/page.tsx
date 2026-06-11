@@ -462,7 +462,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div>
                                     <p className="text-lg font-semibold tracking-tighter">iPOS Zen Evolution</p>
-                                    <p className="text-[9px] font-semibold text-primary/40 uppercase ">Version 1.9.2 - Elite Stable</p>
+                                    <p className="text-[9px] font-semibold text-primary/40 uppercase ">Version 2.0.0 - Elite Stable</p>
                                 </div>
                             </div>
                             
@@ -491,7 +491,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-6">
                             <p className="text-[10px] font-bold text-destructive/60 leading-relaxed text-center italic px-2 uppercase tracking-wide">
-                                Les actions ci-dessous sont irréversibles et entraînent la perte totale de vos données locales non sauvegardées.
+                                Les actions ci-dessous sont irréversible et entraînent la perte totale de vos données locales non sauvegardées.
                             </p>
                             <Button 
                                 variant="outline" 

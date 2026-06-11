@@ -21,4 +21,3 @@ export const DATE_PRESETS: DatePreset[] = [
 
 // ── App ──────────────────────────────────────────────────────────────────────
 export const APP_VERSION = '2.0.0';
-export const THEME_KEY   = 'ipos-theme';
