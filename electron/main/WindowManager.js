@@ -16,7 +16,7 @@ class WindowManager {
             minWidth: MIN_WIDTH,
             minHeight: MIN_HEIGHT,
             autoHideMenuBar: true,
-            icon: path.join(__dirname, '../../public/icons/icon-512x512.png'),
+            icon: path.join(__dirname, '../../public/icon.svg'),
             title: 'iPOS Zen — Elite Ledger',
             backgroundColor: '#F8FAFC',
             show: false,
