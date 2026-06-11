@@ -7,24 +7,28 @@ import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * Service de gestion d'inventaire avec traçabilité complète.
- * Conçu pour fonctionner à l'intérieur de transactions Dexie.
+ * Conçu pour fonctionner à l'intérieur de transactions Dexie pour une intégrité Enterprise.
  */
 class InventoryService {
 
     /**
-     * Ajuste le stock d'un produit.
-     * Cette méthode génère systématiquement un log d'audit.
+     * Ajuste le stock d'un produit avec audit obligatoire.
+     * Cette méthode doit idéalement être appelée dans une transaction parente.
      */
     async adjustStock(
         productUuid: string | null | undefined,
         quantityChange: number,
         reason: InventoryLogReason,
         relatedUuid?: string,
+        details?: string
     ): Promise<void> {
         if (!productUuid || productUuid.startsWith('custom-')) return;
 
         const product = await db.products.where('uuid').equals(productUuid).first();
-        if (!product?.id) return;
+        if (!product?.id) {
+            console.warn(`[Inventory] Tentative d'ajustement pour un produit introuvable: ${productUuid}`);
+            return;
+        }
 
         const currentQty = safeNumber(product.quantity);
         const change = roundFinancial(safeNumber(quantityChange));
@@ -34,6 +38,7 @@ class InventoryService {
             quantity: newQty,
             stockStatus: calculateStockStatus(newQty, product.minStockLevel),
             updatedAt: new Date(),
+            syncStatus: 'pending' as const
         };
 
         const log: InventoryLog = {
@@ -43,6 +48,7 @@ class InventoryService {
             newQuantity: newQty,
             reason,
             relatedUuid,
+            details: details || `Mouvement automatique via ${reason}`,
             createdAt: new Date(),
             updatedAt: new Date(),
             syncStatus: 'pending',
@@ -52,6 +58,14 @@ class InventoryService {
         // Note: Dexie inclut automatiquement ces appels dans la transaction parente si elle existe.
         await db.products.update(product.id, updateData);
         await db.inventory_logs.add(log);
+        
+        // Enregistrement dans la file de synchro
+        await db.sync_queue.add({
+            table: 'products',
+            operation: 'UPDATE',
+            payload: { ...product, ...updateData },
+            timestamp: Date.now()
+        });
     }
 
     async getLogs(filters: {
@@ -68,7 +82,7 @@ class InventoryService {
 
         let logs = await logsCollection.toArray();
 
-        // Jointure manuelle optimisée
+        // Jointure manuelle optimisée avec cache temporaire
         const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter(Boolean) as string[]));
         const products = await db.products.where('uuid').anyOf(productUuids).toArray();
         const productMap = new Map(products.map(p => [p.uuid, p.name]));
@@ -87,14 +101,18 @@ class InventoryService {
 
         if (filters.query) {
             const q = filters.query.toLowerCase();
-            result = result.filter(l => l.productName.toLowerCase().includes(q) || l.reason.toLowerCase().includes(q));
+            result = result.filter(l => 
+                l.productName.toLowerCase().includes(q) || 
+                l.reason.toLowerCase().includes(q) ||
+                (l.details && l.details.toLowerCase().includes(q))
+            );
         }
 
         return result.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
     }
 
     async getStockSummary() {
-        const products = await db.products.toArray();
+        const products = await db.products.filter(p => !p.deletedAt).toArray();
         return {
             totalValue: products.reduce((s, p) => s + (safeNumber(p.quantity) * safeNumber(p.purchasePrice)), 0),
             outOfStock: products.filter(p => p.quantity <= 0).length,

@@ -6,7 +6,7 @@ import { safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * Service de Clôture de Caisse (Z-Report) Enterprise.
- * Analyse les recettes réelles, les dépenses et le flux de trésorerie net.
+ * Analyse les recettes réelles, les dépenses et le flux de trésorerie net par session.
  */
 class ClosingService {
     /**

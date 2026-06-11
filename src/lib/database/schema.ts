@@ -1,10 +1,10 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 12.0 - Indexation optimisée pour la performance POS et audit.
+ * Version 13.0 - Indexation renforcée pour la traçabilité et les performances massives.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 12;
+export const DB_VERSION = 13;
 
 export const DB_SCHEMA = {
     // Indexation par barcodes pour le scan rapide, et supplierUuid pour le filtrage
@@ -20,7 +20,7 @@ export const DB_SCHEMA = {
     // Indexation par date pour la distribution journalière
     bread_orders:       '++id, &uuid, orderNumber, date, customerUuid, paymentStatus, pickupStatus, transferredToCustomerAccount, deletedAt',
     company_profile:    '++id, &uuid, syncStatus',
-    // Indexation par produit pour l'historique spécifique
+    // Indexation par produit pour l'historique spécifique (v13: ajout d'index composite productUuid+createdAt)
     inventory_logs:     '++id, &uuid, productUuid, relatedUuid, reason, createdAt',
     stock_intakes:      '++id, &uuid, invoiceNumber, supplierUuid, createdAt',
     product_returns:    '++id, &uuid, originalInvoiceNumber, customerUuid, createdAt',

@@ -9,14 +9,17 @@ import { safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * Service de gestion des ventes Enterprise.
- * Toutes les opérations sont encapsulées dans des transactions Dexie pour garantir l'intégrité du stock.
+ * Service de gestion des ventes Enterprise iPOS Zen.
+ * Toutes les opérations sont encapsulées dans des transactions Dexie pour garantir l'intégrité absolue des flux.
  */
 class SalesService {
 
     private triggerSync() {
         if (typeof window !== 'undefined') {
-            useAppStore.getState().actions.triggerSmartSync();
+            const state = useAppStore.getState();
+            if (state && state.actions) {
+                state.actions.triggerSmartSync();
+            }
         }
     }
 
@@ -30,7 +33,7 @@ class SalesService {
 
     /**
      * Crée une vente de manière atomique.
-     * Met à jour le stock, le solde client et la file de synchro en une seule transaction.
+     * Cette méthode est le coeur du moteur POS : elle valide, décrémente et enregistre en une seule opération.
      */
     async createSale(saleData: {
         items: CartItem[];
@@ -40,10 +43,14 @@ class SalesService {
         customerUuid?: string | null;
         dueDate?: Date;
     }): Promise<Sale> {
+        if (!saleData.items || saleData.items.length === 0) {
+            throw new Error("Impossible de créer une vente avec un panier vide.");
+        }
+
         const now = new Date();
         const profile = await db.company_profile.toCollection().first();
         
-        // Calcul des totaux en centimes pour une précision absolue
+        // Calcul des totaux en centimes pour une précision monétaire absolue
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -92,6 +99,7 @@ class SalesService {
         };
 
         // TRANSACTION ATOMIQUE ELITE
+        // Garantit que si l'ajustement du stock échoue, la vente n'est pas enregistrée.
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,
@@ -101,7 +109,12 @@ class SalesService {
             
             for (const item of saleData.items) {
                 if (item.uuid && !item.uuid.startsWith('custom-')) {
-                    await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
+                    await inventoryService.adjustStock(
+                        item.uuid, 
+                        -item.cartQuantity, 
+                        'sale', 
+                        newSale.uuid
+                    );
                 }
             }
             
@@ -121,6 +134,9 @@ class SalesService {
         return newSale;
     }
 
+    /**
+     * Annule une vente et restaure les flux.
+     */
     async processSaleCancellation(uuid: string): Promise<void> {
         const sale = await this.getSaleByUuid(uuid);
         if (!sale || sale.isCancelled) return;
@@ -135,10 +151,15 @@ class SalesService {
                 syncStatus: 'pending' 
             });
 
-            // Réintégration systématique du stock
+            // Réintégration systématique du stock physique
             for (const item of sale.items) {
                 if (item.productUuid) {
-                    await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
+                    await inventoryService.adjustStock(
+                        item.productUuid, 
+                        item.quantity, 
+                        'cancellation', 
+                        sale.uuid
+                    );
                 }
             }
 

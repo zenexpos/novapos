@@ -6,7 +6,7 @@ import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
  * Système de secours ultime d'iPOS Zen.
- * En cas de crash fatal, permet de redémarrer le module sans perdre les données locales.
+ * En cas de crash fatal au niveau racine, permet de redémarrer le module sans perdre les données locales.
  */
 export default function GlobalError({
   error,
@@ -27,7 +27,7 @@ export default function GlobalError({
             <ShieldAlert className="h-20 w-20 text-red-600" />
           </div>
           
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4 text-slate-900">
             Erreur Système
           </h1>
           

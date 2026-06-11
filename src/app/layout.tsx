@@ -14,7 +14,7 @@ import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
 /**
- * Layout Racine iPOS Zen.
+ * Layout Racine iPOS Zen — Enterprise Edition.
  * Gère l'hydratation sécurisée et l'initialisation des services Offline.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -57,10 +57,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </TooltipProvider>
           </ClientProviders>
         ) : (
-          <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-            <div className="animate-pulse flex flex-col items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-slate-200" />
-              <div className="h-4 w-32 rounded bg-slate-200" />
+          <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50">
+            <div className="animate-pulse flex flex-col items-center gap-6">
+              <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-lg bg-primary/40" />
+              </div>
+              <div className="h-4 w-40 rounded bg-slate-200" />
             </div>
           </div>
         )}
