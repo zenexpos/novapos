@@ -16,6 +16,7 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -43,6 +44,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-DZ" suppressHydrationWarning>
+      <head>
+        {/* رابط المانيفست لضمان التقاطه من قبل المتصفحات القديمة والحديثة */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body className="antialiased bg-background text-foreground overflow-hidden">
         <ServiceWorkerRegister />
         <ClientProviders>
