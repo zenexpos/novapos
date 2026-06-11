@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Home, SearchX } from 'lucide-react';
 import Link from 'next/link';
 
+/**
+ * صفحة 404 المخصصة بهوية iPOS Zen.
+ */
 export default function NotFound() {
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-background">
             <div className="p-8 rounded-full bg-muted/20 border border-dashed border-border mb-8">
                 <SearchX className="h-16 w-16 text-muted-foreground/30" />
             </div>

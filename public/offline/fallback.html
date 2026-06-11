@@ -1,23 +1,61 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPOS Zen - Mode Hors-ligne</title>
+    <title>iPOS Zen — وضع الأوفلاين</title>
     <style>
-        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #0f172a; text-align: center; }
-        .card { padding: 2rem; background: white; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 400px; }
-        h1 { margin: 0 0 1rem; font-size: 1.5rem; font-weight: 900; }
-        p { color: #64748b; font-size: 0.875rem; line-height: 1.5; }
-        .btn { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #afb42b; color: white; text-decoration: none; border-radius: 0.75rem; font-weight: bold; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #F8FAFC;
+            color: #0F172A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+            max-width: 400px;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.2;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        p {
+            color: #64748B;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 2rem;
+            background-color: #AFB42B;
+            color: white;
+            text-decoration: none;
+            border-radius: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Zone Hors-Ligne</h1>
-        <p>Il semble que vous soyez déconnecté et que cette page n'ait pas encore été mise en cache.</p>
-        <p>iPOS Zen continue de fonctionner localement pour les ventes et le stock.</p>
-        <a href="/" class="btn">Retour au Tableau de Bord</a>
+    <div class="container">
+        <div class="icon">📶❌</div>
+        <h1>أنت غير متصل</h1>
+        <p>يبدو أنك تحاول الوصول إلى صفحة لم يتم تخزينها مؤقتاً بعد. يرجى الاتصال بالإنترنت أو العودة للوحة التحكم التي تعمل دائماً دون اتصال.</p>
+        <a href="/" class="btn">العودة للرئيسية</a>
     </div>
 </body>
 </html>
