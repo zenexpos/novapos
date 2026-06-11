@@ -4,9 +4,23 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import {
-    LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
-    Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building, Settings, Download, Wifi, WifiOff, Zap,
+    LayoutDashboard, 
+    ShoppingCart, 
+    BellRing, 
+    Archive, 
+    Package, 
+    Users2, 
+    History, 
+    Undo2, 
+    Wallet, 
+    Wheat, 
+    Coins, 
+    UserCog,
+    RefreshCw, 
+    Settings, 
+    Download, 
+    Wifi, 
+    WifiOff, 
     BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,19 +39,19 @@ export function AppHeader() {
     const navLinks = useMemo(() => [
         { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
         { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
-        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
-        { href: '/stock',         label: 'Stock',     icon: Archive },
         { href: '/products',      label: 'Produits',  icon: Package },
         { href: '/customers',     label: 'Clients',   icon: Users2 },
-        { href: '/sales-history', label: 'Ventes',    icon: History },
+        { href: '/stock',         label: 'Logistique',icon: Archive },
+        { href: '/sales-history', label: 'Journal',   icon: History },
         { href: '/returns',       label: 'Retours',   icon: Undo2 },
-        { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
-        { href: '/reports',       label: 'Rapports',  icon: BarChart3 },
+        { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
+        { href: '/expenses',      label: 'Charges',   icon: Wallet },
+        { href: '/reports',       label: 'Analyses',  icon: BarChart3 },
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
         { href: '/install',       label: 'Installer', icon: Download },
-        { href: '/settings',      label: 'Réglages',  icon: Settings },
+        { href: '/settings',      label: 'Système',   icon: Settings },
     ], []);
     
     const pathname = usePathname();
@@ -87,12 +101,12 @@ export function AppHeader() {
                         <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter", 
                             networkStatus === 'degraded' ? "text-amber-400" : "text-emerald-400")}>
                             <Wifi className="h-3 w-3" />
-                            {networkStatus === 'degraded' ? 'Connexion Lente' : 'Souverain Cloud'}
+                            {networkStatus === 'degraded' ? 'Lent' : 'Cloud'}
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-destructive animate-pulse">
                             <WifiOff className="h-3 w-3" />
-                            Fortress Offline
+                            Offline
                         </div>
                     )}
                 </div>
@@ -143,7 +157,7 @@ export function AppHeader() {
                             className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2 border border-white/10"
                         >
                             <Download className="h-4 w-4" />
-                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer iPOS</span>
+                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Install</span>
                         </Button>
                     )}
 

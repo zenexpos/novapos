@@ -3,29 +3,30 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-import { Package, LayoutDashboard, ShoppingCart, Archive, BellRing, Settings } from 'lucide-react';
+import { 
+    Package, 
+    LayoutDashboard, 
+    ShoppingCart, 
+    Archive, 
+    BellRing, 
+    Users2 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
-    { href: '/dashboard',   label: 'Dash', icon: LayoutDashboard },
-    { href: '/products',    label: 'Items', icon: Package },
+    { href: '/dashboard',   label: 'Dash',   icon: LayoutDashboard },
     { href: '/sell',        label: 'Vendre', icon: ShoppingCart },
-    { href: '/debt-alerts', label: 'Dettes', icon: BellRing },
-    { href: '/stock',       label: 'Stock', icon: Archive },
-    { href: '/settings',    label: 'Réglages', icon: Settings },
+    { href: '/products',    label: 'Items',  icon: Package },
+    { href: '/customers',   label: 'Clients',icon: Users2 },
+    { href: '/debt-alerts', label: 'Alertes',icon: BellRing },
+    { href: '/stock',       label: 'Stock',  icon: Archive },
 ];
 
 export function BottomNavBar() {
     const pathname = usePathname();
     return (
         <div className="print-hide fixed bottom-0 left-0 z-30 w-full md:hidden">
-            {/* Solid panel */}
-            <div className="
-                relative h-18
-                border-t border-border
-                bg-card
-                shadow-sm
-            ">
+            <div className="relative h-18 border-t border-border bg-card shadow-sm">
                 <div className="grid grid-cols-6 h-full px-1">
                     {links.map(link => {
                         const active = pathname.startsWith(link.href);
