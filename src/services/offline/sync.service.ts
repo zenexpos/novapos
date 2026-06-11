@@ -2,12 +2,14 @@
 
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
-import { toast } from 'sonner';
 
+/**
+ * محرك المزامنة Titanium Sync - المسؤول عن نقل البيانات بين IndexedDB و Supabase.
+ */
 class SyncService {
     private isSyncing = false;
 
-    async performSync(url: string, key: string): Promise<void> {
+    async startSync(url: string, key: string): Promise<void> {
         if (this.isSyncing) return;
         this.isSyncing = true;
 
@@ -18,17 +20,17 @@ class SyncService {
         }
 
         try {
-            // 1. Push local changes
+            // 1. معالجة طابور المزامنة (Local to Cloud)
             const queueItems = await db.sync_queue.orderBy('id').toArray();
             for (const item of queueItems) {
                 const { error } = await supabase
-                    .from(this.camelToSnake(item.table))
-                    .upsert(this.sanitizePayload(item.payload), { onConflict: 'uuid' });
+                    .from(item.table)
+                    .upsert(item.payload, { onConflict: 'uuid' });
                 
                 if (!error) await db.sync_queue.delete(item.id!);
             }
 
-            // 2. Update Sync Timestamp
+            // 2. تحديث طابع المزامنة في الملف الشخصي
             const profile = await db.company_profile.toCollection().first();
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
@@ -37,24 +39,10 @@ class SyncService {
                 });
             }
         } catch (e) {
-            console.error('Sync Engine Error:', e);
+            console.error('[Sync Engine] Error:', e);
         } finally {
             this.isSyncing = false;
         }
-    }
-
-    private camelToSnake(str: string) {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    }
-
-    private sanitizePayload(data: any) {
-        const { id, ...rest } = data;
-        const clean: any = {};
-        for (const key in rest) {
-            const snakeKey = this.camelToSnake(key);
-            clean[snakeKey] = rest[key] instanceof Date ? rest[key].toISOString() : rest[key];
-        }
-        return clean;
     }
 }
 

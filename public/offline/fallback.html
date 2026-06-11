@@ -2,24 +2,22 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPOS Zen - Hors-ligne</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPOS Zen - Mode Hors-ligne</title>
     <style>
-        :root { --primary: #AFB42B; --bg: #F8FAFC; --text: #0F172A; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-        .card { padding: 40px; background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 400px; width: 90%; }
-        .icon { font-size: 48px; margin-bottom: 20px; }
-        h1 { font-weight: 900; letter-spacing: -1px; margin: 0 0 10px; }
-        p { color: #64748B; line-height: 1.6; margin-bottom: 30px; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #0f172a; text-align: center; }
+        .card { padding: 2rem; background: white; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 400px; }
+        h1 { margin: 0 0 1rem; font-size: 1.5rem; font-weight: 900; }
+        p { color: #64748b; font-size: 0.875rem; line-height: 1.5; }
+        .btn { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #afb42b; color: white; text-decoration: none; border-radius: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="icon">📶🚫</div>
         <h1>Zone Hors-Ligne</h1>
-        <p>iPOS Zen est conçu pour fonctionner sans internet, mais cette page spécifique n'est pas encore en cache.</p>
-        <button onclick="window.location.reload()">Réessayer</button>
+        <p>Il semble que vous soyez déconnecté et que cette page n'ait pas encore été mise en cache.</p>
+        <p>iPOS Zen continue de fonctionner localement pour les ventes et le stock.</p>
+        <a href="/" class="btn">Retour au Tableau de Bord</a>
     </div>
 </body>
 </html>

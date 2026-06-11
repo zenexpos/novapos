@@ -1,6 +1,6 @@
 /**
  * @fileOverview iPOS Zen - Titanium Database Schema
- * Defines the Dexie.js stores and indexing strategy for high-performance offline lookup.
+ * تعريف هيكل الجداول بشكل مستقل لضمان سهولة التوسع والـ Migrations.
  */
 
 export const DB_NAME = 'iPOSDatabase';

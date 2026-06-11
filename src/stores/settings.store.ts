@@ -7,7 +7,6 @@ interface SettingsState {
     theme: 'light' | 'dark' | 'system';
     autoPrint: boolean;
     language: 'fr' | 'ar';
-    currency: string;
     sidebarCollapsed: boolean;
     
     actions: {
@@ -19,8 +18,7 @@ interface SettingsState {
 }
 
 /**
- * iPOS Zen - Atomic Settings Store
- * Persisted in localStorage for UI preferences.
+ * متجر الإعدادات - منفصل عن منطق الأعمال لتقليل الـ Re-renders.
  */
 export const useSettingsStore = create<SettingsState>()(
     persist(
@@ -28,7 +26,6 @@ export const useSettingsStore = create<SettingsState>()(
             theme: 'system',
             autoPrint: false,
             language: 'fr',
-            currency: 'DA',
             sidebarCollapsed: false,
 
             actions: {
