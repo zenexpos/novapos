@@ -1,6 +1,7 @@
 
 const { ipcMain } = require('electron');
 const IpcValidator = require('./validators/IpcValidator');
+const { CHANNELS } = require('../constants/AppConstants');
 
 class IpcDispatcher {
     constructor(windowManager, hardware, logger) {
@@ -11,32 +12,37 @@ class IpcDispatcher {
     }
 
     register() {
-        // Safe Printing
-        ipcMain.on('print-receipt', (event, data) => {
+        // 1. Secure Receipt Printing
+        ipcMain.on(CHANNELS.PRINT_RECEIPT, (event, data) => {
             if (this.validator.validatePrintData(data)) {
                 this.hardware.printReceipt(data);
-                this.logger.audit('PRINT', `Invoice ${data.invoiceNumber} printed`);
+                this.logger.audit('PRINT', `Invoice ${data.invoiceNumber} executed`);
+            } else {
+                this.logger.error(`Invalid print attempt: ${JSON.stringify(data)}`);
+                event.sender.send('printer-error', 'Format de données invalide');
             }
         });
 
-        // Cash Drawer Access
-        ipcMain.on('open-cash-drawer', () => {
+        // 2. Cash Drawer (Protected)
+        ipcMain.on(CHANNELS.OPEN_DRAWER, (event) => {
             this.hardware.openDrawer();
-            this.logger.audit('SECURITY', 'Cash drawer triggered manually via IPC');
+            this.logger.audit('SECURITY', 'Manual drawer trigger via IPC');
         });
 
-        // External Link Handling
-        ipcMain.handle('open-external', async (event, url) => {
+        // 3. Hardware Discovery
+        ipcMain.handle(CHANNELS.GET_PRINTERS, async (event) => {
+            return await this.hardware.getPrinters(event.sender);
+        });
+
+        // 4. Safe External Links
+        ipcMain.handle(CHANNELS.OPEN_EXTERNAL, async (event, url) => {
             if (this.validator.isSafeUrl(url)) {
-                require('electron').shell.openExternal(url);
+                const { shell } = require('electron');
+                await shell.openExternal(url);
                 return true;
             }
+            this.logger.warn(`Blocked suspicious URL: ${url}`);
             return false;
-        });
-
-        // Printer List
-        ipcMain.handle('get-printers', async (event) => {
-            return await this.hardware.getPrinters(event.sender);
         });
     }
 }

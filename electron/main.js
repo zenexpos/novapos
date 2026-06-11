@@ -4,26 +4,35 @@ const AppStartup = require('./main/AppStartup');
 const LifecycleManager = require('./main/LifecycleManager');
 
 /**
- * iPOS Zen — Desktop Entry Point
- * Modular entry for enterprise stability.
+ * iPOS Zen — Titanium Desktop Entry Point
+ * Production-ready modular bootstrap.
  */
 
 const startup = new AppStartup();
 const lifecycle = new LifecycleManager();
 
-async function init() {
-    // Single instance lock
+async function bootstrap() {
+    // 1. Enforce single instance lock for data integrity
     const gotTheLock = app.requestSingleInstanceLock();
     if (!gotTheLock) {
+        console.warn('[System] Another instance is already running. Terminating.');
         app.quit();
         return;
     }
 
-    startup.init();
+    // 2. Init global lifecycle observers
     lifecycle.init();
+
+    // 3. Launch application services and UI
+    startup.init();
 }
 
-init().catch(err => {
-    console.error('[Fatal] App Initialization Failed:', err);
-    app.quit();
+// Global exception handling for main process
+process.on('uncaughtException', (err) => {
+    console.error('[Fatal Error]:', err);
+});
+
+bootstrap().catch(err => {
+    console.error('[Bootstrap Error]:', err);
+    app.exit(1);
 });
