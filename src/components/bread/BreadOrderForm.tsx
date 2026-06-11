@@ -6,10 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Plus, User, UserPlus, Coins, Package, Clock, Loader2 } from 'lucide-react';
+import { Plus, User, UserPlus, Coins, Package, Clock, Loader2, RefreshCw } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -18,9 +19,10 @@ interface BreadOrderFormProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     currentDate: string;
+    onSuccess?: () => void;
 }
 
-export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrderFormProps) {
+export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }: BreadOrderFormProps) {
     const profile = useAppStore(state => state.companyProfile);
     const [mode, setMode] = useState<'registered' | 'external'>('registered');
     const [selectedClientUuid, setSelectedClientUuid] = useState<string>('');
@@ -28,6 +30,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
     const [quantity, setQuantity] = useState(10);
     const [unitPrice, setUnitPrice] = useState(profile?.prix_pain || 10);
     const [pickupTime, setPickupTime] = useState('08:00');
+    const [isRecurring, setIsRecurring] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [manualClients, setManualClients] = useState<Customer[]>([]);
 
@@ -50,6 +53,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
 
         setIsLoading(true);
         try {
+            // 1. Ajouter la commande pour aujourd'hui
             await breadService.addManualBreadOrder({
                 customerUuid: mode === 'registered' ? selectedClientUuid : undefined,
                 customName: mode === 'external' ? customName.trim() : undefined,
@@ -58,7 +62,20 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                 unitPrice,
                 pickupTime
             });
+
+            // 2. Si récurrent et client enregistré, mettre à jour le profil client
+            if (mode === 'registered' && isRecurring && selectedClientUuid) {
+                await customerService.updateCustomer(selectedClientUuid, {
+                    isBreadClient: true,
+                    bread_type_recurrence: 'quotidien',
+                    bread_quantite_defaut: quantity,
+                    updatedAt: new Date()
+                });
+                toast.success("Abonnement quotidien activé pour ce client.");
+            }
+
             toast.success("Commande enregistrée.");
+            onSuccess?.();
             onOpenChange(false);
             resetForm();
         } catch(e: any) {
@@ -72,6 +89,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
         setSelectedClientUuid('');
         setCustomName('');
         setQuantity(10);
+        setIsRecurring(false);
     };
 
     return (
@@ -83,7 +101,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                             <Plus className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande de Pain Elite</DialogTitle>
+                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande de Pain</DialogTitle>
                             <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Saisie d'un flux de distribution direct</DialogDescription>
                         </div>
                     </div>
@@ -162,23 +180,27 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Heure de retrait prévue</Label>
-                            <div className="relative">
-                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
-                                <Input 
-                                    type="time"
-                                    className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold"
-                                    value={pickupTime}
-                                    onChange={e => setPickupTime(e.target.value)}
+                        {mode === 'registered' && (
+                            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 transition-all hover:bg-primary/10">
+                                <Checkbox 
+                                    id="recurring" 
+                                    checked={isRecurring} 
+                                    onCheckedChange={(checked) => setIsRecurring(!!checked)}
+                                    className="h-5 w-5 rounded-md border-primary"
                                 />
+                                <Label htmlFor="recurring" className="flex-1 cursor-pointer">
+                                    <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase">
+                                        <RefreshCw className="h-3 w-3" /> Rendre ce débit récurrent quotidiennement
+                                    </div>
+                                    <p className="text-[9px] text-muted-foreground mt-0.5">Le système générera ce débit automatiquement chaque matin.</p>
+                                </Label>
                             </div>
-                        </div>
+                        )}
                     </div>
 
-                    <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex justify-between items-end">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">Total à facturer</span>
-                        <span className="text-2xl font-black tracking-tighter tabular-nums">{(quantity * unitPrice).toFixed(2)} DA</span>
+                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 flex justify-between items-end shadow-inner">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Total à facturer</span>
+                        <span className="text-2xl font-black tracking-tighter tabular-nums text-primary">{(quantity * unitPrice).toFixed(2)} DA</span>
                     </div>
                 </div>
 

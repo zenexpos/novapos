@@ -9,13 +9,17 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { BreadStats } from '@/components/bread/BreadStats';
 import { BreadOrderTable } from '@/components/bread/BreadOrderTable';
 import { BreadOrderForm } from '@/components/bread/BreadOrderForm';
+import { BreadClientList } from '@/components/bread/BreadClientList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
     Loader2, 
     ChevronLeft, 
     ChevronRight, 
     Plus,
     Search,
-    Clock
+    Clock,
+    Users,
+    Calendar
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -32,6 +36,7 @@ export default function BreadPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessingTransfers, setIsProcessingTransfers] = useState(false);
+    const [activeTab, setActiveTab] = useState('distribution');
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
 
@@ -92,7 +97,7 @@ export default function BreadPage() {
                         className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
                     >
                         {isProcessingTransfers ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
-                        Lancer l'automatisation nocturne
+                        Automatisation
                     </Button>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5 shadow-inner">
@@ -117,35 +122,56 @@ export default function BreadPage() {
                 </div>
             </PageHeader>
 
-            <BreadStats date={formattedDate} />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <div className="flex flex-col lg:flex-row justify-between gap-4">
+                    <TabsList className="bg-card/40 border border-white/5 p-1 h-12 rounded-2xl">
+                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-bold text-xs uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Calendar className="h-4 w-4 mr-2" /> Distribution
+                        </TabsTrigger>
+                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-bold text-xs uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <Users className="h-4 w-4 mr-2" /> Abonnés Quotidiens
+                        </TabsTrigger>
+                    </TabsList>
 
-            <div className="flex flex-col lg:flex-row gap-4">
-                <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                    <Input 
-                        placeholder="Rechercher par client ou N° commande..."
-                        className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
+                    {activeTab === 'distribution' && (
+                        <div className="relative flex-grow max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                            <Input 
+                                placeholder="Rechercher par client ou N° commande..."
+                                className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    )}
                 </div>
-            </div>
 
-            <div className="bg-card/40 backdrop-blur-sm rounded-lg border border-white/5 overflow-hidden min-h-[500px]">
-                {ordersResult.isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-[500px] opacity-20">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                        <p className="mt-4 font-bold uppercase tracking-widest">Chargement du registre...</p>
+                <TabsContent value="distribution" className="space-y-6 outline-none">
+                    <BreadStats date={formattedDate} />
+                    <div className="bg-card/40 backdrop-blur-sm rounded-lg border border-white/5 overflow-hidden min-h-[500px]">
+                        {ordersResult.isLoading ? (
+                            <div className="flex flex-col items-center justify-center h-[500px] opacity-20">
+                                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                                <p className="mt-4 font-bold uppercase tracking-widest">Chargement du registre...</p>
+                            </div>
+                        ) : (
+                            <BreadOrderTable orders={filteredOrders} />
+                        )}
                     </div>
-                ) : (
-                    <BreadOrderTable orders={filteredOrders} />
-                )}
-            </div>
+                </TabsContent>
+
+                <TabsContent value="subscribers" className="outline-none">
+                    <div className="grid grid-cols-1 gap-6 min-h-[500px]">
+                        <BreadClientList onListChange={() => ordersResult.refresh()} />
+                    </div>
+                </TabsContent>
+            </Tabs>
 
             <BreadOrderForm 
                 isOpen={isFormOpen} 
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
+                onSuccess={() => ordersResult.refresh()}
             />
         </div>
     );
