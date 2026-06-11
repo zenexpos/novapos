@@ -68,7 +68,7 @@ export default function GlobalError({
           </div>
 
           <footer className="fixed bottom-10 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/30">
-            Titanium Recovery Engine • iPOS Zen v2.9
+            Titanium Recovery Engine • iPOS Zen Enterprise
           </footer>
         </div>
       </body>

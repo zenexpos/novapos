@@ -8,7 +8,6 @@ import { useEffect } from 'react';
 export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // تسجيل ملف sw.js لضمان ظهور أيقونة التثبيت في شريط العنوان
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
