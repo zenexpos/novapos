@@ -1,5 +1,6 @@
 'use client';
 /**
- * @fileOverview Component removed during cleanup (Dead Code).
+ * @fileOverview This component is deprecated. 
+ * The application now uses generic Skeleton components from @/components/ui/skeleton.
  */
-export function StockIntakeTableSkeleton() { return null; }
+export const StockIntakeTableSkeleton = () => null;
