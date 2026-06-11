@@ -9,8 +9,8 @@ import { safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * Service de gestion des ventes Enterprise iPOS Zen.
- * Toutes les opérations sont encapsulées dans des transactions Dexie pour garantir l'intégrité absolue des flux.
+ * Service de gestion des ventes Enterprise.
+ * Assure la cohérence entre le stock, le compte client et le journal des ventes.
  */
 class SalesService {
 
@@ -27,13 +27,8 @@ class SalesService {
         return db.sales.where('uuid').equals(uuid).first();
     }
 
-    async getSaleByInvoiceNumber(invoiceNumber: string): Promise<Sale | undefined> {
-        return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
-    }
-
     /**
-     * Crée une vente de manière atomique.
-     * Cette méthode est le coeur du moteur POS : elle valide, décrémente et enregistre en une seule opération.
+     * Crée une vente atomique avec transaction Dexie.
      */
     async createSale(saleData: {
         items: CartItem[];
@@ -44,13 +39,12 @@ class SalesService {
         dueDate?: Date;
     }): Promise<Sale> {
         if (!saleData.items || saleData.items.length === 0) {
-            throw new Error("Impossible de créer une vente avec un panier vide.");
+            throw new Error("Panier vide.");
         }
 
         const now = new Date();
         const profile = await db.company_profile.toCollection().first();
         
-        // Calcul des totaux en centimes pour une précision monétaire absolue
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -98,8 +92,7 @@ class SalesService {
             isCancelled: false
         };
 
-        // TRANSACTION ATOMIQUE ELITE
-        // Garantit que si l'ajustement du stock échoue, la vente n'est pas enregistrée.
+        // TRANSACTION ELITE : Stock + Customer + Sale + SyncQueue
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,
@@ -134,9 +127,6 @@ class SalesService {
         return newSale;
     }
 
-    /**
-     * Annule une vente et restaure les flux de stocks et financiers.
-     */
     async processSaleCancellation(uuid: string): Promise<void> {
         const sale = await this.getSaleByUuid(uuid);
         if (!sale || sale.isCancelled) return;
@@ -151,7 +141,6 @@ class SalesService {
                 syncStatus: 'pending' 
             });
 
-            // Réintégration systématique du stock physique
             for (const item of sale.items) {
                 if (item.productUuid) {
                     await inventoryService.adjustStock(
@@ -166,40 +155,9 @@ class SalesService {
             if (sale.customerUuid) {
                 await customerService.recalculateCustomerStatus(sale.customerUuid);
             }
-
-            await db.sync_queue.add({
-                table: 'sales',
-                operation: 'UPDATE',
-                payload: { ...sale, isCancelled: true },
-                timestamp: Date.now()
-            });
         });
 
         this.triggerSync();
-    }
-
-    async filterSales(filters: { query?: string; status?: string; from?: Date; to?: Date }): Promise<Sale[]> {
-        let collection = db.sales.filter(s => !s.deletedAt);
-        
-        if (filters.status && filters.status !== 'all') {
-            collection = collection.filter(s => s.paymentStatus === filters.status);
-        }
-        
-        let sales = await collection.toArray();
-        
-        if (filters.query) {
-            const q = filters.query.toLowerCase().trim();
-            sales = sales.filter(s => s.invoiceNumber.toLowerCase().includes(q));
-        }
-
-        if (filters.from && filters.to) {
-            sales = sales.filter(s => {
-                const d = new Date(s.createdAt!);
-                return d >= filters.from! && d <= filters.to!;
-            });
-        }
-
-        return sales.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
     }
 
     private async generateInvoiceNumber(): Promise<string> {

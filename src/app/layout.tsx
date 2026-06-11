@@ -13,8 +13,8 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import { Metadata, Viewport } from 'next';
 
 /**
- * Metadata iPOS Zen — Configuration souveraine via l'API Next.js.
- * Server-side Metadata évite les erreurs d'hydratation.
+ * RootLayout - Server Component.
+ * Utilise l'API Metadata pour éviter les erreurs d'hydratation et optimiser le SEO.
  */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',

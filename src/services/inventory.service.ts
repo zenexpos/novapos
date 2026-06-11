@@ -7,13 +7,12 @@ import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * Service de gestion d'inventaire avec traçabilité complète.
- * Conçu pour fonctionner à l'intérieur de transactions Dexie pour une intégrité Enterprise.
+ * Chaque mouvement de stock génère un log d'audit immuable.
  */
 class InventoryService {
 
     /**
      * Ajuste le stock d'un produit avec audit obligatoire.
-     * Cette méthode doit idéalement être appelée dans une transaction parente.
      */
     async adjustStock(
         productUuid: string | null | undefined,
@@ -26,7 +25,7 @@ class InventoryService {
 
         const product = await db.products.where('uuid').equals(productUuid).first();
         if (!product?.id) {
-            console.warn(`[Inventory] Tentative d'ajustement pour un produit introuvable: ${productUuid}`);
+            console.warn(`[Inventory] Produit introuvable: ${productUuid}`);
             return;
         }
 
@@ -48,23 +47,24 @@ class InventoryService {
             newQuantity: newQty,
             reason,
             relatedUuid,
-            details: details || `Mouvement automatique via ${reason}`,
+            details: details || `Ajustement via ${reason}`,
             createdAt: new Date(),
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: 1
         };
 
-        // Note: Dexie inclut automatiquement ces appels dans la transaction parente si elle existe.
-        await db.products.update(product.id, updateData);
-        await db.inventory_logs.add(log);
-        
-        // Enregistrement dans la file de synchro
-        await db.sync_queue.add({
-            table: 'products',
-            operation: 'UPDATE',
-            payload: { ...product, ...updateData },
-            timestamp: Date.now()
+        // Commitment atomique
+        await db.transaction('rw', [db.products, db.inventory_logs, db.sync_queue], async () => {
+            await db.products.update(product.id!, updateData);
+            await db.inventory_logs.add(log);
+            
+            await db.sync_queue.add({
+                table: 'products',
+                operation: 'UPDATE',
+                payload: { ...product, ...updateData },
+                timestamp: Date.now()
+            });
         });
     }
 
@@ -82,7 +82,7 @@ class InventoryService {
 
         let logs = await logsCollection.toArray();
 
-        // Jointure manuelle optimisée avec cache temporaire
+        // Jointure manuelle performante pour le mode offline
         const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter(Boolean) as string[]));
         const products = await db.products.where('uuid').anyOf(productUuids).toArray();
         const productMap = new Map(products.map(p => [p.uuid, p.name]));
@@ -92,19 +92,11 @@ class InventoryService {
             productName: productMap.get(log.productUuid ?? '') ?? 'Produit archivé',
         }));
 
-        if (filters.from && filters.to) {
-            result = result.filter(l => {
-                const d = new Date(l.createdAt!);
-                return d >= filters.from! && d <= filters.to!;
-            });
-        }
-
         if (filters.query) {
             const q = filters.query.toLowerCase();
             result = result.filter(l => 
                 l.productName.toLowerCase().includes(q) || 
-                l.reason.toLowerCase().includes(q) ||
-                (l.details && l.details.toLowerCase().includes(q))
+                l.reason.toLowerCase().includes(q)
             );
         }
 

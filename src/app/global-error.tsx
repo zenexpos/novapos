@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Système de secours ultime d'iPOS Zen.
- * En cas de crash fatal au niveau racine, permet de redémarrer le module sans perdre les données locales IndexedDB.
+ * Barrière de sécurité ultime contre les crashs critiques.
+ * Permet à l'utilisateur de redémarrer l'application sans perdre les données locales IndexedDB.
  */
 export default function GlobalError({
   error,
@@ -16,7 +16,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[CRITICAL SYSTEM FAILURE]:', error);
+    console.error('[iPOS Zen Critical Crash]:', error);
   }, [error]);
 
   return (
@@ -55,7 +55,7 @@ export default function GlobalError({
           </div>
           
           <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.4em]">
-            iPOS Zen Sovereign Ledger • Enterprise Recovery
+            iPOS Zen Sovereign Ledger • Enterprise Recovery Boundary
           </p>
         </div>
       </body>
