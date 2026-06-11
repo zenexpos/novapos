@@ -7,12 +7,13 @@ import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * Service de gestion d'inventaire avec traçabilité complète.
+ * Conçu pour fonctionner à l'intérieur de transactions Dexie.
  */
 class InventoryService {
 
     /**
      * Ajuste le stock d'un produit.
-     * Cette méthode est transactionnelle et génère un log d'audit.
+     * Cette méthode génère systématiquement un log d'audit.
      */
     async adjustStock(
         productUuid: string | null | undefined,
@@ -48,7 +49,7 @@ class InventoryService {
             version: 1
         };
 
-        // Dexie will automatically include this in parent transaction if one exists
+        // Note: Dexie inclut automatiquement ces appels dans la transaction parente si elle existe.
         await db.products.update(product.id, updateData);
         await db.inventory_logs.add(log);
     }
@@ -67,14 +68,14 @@ class InventoryService {
 
         let logs = await logsCollection.toArray();
 
-        // Join product names
+        // Jointure manuelle optimisée
         const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter(Boolean) as string[]));
         const products = await db.products.where('uuid').anyOf(productUuids).toArray();
         const productMap = new Map(products.map(p => [p.uuid, p.name]));
 
         let result = logs.map(log => ({
             ...log,
-            productName: productMap.get(log.productUuid ?? '') ?? 'Produit supprimé',
+            productName: productMap.get(log.productUuid ?? '') ?? 'Produit archivé',
         }));
 
         if (filters.from && filters.to) {

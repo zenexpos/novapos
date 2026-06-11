@@ -1,5 +1,5 @@
 /**
- * @fileOverview Moteur de calcul financier précis iPOS Math Engine.
+ * Moteur de calcul financier précis iPOS Math Engine.
  * Résout les problèmes de virgule flottante en JavaScript pour garantir la précision des factures.
  */
 
@@ -7,7 +7,7 @@ export const FINANCIAL_PRECISION = 2;
 export const FINANCIAL_EPSILON = 0.001;
 
 /**
- * Rounds a number to the standard financial precision (2 decimal places).
+ * Arrondi financier standard (2 décimales).
  */
 export function roundFinancial(value: number): number {
     const multiplier = Math.pow(10, FINANCIAL_PRECISION);
@@ -15,7 +15,7 @@ export function roundFinancial(value: number): number {
 }
 
 /**
- * Ensures a value is a valid number, sanitizing common input errors.
+ * Nettoie et sécurise un nombre, évite les NaN.
  */
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) ? 0 : val;
@@ -25,21 +25,21 @@ export function safeNumber(val: any): number {
 }
 
 /**
- * Multiplies two numbers with financial rounding.
+ * Multiplication avec précision financière.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));
 }
 
 /**
- * Adds two numbers with financial rounding.
+ * Addition avec précision financière.
  */
 export function preciseAdd(a: number, b: number): number {
     return roundFinancial(safeNumber(a) + safeNumber(b));
 }
 
 /**
- * Calcul des totaux du panier avec précision financière.
+ * Calcul des totaux du panier avec précision absolue.
  */
 export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
     const subtotal = cart.items.reduce((acc, item) => {
@@ -76,7 +76,7 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 }
 
 /**
- * Calcule le montant de la TVA à partir d'un montant TTC.
+ * Calcule le montant de la TVA.
  */
 export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
@@ -91,7 +91,7 @@ export function calculateNisab(goldPrice: number): number {
 }
 
 /**
- * Calcule le montant de la Zakat (2.5% des actifs nets si > Nissab).
+ * Calcule le montant de la Zakat.
  */
 export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
     const nisab = calculateNisab(goldPrice);

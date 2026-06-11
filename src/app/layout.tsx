@@ -14,8 +14,8 @@ import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
 /**
- * Layout Racine Enterprise.
- * Gère l'hydratation, les thèmes et l'initialisation des services PWA/Offline.
+ * Layout Racine iPOS Zen.
+ * Gère l'hydratation sécurisée et l'initialisation des services Offline.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);

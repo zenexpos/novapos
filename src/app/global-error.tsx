@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Barrière de sécurité ultime d'iPOS Zen.
- * En cas de crash fatal du système, ce composant permet de redémarrer l'application.
+ * Système de secours ultime d'iPOS Zen.
+ * En cas de crash fatal, permet de redémarrer le module sans perdre les données locales.
  */
 export default function GlobalError({
   error,
@@ -32,7 +32,7 @@ export default function GlobalError({
           </h1>
           
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-            Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span>. 
+            Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span> dans votre navigateur. 
             Veuillez redémarrer le module pour continuer.
           </p>
           
@@ -53,6 +53,10 @@ export default function GlobalError({
               <Home className="h-5 w-5" /> Accueil
             </Button>
           </div>
+          
+          <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.4em]">
+            iPOS Zen Sovereign Ledger • Enterprise Recovery
+          </p>
         </div>
       </body>
     </html>
