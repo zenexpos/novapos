@@ -1,6 +1,5 @@
 /**
- * @fileOverview Main Barrel file for Types.
- * Centralizes all domain definitions.
+ * @fileOverview iPOS Zen - Type System Entry
  */
 
 export * from './types/common';
@@ -13,5 +12,3 @@ export * from './types/bread';
 export * from './types/zakat';
 export * from './types/proforma';
 export * from './types/expense';
-
-// Keep legacy combined exports if needed temporarily, but preferred to split them all.

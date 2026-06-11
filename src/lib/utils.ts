@@ -1,6 +1,5 @@
 /**
  * @fileOverview Barrel file for Utilities.
- * Re-exports from specialized files to maintain backward compatibility.
  */
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,7 +13,7 @@ export * from './utils/currency';
 export * from './utils/date';
 export * from './utils/helpers';
 
-// Global shared date safety
+// Shared date helper
 export function safeToDate(date: Date | string | undefined | null): Date {
     if (!date) return new Date(0);
     if (date instanceof Date) return isNaN(date.getTime()) ? new Date(0) : date;

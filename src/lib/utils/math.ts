@@ -60,30 +60,3 @@ export function calculateCartTotals(cart: {
         total
     };
 }
-
-/**
- * TVA and Tax helpers
- */
-export function calculateTVA(amount: number, rate: number): number {
-    return roundFinancial((amount * rate) / 100);
-}
-
-export function ttcToHt(ttc: number, rate: number): number {
-    return roundFinancial(ttc / (1 + rate / 100));
-}
-
-/**
- * Zakat calculations
- */
-export function calculateNisab(goldPrice: number): number {
-    return roundFinancial(goldPrice * 85);
-}
-
-export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
-    const nisab = calculateNisab(goldPrice);
-    const due = netAssets >= nisab;
-    return {
-        due,
-        amount: due ? roundFinancial(netAssets * 0.025) : 0,
-    };
-}
