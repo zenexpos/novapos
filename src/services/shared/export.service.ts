@@ -26,7 +26,7 @@ class ExportService {
             link.click();
             document.body.removeChild(link);
             
-            toast.success("Exportation réussية.");
+            toast.success("Exportation réussie.");
         } catch (error) {
             console.error('Export error:', error);
             toast.error("Échec de l'exportation.");
