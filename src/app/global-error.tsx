@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, RefreshCcw, Home, LifeBuoy } from 'lucide-react';
+import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
  * Barrière de sécurité ultime d'iPOS Zen.
- * En cas de crash fatal de Next.js, ce composant protège l'intégrité des données locales.
+ * En cas de crash fatal, ce composant permet de redémarrer l'application.
  */
 export default function GlobalError({
   error,
@@ -19,10 +19,6 @@ export default function GlobalError({
     console.error('[CRITICAL SYSTEM FAILURE]:', error);
   }, [error]);
 
-  const handleFullRestart = () => {
-    window.location.href = '/';
-  };
-
   return (
     <html>
       <body className="bg-slate-50 text-slate-900 antialiased font-sans">
@@ -31,13 +27,13 @@ export default function GlobalError({
             <ShieldAlert className="h-20 w-20 text-red-600" />
           </div>
           
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4 text-slate-900">
-            Erreur Système Critique
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">
+            Erreur Système
           </h1>
           
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
             Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span>. 
-            Le système doit être réinitialisé pour garantir la stabilité de la base de données.
+            Veuillez redémarrer le module pour continuer.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full">
@@ -50,24 +46,13 @@ export default function GlobalError({
             </Button>
             <Button 
                 variant="outline" 
-                onClick={handleFullRestart} 
+                onClick={() => window.location.href = '/'} 
                 size="lg" 
                 className="flex-1 rounded-2xl border-slate-200 bg-white gap-2 font-black uppercase text-xs h-14"
             >
               <Home className="h-5 w-5" /> Accueil
             </Button>
           </div>
-
-          <div className="mt-16 p-4 rounded-xl bg-blue-50 border border-blue-100 flex items-center gap-3">
-            <LifeBuoy className="h-5 w-5 text-blue-500" />
-            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider text-left">
-              Besoin d'aide ? Contactez le support technique iPOS Zen via le portail Titanium.
-            </p>
-          </div>
-
-          <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.4em]">
-            Sovereign POS Engine • Internal Recovery Mode
-          </p>
         </div>
       </body>
     </html>

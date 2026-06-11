@@ -5,21 +5,15 @@ import { cn } from '@/lib/utils';
 
 interface ZenLoaderProps {
     message?: string;
-    fullScreen?: boolean;
     className?: string;
 }
 
 /**
- * Composant de chargement unifié iPOS Zen Loader.
- * Utilisé dans les écrans d'attente et de synchronisation.
+ * Composant de chargement unifié iPOS Zen.
  */
-export function ZenLoader({ message = "Traitement des données en cours...", fullScreen = false, className }: ZenLoaderProps) {
+export function ZenLoader({ message = "Traitement en cours...", className }: ZenLoaderProps) {
     return (
-        <div className={cn(
-            "flex flex-col items-center justify-center gap-4",
-            fullScreen && "h-full w-full",
-            className
-        )}>
+        <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
             <div className="relative">
                 <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full animate-pulse"></div>
                 <Loader2 className="h-12 w-12 animate-spin text-primary relative z-10" />
