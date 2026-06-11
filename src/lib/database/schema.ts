@@ -1,6 +1,6 @@
 /**
  * @fileOverview iPOS Zen - Titanium Database Schema
- * تعريف هيكل الجداول بشكل مستقل لضمان سهولة التوسع والـ Migrations.
+ * Définition de la structure des tables indépendamment pour assurer l'extensibilité et les migrations.
  */
 
 export const DB_NAME = 'iPOSDatabase';

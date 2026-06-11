@@ -8,7 +8,7 @@ class IpcHandlers {
     }
 
     register() {
-        // فتح الروابط الخارجية بأمان
+        // Ouvrir les liens externes en toute sécurité
         ipcMain.handle('open-external', async (event, url) => {
             if (typeof url === 'string' && url.startsWith('http')) {
                 await shell.openExternal(url);
@@ -17,17 +17,17 @@ class IpcHandlers {
             return false;
         });
 
-        // جلب قائمة الطابعات المتصلة
+        // Récupérer la liste des imprimantes connectées
         ipcMain.handle('get-printers', async (event) => {
             return await this.hardware.getPrinters(event.sender);
         });
 
-        // معالجة طلبات الطباعة
+        // Traitement des demandes d'impression
         ipcMain.on('print-receipt', (event, saleData) => {
             this.hardware.printESC(saleData);
         });
 
-        // فتح درج النقد
+        // Ouverture du tiroir-caisse
         ipcMain.on('open-cash-drawer', () => {
             this.hardware.openCashDrawer();
         });

@@ -18,7 +18,7 @@ interface SettingsState {
 }
 
 /**
- * متجر الإعدادات - منفصل عن منطق الأعمال لتقليل الـ Re-renders.
+ * Store des paramètres - séparé de la logique métier pour réduire les re-renders.
  */
 export const useSettingsStore = create<SettingsState>()(
     persist(

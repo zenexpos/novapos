@@ -1,37 +1,37 @@
 # iPOS Zen — Sovereign Ledger & Elite POS
 
-**iPOS Zen** هو نظام نقطة بيع (POS) سيادي وفاخر، مصمم ليعمل بالكامل داخل المتصفح وبفلسفة **العمل دون اتصال أولاً (Offline-First)**. يوفر النظام تجربة مستخدم "Zen" فائقة السرعة مع خصوصية مطلقة للبيانات.
+**iPOS Zen** est un système de point de vente (POS) souverain et luxueux, conçu pour fonctionner entièrement dans le navigateur avec une philosophie **Hors-ligne d'abord (Offline-First)**. Le système offre une expérience utilisateur "Zen" ultra-rapide avec une confidentialité absolue des données.
 
-## 🏗 هيكل المشروع (Detailed Trunk)
+## 🏗 Structure du projet (Detailed Trunk)
 
-النظام مبني على معايير هندسية متقدمة لضمان القابلية للتوسع والأداء العالي:
+Le système est basé sur des normes d'ingénierie avancées pour assurer l'extensibilité et la haute performance :
 
 ### 1. `src/services/` (Business Logic)
-- **Domain Driven:** تقسيم الخدمات حسب النطاق (Sales, Inventory, Finance).
-- **Service Layer:** فصل منطق الأعمال عن واجهة المستخدم لسهولة الاختبار والصيانة.
+- **Domain Driven:** Division des services par domaine (Sales, Inventory, Finance).
+- **Service Layer:** Séparation de la logique métier de l'interface utilisateur pour faciliter les tests et la maintenance.
 
 ### 2. `src/stores/` (State Management)
-- **Atomic State:** استخدام Zustand لتقسيم الحالة إلى متاجر صغيرة (Atomic) لتقليل عمليات إعادة الرندر (Re-renders) وزيادة السرعة.
-- **Persistence:** حفظ الحالة تلقائياً في التخزين المحلي لضمان استمرارية العمل.
+- **Atomic State:** Utilisation de Zustand pour diviser l'état en petits stores (Atomic) afin de réduire les re-renders et augmenter la vitesse.
+- **Persistence:** Sauvegarde automatique de l'état dans le stockage local pour assurer la continuité du travail.
 
 ### 3. `src/lib/` (Core Utilities)
-- **Math Engine:** محرك حسابات مالية مخصص يعالج مشاكل الفواصل العشرية (Floating Point) بدقة محاسبية.
-- **Database Layer:** محرك Dexie.js لإدارة IndexedDB مع Schema منظم يدعم المزامنة السحابية.
+- **Math Engine:** Moteur de calcul financier personnalisé traitant les problèmes de virgule flottante avec une précision comptable.
+- **Database Layer:** Moteur Dexie.js pour gérer IndexedDB avec un schéma organisé supportant la synchronisation cloud.
 
 ### 4. `public/` (Fortress Offline)
-- **PWA Assets:** نظام أيقونات ومانيفست متطور يدعم التثبيت على كافة أنظمة التشغيل.
-- **Zen Fallback:** صفحة Offline مخصصة تضمن بقاء المستخدم داخل بيئة التطبيق حتى عند الانهيار التام للشبكة.
+- **PWA Assets:** Système d'icônes et manifeste avancé supportant l'installation sur tous les systèmes d'exploitation.
+- **Zen Fallback:** Page hors-ligne dédiée garantissant que l'utilisateur reste dans l'environnement de l'application même en cas de panne totale du réseau.
 
 ### 5. `electron/` (Native Desktop)
-- **Hardware Bridge:** التواصل المباشر مع الطابعات الحرارية ودرج النقد عبر منافذ USB/Serial.
-- **Security Policy:** سياسات أمان صارمة (CSP) لعزل واجهة الويب عن عمليات النظام الحساسة.
+- **Hardware Bridge:** Communication directe avec les imprimantes thermiques et le tiroir-caisse via les ports USB/Série.
+- **Security Policy:** Politiques de sécurité strictes (CSP) pour isoler l'interface web des opérations système sensibles.
 
-## 🛠 التكنولوجيا المستخدمة
+## 🛠 Technologie utilisée
 
-*   **Framework :** Next.js 15 (React 19) — وضع التصدير الثابت (Static Export).
-*   **Database :** IndexedDB (via Dexie.js) — تخزين محلي فائق السرعة.
-*   **UI Engine :** Tailwind CSS v4 & ShadCN UI — واجهة مصممة لشاشات الـ POS.
-*   **Sync :** Titanium Sync Engine — مزامنة ذكية مع Supabase.
+*   **Framework :** Next.js 15 (React 19) — mode d'exportation statique (Static Export).
+*   **Database :** IndexedDB (via Dexie.js) — stockage local ultra-rapide.
+*   **UI Engine :** Tailwind CSS v4 & ShadCN UI — interface conçue pour les écrans POS.
+*   **Sync :** Titanium Sync Engine — synchronisation intelligente avec Supabase.
 
-## 💻 التوافق والأداء
-تم تصميم الواجهة بعناية لتناسب أطراف البيع القياسية (دقة 1360x768)، مع التركيز على كثافة البيانات وتقليل الحاجة للتمرير (Zero-Scroll Policy) لضمان رؤية شاملة للعملية التجارية.
+## 💻 Compatibilité et Performance
+L'interface a été soigneusement conçue pour s'adapter aux terminaux de vente standard (résolution 1360x768), en mettant l'accent sur la densité des données et en minimisant le besoin de défilement (Politique Zero-Scroll) pour garantir une vision globale du processus commercial.

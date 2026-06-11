@@ -10,10 +10,10 @@ interface ZenLoaderProps {
 }
 
 /**
- * مكون التحميل الموحد iPOS Zen Loader
- * يستخدم في شاشات الانتظار والمزامنة.
+ * Composant de chargement unifié iPOS Zen Loader.
+ * Utilisé dans les écrans d'attente et de synchronisation.
  */
-export function ZenLoader({ message = "جاري معالجة البيانات...", fullScreen = false, className }: ZenLoaderProps) {
+export function ZenLoader({ message = "Traitement des données en cours...", fullScreen = false, className }: ZenLoaderProps) {
     return (
         <div className={cn(
             "flex flex-col items-center justify-center gap-4",

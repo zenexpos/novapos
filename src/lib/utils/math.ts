@@ -1,6 +1,6 @@
 /**
- * @fileOverview محرك الحسابات المالية الدقيق iPOS Math Engine.
- * يحل مشاكل Floating Point في جافاسكريبت لضمان دقة الفواتير.
+ * @fileOverview Moteur de calcul financier précis iPOS Math Engine.
+ * Résout les problèmes de virgule flottante en JavaScript pour garantir la précision des factures.
  */
 
 export const FINANCIAL_PRECISION = 2;

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 /**
- * إنشاء خريطة الموقع ديناميكياً.
+ * Génération dynamique du sitemap.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://iposzen.com';

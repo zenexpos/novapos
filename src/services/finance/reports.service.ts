@@ -5,7 +5,7 @@ import { startOfDay, endOfDay, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 /**
- * ReportsService — محرك التحليل الإحصائي المتقدم.
+ * ReportsService — Moteur d'analyse statistique avancée.
  */
 class ReportsService {
     

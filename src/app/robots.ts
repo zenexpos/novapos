@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 /**
- * إعدادات Robots.txt لضمان خصوصية النظام السيادي.
+ * Paramètres Robots.txt pour garantir la confidentialité du système souverain.
  */
 export default function robots(): MetadataRoute.Robots {
   return {

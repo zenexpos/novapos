@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 /**
- * ServiceWorkerRegister — التسجيل السيادي لمحرك الأوفلاين.
+ * ServiceWorkerRegister — Enregistrement souverain du moteur hors-ligne.
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {

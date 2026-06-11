@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 /**
  * iPOS Zen — Manifest Configuration (Elite Production Edition)
- * تحسين الإعدادات لضمان استيفاء معايير التثبيت (Installability Criteria).
+ * Optimisation des paramètres pour garantir le respect des critères d'installabilité (Installability Criteria).
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
