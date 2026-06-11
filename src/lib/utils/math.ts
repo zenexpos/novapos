@@ -82,3 +82,23 @@ export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
     return totalTTC - ht;
 }
+
+/**
+ * Calcule le seuil du Nissab (85g d'or).
+ */
+export function calculateNisab(goldPrice: number): number {
+    return roundFinancial(safeNumber(goldPrice) * 85);
+}
+
+/**
+ * Calcule le montant de la Zakat (2.5% des actifs nets si > Nissab).
+ */
+export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
+    const nisab = calculateNisab(goldPrice);
+    const assets = safeNumber(netAssets);
+    const isEligible = assets >= nisab && nisab > 0;
+    return {
+        due: isEligible,
+        amount: isEligible ? roundFinancial(assets * 0.025) : 0
+    };
+}
