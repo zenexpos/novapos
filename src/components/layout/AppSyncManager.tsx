@@ -28,7 +28,10 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         initialSyncTriggered.current = true;
         
         // Exécution des tâches métier prioritaires au démarrage
-        breadService.processEndOfDayTransfers();
+        const triggerAutomation = async () => {
+             await breadService.processEndOfDayTransfers();
+        };
+        triggerAutomation();
 
         const timeoutId = setTimeout(async () => {
             try {

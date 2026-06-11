@@ -6,7 +6,7 @@ import type { InventoryLog, InventoryLogReason } from '@/lib/types';
 
 /**
  * iPOS Zen - Inventory Audit Service
- * Tracks every single movement of stock with full traceability.
+ * Centralise la traçabilité des mouvements de stock.
  */
 class InventoryAuditService {
     async logMovement(params: {

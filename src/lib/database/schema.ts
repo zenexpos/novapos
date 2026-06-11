@@ -1,10 +1,10 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 11.0 - Indexation optimisée pour la performance POS.
+ * Version 12.0 - Indexation optimisée pour la performance POS et audit.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 11;
+export const DB_VERSION = 12;
 
 export const DB_SCHEMA = {
     // Indexation par barcodes pour le scan rapide, et supplierUuid pour le filtrage
