@@ -11,7 +11,7 @@ import { inventoryService } from '@/services/inventory.service';
 import {
     TrendingUp, Receipt, Undo2, Users, CreditCard, Archive,
     RefreshCw, ArrowUpRight, ArrowDownRight, ShoppingCart, Wallet,
-    Percent, Sparkles, LayoutDashboard, Package, AlertTriangle,
+    Percent, Sparkles, LayoutDashboard, Package, TriangleAlert,
 } from 'lucide-react';
 import { formatCurrency, safeToDate, cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -195,7 +195,7 @@ const RecentActivity = React.memo(({ sales, returns, isLoading }: {
             {isLoading ? (
                 <div className="space-y-2 p-2">
                     {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                        <Skeleton className="h-14 w-full rounded-xl" />
                     ))}
                 </div>
             ) : sales.length === 0 && returns.length === 0 ? (
@@ -271,7 +271,7 @@ const LowStockPanel = React.memo(({ products, isLoading }: { products: any[]; is
     <Card className="overflow-hidden">
         <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
             <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <TriangleAlert className="h-4 w-4 text-amber-500" />
                 <CardTitle className="text-base font-black tracking-tight">
                     Stock Critique
                 </CardTitle>

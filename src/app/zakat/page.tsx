@@ -11,8 +11,8 @@ import {
     Building, 
     Scale, 
     RefreshCw, 
-    AlertCircle, 
-    CheckCircle2, 
+    CircleAlert, 
+    CircleCheckBig, 
     Info,
     Sparkles,
     Archive,
@@ -73,7 +73,7 @@ export default function ZakatPage() {
 
     const handleToggleMethod = (checked: boolean) => {
         updateCompanyProfile({ zakat_use_sale_price: checked });
-        toast.info(checked ? "Méthode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
+        toast.info(checked ? "Méثode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
     };
 
     // Raccourci pour actualiser le bilan
@@ -202,7 +202,7 @@ export default function ZakatPage() {
                                 </div>
                                 {!calculation.isEligible && (
                                     <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 animate-in zoom-in">
-                                        <AlertCircle className="h-4 w-4" />
+                                        <CircleAlert className="h-4 w-4" />
                                         <span className="text-[10px] font-semibold uppercase tracking-wide">
                                             {data.nisabThreshold === null ? 'Configurer le prix de l\'or' : 'En dessous du Nissab'}
                                         </span>
@@ -210,7 +210,7 @@ export default function ZakatPage() {
                                 )}
                                 {calculation.isEligible && (
                                     <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 animate-in zoom-in">
-                                        <CheckCircle2 className="h-4 w-4" />
+                                        <CircleCheckBig className="h-4 w-4" />
                                         <span className="text-[10px] font-semibold uppercase tracking-wide">Assiette éligible à la Zakat</span>
                                     </div>
                                 )}

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { breadService } from '@/services/bread.service';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useDebounce } from '@/hooks/useDebounce';
-import { CheckCircle2, UserCircle2, Package, Landmark, Loader2, Trash2, User, Sparkles, Hash } from 'lucide-react';
+import { CircleCheckBig, CircleUser, Package, Landmark, Loader2, Trash2, User, Sparkles, Hash } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 
 interface BreadOrderCardProps {
@@ -127,7 +127,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                     </div>
                 ) : (
                     <div className="p-2 rounded-xl bg-emerald-500/10 shadow-inner">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in" />
+                        <CircleCheckBig className="h-5 w-5 text-emerald-500 animate-in zoom-in" />
                     </div>
                 )}
             </div>
@@ -137,7 +137,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                     <div className="flex items-center gap-2 mb-1.5">
                         {isExternal ? (
                             <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[8px] font-semibold uppercase tracking-wide flex items-center gap-1.5">
-                                <UserCircle2 className="h-2.5 w-2.5" /> Client Passager
+                                <CircleUser className="h-2.5 w-2.5" /> Client Passager
                             </div>
                         ) : (
                             <div className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[8px] font-semibold uppercase tracking-wide flex items-center gap-1.5">
@@ -200,7 +200,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                             isPaid ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                         )}
                     >
-                        {isPaid ? <CheckCircle2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+                        {isPaid ? <CircleCheckBig className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
                         {isPaid ? 'SOLDE' : 'COMPTE'}
                     </Button>
                 </div>

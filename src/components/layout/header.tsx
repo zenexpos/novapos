@@ -21,7 +21,7 @@ import {
     Download, 
     Wifi, 
     WifiOff, 
-    BarChart3
+    ChartBar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -46,7 +46,7 @@ export function AppHeader() {
         { href: '/returns',       label: 'Retours',   icon: Undo2 },
         { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
         { href: '/expenses',      label: 'Charges',   icon: Wallet },
-        { href: '/reports',       label: 'Analyses',  icon: BarChart3 },
+        { href: '/reports',       label: 'Analyses',  icon: ChartBar },
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },

@@ -18,7 +18,7 @@ import {
 } from '@/lib/utils';
 import {
     BellRing, Search, Phone, MessageCircle,
-    AlertOctagon, Clock, CheckCircle2,
+    OctagonAlert, Clock, CircleCheckBig,
     HandCoins, Coins, ShieldAlert, FileText, Users2,
 } from 'lucide-react';
 import {
@@ -82,7 +82,7 @@ const tierConfig = {
         bg:     'bg-red-500/8 border-red-500/20 hover:border-red-500/35',
         accent: 'border-l-4 border-l-red-500',
         badge:  'bg-red-500/12 text-red-500 border-red-500/20',
-        icon:   AlertOctagon,
+        icon:   OctagonAlert,
         label:  'En retard',
         dot:    'bg-red-500 animate-pulse',
     },
@@ -98,7 +98,7 @@ const tierConfig = {
         bg:     'bg-[var(--glass-bg)] border-[var(--glass-border)] hover:border-primary/20',
         accent: 'border-l-4 border-l-muted',
         badge:  'bg-muted/30 text-muted-foreground border-muted',
-        icon:   CheckCircle2,
+        icon:   CircleCheckBig,
         label:  'Actif',
         dot:    'bg-muted-foreground/40',
     },
@@ -370,7 +370,7 @@ export default function DebtAlertsPage() {
             <div className="grid grid-cols-3 gap-3">
                 {[
                     { icon: Coins,     label: 'Total encours',   value: formatCurrency(kpis.total),  color: 'text-primary'    },
-                    { icon: AlertOctagon, label: 'Critiques',    value: `${kpis.critical} clients`,   color: 'text-red-500'    },
+                    { icon: OctagonAlert, label: 'Critiques',    value: `${kpis.critical} clients`,   color: 'text-red-500'    },
                     { icon: Users2,    label: 'Débiteurs actifs', value: `${kpis.count} clients`,    color: 'text-foreground' },
                 ].map(stat => (
                     <Card key={stat.label} className="overflow-hidden">
@@ -394,7 +394,7 @@ export default function DebtAlertsPage() {
                 </div>
             ) : filtered.length === 0 ? (
                 <EmptyState
-                    icon={search ? Search : CheckCircle2}
+                    icon={search ? Search : CircleCheckBig}
                     title={search ? 'Aucun résultat' : 'Aucune dette en cours'}
                     description={search
                         ? `Aucun client trouvé pour "${search}".`
