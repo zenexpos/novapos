@@ -4,18 +4,14 @@ import { db } from '@/lib/db';
 import { startOfDay, endOfDay } from 'date-fns';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 
-/**
- * ReportsService — Engine for financial analytics and daily closing.
- */
 class ReportsService {
   async getDailySummary(date: Date = new Date()) {
     const start = startOfDay(date);
     const end = endOfDay(date);
 
-    const [sales, expenses, returns, payments] = await Promise.all([
+    const [sales, expenses, payments] = await Promise.all([
       db.sales.where('createdAt').between(start, end, true, true).filter(s => !s.isCancelled).toArray(),
       db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
-      db.product_returns.where('createdAt').between(start, end, true, true).toArray(),
       db.payments.where('paymentDate').between(start, end, true, true).toArray(),
     ]);
 
@@ -23,15 +19,13 @@ class ReportsService {
     const debtCollections = payments.reduce((sum, p) => sum + safeNumber(p.amount), 0);
     const totalCashIn = cashRevenue + debtCollections;
     const totalExpenses = expenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
-    const totalReturnsPaid = returns.reduce((sum, r) => sum + safeNumber(r.amountRefunded), 0);
 
     return {
       cashRevenue: roundFinancial(cashRevenue),
       debtCollections: roundFinancial(debtCollections),
       totalCashIn: roundFinancial(totalCashIn),
       totalExpenses: roundFinancial(totalExpenses),
-      totalReturnsPaid: roundFinancial(totalReturnsPaid),
-      netCashFlow: roundFinancial(totalCashIn - totalExpenses - totalReturnsPaid),
+      netCashFlow: roundFinancial(totalCashIn - totalExpenses),
       transactionCount: sales.length,
     };
   }

@@ -17,7 +17,7 @@ interface ProfileState {
 
 export const useProfileStore = create<ProfileState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       profile: null,
       isLoading: false,
       actions: {
