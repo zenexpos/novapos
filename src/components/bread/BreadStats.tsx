@@ -28,9 +28,10 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
 );
 
 export function BreadStats({ date }: BreadStatsProps) {
-    const ordersResult = useLiveQuery<BreadOrder[]>(() => 
-        db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray(), [date]
-    );
+    const ordersResult = useLiveQuery<BreadOrder[]>(() => {
+        if (!date) return [];
+        return db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray();
+    }, [date]);
 
     const stats = useMemo(() => {
         if (!ordersResult.value) return { 

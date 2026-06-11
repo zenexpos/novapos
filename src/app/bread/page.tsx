@@ -117,7 +117,7 @@ export default function BreadPage() {
                 </div>
             </PageHeader>
 
-            <BreadStats currentDate={formattedDate} />
+            <BreadStats date={formattedDate} />
 
             <div className="flex flex-col lg:flex-row gap-4">
                 <div className="relative flex-grow">
