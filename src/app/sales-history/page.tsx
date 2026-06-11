@@ -6,7 +6,6 @@ import { salesService } from '@/services/sales.service';
 import { useDateRange } from '@/hooks/useDateRange';
 import type { Sale, Customer, Payment } from '@/lib/types';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { 
     Search, 
@@ -300,7 +299,7 @@ export default function SalesHistoryPage() {
                             <Input ref={searchInputRef} placeholder="Chercher un flux... [F3]" className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-lg" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
                         <div className="space-y-4 animate-page-enter">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground/40 ml-1">Statut des Ventes</Label>
+                            <Badge variant="outline" className="text-[10px] font-black uppercase text-muted-foreground/40 ml-1">Statut des Ventes</Badge>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="w-full justify-between rounded-xl h-12 bg-black/20 border-white/5 text-xs font-semibold uppercase">

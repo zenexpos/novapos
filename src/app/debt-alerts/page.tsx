@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useDeferredValue, useEffect, useCallback } from 'react';
 import { PageHeader }        from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button }            from '@/components/ui/button';
 import { Input }             from '@/components/ui/input';
 import { Skeleton }          from '@/components/ui/skeleton';
@@ -17,16 +17,15 @@ import {
     formatCurrency, cn, safeNumber, formatCurrencyCompact,
 } from '@/lib/utils';
 import {
-    BellRing, Search, ChevronRight, Phone, MessageCircle,
-    AlertOctagon, Clock, CheckCircle2, TrendingUp, History,
+    BellRing, Search, Phone, MessageCircle,
+    AlertOctagon, Clock, CheckCircle2,
     HandCoins, Coins, ShieldAlert, FileText, Users2,
 } from 'lucide-react';
 import {
-    differenceInDays, startOfDay, startOfMonth, subMonths,
-    setDate as fnsSetDate, lastDayOfMonth, format,
+    differenceInDays, startOfDay, subMonths,
+    setDate as fnsSetDate, format,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { toast } from 'sonner';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -110,7 +109,6 @@ const tierConfig = {
 function DebtorRow({ debtor, onPay }: { debtor: EnrichedDebtor; onPay: (c: Customer) => void }) {
     const { customer, balance, tier, daysOverdue, nextDueDate } = debtor;
     const cfg       = tierConfig[tier];
-    const TierIcon  = cfg.icon;
     const initials  = `${customer.firstName?.[0] ?? ''}${customer.lastName?.[0] ?? ''}`.toUpperCase() || '?';
     const limit     = safeNumber(customer.creditLimit);
     const usage     = limit > 0 ? Math.min(100, (balance / limit) * 100) : 0;
