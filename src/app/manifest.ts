@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 /**
  * iPOS Zen — Manifest Configuration (Elite Production Edition)
- * Next.js 15 static export requires manifest to be forced static.
+ * Enhanced with shortcuts, screenshots, and rich metadata for better OS integration.
  */
 export const dynamic = "force-static";
 
@@ -16,6 +16,9 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: '#F8FAFC',
     theme_color: '#AFB42B',
     orientation: 'portrait-primary',
+    categories: ['business', 'finance', 'productivity'],
+    lang: 'fr-DZ',
+    dir: 'ltr',
     icons: [
       {
         src: '/icons/icon-72x72.png',
@@ -60,24 +63,37 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       }
     ],
+    shortcuts: [
+      {
+        name: 'Nouvelle Vente',
+        short_name: 'Vendre',
+        description: 'Ouvrir l\'interface de vente rapide',
+        url: '/sell',
+        icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+      },
+      {
+        name: 'État du Stock',
+        short_name: 'Stock',
+        description: 'Vérifier l\'inventaire',
+        url: '/products',
+        icons: [{ src: '/icons/icon-96x96.png', sizes: '96x96' }]
+      }
+    ],
     screenshots: [
       {
-        src: 'https://picsum.photos/seed/ipos-dashboard-preview/1280/720',
+        src: 'https://picsum.photos/seed/ipos-wide/1280/720',
         sizes: '1280x720',
         type: 'image/png',
         form_factor: 'wide',
-        label: 'Tableau de bord iPOS Zen - Aperçu global de l\'activité',
+        label: 'Dashboard Elite'
       },
       {
-        src: 'https://picsum.photos/seed/ipos-mobile-sell/720/1280',
+        src: 'https://picsum.photos/seed/ipos-mobile/720/1280',
         sizes: '720x1280',
         type: 'image/png',
         form_factor: 'narrow',
-        label: 'Interface de vente rapide - iPOS Zen Mobile',
-      },
-    ],
-    categories: ['business', 'finance', 'productivity'],
-    lang: 'fr-DZ',
-    dir: 'ltr',
+        label: 'Interface Vente'
+      }
+    ]
   };
 }

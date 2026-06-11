@@ -1,25 +1,26 @@
 /**
- * iPOS Zen — Fortress Offline Service Worker
- * Version: 2.1.0
+ * iPOS Zen — Sovereign Offline Fortress
+ * High-performance Service Worker for enterprise-grade POS stability.
  */
 
-const CACHE_NAME = 'ipos-zen-v2.1.0';
+const CACHE_NAME = 'ipos-zen-v2.1';
 const OFFLINE_URL = '/offline/offline.html';
 
-const ASSETS_TO_CACHE = [
+// Assets that must be available even on the first offline load
+const PRECACHE_ASSETS = [
   '/',
   OFFLINE_URL,
   '/offline/offline.css',
-  '/manifest.webmanifest',
   '/icon.svg',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/favicon.ico',
+  '/manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('[SW] Pre-caching fortress assets...');
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
   self.skipWaiting();
@@ -31,6 +32,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Purging stale cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -41,7 +43,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
+  // Only handle GET requests for internal assets
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -52,23 +54,20 @@ self.addEventListener('fetch', (event) => {
 
       return fetch(event.request)
         .then((response) => {
-          // Check if we received a valid response
+          // Don't cache external APIs like Supabase here (handled by NetworkFirst strategy in config)
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
 
-          // Dynamic caching for static assets
-          if (event.request.url.match(/\.(js|css|png|jpg|jpeg|svg|woff2)$/)) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
 
           return response;
         })
         .catch(() => {
-          // If network fails and it's a page request, show offline page
+          // Fallback to offline page for document requests
           if (event.request.mode === 'navigate') {
             return caches.match(OFFLINE_URL);
           }

@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPOS Zen — Hors Ligne</title>
-    <link rel="stylesheet" href="offline.css">
+    <title>iPOS Zen — Mode Hors-ligne</title>
+    <link rel="stylesheet" href="/offline/offline.css">
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="20" fill="#AFB42B"/>
-                <path d="M30 50L45 65L70 35" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+    <div class="fortress-container">
+        <div class="logo-wrapper">
+            <img src="/icon.svg" alt="iPOS Zen" width="80" height="80">
         </div>
-        <h1>Zone Hors-Ligne</h1>
-        <p>L'application iPOS Zen fonctionne localement, mais cette page n'est pas encore enregistrée dans votre cache de sécurité.</p>
-        <div class="actions">
-            <button onclick="window.location.reload()">Réessayer</button>
-            <a href="/">Retour à l'accueil</a>
-        </div>
+        <h1>Forteresse iPOS</h1>
+        <p>Connexion perdue. Le système continue de protéger vos données localement.</p>
+        <div class="status-badge">Mode Souverain Actif</div>
+        <button onclick="window.location.reload()" class="retry-btn">Tenter de se reconnecter</button>
         <div class="footer">iPOS Zen — Sovereign Ledger</div>
     </div>
 </body>
