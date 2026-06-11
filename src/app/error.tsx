@@ -6,7 +6,8 @@ import { TriangleAlert, RefreshCcw, Home } from 'lucide-react';
 import Link from 'next/link';
 
 /**
- * Gestionnaire d'erreurs au niveau du domaine de la page - empêche l'effondrement du système et protège les données locales.
+ * Gestionnaire d'erreurs au niveau du domaine de la page.
+ * Empêche l'effondrement du système et protège les données locales.
  */
 export default function DomainError({
     error,

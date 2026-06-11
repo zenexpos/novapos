@@ -1,15 +1,17 @@
 import type { DatePreset } from './types/common';
 
 /**
- * @fileOverview iPOS Zen Global Constants (Audited).
+ * iPOS Zen - Constantes Globales Enterprise.
  */
 
-export * from './constants/app';
+export const APP_NAME = 'iPOS Zen';
+export const APP_VERSION = '2.9.5';
+export const COMPANY_DOMAIN = 'iposzen.com';
+
+export const SYNC_INTERVAL_MS = 5 * 60 * 1000; 
+export const BACKUP_REMINDER_DAYS = 7;
 
 // ── Bread Constants ──────────────────────────────────────────────────────────
-/**
- * Array mapping for Date.getDay() (0 = Sunday, 1 = Monday, etc.)
- */
 export const BREAD_WEEK_DAYS = [
     'dimanche',
     'lundi',
