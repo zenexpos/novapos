@@ -6,7 +6,7 @@ import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
 import { BottomNavBarWrapper } from '@/components/layout/BottomNavBarWrapper';
 import { SaleInfoBarWrapper } from '@/components/layout/SaleInfoBarWrapper';
 import { AppSyncManager } from '@/components/layout/AppSyncManager';
-import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
+import { KeyboardShortcutsProvider } from '@/contexts/shortcut-context';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
@@ -17,22 +17,7 @@ export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
   manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "iPOS Zen",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
-    ],
-    apple: '/icons/icon-192x192.png',
-  },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "iPOS Zen" },
 };
 
 export const viewport: Viewport = {
@@ -43,11 +28,7 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-DZ" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground overflow-hidden">
