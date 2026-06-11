@@ -1,8 +1,9 @@
 /**
- * iPOS Zen — Minimalist Offline Engine
- * هذا الملف ضروري لظهور أيقونة التثبيت في شريط العنوان.
+ * iPOS Zen — Titanium Offline Fortress v2.9
+ * Standalone Service Worker for Production.
  */
-const CACHE_NAME = 'ipos-zen-v2';
+
+const CACHE_NAME = 'ipos-zen-v2.9';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -12,14 +13,17 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-// مستمع الـ fetch هو الشرط الأساسي الذي يطلبه Chrome لظهور أيقونة التثبيت
 self.addEventListener('fetch', (event) => {
-  // يمرر الطلبات بشكل طبيعي لكن وجوده يخبر المتصفح أن التطبيق يدعم الأوفلاين
+  // CRITICAL: Chrome requires a fetch listener to show the PWA install icon
+  // iPOS Zen relies on next-pwa for advanced caching, but this file 
+  // acts as the primary signal for browser installability.
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
-    );
+    event.respondWith(fetch(event.request).catch(() => caches.match('/offline')));
+  }
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
