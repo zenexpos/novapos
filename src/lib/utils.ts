@@ -58,10 +58,6 @@ export function preciseMultiply(a: number, b: number): number {
 // CALCULS TVA & MARGES
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function calculateTVA(priceHT: number, tvaRate: number = TVA_RATE_STANDARD): number {
-    return roundFinancial(preciseMultiply(priceHT, tvaRate / 100));
-}
-
 export function ttcToHt(priceTTC: number, tvaRate: number = TVA_RATE_STANDARD): number {
     return roundFinancial(priceTTC / (1 + tvaRate / 100));
 }
