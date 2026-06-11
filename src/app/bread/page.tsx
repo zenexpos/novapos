@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { formatDateToYYYYMMDD } from '@/lib/utils';
 import { addDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -40,8 +40,13 @@ export default function BreadPage() {
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
 
+    // Déclencher la génération des commandes à l'extérieur du liveQuery
+    useEffect(() => {
+        breadService.ensureOrdersForDate(formattedDate);
+    }, [formattedDate]);
+
     const ordersResult = useLiveQuery<BreadOrderWithCustomer[] | undefined>(
-        async () => await breadService.generateAndGetOrdersForDate(formattedDate),
+        () => breadService.getOrdersForDate(formattedDate),
         [formattedDate],
         undefined
     );

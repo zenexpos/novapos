@@ -21,7 +21,7 @@ const triggerSync = () => {
 class BreadService {
 
     /**
-     * Generate an order number based on sequence.
+     * Génère un numéro de commande basé sur la séquence.
      */
     private async generateOrderNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
@@ -38,23 +38,10 @@ class BreadService {
     }
 
     /**
-     * Get or generate orders for a specific date.
+     * Récupère les commandes pour une date spécifique (Lecture seule).
      */
-    async generateAndGetOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
+    async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
         if (!date) return [];
-
-        const activeBreadClientsCount = await db.customers
-            .filter(c => !!c.isBreadClient && !c.deletedAt)
-            .count();
-
-        const existingCount = await db.bread_orders
-            .where('date').equals(date)
-            .filter(o => !o.deletedAt)
-            .count();
-
-        if (activeBreadClientsCount > 0 && existingCount === 0) {
-            await this.createDayOrders(date);
-        }
 
         const orders = await db.bread_orders
             .where('date').equals(date)
@@ -71,6 +58,26 @@ class BreadService {
             ...o,
             customer: o.customerUuid ? customerMap.get(o.customerUuid) || null : null,
         })).sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
+    }
+
+    /**
+     * Déclenche la génération automatique des commandes si elles n'existent pas encore.
+     */
+    async ensureOrdersForDate(date: string): Promise<void> {
+        if (!date) return;
+
+        const activeBreadClientsCount = await db.customers
+            .filter(c => !!c.isBreadClient && !c.deletedAt)
+            .count();
+
+        const existingCount = await db.bread_orders
+            .where('date').equals(date)
+            .filter(o => !o.deletedAt)
+            .count();
+
+        if (activeBreadClientsCount > 0 && existingCount === 0) {
+            await this.createDayOrders(date);
+        }
     }
 
     private async createDayOrders(date: string): Promise<void> {
@@ -137,14 +144,11 @@ class BreadService {
         unitPrice: number;
         pickupTime?: string;
     }): Promise<BreadOrder> {
-        // Verification d'unicité pour la même date
         const existing = await db.bread_orders
             .where('date').equals(params.date)
             .filter(o => {
                 if (o.deletedAt) return false;
-                // Si client enregistré
                 if (params.customerUuid && o.customerUuid === params.customerUuid) return true;
-                // Si client passager (comparaison insensible à la casse)
                 if (params.customName && o.customName?.trim().toLowerCase() === params.customName.trim().toLowerCase()) return true;
                 return false;
             })
