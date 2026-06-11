@@ -1,6 +1,5 @@
 'use client';
 /**
- * @fileOverview Unused artifact.
- * Replaced by generic Skeleton UI in stock management. Ready for manual deletion.
+ * @fileOverview Peaufinage de l'UI : remplacement par une structure de squelette générique.
  */
 export const StockIntakeTableSkeleton = () => null;
