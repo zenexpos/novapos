@@ -5,8 +5,8 @@ import { useEffect, useRef } from 'react';
 import { breadService } from '@/services/bread.service';
 
 /**
- * مكون مسؤول عن إدارة عمليات المزامنة وضمان استقرار التطبيق في وضع الأوفلاين.
- * يقوم أيضاً بتشغيل مهام الأتمتة المجدولة لطلبات الخبز.
+ * Composant responsable de la gestion des opérations de synchronisation et de la stabilité de l'application en mode hors-ligne.
+ * Il exécute également les tâches d'automatisation planifiées pour les commandes de pain.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
@@ -19,7 +19,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         fetchCompanyProfile();
     }, [fetchCompanyProfile]);
 
-    // المزامنة الأولية عند التوفر وتشغيل أتمتة الخبز
+    // Synchronisation initiale lors de la disponibilité et exécution de l'automatisation du pain
     useEffect(() => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
@@ -27,7 +27,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
 
         initialSyncTriggered.current = true;
         
-        // تشغيل أتمتة الخبز عند البدء
+        // Exécution de l'automatisation du pain au démarrage
         breadService.processEndOfDayTransfers();
 
         const timeoutId = setTimeout(async () => {
@@ -40,7 +40,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         return () => clearTimeout(timeoutId);
     }, [companyProfile, isSyncing, performBackgroundSync]);
 
-    // التفاعل مع استعادة الاتصال
+    // Réaction à la restauration de la connexion
     useEffect(() => {
         const handleOnline = () => {
             if (companyProfile?.supabase_url && companyProfile?.supabase_key) {
@@ -52,7 +52,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('online', handleOnline);
     }, [performBackgroundSync, companyProfile]);
 
-    // التفاعل مع استعادة نشاط الصفحة (Check tasks at 23:00 approx)
+    // Réaction à la restauration de l'activité de la page (Vérification des tâches vers 23h00 approx)
     useEffect(() => {
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
@@ -66,7 +66,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, [performBackgroundSync, companyProfile]);
 
-    // دورة المزامنة الدورية (فقط عند توفر الإنترنت)
+    // Cycle de synchronisation périodique (uniquement si en ligne)
     useEffect(() => {
         if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
 
