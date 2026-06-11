@@ -514,12 +514,12 @@ export default function SettingsPage() {
                 title="Effacer l'intégralité du système ?"
                 description={
                     <div className="space-y-6">
-                        <p className="font-medium text-foreground">Cette action va purجر définitivement votre base de données locale :</p>
+                        <p className="font-medium text-foreground">Cette action va purger définitivement votre base de données locale :</p>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 'Catalogue Produits', 'Fichiers Clients', 
                                 'Registre des Ventes', 'Journal d\'Audit', 
-                                'Profil Étabلissement', 'Historique Stock'
+                                'Profil Établissement', 'Historique Stock'
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-muted/20 border border-white/5">
                                     <X className="h-3 w-3 text-destructive opacity-40" />

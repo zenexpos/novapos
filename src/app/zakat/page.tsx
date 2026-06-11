@@ -73,7 +73,7 @@ export default function ZakatPage() {
 
     const handleToggleMethod = (checked: boolean) => {
         updateCompanyProfile({ zakat_use_sale_price: checked });
-        toast.info(checked ? "Méثode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
+        toast.info(checked ? "Méthode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
     };
 
     // Raccourci pour actualiser le bilan
