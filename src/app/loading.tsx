@@ -3,6 +3,10 @@
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
+/**
+ * iPOS Zen - Global Loading State
+ * Professional loader with "Zen" branding.
+ */
 export default function RootLoading() {
     return (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-500">

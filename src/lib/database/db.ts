@@ -8,7 +8,7 @@ import type {
 } from '../types';
 
 /**
- * @fileOverview iPOS Zen - Core Database Instance
+ * iPOS Zen - Core Database Instance
  * Production-ready IndexedDB engine powered by Dexie.
  */
 class iPOSDatabase extends Dexie {
@@ -37,7 +37,7 @@ export const db = new iPOSDatabase();
 
 if (typeof window !== 'undefined') {
     db.on('versionchange', () => {
-        console.warn('[iPOS Zen] Database version change. Reloading...');
+        console.warn('[iPOS Zen] Database version change detected. Reloading...');
         window.location.reload();
     });
 }
