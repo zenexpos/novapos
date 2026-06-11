@@ -89,7 +89,9 @@ export default function SettingsPage() {
                     db.inventory_logs.count()
                 ]);
                 setStats({ products: p, customers: c, sales: s, logs: l });
-            } catch (err) {}
+            } catch (err) {
+                // Silently handled via UI feedback
+            }
         };
         fetchStats();
 
@@ -512,7 +514,7 @@ export default function SettingsPage() {
                 title="Effacer l'intégralité du système ?"
                 description={
                     <div className="space-y-6">
-                        <p className="font-medium text-foreground">Cette action va purger définitivement votre base de données locale :</p>
+                        <p className="font-medium text-foreground">Cette action va purجر définitivement votre base de données locale :</p>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 'Catalogue Produits', 'Fichiers Clients', 

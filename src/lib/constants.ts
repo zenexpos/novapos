@@ -2,7 +2,7 @@ import type { Customer, DatePreset } from './types';
 
 /**
  * @fileOverview iPOS Zen Global Constants (Audited).
- * Removed unused APP_NAME and DB_KEYS constants.
+ * Removed unused legacy constants to optimize bundle size.
  */
 
 // ── Bread ────────────────────────────────────────────────────────────────────

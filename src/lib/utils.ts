@@ -69,7 +69,7 @@ export function calculateMarginRate(salePrice: number, purchasePrice: number): n
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CALCULS PANIER & REMISES (AUDIT FIX: Cent-based precision)
+// CALCULS PANIER & REMISES
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CalculableCart {
