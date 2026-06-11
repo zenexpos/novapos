@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr-FR" suppressHydrationWarning>
       <head>
         <title>iPOS Zen — Système POS Souverain</title>
-        <meta name="description" content="Gestion de point de vente locale et synchronisée" />
+        <meta name="description" content="Gestion de point de vente locale et sécurisée" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#AFB42B" />
