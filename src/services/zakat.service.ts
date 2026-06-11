@@ -6,7 +6,8 @@ import { companyProfileService } from './profile.service';
 import type { ZakatData } from '@/lib/types';
 
 /**
- * Service Zakat v2 — utilise les fonctions centralisées de utils.ts.
+ * Service de calcul de la Zakat Enterprise.
+ * Analyse les actifs nets (Stock + Créances - Dettes) par rapport au seuil du Nissab.
  */
 class ZakatService {
 
@@ -18,12 +19,14 @@ class ZakatService {
             companyProfileService.getProfile(),
         ]);
 
+        // Valorisation du stock au coût PMP
         const inventoryValueCost = products.reduce((sum, p) =>
             sum + (safeNumber(p.quantity) > 0
                 ? preciseMultiply(safeNumber(p.quantity), safeNumber(p.purchasePrice))
                 : 0),
         0);
 
+        // Valorisation du stock au prix de vente (méthode recommandée par certains savants)
         const inventoryValueSale = products.reduce((sum, p) =>
             sum + (safeNumber(p.quantity) > 0
                 ? preciseMultiply(safeNumber(p.quantity), safeNumber(p.price))
@@ -40,7 +43,7 @@ class ZakatService {
 
         const goldPrice = safeNumber(profile?.goldPricePerGram);
 
-        // Actifs nets selon calcul islamique
+        // Actifs nets selon calcul comptable souverain
         const netAssets = roundFinancial(
             inventoryValueCost + customerDebts - supplierDebts
         );

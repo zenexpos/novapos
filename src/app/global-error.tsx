@@ -6,7 +6,7 @@ import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
  * Système de secours ultime d'iPOS Zen.
- * En cas de crash fatal au niveau racine, permet de redémarrer le module sans perdre les données locales.
+ * En cas de crash fatal au niveau racine, permet de redémarrer le module sans perdre les données locales IndexedDB.
  */
 export default function GlobalError({
   error,
@@ -16,6 +16,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Log de l'erreur pour audit technique local
     console.error('[CRITICAL SYSTEM FAILURE]:', error);
   }, [error]);
 
@@ -33,7 +34,7 @@ export default function GlobalError({
           
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
             Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span> dans votre navigateur. 
-            Veuillez redémarrer le module pour continuer.
+            Veuillez redémarrer le module pour continuer votre activité.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full">

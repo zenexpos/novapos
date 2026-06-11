@@ -91,7 +91,7 @@ export function calculateNisab(goldPrice: number): number {
 }
 
 /**
- * Calcule le montant de la Zakat.
+ * Calcule le montant de la Zakat (2.5% des actifs nets).
  */
 export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
     const nisab = calculateNisab(goldPrice);

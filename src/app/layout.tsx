@@ -14,6 +14,7 @@ import { Metadata, Viewport } from 'next';
 
 /**
  * Metadata iPOS Zen — Configuration souveraine via l'API Next.js.
+ * Garantit que le moteur de recherche et les navigateurs identifient correctement l'app.
  */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
 
 /**
  * Layout Racine iPOS Zen — Enterprise Edition.
- * Converti en Server Component pour garantir une hydratation stable.
+ * Server Component pour une hydratation stable et performante.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </KeyboardShortcutsProvider>
           </TooltipProvider>
         </ClientProviders>
+        {/* Portal pour l'impression native sans polluer le DOM principal */}
         <div id="receipt-for-print" className="hidden print:block bg-white min-h-screen w-full"></div>
       </body>
     </html>

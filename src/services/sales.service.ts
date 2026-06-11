@@ -135,7 +135,7 @@ class SalesService {
     }
 
     /**
-     * Annule une vente et restaure les flux.
+     * Annule une vente et restaure les flux de stocks et financiers.
      */
     async processSaleCancellation(uuid: string): Promise<void> {
         const sale = await this.getSaleByUuid(uuid);
