@@ -132,8 +132,8 @@ export default function SettingsPage() {
         try {
             const isValid = await supabaseSyncService.testConnection(companyProfile.supabase_url, companyProfile.supabase_key);
             setConnectionStatus(isValid ? 'success' : 'error');
-            if (isValid) toast.success("Connexion au Cloud Saphir établie.");
-            else toast.error("Échec de connexion au Cloud Saphir.");
+            if (isValid) toast.success("Connexion au Cloud établie.");
+            else toast.error("Échec de connexion au Cloud.");
         } catch (e) {
             setConnectionStatus('error');
         } finally {
@@ -167,8 +167,8 @@ export default function SettingsPage() {
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto pb-32 animate-in fade-in duration-1000">
             <PageHeader 
-                title="Configuration Souveraine"
-                description="Maintenance technique, diagnostic système et gestion de la confidentialité locale."
+                title="Configuration"
+                description="Maintenance technique, diagnostic système et gestion des données locales."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -183,7 +183,7 @@ export default function SettingsPage() {
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl font-black tracking-tight">Mode iPOS Desktop</CardTitle>
-                                            <CardDescription className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Expérience Native Elite</CardDescription>
+                                            <CardDescription className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Une meilleure expérience</CardDescription>
                                         </div>
                                     </div>
                                     <Button 
@@ -199,7 +199,7 @@ export default function SettingsPage() {
                                 <Sparkles className="absolute -right-8 -bottom-8 h-40 w-40 text-primary/5 rotate-12" />
                                 <div className="space-y-4 relative z-10">
                                     <p className="text-sm font-bold text-muted-foreground/80 leading-relaxed">
-                                        Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément depuis la barre des tâches, sans distraction du navigateur.
+                                        Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément depuis la barre des tâches.
                                     </p>
                                     <div className="flex flex-wrap gap-3">
                                         {['Lancement Rapide', 'Icône Bureau', 'Plein Écran', 'Hors-ligne Stable'].map((feat, i) => (
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                                         <Cloud className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-lg font-semibold tracking-tighter">Sauvegarde Cloud Élite</CardTitle>
+                                        <CardTitle className="text-lg font-semibold tracking-tighter">Sauvegarde Cloud</CardTitle>
                                         <CardDescription className="text-[10px] font-semibold uppercase text-primary/50">Infrastructure Saphir (Supabase)</CardDescription>
                                     </div>
                                 </div>
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                                     className="rounded-xl h-10 px-6 font-semibold text-[10px] uppercase tracking-wide border-primary/20 hover:bg-primary/10 transition-all gap-2"
                                 >
                                     {isTestingConnection ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
-                                    Tester Diagnostic
+                                    Tester Connexion
                                 </Button>
                             </div>
                         </CardHeader>
@@ -244,10 +244,10 @@ export default function SettingsPage() {
                                     </div>
                                     <p className="text-sm font-bold text-amber-600 mb-2 uppercase tracking-tighter">Configuration Requise</p>
                                     <p className="text-xs text-muted-foreground mb-6 max-w-md mx-auto leading-relaxed">
-                                        Lien Cloud non détecté. Veuillez renseigner votre URL et Clé Supabase dans votre profil pour activer les capacités de sauvegarde souveraine.
+                                        Lien Cloud non détecté. Veuillez renseigner votre URL et Clé Supabase dans votre profil pour activer les sauvegardes.
                                     </p>
                                     <Button variant="outline" className="rounded-2xl border-amber-500/20 text-amber-600 hover:bg-amber-500/10 h-12 px-8 font-semibold text-[10px] uppercase tracking-wide" asChild>
-                                        <a href="/profile">Aller au Profil Elite</a>
+                                        <a href="/profile">Aller au Profil</a>
                                     </Button>
                                 </div>
                             ) : (
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                                         )}>
                                             {connectionStatus === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                             <span className="text-[10px] font-semibold uppercase tracking-wide">
-                                                {connectionStatus === 'success' ? "Canal Saphir Opérationnel" : "Erreur de poignée de main Cloud"}
+                                                {connectionStatus === 'success' ? "Canal Cloud Opérationnel" : "Erreur de connexion Cloud"}
                                             </span>
                                         </div>
                                     )}
@@ -267,14 +267,14 @@ export default function SettingsPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div className="p-4 bg-muted/20 rounded-lg border border-white/5 space-y-6 group hover:bg-muted/30 transition-all relative overflow-hidden">
                                             <UploadCloud className="absolute -right-4 -top-4 h-24 w-24 opacity-[0.02] group-hover:opacity-10 transition-opacity" />
-                                            <div className="flex items-center gap-3 text-primary">
+                                            <div className="flex items-center gap-3 text-primary relative z-10">
                                                 <div className="p-2.5 rounded-xl bg-primary/10 shadow-inner">
                                                     <UploadCloud className="h-5 w-5" />
                                                 </div>
-                                                <span className="text-[10px] font-semibold uppercase ">Backup (Push)</span>
+                                                <span className="text-[10px] font-semibold uppercase ">Sauvegarde (Envoyer)</span>
                                             </div>
                                             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-                                                Téléverse l'intégralité de votre cache local vers le coffre-fort Cloud. Écrase les archives obsolètes.
+                                                Envoie vos données locales vers le Cloud. Écrase les anciennes versions.
                                             </p>
                                             <Button 
                                                 onClick={() => performCloudSync('push')} 
@@ -292,10 +292,10 @@ export default function SettingsPage() {
                                                 <div className="p-2.5 rounded-xl bg-emerald-500/10 shadow-inner">
                                                     <DownloadCloud className="h-5 w-5" />
                                                 </div>
-                                                <span className="text-[10px] font-semibold uppercase ">Restauration (Pull)</span>
+                                                <span className="text-[10px] font-semibold uppercase ">Restauration (Recevoir)</span>
                                             </div>
                                             <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-                                                Récupère vos actifs depuis le Cloud pour synchroniser ce terminal. Fusionne avec les données locales.
+                                                Récupère vos données depuis le Cloud pour synchroniser cet appareil.
                                             </p>
                                             <Button 
                                                 onClick={() => performCloudSync('pull')} 
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                                 <div className="flex items-center justify-center gap-3 px-6 py-3 bg-primary/5 rounded-2xl border border-primary/10 w-fit mx-auto">
                                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                                     <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">
-                                        Dernière intégrité Cloud : {format(new Date(companyProfile.last_sync_at), 'd MMMM yyyy, HH:mm', { locale: fr })}
+                                        Dernière mise à jour Cloud : {format(new Date(companyProfile.last_sync_at), 'd MMMM yyyy, HH:mm', { locale: fr })}
                                     </span>
                                 </div>
                             )}
@@ -331,15 +331,15 @@ export default function SettingsPage() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-base font-semibold">Impression Automatique</CardTitle>
-                                    <CardDescription className="text-xs">Imprime la facture thermique 80mm après chaque vente</CardDescription>
+                                    <CardDescription className="text-xs">Imprime le ticket après chaque vente</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium">AutoPrint thermique</p>
-                                    <p className="text-xs text-muted-foreground">Impression directe sur imprimante 80mm sans dialog</p>
+                                    <p className="text-sm font-medium">Impression directe</p>
+                                    <p className="text-xs text-muted-foreground">Imprime sur imprimante thermique 80mm sans confirmation</p>
                                 </div>
                                 <Switch
                                     checked={autoPrintEnabled}
@@ -357,7 +357,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-lg font-semibold tracking-tighter">Santé du Système Local</CardTitle>
-                                    <CardDescription className="text-[10px] font-semibold uppercase text-primary/50">Analyse en temps réel du stockage IndexedDB</CardDescription>
+                                    <CardDescription className="text-[10px] font-semibold uppercase text-primary/50">Analyse du stockage sur cet appareil</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -384,9 +384,9 @@ export default function SettingsPage() {
                                     <div className="flex justify-between items-end relative z-10">
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-primary">
-                                                <Activity className="h-3.5 w-3.5 animate-pulse" /> Empreinte Disque
+                                                <Activity className="h-3.5 w-3.5 animate-pulse" /> Espace utilisé
                                             </div>
-                                            <p className="text-sm text-muted-foreground font-medium italic">Occupation réelle dans le cache sécurisé.</p>
+                                            <p className="text-sm text-muted-foreground font-medium italic">Occupation sur le disque local.</p>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-lg font-semibold text-primary">{storage.used}</span>
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[10px] font-semibold uppercase ">Base de données opérationnelle</p>
-                                    <p className="text-[9px] font-bold opacity-60 uppercase tracking-wide">Architecture Zen : 100% Hors-ligne & Confidentialité Totale</p>
+                                    <p className="text-[9px] font-bold opacity-60 uppercase tracking-wide">Mode 100% Hors-ligne & Confidentialité Totale</p>
                                 </div>
                                 <Zap className="h-5 w-5 ml-auto opacity-20 animate-pulse" />
                             </div>
@@ -423,18 +423,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-4 animate-in slide-in-from-right-4 duration-700 delay-300">
-                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
+                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
                         <CardHeader className="p-4 pb-4 border-b border-white/5 bg-muted/20">
                             <div className="flex items-center gap-3">
                                 <Server className="h-4 w-4 text-primary opacity-50" />
-                                <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground/60">Environnement Actif</CardTitle>
+                                <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground/60">Environnement</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                             {[
                                 { icon: Monitor, label: 'Système', value: envInfo?.os },
                                 { icon: Globe, label: 'Navigateur', value: envInfo?.browser },
-                                { icon: Smartphone, label: 'Mode PWA', value: 'ACTIF', status: 'ACTIF' }
+                                { icon: Smartphone, label: 'Mode Appli', value: 'ACTIF', status: 'ACTIF' }
                             ].map((env, idx) => (
                                 <div key={idx} className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5 group hover:border-primary/20 transition-all">
                                     <div className="flex items-center gap-3">
@@ -450,11 +450,11 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
+                    <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
                         <CardHeader className="p-4 pb-4">
                             <div className="flex items-center gap-3">
                                 <Info className="h-4 w-4 text-primary opacity-50" />
-                                <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground/60">À propos de iPOS Luxury</CardTitle>
+                                <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground/60">À propos d'iPOS Zen</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-0 space-y-4">
@@ -463,22 +463,22 @@ export default function SettingsPage() {
                                     <Cpu className="h-7 w-7 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-semibold tracking-tighter">iPOS Zen Evolution</p>
-                                    <p className="text-[9px] font-semibold text-primary/40 uppercase ">Version 2.0.0 - Elite Stable</p>
+                                    <p className="text-lg font-semibold tracking-tighter">iPOS Zen</p>
+                                    <p className="text-[9px] font-semibold text-primary/40 uppercase ">Version 2.0.0 - Stable</p>
                                 </div>
                             </div>
                             
                             <div className="space-y-5 text-[11px] font-medium text-muted-foreground/60 leading-relaxed italic px-2">
-                                <p>iPOS est une application "Client-Side Only" de nouvelle génération. Vos données commerciales ne transitent par aucun serveur externe par défaut.</p>
-                                <p>L'utilisation de la technologie Supabase permet désormais une sauvegarde optionnelle dans le Cloud de manière sécurisée.</p>
+                                <p>iPOS est une application moderne. Vos données commerciales restent sur votre appareil par défaut.</p>
+                                <p>L'utilisation de Supabase permet une sauvegarde optionnelle et sécurisée.</p>
                             </div>
                         </CardContent>
                         <CardFooter className="pt-0 pb-10 px-4">
                             <div className="w-full flex flex-col items-center gap-4">
                                 <div className="w-full h-px bg-white/5" />
                                 <div className="flex items-center justify-between w-full text-[10px] font-semibold uppercase opacity-20">
-                                    <span className="flex items-center gap-2"><Shield className="h-3 w-3" /> Statut Sécurité</span>
-                                    <span className="text-emerald-500">Option Cloud Activable</span>
+                                    <span className="flex items-center gap-2"><Shield className="h-3 w-3" /> Sécurité</span>
+                                    <span className="text-emerald-500">Sauvegarde active</span>
                                 </div>
                             </div>
                         </CardFooter>
@@ -493,7 +493,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-6">
                             <p className="text-[10px] font-bold text-destructive/60 leading-relaxed text-center italic px-2 uppercase tracking-wide">
-                                Les actions ci-dessous sont irréversible et entraînent la perte totale de vos données locales non sauvegardées.
+                                Ces actions sont irréversibles et entraînent la perte de vos données locales.
                             </p>
                             <Button 
                                 variant="outline" 
@@ -511,15 +511,15 @@ export default function SettingsPage() {
             <ConfirmAlertDialog
                 isOpen={isResetConfirmOpen}
                 onOpenChange={setIsResetConfirmOpen}
-                title="Effacer l'intégralité du système ?"
+                title="Tout supprimer ?"
                 description={
                     <div className="space-y-6">
-                        <p className="font-medium text-foreground">Cette action va purger définitivement votre base de données locale :</p>
+                        <p className="font-medium text-foreground">Cette action va effacer toutes vos données locales :</p>
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                'Catalogue Produits', 'Fichiers Clients', 
-                                'Registre des Ventes', 'Journal d\'Audit', 
-                                'Profil Établissement', 'Historique Stock'
+                                'Liste des Produits', 'Clients', 
+                                'Ventes', 'Historique', 
+                                'Profil', 'Stock'
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-muted/20 border border-white/5">
                                     <X className="h-3 w-3 text-destructive opacity-40" />
@@ -530,8 +530,8 @@ export default function SettingsPage() {
                         <div className="p-5 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-start gap-4 mt-4">
                             <ShieldAlert className="h-6 w-6 text-destructive shrink-0" />
                             <div className="space-y-1">
-                                <p className="text-xs font-semibold text-destructive uppercase tracking-tight leading-tight">Attention Critique</p>
-                                <p className="text-[10px] text-destructive/70 leading-relaxed font-medium">Aucun retour en arrière n'est possible sans un fichier de sauvegarde (.json) ou une synchronisation Cloud préalable.</p>
+                                <p className="text-xs font-semibold text-destructive uppercase tracking-tight leading-tight">Attention</p>
+                                <p className="text-[10px] text-destructive/70 leading-relaxed font-medium">Vous ne pourrez pas revenir en arrière sans une sauvegarde préalable.</p>
                             </div>
                         </div>
                     </div>

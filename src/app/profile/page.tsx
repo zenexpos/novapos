@@ -67,7 +67,7 @@ export default function ProfilePage() {
                                             {companyProfile?.phone && (
                                                 <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-md shadow-inner group-hover:border-primary/10 transition-colors">
                                                     <Phone className="h-4 w-4 text-primary/60" />
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide leading-none">
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide font-bold leading-none">
                                                         {companyProfile.phone}
                                                     </span>
                                                 </div>

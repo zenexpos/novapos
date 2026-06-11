@@ -235,7 +235,7 @@ export default function ExpensesPage() {
                             <p>${profile?.address || ''}</p>
                         </div>
                         <div style="text-align: right">
-                            <p>RAPPORT DE DÉPENSES ELITE</p>
+                            <p>RAPPORT DE DÉPENSES</p>
                             <p>Période: ${dateStr}</p>
                         </div>
                     </header>
@@ -310,8 +310,8 @@ export default function ExpensesPage() {
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
             <PageHeader
-                title="Registre des Charges"
-                description="Pilotage souverain des flux flux sortants et de la trésorerie"
+                title="Liste des Dépenses"
+                description="Suivi simple de vos sorties d'argent et de votre trésorerie"
             >
                 <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" onClick={handlePrintSummary} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5 transition-all">
@@ -331,32 +331,32 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
-                    title="Total Décaissements" 
+                    title="Total Dépensé" 
                     value={formatCurrency(stats.total)} 
                     icon={Wallet} 
                     colorClass="bg-destructive/10 text-destructive"
                     subtitle={`${stats.count} opérations`}
                 />
                 <StatCard 
-                    title="Charge Journalière" 
+                    title="Moyenne par jour" 
                     value={formatCurrency(stats.dailyAverage)} 
                     icon={TrendingDown} 
                     colorClass="bg-primary/10 text-primary"
-                    subtitle="Moyenne période"
+                    subtitle="Période actuelle"
                 />
                 <StatCard 
-                    title="Poste Dominant" 
+                    title="Plus grosse catégorie" 
                     value={stats.topCategory} 
                     icon={PieChart} 
                     colorClass="bg-amber-500/10 text-amber-500"
-                    subtitle="Max centre coût"
+                    subtitle="Poste principal"
                 />
                 <StatCard 
-                    title="Fréquence Flux" 
+                    title="Opérations par jour" 
                     value={(stats.count / Math.max(1, differenceInDays(dateRange?.to || new Date(), dateRange?.from || new Date()) + 1)).toFixed(1)} 
                     icon={CalendarDays} 
                     colorClass="bg-emerald-500/10 text-emerald-500"
-                    subtitle="Opérations / jour"
+                    subtitle="Fréquence"
                 />
             </div>
 
@@ -381,7 +381,7 @@ export default function ExpensesPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-2xl border-white/5 shadow-sm min-w-[200px] max-h-80 overflow-y-auto">
-                            <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Filtrer par Poste</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Filtrer par catégorie</DropdownMenuLabel>
                             <DropdownMenuSeparator className="opacity-10" />
                             <DropdownMenuCheckboxItem checked={selectedCategory === 'all'} onCheckedChange={() => setSelectedCategory('all')}>Toutes</DropdownMenuCheckboxItem>
                             {categories?.map(cat => (
@@ -411,8 +411,8 @@ export default function ExpensesPage() {
                ) : allExpenses.length === 0 ? (
                     <EmptyState
                         icon={TrendingDown}
-                        title="Silence de Caisse"
-                        description={isFiltered ? "Ajustez vos filtres." : "Enregistrer votre première opération."}
+                        title="Aucune dépense"
+                        description={isFiltered ? "Ajustez vos filtres." : "Enregistrez votre première dépense."}
                     />
                ) : (
                     viewMode === 'list' ? (

@@ -89,7 +89,7 @@ const StatCard = React.memo(({
                 </p>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
         </div>
     );
 
@@ -320,10 +320,9 @@ const ProfitRing = React.memo(({
 }: { margin: number; isLoading: boolean }) => {
     const clamped = Math.min(100, Math.max(0, margin));
     const r = 36, stroke = 7;
-    const circ = 2 * PI * r;
+    const circ = 2 * Math.PI * r;
     const dash  = (clamped / 100) * circ;
     const color = clamped >= 20 ? 'hsl(142 65% 42%)' : clamped >= 10 ? 'hsl(38 90% 50%)' : 'hsl(0 80% 55%)';
-    const PI = 3.14159;
 
     return (
         <Card className="overflow-hidden">
@@ -337,7 +336,7 @@ const ProfitRing = React.memo(({
                                 stroke="hsl(var(--muted))" strokeWidth={stroke} />
                             <circle cx="44" cy="44" r={r} fill="none"
                                 stroke={color} strokeWidth={stroke}
-                                strokeDasharray={`${(clamped/100)*2*Math.PI*r} ${2*Math.PI*r}`}
+                                strokeDasharray={`${dash} ${circ}`}
                                 strokeLinecap="round"
                                 style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.22,1,0.36,1)' }}
                             />
