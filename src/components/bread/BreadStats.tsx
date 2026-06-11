@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import type { BreadOrder } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, Wallet, Landmark, AlertCircle } from 'lucide-react';
+import { Package, Truck, Wallet, Landmark, AlertCircle, ShoppingBag } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -35,17 +35,18 @@ export function BreadStats({ date }: BreadStatsProps) {
 
     const stats = useMemo(() => {
         if (!ordersResult.value) return { 
-            count: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
-            unreceived: 0, transferred: 0, debts: 0 
+            count: 0, totalPieces: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
+            unreceivedPieces: 0, transferred: 0, debts: 0 
         };
         const orders = ordersResult.value;
 
         return {
             count: orders.length,
+            totalPieces: orders.reduce((s, o) => s + (o.quantity || 0), 0),
             totalVal: orders.reduce((s, o) => s + o.totalAmount, 0),
             paidVal: orders.reduce((s, o) => s + o.amountPaid, 0),
             unpaidVal: orders.reduce((s, o) => s + o.remainingAmount, 0),
-            unreceived: orders.filter(o => o.pickupStatus === 'unreceived').length,
+            unreceivedPieces: orders.filter(o => o.pickupStatus !== 'received').reduce((s, o) => s + (o.quantity || 0), 0),
             transferred: orders.filter(o => o.transferredToCustomerAccount).length,
             debts: orders.filter(o => o.transferredToCustomerAccount).reduce((s, o) => s + o.remainingAmount, 0)
         };
@@ -59,13 +60,52 @@ export function BreadStats({ date }: BreadStatsProps) {
 
     return (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7 animate-in fade-in duration-500">
-            <StatCard title="Total Commandes" value={String(stats.count)} icon={Package} colorClass="bg-primary/10 text-primary" />
-            <StatCard title="Valeur Ventes" value={formatCurrency(stats.totalVal)} icon={Landmark} colorClass="bg-emerald-500/10 text-emerald-500" />
-            <StatCard title="Total Encaissé" value={formatCurrency(stats.paidVal)} icon={Wallet} colorClass="bg-emerald-500/10 text-emerald-500" />
-            <StatCard title="Restant Dû" value={formatCurrency(stats.unpaidVal)} icon={AlertCircle} colorClass="bg-destructive/10 text-destructive" />
-            <StatCard title="Non Livré" value={String(stats.unreceived)} icon={Truck} colorClass="bg-amber-500/10 text-amber-500" />
-            <StatCard title="Transféré" value={String(stats.transferred)} icon={Landmark} colorClass="bg-blue-500/10 text-blue-500" />
-            <StatCard title="Dettes Commandes" value={formatCurrency(stats.debts)} icon={Wallet} colorClass="bg-purple-500/10 text-purple-500" />
+            <StatCard 
+                title="Volume Total" 
+                value={`${stats.totalPieces} PCS`} 
+                icon={ShoppingBag} 
+                colorClass="bg-primary/10 text-primary" 
+                subtitle="Nombre d'arghifa"
+            />
+            <StatCard 
+                title="Valeur Ventes" 
+                value={formatCurrency(stats.totalVal)} 
+                icon={Landmark} 
+                colorClass="bg-emerald-500/10 text-emerald-500" 
+            />
+            <StatCard 
+                title="Total Encaissé" 
+                value={formatCurrency(stats.paidVal)} 
+                icon={Wallet} 
+                colorClass="bg-emerald-500/10 text-emerald-500" 
+            />
+            <StatCard 
+                title="Restant Dû" 
+                value={formatCurrency(stats.unpaidVal)} 
+                icon={AlertCircle} 
+                colorClass="bg-destructive/10 text-destructive" 
+            />
+            <StatCard 
+                title="À Livrer" 
+                value={`${stats.unreceivedPieces} PCS`} 
+                icon={Truck} 
+                colorClass="bg-amber-500/10 text-amber-500" 
+                subtitle="Reliquat en arghifa"
+            />
+            <StatCard 
+                title="N° Commandes" 
+                value={String(stats.count)} 
+                icon={Package} 
+                colorClass="bg-blue-500/10 text-blue-500" 
+                subtitle="Flux identifiés"
+            />
+            <StatCard 
+                title="Transféré" 
+                value={String(stats.transferred)} 
+                icon={Landmark} 
+                colorClass="bg-purple-500/10 text-purple-500" 
+                subtitle="Inscrit en compte"
+            />
         </div>
     );
 }
