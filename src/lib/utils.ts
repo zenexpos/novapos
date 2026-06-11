@@ -11,7 +11,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export const FINANCIAL_EPSILON = 0.00001;
 export const TVA_RATE_STANDARD = 19;
-export const TVA_RATE_REDUIT = 9;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ARRONDI & SÉCURITÉ (PRECISION FIX)

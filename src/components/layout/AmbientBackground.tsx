@@ -1,6 +1,5 @@
 'use client';
 /**
- * @fileOverview Composant de fond d'ambiance.
- * Statut : Supprimé car obsolète (Dead Code).
+ * @fileOverview Component removed during cleanup (Dead Code).
  */
 export function AmbientBackground() { return null; }
