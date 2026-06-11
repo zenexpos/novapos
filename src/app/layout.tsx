@@ -19,6 +19,11 @@ import { Metadata, Viewport } from 'next';
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
   description: 'Gestion de point de vente locale et sécurisée',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
