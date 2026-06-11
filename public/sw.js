@@ -1,9 +1,8 @@
 /**
- * iPOS Zen — Titanium Offline Fortress v2.9
- * Standalone Service Worker for Production.
+ * iPOS Zen — Service Worker Manuel pour la détection PWA.
+ * Nécessaire pour forcer l'icône d'installation dans la barre d'adresse.
  */
-
-const CACHE_NAME = 'ipos-zen-v2.9';
+const CACHE_NAME = 'ipos-zen-fortress-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -13,17 +12,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
+// Écouteur fetch minimal requis par Chrome pour afficher le bouton d'installation
 self.addEventListener('fetch', (event) => {
-  // CRITICAL: Chrome requires a fetch listener to show the PWA install icon
-  // iPOS Zen relies on next-pwa for advanced caching, but this file 
-  // acts as the primary signal for browser installability.
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match('/offline')));
-  }
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/');
+      })
+    );
   }
 });

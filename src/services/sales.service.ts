@@ -6,76 +6,20 @@ import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
 import { safeToDate, safeNumber, preciseMultiply } from '@/lib/utils';
-import { startOfDay, endOfDay } from 'date-fns';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * Service de gestion des ventes Elite — TITANIUM OFFLINE.
- * Gère le cycle de vie complet d'une transaction commerciale de manière ATOMIQUE.
- * 100% Local-First.
+ * SalesService — Moteur de vente Entreprise.
+ * Garantit l'intégrité des stocks et des soldes clients via des transactions atomiques.
  */
 class SalesService {
 
-    async getSaleByUuid(uuid: string): Promise<Sale | undefined> {
-        return db.sales.where('uuid').equals(uuid).first();
+    private triggerSync() {
+        if (typeof window !== 'undefined') {
+            useAppStore.getState().actions.triggerSmartSync();
+        }
     }
 
-    async getSaleByInvoiceNumber(invoiceNumber: string): Promise<Sale | undefined> {
-        return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
-    }
-
-    async filterSales(filters: {
-        query?: string;
-        status?: 'all' | 'paid' | 'partial' | 'unpaid';
-        from?: Date;
-        to?: Date;
-    }): Promise<Sale[]> {
-        let collection = db.sales.toCollection();
-        const endDate = filters.to ? endOfDay(filters.to!) : undefined;
-
-        if (filters.from && endDate) {
-            const start = startOfDay(filters.from);
-            collection = db.sales.where('createdAt').between(start, endDate, true, true);
-        } else if (filters.from) {
-            collection = db.sales.where('createdAt').aboveOrEqual(startOfDay(filters.from));
-        } else if (endDate) {
-            collection = db.sales.where('createdAt').belowOrEqual(endDate);
-        }
-
-        let sales = await collection.toArray();
-        sales = sales.filter(s => !s.deletedAt && !s.isCancelled);
-
-        if (filters.status && filters.status !== 'all') {
-            sales = sales.filter(s => s.paymentStatus === filters.status);
-        }
-
-        if (filters.query) {
-            const lowerQuery = filters.query.toLowerCase().trim();
-            sales = sales.filter(s => s.invoiceNumber.toLowerCase().includes(lowerQuery));
-        }
-
-        return sales.sort((a, b) => safeToDate(b.createdAt!).getTime() - safeToDate(a.createdAt!).getTime());
-    }
-
-    private async generateInvoiceNumber(): Promise<string> {
-        const profile = await db.company_profile.toCollection().first();
-        const currentCounter = profile?.invoice_counter ?? 1;
-        const prefix = profile?.invoice_prefix || String(new Date().getFullYear());
-        const invoiceNumber = `${prefix}-${String(currentCounter).padStart(6, '0')}`;
-
-        if (profile?.id) {
-            await db.company_profile.update(profile.id, {
-                invoice_counter: currentCounter + 1,
-                updatedAt: new Date(),
-                syncStatus: 'pending'
-            });
-        }
-        return invoiceNumber;
-    }
-
-    /**
-     * Crée une vente de manière atomique.
-     */
     async createSale(saleData: {
         items: CartItem[];
         discountType: 'fixed' | 'percentage';
@@ -85,7 +29,9 @@ class SalesService {
         dueDate?: Date;
     }): Promise<Sale> {
         const now = new Date();
+        const profile = await db.company_profile.toCollection().first();
         
+        // Calcul des totaux en centimes
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -106,20 +52,17 @@ class SalesService {
             Math.abs(remainingCents) < 1 ? 'paid' :
             amountPaidCents > 0 ? 'partial' : 'unpaid';
 
-        const profile = await db.company_profile.toCollection().first();
-        
         const saleItems: SaleItem[] = saleData.items.map(item => ({
             productUuid: item.uuid.startsWith('custom-') ? null : item.uuid,
             name: item.name,
             price: safeNumber(item.price),
             purchasePrice: safeNumber(item.purchasePrice),
             quantity: safeNumber(item.cartQuantity),
-            tva_rate: profile?.tva_rate || 19,
         }));
 
         const newSale: Sale = {
             uuid: uuidv4(),
-            invoiceNumber: '',
+            invoiceNumber: await this.generateInvoiceNumber(),
             items: saleItems,
             subtotal: subtotalCents / 100,
             discountAmount: discountCents / 100,
@@ -135,16 +78,15 @@ class SalesService {
             version: 1
         };
 
+        // TRANSACTION ATOMIQUE CRITIQUE
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
-            db.customers, db.company_profile, db.payments, db.product_returns,
-            db.bread_orders, db.sync_queue
+            db.customers, db.company_profile, db.sync_queue
         ], async () => {
-            newSale.invoiceNumber = await this.generateInvoiceNumber();
             await db.sales.add(newSale);
             
             for (const item of saleData.items) {
-                if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT') {
+                if (item.uuid && !item.uuid.startsWith('custom-')) {
                     await inventoryService.adjustStock(item.uuid, -item.cartQuantity, 'sale', newSale.uuid);
                 }
             }
@@ -165,51 +107,19 @@ class SalesService {
         return newSale;
     }
 
-    async processSaleCancellation(uuid: string): Promise<void> {
-        await db.transaction('rw', [
-            db.sales, db.products, db.customers, db.inventory_logs, db.payments, db.product_returns, db.sync_queue
-        ], async () => {
-            const sale = await this.getSaleByUuid(uuid);
-            if (!sale || !sale.id) throw new Error('Vente non trouvée.');
-            if (sale.isCancelled) return;
+    private async generateInvoiceNumber(): Promise<string> {
+        const profile = await db.company_profile.toCollection().first();
+        const currentCounter = profile?.invoice_counter ?? 1;
+        const prefix = profile?.invoice_prefix || String(new Date().getFullYear());
+        const invoiceNumber = `${prefix}-${String(currentCounter).padStart(6, '0')}`;
 
-            const update = {
-                isCancelled: true,
-                cancelledAt: new Date(),
-                updatedAt: new Date(),
-                syncStatus: 'pending' as const
-            };
-
-            await db.sales.update(sale.id, update);
-
-            for (const item of sale.items) {
-                if (item.productUuid) {
-                    await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
-                }
-            }
-            
-            if (sale.customerUuid) {
-                await customerService.recalculateCustomerStatus(sale.customerUuid);
-            }
-
-            await db.sync_queue.add({
-                table: 'sales',
-                operation: 'UPDATE',
-                payload: { ...sale, ...update },
-                timestamp: Date.now()
+        if (profile?.id) {
+            await db.company_profile.update(profile.id, {
+                invoice_counter: currentCounter + 1,
+                updatedAt: new Date()
             });
-        });
-
-        this.triggerSync();
-    }
-
-    private triggerSync() {
-        if (typeof window !== 'undefined') {
-            const state = useAppStore.getState();
-            if (state && state.actions) {
-                state.actions.triggerSmartSync();
-            }
         }
+        return invoiceNumber;
     }
 }
 

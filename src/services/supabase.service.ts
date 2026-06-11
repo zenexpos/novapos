@@ -3,12 +3,10 @@
 import { db } from '@/lib/db';
 import { getSupabaseClient } from '@/lib/supabase';
 import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
-import { toast } from 'sonner';
 
 /**
- * @fileOverview Titanium Sync Engine — v2.9.5 (Audited Edition)
- * Fixed: Incremental sync to prevent performance bottleneck.
- * Fixed: Explicit date mapping to ensure object integrity.
+ * Titanium Sync Engine — Version Entreprise
+ * Gère la synchronisation bidirectionnelle incrémentale.
  */
 class SupabaseSyncService {
     private isSyncing = false;
@@ -35,16 +33,16 @@ class SupabaseSyncService {
         }
 
         try {
-            // 1. PUSH : Process local changes first
+            // 1. PUSH : Envoyer les changements locaux
             await this.processSyncQueue(supabase);
 
-            // 2. PULL : Get ONLY new/updated records from Cloud (Incremental)
+            // 2. PULL : Récupérer les nouveautés du Cloud
             const profile = await db.company_profile.toCollection().first();
             const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
             
             await this.pullRemoteChanges(supabase, lastSync);
 
-            // 3. FINALIZE
+            // 3. FINALISATION
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
                     last_sync_at: new Date(),
@@ -94,16 +92,14 @@ class SupabaseSyncService {
         const tables = [
             'company_profile', 'suppliers', 'customers', 'products', 
             'expenses', 'stock_intakes', 'sales', 'product_returns', 
-            'payments', 'bread_orders', 'inventory_logs', 'supplier_payments'
+            'payments', 'bread_orders', 'inventory_logs'
         ];
 
         for (const table of tables) {
-            // AUDIT FIX: Only pull records updated after our last sync
             const { data, error } = await supabase
                 .from(table)
                 .select('*')
-                .gt('updated_at', lastSync)
-                .order('updated_at', { ascending: true });
+                .gt('updated_at', lastSync);
 
             if (error || !data || data.length === 0) continue;
 
@@ -117,29 +113,12 @@ class SupabaseSyncService {
 
                     if (!local) {
                         await dexieTable.add({ ...sanitizedRemote, syncStatus: 'synced' });
-                    } else {
-                        const localTime = new Date(local.updatedAt || 0).getTime();
-                        const remoteTime = new Date(sanitizedRemote.updatedAt || 0).getTime();
-
-                        if (remoteTime > localTime) {
-                            await dexieTable.update(local.id, { ...sanitizedRemote, syncStatus: 'synced' });
-                        }
+                    } else if (new Date(sanitizedRemote.updatedAt) > new Date(local.updatedAt)) {
+                        await dexieTable.update(local.id, { ...sanitizedRemote, syncStatus: 'synced' });
                     }
                 }
             });
         }
-    }
-
-    async push(url: string, key: string): Promise<void> {
-        const supabase = getSupabaseClient(url, key);
-        if (supabase) await this.processSyncQueue(supabase);
-    }
-
-    async pull(url: string, key: string): Promise<void> {
-        const profile = await db.company_profile.toCollection().first();
-        const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
-        const supabase = getSupabaseClient(url, key);
-        if (supabase) await this.pullRemoteChanges(supabase, lastSync);
     }
 
     private camelToSnake(str: string): string {
@@ -168,21 +147,20 @@ class SupabaseSyncService {
         for (const key in record) {
             const camelKey = this.snakeToCamel(key);
             let value = record[key];
-            
-            // AUDIT FIX: Explicitly handle all timestamp/date fields
-            if (typeof value === 'string' && (
-                key.endsWith('_at') || 
-                key.endsWith('_date') || 
-                key === 'date' || 
-                key === 'pickup_date' ||
-                key === 'cancelled_at'
-            )) {
+            if (typeof value === 'string' && (key.endsWith('_at') || key.endsWith('_date') || key === 'date')) {
                 const d = new Date(value);
                 if (!isNaN(d.getTime())) value = d;
             }
             clean[camelKey] = value;
         }
         return clean;
+    }
+
+    async push(url: string, key: string) { await this.processSyncQueue(getSupabaseClient(url, key)); }
+    async pull(url: string, key: string) { 
+        const profile = await db.company_profile.toCollection().first();
+        const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
+        await this.pullRemoteChanges(getSupabaseClient(url, key), lastSync); 
     }
 }
 

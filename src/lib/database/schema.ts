@@ -1,13 +1,13 @@
 /**
- * @fileOverview iPOS Zen - Titanium Database Schema
- * Définition de la structure des tables indépendamment pour assurer l'extensibilité et les migrations.
+ * iPOS Zen - Source de vérité du schéma de la base de données.
+ * Version 7.0 - Enterprise Edition.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 
 export const DB_SCHEMA = {
-    products:           '++id, &uuid, name, *barcodes, supplierUuid, syncStatus, deletedAt, dateExpiration',
+    products:           '++id, &uuid, name, *barcodes, supplierUuid, syncStatus, deletedAt',
     customers:          '++id, &uuid, searchName, syncStatus, deletedAt',
     sales:              '++id, &uuid, invoiceNumber, customerUuid, createdAt, syncStatus, deletedAt',
     expenses:           '++id, &uuid, category, expenseDate, syncStatus, deletedAt',
@@ -19,6 +19,5 @@ export const DB_SCHEMA = {
     stock_intakes:      '++id, &uuid, invoiceNumber, supplierUuid, createdAt',
     product_returns:    '++id, &uuid, originalInvoiceNumber, customerUuid, createdAt',
     supplier_payments:  '++id, &uuid, supplierUuid, paymentDate',
-    proforma_invoices:  '++id, &uuid, proformaNumber, customerUuid, createdAt',
     sync_queue:         '++id, table, operation, timestamp'
 };
