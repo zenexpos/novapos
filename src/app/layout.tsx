@@ -14,14 +14,20 @@ import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { PWAUpdateNotifier } from '@/components/pwa/PWAUpdateNotifier';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
+/**
+ * Layout Racine — Standard Enterprise.
+ * Gère les polices, les métadonnées et l'initialisation des services PWA/Offline.
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-FR" suppressHydrationWarning>
       <head>
-        <title>iPOS Zen - Gestion Simple</title>
-        <meta name="description" content="Système de vente simple et efficace pour gérer vos produits et vos clients" />
-        <link rel="manifest" href="/manifest.webmanifest" />
+        <title>iPOS Zen — Gestion Simple</title>
+        <meta name="description" content="Système de vente efficace pour commerces de proximité" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#AFB42B" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20">
         <ServiceWorkerRegister />

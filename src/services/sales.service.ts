@@ -5,12 +5,11 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeToDate, safeNumber, preciseMultiply } from '@/lib/utils';
+import { safeNumber, preciseMultiply } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * SalesService — Moteur de vente Entreprise.
- * Garantit l'intégrité des stocks et des soldes clients via des transactions atomiques.
+ * Service de gestion des ventes Enterprise.
  */
 class SalesService {
 
@@ -18,6 +17,14 @@ class SalesService {
         if (typeof window !== 'undefined') {
             useAppStore.getState().actions.triggerSmartSync();
         }
+    }
+
+    async getSaleByUuid(uuid: string): Promise<Sale | undefined> {
+        return db.sales.where('uuid').equals(uuid).first();
+    }
+
+    async getSaleByInvoiceNumber(invoiceNumber: string): Promise<Sale | undefined> {
+        return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
     }
 
     async createSale(saleData: {
@@ -31,7 +38,7 @@ class SalesService {
         const now = new Date();
         const profile = await db.company_profile.toCollection().first();
         
-        // Calcul des totaux en centimes
+        // Calcul des totaux en centimes pour précision absolue
         const subtotalCents = saleData.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -75,13 +82,15 @@ class SalesService {
             updatedAt: now,
             dueDate: saleData.dueDate,
             syncStatus: 'pending',
-            version: 1
+            version: 1,
+            isCancelled: false
         };
 
-        // TRANSACTION ATOMIQUE CRITIQUE
+        // TRANSACTION ATOMIQUE ELITE
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
-            db.customers, db.company_profile, db.sync_queue
+            db.customers, db.company_profile, db.sync_queue,
+            db.payments, db.product_returns
         ], async () => {
             await db.sales.add(newSale);
             
@@ -105,6 +114,65 @@ class SalesService {
 
         this.triggerSync();
         return newSale;
+    }
+
+    async processSaleCancellation(uuid: string): Promise<void> {
+        const sale = await this.getSaleByUuid(uuid);
+        if (!sale || sale.isCancelled) return;
+
+        await db.transaction('rw', [
+            db.sales, db.products, db.inventory_logs, 
+            db.customers, db.sync_queue
+        ], async () => {
+            await db.sales.update(sale.id!, { 
+                isCancelled: true, 
+                updatedAt: new Date(),
+                syncStatus: 'pending' 
+            });
+
+            for (const item of sale.items) {
+                if (item.productUuid) {
+                    await inventoryService.adjustStock(item.productUuid, item.quantity, 'cancellation', sale.uuid);
+                }
+            }
+
+            if (sale.customerUuid) {
+                await customerService.recalculateCustomerStatus(sale.customerUuid);
+            }
+
+            await db.sync_queue.add({
+                table: 'sales',
+                operation: 'UPDATE',
+                payload: { ...sale, isCancelled: true },
+                timestamp: Date.now()
+            });
+        });
+
+        this.triggerSync();
+    }
+
+    async filterSales(filters: { query?: string; status?: string; from?: Date; to?: Date }): Promise<Sale[]> {
+        let collection = db.sales.filter(s => !s.deletedAt);
+        
+        if (filters.status && filters.status !== 'all') {
+            collection = collection.filter(s => s.paymentStatus === filters.status);
+        }
+        
+        let sales = await collection.toArray();
+        
+        if (filters.query) {
+            const q = filters.query.toLowerCase().trim();
+            sales = sales.filter(s => s.invoiceNumber.toLowerCase().includes(q));
+        }
+
+        if (filters.from && filters.to) {
+            sales = sales.filter(s => {
+                const d = new Date(s.createdAt!);
+                return d >= filters.from! && d <= filters.to!;
+            });
+        }
+
+        return sales.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
     }
 
     private async generateInvoiceNumber(): Promise<string> {

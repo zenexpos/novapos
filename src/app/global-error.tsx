@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Dernier rempart contre le crash complet du système Enterprise.
- * Permet de redémarrer l'application sans perdre les données locales.
+ * Dernier rempart contre le crash complet du système.
  */
 export default function GlobalError({
   error,
