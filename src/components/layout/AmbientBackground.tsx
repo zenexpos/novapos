@@ -1,6 +1,5 @@
 'use client';
 /**
- * @fileOverview Dead code eliminated. 
- * Component was empty and unused in layouts. Ready for manual deletion.
+ * @fileOverview Unused background artifact cleaned during audit.
  */
 export const AmbientBackground = () => null;

@@ -1,10 +1,8 @@
 'use client';
 
 import { db } from '@/lib/db';
-import { startOfDay, endOfDay } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
+import { startOfDay, endOfDay, format } from 'date-fns';
 import { safeNumber, roundFinancial } from '@/lib/utils';
-import type { Sale, Expense, Payment } from '@/lib/types';
 
 /**
  * Service de Clôture Quotidienne (Z-Report).
@@ -36,28 +34,9 @@ class ClosingService {
                 totalExpenses: roundFinancial(totalExpenses),
                 expectedCash: roundFinancial(expectedCash),
                 saleCount: sales.length,
-            },
-            isClosed: false
-        };
-    }
-
-    async closeDay(actualCash: number, notes?: string) {
-        const report = await this.generateDailyZReport();
-        const variance = actualCash - report.summary.expectedCash;
-
-        // Implementation of permanent record storage can be added to db.z_reports table if needed
-        return {
-            ...report,
-            actualCash,
-            variance: roundFinancial(variance),
-            closedAt: new Date(),
-            notes
+            }
         };
     }
 }
 
 export const closingService = new ClosingService();
-
-function format(date: Date, arg1: string): string {
-    return date.toISOString().split('T')[0];
-}
