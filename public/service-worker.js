@@ -4,9 +4,12 @@ const OFFLINE_URL = '/offline/offline.html';
 const ASSETS_TO_CACHE = [
   '/',
   OFFLINE_URL,
-  '/icon.svg',
+  '/offline/offline.css',
+  '/offline/offline.js',
   '/manifest.webmanifest',
-  'https://picsum.photos/seed/ipos-pwa-1/1280/720'
+  '/icon.svg',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,23 +43,11 @@ self.addEventListener('fetch', (event) => {
         return caches.match(OFFLINE_URL);
       })
     );
-    return;
+  } else {
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        return response || fetch(event.request);
+      })
+    );
   }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((fetchResponse) => {
-        if (event.request.url.includes('supabase.co')) return fetchResponse;
-        
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, fetchResponse.clone());
-          return fetchResponse;
-        });
-      });
-    }).catch(() => {
-      if (event.request.destination === 'image') {
-        return caches.match('/icon.svg');
-      }
-    })
-  );
 });
