@@ -1,7 +1,7 @@
 'use client';
 
 import { db } from '@/lib/db';
-import { startOfDay, endOfDay, subDays, format } from 'date-fns';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 /**
@@ -10,28 +10,34 @@ import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
  */
 class ReportsService {
     
+    /**
+     * حساب قيمة المخزون الحالية (بسعر الشراء وسعر البيع).
+     */
     async getInventoryValuation() {
         const products = await db.products.toArray();
-        let totalCost = 0;
-        let totalRetail = 0;
+        let totalCostCents = 0;
+        let totalRetailCents = 0;
 
         products.forEach(p => {
             const qty = safeNumber(p.quantity);
             if (qty > 0) {
-                totalCost += Math.round(preciseMultiply(qty, safeNumber(p.purchasePrice)) * 100);
-                totalRetail += Math.round(preciseMultiply(qty, safeNumber(p.price)) * 100);
+                totalCostCents += Math.round(preciseMultiply(qty, safeNumber(p.purchasePrice)) * 100);
+                totalRetailCents += Math.round(preciseMultiply(qty, safeNumber(p.price)) * 100);
             }
         });
 
         return {
-            atCost: totalCost / 100,
-            atRetail: totalRetail / 100,
-            potentialProfit: (totalRetail - totalCost) / 100
+            atCost: totalCostCents / 100,
+            atRetail: totalRetailCents / 100,
+            potentialProfit: (totalRetailCents - totalCostCents) / 100
         };
     }
 
+    /**
+     * أداء الفترة (إيرادات، سيولة، مصاريف).
+     */
     async getPeriodPerformance(days = 30) {
-        const start = startOfDay(subDays(new Date(), days));
+        const start = startOfDay(subDays(new Date(), days - 1));
         const end = endOfDay(new Date());
 
         const [sales, expenses, payments] = await Promise.all([
@@ -41,17 +47,24 @@ class ReportsService {
         ]);
 
         const revenue = sales.reduce((sum, s) => sum + safeNumber(s.total), 0);
-        const collected = sales.reduce((sum, s) => sum + safeNumber(s.amountPaid), 0) + 
-                          payments.reduce((sum, p) => sum + safeNumber(p.amount), 0);
+        const cashRevenue = sales.reduce((sum, s) => sum + safeNumber(s.amountPaid), 0);
+        const debtRecovered = payments.reduce((sum, p) => sum + safeNumber(p.amount), 0);
         const outgoings = expenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
+
+        const totalCashIn = cashRevenue + debtRecovered;
 
         return {
             revenue: roundFinancial(revenue),
-            cashFlow: roundFinancial(collected - outgoings),
+            cashFlow: roundFinancial(totalCashIn - outgoings),
+            totalIn: roundFinancial(totalCashIn),
+            totalOut: roundFinancial(outgoings),
             expenseRatio: revenue > 0 ? (outgoings / revenue) * 100 : 0
         };
     }
 
+    /**
+     * المنتجات الأكثر مبيعاً.
+     */
     async getTopSellingProducts(limit = 10) {
         const sales = await db.sales.filter(s => !s.isCancelled).toArray();
         const productStats = new Map<string, { name: string, qty: number, revenue: number }>();
