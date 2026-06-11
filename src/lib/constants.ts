@@ -1,18 +1,33 @@
-import type { Customer, DatePreset } from './types';
+import type { DatePreset } from './types/common';
 
 /**
  * @fileOverview iPOS Zen Global Constants (Audited).
- * Removed unused legacy constants to optimize bundle size.
  */
 
-// ── Bread ────────────────────────────────────────────────────────────────────
-export const BREAD_WEEK_DAYS: (keyof NonNullable<Customer['bread_jours_semaine']>)[] = [
-    'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi',
-];
+export * from './constants/app';
+
+// ── Bread Constants ──────────────────────────────────────────────────────────
+/**
+ * Array mapping for Date.getDay() (0 = Sunday, 1 = Monday, etc.)
+ */
+export const BREAD_WEEK_DAYS = [
+    'dimanche',
+    'lundi',
+    'mardi',
+    'mercredi',
+    'jeudi',
+    'vendredi',
+    'samedi',
+] as const;
 
 export const BREAD_WEEK_DAY_LABELS_FULL: Record<string, string> = {
-    lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
-    jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche',
+    lundi: 'Lundi', 
+    mardi: 'Mardi', 
+    mercredi: 'Mercredi',
+    jeudi: 'Jeudi', 
+    vendredi: 'Vendredi', 
+    samedi: 'Samedi', 
+    dimanche: 'Dimanche',
 };
 
 // ── Date presets ─────────────────────────────────────────────────────────────
@@ -23,6 +38,3 @@ export const DATE_PRESETS: DatePreset[] = [
     { label: '90 derniers jours', days: 89 },
     { label: 'Cette année',       days: 364 },
 ];
-
-// ── App ──────────────────────────────────────────────────────────────────────
-export const APP_VERSION = '2.0.0';

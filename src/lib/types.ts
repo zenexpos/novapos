@@ -1,5 +1,5 @@
 /**
- * @fileOverview iPOS Zen - Type System Entry
+ * @fileOverview iPOS Zen - Type System Entry (Modular Barrel)
  */
 
 export * from './types/common';

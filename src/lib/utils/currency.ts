@@ -18,3 +18,7 @@ export function formatCurrencyCompact(value: number, currency = 'DA'): string {
     if (num >= 1_000) return `${(num / 1_000).toFixed(1)}k ${currency}`;
     return formatCurrency(num, currency);
 }
+
+export function formatPercent(value: number, decimals: number = 1): string {
+    return `${safeNumber(value).toFixed(decimals)}%`;
+}

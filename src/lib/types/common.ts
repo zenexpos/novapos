@@ -19,3 +19,8 @@ export interface SyncQueueItem {
     payload: any;
     timestamp: number;
 }
+
+export interface DatePreset {
+    label: string;
+    days: number;
+}

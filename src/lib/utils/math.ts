@@ -60,3 +60,22 @@ export function calculateCartTotals(cart: {
         total
     };
 }
+
+/**
+ * TTC to HT Extraction
+ */
+export function ttcToHt(ttc: number, tvaRate: number = 19): number {
+    return ttc / (1 + (tvaRate / 100));
+}
+
+/**
+ * HT to TTC Addition
+ */
+export function htToTtc(ht: number, tvaRate: number = 19): number {
+    return ht * (1 + (tvaRate / 100));
+}
+
+export function calculateTVA(totalTTC: number, tvaRate: number = 19): number {
+    const ht = ttcToHt(totalTTC, tvaRate);
+    return totalTTC - ht;
+}
