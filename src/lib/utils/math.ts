@@ -82,23 +82,3 @@ export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
     return totalTTC - ht;
 }
-
-/**
- * Calcule le montant de la Zakat (2.5%) si le seuil est atteint.
- */
-export function calculateZakat(assets: number, goldPrice: number) {
-    const nisab = calculateNisab(goldPrice);
-    const isEligible = assets >= nisab;
-    return {
-        due: isEligible,
-        amount: isEligible ? roundFinancial(assets * 0.025) : 0,
-        nisab
-    };
-}
-
-/**
- * Calcule le seuil du Nissab (85g d'or).
- */
-export function calculateNisab(goldPrice: number): number {
-    return roundFinancial(85 * safeNumber(goldPrice));
-}

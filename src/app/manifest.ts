@@ -1,15 +1,15 @@
 import { MetadataRoute } from 'next';
 
 /**
- * Manifeste PWA Enterprise - iPOS Zen v2.9.
+ * Manifeste PWA Enterprise - iPOS Zen.
  * Définit l'identité visuelle et garantit l'installabilité native sur Desktop et Mobile.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: 'ipos-zen-sovereign',
-    name: 'iPOS Zen — Système POS Souverain',
+    name: 'iPOS Zen — Point de Vente',
     short_name: 'iPOS Zen',
-    description: 'Gestion de point de vente haute performance, 100% hors-ligne et sécurisée.',
+    description: 'Gestion de point de vente locale et sécurisée.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -39,15 +39,13 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: 'Nouvelle Vente',
+        name: 'Vendre',
         url: '/sell',
-        description: 'Démarrer une session de vente immédiate',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       },
       {
-        name: 'Alerte Dettes',
+        name: 'Dettes',
         url: '/debt-alerts',
-        description: 'Vérifier les créances clients',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       }
     ]

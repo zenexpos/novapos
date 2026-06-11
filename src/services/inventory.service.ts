@@ -48,7 +48,7 @@ class InventoryService {
             version: 1
         };
 
-        // Utilise la transaction parente si elle existe ou en crée une nouvelle
+        // Dexie will automatically include this in parent transaction if one exists
         await db.products.update(product.id, updateData);
         await db.inventory_logs.add(log);
     }
@@ -67,7 +67,7 @@ class InventoryService {
 
         let logs = await logsCollection.toArray();
 
-        // Jointure manuelle optimisée pour les noms de produits
+        // Join product names
         const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter(Boolean) as string[]));
         const products = await db.products.where('uuid').anyOf(productUuids).toArray();
         const productMap = new Map(products.map(p => [p.uuid, p.name]));
