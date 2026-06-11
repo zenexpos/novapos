@@ -6,7 +6,7 @@ import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
  * Barrière de sécurité ultime d'iPOS Zen.
- * En cas de crash fatal, ce composant permet de redémarrer l'application.
+ * En cas de crash fatal du système, ce composant permet de redémarrer l'application.
  */
 export default function GlobalError({
   error,
