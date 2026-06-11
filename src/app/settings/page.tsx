@@ -173,7 +173,7 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="lg:col-span-8 space-y-4">
-                    {/* PWA Installation Card - يتم عرضه عندما يكتشف المتصفح أن التطبيق جاهز للتثبيت */}
+                    {/* PWA Installation Card */}
                     {isInstallable && (
                         <Card className="app-card rounded-lg border-primary/20 bg-primary/5 overflow-hidden shadow-xl group animate-in slide-in-from-top-4 duration-1000">
                             <CardHeader className="bg-primary/10 border-b border-primary/10 p-6">
@@ -200,7 +200,7 @@ export default function SettingsPage() {
                                 <Sparkles className="absolute -right-8 -bottom-8 h-40 w-40 text-primary/5 rotate-12" />
                                 <div className="space-y-4 relative z-10">
                                     <p className="text-sm font-bold text-muted-foreground/80 leading-relaxed">
-                                        Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément منذ شريط المهام، دون تشتيت المتصفح.
+                                        Transformez iPOS Zen en une application de bureau complète. Accédez au système instantanément depuis la barre des tâches, sans distraction du navigateur.
                                     </p>
                                     <div className="flex flex-wrap gap-3">
                                         {['Lancement Rapide', 'Icône Bureau', 'Plein Écran', 'Hors-ligne Stable'].map((feat, i) => (
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                                                 onClick={() => performCloudSync('pull')} 
                                                 variant="outline"
                                                 disabled={isSyncing}
-                                                className="w-full rounded-2xl h-9 font-semibold text-[10px] uppercase tracking-wide border-emerald-500/20 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500/10 transition-all active:scale-95 gap-3"
+                                                className="w-full rounded-2xl h-9 font-semibold text-[10px] uppercase tracking-wide border-emerald-500/20 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500/10 transition-all active:scale-95 gap-3"
                                             >
                                                 {isSyncing ? <RefreshCw className="h-4 w-4 animate-spin"/> : <DownloadCloud className="h-4 w-4" />}
                                                 Restaurer Données
@@ -494,7 +494,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="p-4 space-y-6">
                             <p className="text-[10px] font-bold text-destructive/60 leading-relaxed text-center italic px-2 uppercase tracking-wide">
-                                Les actions ci-dessous sont irréversible et entraînent la perte totale de vos données locales non sauvegardées.
+                                Les actions ci-dessous sont irréversibles et entraînent la perte totale de vos données locales non sauvegardées.
                             </p>
                             <Button 
                                 variant="outline" 
@@ -515,12 +515,12 @@ export default function SettingsPage() {
                 title="Effacer l'intégralité du système ?"
                 description={
                     <div className="space-y-6">
-                        <p className="font-medium text-foreground">Cette action va purجر définitivement votre base de données locale :</p>
+                        <p className="font-medium text-foreground">Cette action va purger définitivement votre base de données locale :</p>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 'Catalogue Produits', 'Fichiers Clients', 
                                 'Registre des Ventes', 'Journal d\'Audit', 
-                                'Profil Étabلissement', 'Historique Stock'
+                                'Profil Établissement', 'Historique Stock'
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-muted/20 border border-white/5">
                                     <X className="h-3 w-3 text-destructive opacity-40" />

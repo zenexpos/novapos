@@ -5,8 +5,8 @@ import type { Sale, CompanyProfile } from '@/lib/types';
 import { numberToFrenchWords } from '@/lib/numberToWords';
 
 /**
- * useAutoPrint — نظام الطباعة التلقائية السريعة iPOS Zen.
- * محاكي لتنسيق Receipt السيادي الموحد لضمان اتساق المخرجات وتوسيطها.
+ * useAutoPrint — Système d'impression automatique rapide iPOS Zen.
+ * Simule le format de reçu souverain unifié pour garantir la cohérence et le centrage des impressions.
  */
 export function useAutoPrint() {
     const isEnabled = useCallback((): boolean => {

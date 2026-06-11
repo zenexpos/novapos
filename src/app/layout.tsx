@@ -15,7 +15,7 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
-  description: "Système محاسبي سيادي صلب وفخم لإدارة المبيعات والمخزون",
+  description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

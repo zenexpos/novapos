@@ -290,11 +290,11 @@ class BreadService {
     async deleteOrder(uuid: string): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.transferredToCustomerAccount) {
-            throw new Error("Impossible de supprimer un طلب محول للحساب.");
+            throw new Error("Impossible de supprimer une commande transférée au compte.");
         }
 
         await db.bread_orders.update(order.id!, { deletedAt: new Date() });
-        await this.logAction(uuid, 'manual_adjustment', 'Suppression du طلب', order, null);
+        await this.logAction(uuid, 'manual_adjustment', 'Suppression du bon', order, null);
         triggerSync();
     }
 

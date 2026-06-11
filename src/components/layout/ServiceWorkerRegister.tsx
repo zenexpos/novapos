@@ -3,13 +3,13 @@
 import { useEffect } from 'react';
 
 /**
- * ServiceWorkerRegister — التسجيل السيادي لمحرك الأوفلاين.
- * يضمن تسجيل ملف service-worker.js لتمكين التثبيت والعمل بدون إنترنت.
+ * ServiceWorkerRegister — Enregistrement souverain du moteur hors-ligne.
+ * Assure l'enregistrement du fichier service-worker.js pour permettre l'installation et le fonctionnement sans internet.
  */
 export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // تسجيل ملف الخدمة اليدوي لضمان تفعيل الـ Fetch listener والعمل أوفلاين كلياً
+      // Enregistrement manuel du fichier de service pour garantir l'activation du fetch listener et un fonctionnement hors-ligne complet
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((reg) => {

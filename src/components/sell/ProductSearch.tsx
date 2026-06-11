@@ -111,7 +111,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     const results = data.slice(0, 15);
                     setSearchResults(results);
 
-                    // ميزة الإضافة التلقائية عند مطابقة الكودبار بدقة
+                    // Fonctionnalité d'ajout automatique lors d'une correspondance précise du code-barres
                     if (results.length > 0) {
                         const q = debouncedSearchQuery.trim();
                         const exactMatch = results.find(p => p.barcodes?.includes(q));
@@ -221,7 +221,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                         ) : !isSearching && (
                             <div className="py-24 text-center space-y-4 opacity-20 flex flex-col items-center">
                                 <ShoppingBag className="h-16 w-16 mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertوريé.</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertorié.</p>
                             </div>
                         )}
                     </div>

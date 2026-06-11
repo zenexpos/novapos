@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 
 /**
- * RootPage — توجيه سيادي فوري.
- * يحل مشكلة الـ 404 في وضع التصدير الاستاتيكي عبر توجيه الخادم المباشر.
+ * RootPage — Redirection souveraine immédiate.
+ * Résout le problème du 404 en mode export statique via une redirection serveur directe.
  */
 export default function RootPage() {
     redirect('/dashboard');

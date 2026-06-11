@@ -228,7 +228,7 @@ function PaymentDialogContent({
                                 </p>
                             </div>
                             {!customer && !isFullPay && (
-                                <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px]">Pايement requis</Badge>
+                                <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px]">Paiement requis</Badge>
                             )}
                         </div>
 

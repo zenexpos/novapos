@@ -5,7 +5,7 @@ import type { NetworkStatus } from '@/lib/types';
 
 /**
  * useNetwork — Titanium Monitor.
- * يراقب جودة الاتصال وحالة الإنترنت للتكيف مع وضع الأوفلاين.
+ * Surveille la qualité de la connexion et l'état de l'internet pour s'adapter au mode hors-ligne.
  */
 export function useNetwork() {
     const [status, setStatus] = useState<NetworkStatus>('online');

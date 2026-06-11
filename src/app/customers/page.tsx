@@ -53,7 +53,7 @@ function CustomersContent() {
     const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
     const [isRefreshing, setIsRefreshing] = useState(false);
     
-    // استخدام الهوك المحسن والمستقر
+    // Utilisation du hook optimisé et stable
     const { debouncedValue, signal } = useDebouncedAbortSignal(searchQuery, 300);
 
     const [customers, setCustomers] = useState<Customer[] | undefined>(undefined);
@@ -71,7 +71,7 @@ function CustomersContent() {
         }
     }, [searchParams]);
 
-    // تثبيت الوظيفة لمنع حلقات التكرار في React 19
+    // Stabilisation de la fonction pour éviter les boucles de rendu en React 19
     const fetchCustomers = useCallback(async () => {
         setIsRefreshing(true);
         try {
@@ -394,7 +394,7 @@ function CustomersContent() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="rounded-xl h-11 border-none shadow-sm bg-card hover:bg-primary/5 min-w-[140px] font-medium">
                                 <Users className="mr-2 h-4 w-4 opacity-50" />
-                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'PlafOND dépassé' : 'Clients de Pain'}
+                                {filterStatus === 'all' ? 'Tous les clients' : filterStatus === 'has_debt' ? 'Avec une dette' : filterStatus === 'overdue' ? 'Retard de paiement' : filterStatus === 'over_limit' ? 'Plafond dépassé' : 'Clients de Pain'}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-xl border-none shadow-xl min-w-[200px]">
@@ -476,12 +476,6 @@ function CustomersContent() {
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
                     <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-sm rounded-full px-8 py-4 flex items-center gap-4">
                         <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-                            <Checkbox
-                                id="select-all-customers"
-                                checked={!isLoading && customers && customers.length > 0 && selectedCustomers.size === customers.length}
-                                onCheckedChange={handleToggleSelectAll}
-                                className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
-                            />
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-semibold uppercase text-muted-foreground">Sélection Elite</span>
                                 <span className="text-xs font-semibold text-primary">{selectedCustomers.size} client(s)</span>

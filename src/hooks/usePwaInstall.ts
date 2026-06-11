@@ -3,19 +3,18 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /**
- * usePwaInstall — نظام التقاط حدث التثبيت المتقدم iPOS Zen.
- * يستخدم مستمعاً عالمياً لضمان عدم ضياع الحدث 'beforeinstallprompt'
- * الذي يرسله المتصفح لتفعيل زر التثبيت.
+ * usePwaInstall — Système de capture d'événement d'installation avancé iPOS Zen.
+ * Utilise un écouteur global pour garantir que l'événement 'beforeinstallprompt' envoyé par le navigateur n'est pas manqué, afin d'activer le bouton d'installation.
  */
 
 let deferredPrompt: any = null;
 
 if (typeof window !== 'undefined') {
     window.addEventListener('beforeinstallprompt', (e) => {
-        // منع الظهور التلقائي للمتصفح للتحكم فيه برمجياً عبر أزرارنا الخاصة
+        // Empêche l'affichage automatique du navigateur pour un contrôle programmatique via nos propres boutons
         e.preventDefault();
         deferredPrompt = e;
-        // إرسال تنبيه لكافة المكونات المهتمة بأن التطبيق جاهز للتثبيت
+        // Envoie une notification à tous les composants concernés indiquant que l'application est prête à être installée
         window.dispatchEvent(new Event('pwa-install-ready'));
     });
 
