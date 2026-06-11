@@ -3,7 +3,8 @@
 import { Loader2 } from 'lucide-react';
 
 /**
- * Chargeur global du système.
+ * Chargeur global du système iPOS Zen.
+ * Fournit un feedback visuel constant pendant les transitions de route.
  */
 export default function GlobalLoading() {
     return (
@@ -13,7 +14,7 @@ export default function GlobalLoading() {
                 <Loader2 className="h-12 w-12 animate-spin text-primary relative z-10" />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">
-                Chargement...
+                Chargement du Registre...
             </p>
         </div>
     );

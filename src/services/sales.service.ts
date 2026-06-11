@@ -10,7 +10,7 @@ import { useAppStore } from '@/stores/appStore';
 
 /**
  * Service de gestion des ventes Enterprise.
- * Toutes les opérations sont encapsulées dans des transactions pour garantir l'intégrité du stock.
+ * Toutes les opérations sont encapsulées dans des transactions Dexie pour garantir l'intégrité du stock.
  */
 class SalesService {
 
@@ -28,6 +28,10 @@ class SalesService {
         return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
     }
 
+    /**
+     * Crée une vente de manière atomique.
+     * Met à jour le stock, le solde client et la file de synchro en une seule transaction.
+     */
     async createSale(saleData: {
         items: CartItem[];
         discountType: 'fixed' | 'percentage';
@@ -87,7 +91,7 @@ class SalesService {
             isCancelled: false
         };
 
-        // TRANSACTION ATOMIQUE : Vente + Ajustement Stock + Solde Client + Sync Queue
+        // TRANSACTION ATOMIQUE ELITE
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,

@@ -5,8 +5,8 @@ import { startOfDay, endOfDay, format } from 'date-fns';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
- * Service de Clôture de Caisse (Z-Report).
- * Permet d'analyser les recettes réelles, les dépenses et le flux de trésorerie quotidien.
+ * Service de Clôture de Caisse (Z-Report) Enterprise.
+ * Analyse les recettes réelles, les dépenses et le flux de trésorerie net.
  */
 class ClosingService {
     /**
@@ -16,7 +16,7 @@ class ClosingService {
         const start = startOfDay(date);
         const end = endOfDay(date);
 
-        // Analyse croisée des flux
+        // Analyse croisée des flux financiers
         const [sales, expenses, payments] = await Promise.all([
             db.sales.where('createdAt').between(start, end, true, true).filter(s => !s.isCancelled).toArray(),
             db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
@@ -31,7 +31,7 @@ class ClosingService {
         // Calcul des décaissements (Cash Out)
         const totalExpenses = expenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
 
-        // Trésorerie attendue
+        // Trésorerie nette attendue
         const netCashFlow = totalCashIn - totalExpenses;
 
         return {

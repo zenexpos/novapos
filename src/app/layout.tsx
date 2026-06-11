@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './globals.css';
 import { ClientProviders } from '@/components/layout/ClientProviders';
 import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
@@ -15,14 +15,20 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 
 /**
  * Layout Racine Enterprise.
- * Gère les polices, les métadonnées et l'initialisation des services PWA/Offline.
+ * Gère l'hydratation, les thèmes et l'initialisation des services PWA/Offline.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <html lang="fr-FR" suppressHydrationWarning>
       <head>
-        <title>iPOS Zen — Gestion Simple</title>
-        <meta name="description" content="Système de vente simple et efficace" />
+        <title>iPOS Zen — Système POS Souverain</title>
+        <meta name="description" content="Gestion de point de vente locale et synchronisée" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#AFB42B" />
@@ -31,24 +37,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20">
         <ServiceWorkerRegister />
-        <ClientProviders>
-          <TooltipProvider delayDuration={0}>
-            <KeyboardShortcutsProvider>
-              <AppSyncManager>
-                  <div className="flex h-screen flex-col bg-background relative overflow-hidden">
-                        <AppHeaderWrapper />
-                        <SaleInfoBarWrapper />
-                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background custom-scrollbar">
-                              {children}
-                        </main>
-                        <BottomNavBarWrapper />
-                        <KeyboardShortcutsHelp />
-                        <PWAInstallPrompt />
-                  </div>
-              </AppSyncManager>
-            </KeyboardShortcutsProvider>
-          </TooltipProvider>
-        </ClientProviders>
+        {mounted ? (
+          <ClientProviders>
+            <TooltipProvider delayDuration={0}>
+              <KeyboardShortcutsProvider>
+                <AppSyncManager>
+                    <div className="flex h-screen flex-col bg-background relative overflow-hidden">
+                          <AppHeaderWrapper />
+                          <SaleInfoBarWrapper />
+                          <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background custom-scrollbar">
+                                {children}
+                          </main>
+                          <BottomNavBarWrapper />
+                          <KeyboardShortcutsHelp />
+                          <PWAInstallPrompt />
+                    </div>
+                </AppSyncManager>
+              </KeyboardShortcutsProvider>
+            </TooltipProvider>
+          </ClientProviders>
+        ) : (
+          <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+            <div className="animate-pulse flex flex-col items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-slate-200" />
+              <div className="h-4 w-32 rounded bg-slate-200" />
+            </div>
+          </div>
+        )}
         <div id="receipt-for-print" className="hidden print:block bg-white min-h-screen w-full"></div>
       </body>
     </html>
