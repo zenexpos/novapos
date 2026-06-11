@@ -11,7 +11,7 @@ export function BottomNavBarWrapper() {
     }, []);
 
     if (!mounted) {
-        return <div className="h-20 border-t border-border bg-card/95 md:hidden animate-pulse" />;
+        return <div className="h-18 border-t border-border bg-card/95 md:hidden" />;
     }
 
     return <BottomNavBar />;

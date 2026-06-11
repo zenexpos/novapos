@@ -16,7 +16,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log de l'erreur pour audit technique local
     console.error('[CRITICAL SYSTEM FAILURE]:', error);
   }, [error]);
 

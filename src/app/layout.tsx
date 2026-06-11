@@ -5,7 +5,7 @@ import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
 import { BottomNavBarWrapper } from '@/components/layout/BottomNavBarWrapper';
 import { SaleInfoBarWrapper } from '@/components/layout/SaleInfoBarWrapper';
 import { AppSyncManager } from '@/components/layout/AppSyncManager';
-import { KeyboardShortcutsProvider } from '@/contexts/shortcut-context';
+import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
@@ -14,7 +14,7 @@ import { Metadata, Viewport } from 'next';
 
 /**
  * Metadata iPOS Zen — Configuration souveraine via l'API Next.js.
- * Garantit que le moteur de recherche et les navigateurs identifient correctement l'app.
+ * Server-side Metadata évite les erreurs d'hydratation.
  */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
@@ -27,9 +27,6 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * Configuration du viewport pour une expérience mobile native.
- */
 export const viewport: Viewport = {
   themeColor: '#AFB42B',
   width: 'device-width',
@@ -38,10 +35,6 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-/**
- * Layout Racine iPOS Zen — Enterprise Edition.
- * Server Component pour une hydratation stable et performante.
- */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-FR" suppressHydrationWarning>
@@ -65,7 +58,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </KeyboardShortcutsProvider>
           </TooltipProvider>
         </ClientProviders>
-        {/* Portal pour l'impression native sans polluer le DOM principal */}
         <div id="receipt-for-print" className="hidden print:block bg-white min-h-screen w-full"></div>
       </body>
     </html>

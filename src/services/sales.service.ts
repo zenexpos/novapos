@@ -103,7 +103,7 @@ class SalesService {
         await db.transaction('rw', [
             db.sales, db.products, db.inventory_logs, 
             db.customers, db.company_profile, db.sync_queue,
-            db.payments, db.product_returns
+            db.payments, db.product_returns, db.bread_orders
         ], async () => {
             await db.sales.add(newSale);
             

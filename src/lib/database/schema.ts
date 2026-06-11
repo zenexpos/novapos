@@ -1,10 +1,10 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 14.0 - Indexation renforcée et gestion des flux proforma.
+ * Version 15.0 - Optimisation des index et alignement transactionnel.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 14;
+export const DB_VERSION = 15;
 
 export const DB_SCHEMA = {
     // Indexation par barcodes pour le scan rapide, et supplierUuid pour le filtrage
