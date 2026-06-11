@@ -6,7 +6,8 @@ import { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, ShoppingCart, BellRing, Archive, Package, 
     Users2, History, Undo2, Wallet, Wheat, Coins, UserCog,
-    RefreshCw, Building, Settings, Download, Wifi, WifiOff, Zap
+    RefreshCw, Building, Settings, Download, Wifi, WifiOff, Zap,
+    BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Clock } from '@/components/layout/clock';
@@ -31,9 +32,11 @@ export function AppHeader() {
         { href: '/sales-history', label: 'Ventes',    icon: History },
         { href: '/returns',       label: 'Retours',   icon: Undo2 },
         { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
+        { href: '/reports',       label: 'Rapports',  icon: BarChart3 },
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
+        { href: '/install',       label: 'Installer', icon: Download },
         { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
     
