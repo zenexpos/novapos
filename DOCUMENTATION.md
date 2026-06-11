@@ -1,26 +1,26 @@
-# التوثيق التقني — iPOS Zen
+# Documentation Technique — iPOS Zen
 
-يوضح هذا المستند الهيكل البرمجي والمنطق الداخلي للنظام بناءً على معايير الجودة العالية (Elite Standards).
+Ce document explique la structure programmatique et la logique interne du système basée sur des standards de qualité élevés (Elite Standards).
 
-## 🏗 المعمارية التقنية
+## 🏗 Architecture Technique
 
-### 1. طبقة البيانات (Data Layer)
-يعمل النظام كمحرك بيانات مستقل داخل المتصفح:
-*   **منطق المعرفات:** يتم استخدام `UUID` كمفتاح أساسي لكافة السجلات لضمان عدم تضارب البيانات عند المزامنة بين أجهزة متعددة.
-*   **العمليات الذرية (Transactions):** كافة العمليات الحساسة (مثل `processSale` و `processReturn`) مغلفة داخل `db.transaction` لضمان سلامة البيانات ومنع حدوث أخطاء نتيجة عمليات غير مكتملة.
+### 1. Couche de Données (Data Layer)
+Le système fonctionne comme un moteur de données indépendant à l'intérieur du navigateur :
+*   **Logique des Identifiants :** L'identifiant `UUID` est utilisé comme clé primaire pour tous les enregistrements afin d'éviter les conflits de données lors de la synchronisation entre plusieurs appareils.
+*   **Opérations Atomiques (Transactions) :** Toutes les opérations sensibles (telles que `processSale` et `processReturn`) sont encapsulées dans `db.transaction` pour garantir l'intégrité des données et prévenir les erreurs dues à des opérations incomplètes.
 
-### 2. محرك المزامنة (Sync Engine)
-يتبع النظام بروتوكول مزامنة ثنائي الاتجاه:
-1.  **Pull:** جلب أحدث البيانات من السحاب.
-2.  **Merge:** مقارنة الطابع الزمني `updatedAt`. يتم الاحتفاظ بالسجل الأحدث دائماً.
-3.  **Push:** إرسال التعديلات المحلية الجديدة.
+### 2. Moteur de Synchronisation (Sync Engine)
+Le système suit un protocole de synchronisation bidirectionnel :
+1.  **Pull :** Récupération des dernières données depuis le cloud.
+2.  **Merge :** Comparaison des horodatages `updatedAt`. L'enregistrement le plus récent est toujours conservé.
+3.  **Push :** Envoi des nouvelles modifications locales.
 
-### 3. هندسة الواجهة (UI Engineering)
-تم تصميم الواجهة خصيصاً لتوفير أقصى قدر من الإنتاجية:
-*   **كثافة البيانات:** استخدام ارتفاعات `h-9` و `h-10` للعناصر التفاعلية لتوفير مساحة رأسية كافية.
-*   **Keyboard First:** دعم كامل لاختصارات لوحة المفاتيح (F1-F10) لتسريع عملية البيع في البيئات المزدحمة.
-*   **استقرار الرندر:** تم تحصين كافة "الهوكس" (مثل `useDebounce`) لضمان عدم تجمد الواجهة أثناء معالجة آلاف السجلات محلياً.
+### 3. Ingénierie de l'Interface (UI Engineering)
+L'interface a été conçue spécifiquement pour offrir une productivité maximale :
+*   **Densité des Données :** Utilisation des hauteurs `h-9` et `h-10` pour les éléments interactifs afin de fournir un espace vertical suffisant.
+*   **Keyboard First :** Support complet des raccourcis clavier (F1-F10) pour accélérer le processus de vente dans les environnements encombrés.
+*   **Stabilité du Rendu :** Tous les "hooks" (comme `useDebounce`) ont été sécurisés pour garantir que l'interface ne gèle pas lors du traitement local de milliers d'enregistrements.
 
-## 🔐 الخصوصية والأمان
-*   **تخزين محلي 100%:** لا يتم إرسال أي بيانات تجارية لخوادم خارجية إلا إذا قام المستخدم بضبط إعدادات Supabase الخاصة به.
-*   **تطهير البيانات:** يتم تنظيف البيانات من المعرفات المحلية المؤقتة قبل رفعها للسحاب لتجنب أي تعارض في قواعد البيانات.
+## 🔐 Confidentialité et Sécurité
+*   **Stockage Local 100% :** Aucune donnée commerciale n'est envoyée à des serveurs externes à moins que l'utilisateur n'ait configuré ses propres paramètres Supabase.
+*   **Purge des Données :** Les données sont nettoyées des identifiants locaux temporaires avant d'être téléchargées sur le cloud pour éviter tout conflit dans les bases de données.

@@ -63,13 +63,13 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
             <Table>
                 <TableHeader className="bg-muted/50 border-b border-white/5">
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-[120px] p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">N° الطلب</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">العميل</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">الكمية</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">الإجمالي</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">حالة الدفع</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">حالة الاستلام</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">الحساب الجاري</TableHead>
+                        <TableHead className="w-[120px] p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">N° Commande</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Client</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Quantité</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Total</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut Paiement</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut Livraison</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Compte Courant</TableHead>
                         <TableHead className="w-[100px]"></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -140,11 +140,11 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                             <TableCell className="p-4 text-center">
                                 {order.transferredToCustomerAccount ? (
                                     <Badge variant="outline" className="gap-1 bg-blue-500/10 text-blue-600 border-blue-500/20 text-[8px] font-black uppercase px-2">
-                                        <CloudUpload className="h-2.5 w-2.5" /> تم التحويل
+                                        <CloudUpload className="h-2.5 w-2.5" /> Transféré
                                     </Badge>
                                 ) : (
                                     <Badge variant="outline" className="text-muted-foreground/30 text-[8px] font-black uppercase px-2">
-                                        محلي
+                                        Local
                                     </Badge>
                                 )}
                             </TableCell>
@@ -169,8 +169,8 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
         <ConfirmAlertDialog 
             isOpen={!!orderToDelete}
             onOpenChange={(open) => !open && setOrderToDelete(null)}
-            title="حذف طلب الخبز؟"
-            description="هل أنت متأكد من حذف طلب الخبز؟ لا يمكن التراجع عن هذه العملية ولا يمكن حذف الطلبات المحولة للحسابات الجارية."
+            title="Supprimer la commande ?"
+            description="Êtes-vous sûr de vouloir supprimer cette commande de pain ? Cette action est irréversible et ne peut être effectuée sur les commandes déjà transférées aux comptes courants."
             onConfirm={handleDelete}
             confirmText="Supprimer définitivement"
         />

@@ -1,13 +1,13 @@
-# iPOS Zen — خارطة الطريق والمهام
+# iPOS Zen — Feuille de Route et Tâches
 
-- [x] إصلاح تجمد الواجهة عند تعديل العملاء/المنتجات (تحصين `useDebounce`).
-- [x] تحديث الهوية البصرية (الشعار الرسمي ولقطات الشاشة في الـ PWA).
-- [x] تفعيل محرك الأوفلاين اليدوي لضمان السيادة الرقمية.
-- [x] تطهير الكود من أنواع `any` وتحسين دقة الحسابات المالية.
-- [x] دعم بناء ملفات EXE للويندوز عبر Electron.
+- [x] Correction du gel de l'interface lors de la modification des clients/produits (sécurisation de `useDebounce`).
+- [x] Mise à jour de l'identité visuelle (logo officiel et captures d'écran dans la PWA).
+- [x] Activation du moteur hors-ligne manuel pour garantir la souveraineté numérique.
+- [x] Nettoyage du code des types `any` et amélioration de la précision des calculs financiers.
+- [x] Support de la construction de fichiers EXE pour Windows via Electron.
 
-## المهام المستقبلية (Roadmap)
-- [ ] إضافة دعم للموازين الإلكترونية (Scale Integration) عبر منفذ Serial.
-- [ ] تحسين محرك البحث العالمي (Global Command Palette) للوصول السريع.
-- [ ] إضافة تقارير الأرباح المتقدمة (الربح حسب التصنيف / المورد).
-- [ ] دعم لغات إضافية (العربية، الإنجليزية) بشكل كامل في المطبوعات.
+## Tâches Futures (Roadmap)
+- [ ] Ajout du support pour les balances électroniques (Scale Integration) via port série.
+- [ ] Amélioration du moteur de recherche global (Global Command Palette) pour un accès rapide.
+- [ ] Ajout de rapports de profits avancés (Profit par catégorie / fournisseur).
+- [ ] Support complet de langues supplémentaires (Arabe, Français) dans les documents imprimés.

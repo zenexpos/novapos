@@ -74,7 +74,7 @@ export default function BreadPage() {
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
-        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouveau طلب', ignoreInputFocus: false }
+        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false }
     ], 'Pain');
 
     return (

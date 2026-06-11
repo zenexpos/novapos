@@ -83,7 +83,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                             <Plus className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouveau طلب خبز Elite</DialogTitle>
+                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande de Pain Elite</DialogTitle>
                             <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Saisie d'un flux de distribution direct</DialogDescription>
                         </div>
                     </div>
@@ -98,7 +98,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                                 mode === 'registered' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
                         >
-                            <User className="h-3.5 w-3.5" /> عميل مسجل
+                            <User className="h-3.5 w-3.5" /> Client Enregistré
                         </button>
                         <button 
                             onClick={() => setMode('external')}
@@ -107,7 +107,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                                 mode === 'external' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
                         >
-                            <UserPlus className="h-3.5 w-3.5" /> عميل عابر
+                            <UserPlus className="h-3.5 w-3.5" /> Client Passager
                         </button>
                     </div>
 
@@ -137,7 +137,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">الكمية (أرغفة)</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Quantité (Pains)</Label>
                                 <div className="relative group">
                                     <Package className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                                     <Input 
@@ -149,7 +149,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate }: BreadOrder
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">سعر الرغيف</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Prix Unitaire</Label>
                                 <div className="relative group">
                                     <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                                     <Input 

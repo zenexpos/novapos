@@ -59,13 +59,13 @@ export function BreadStats({ date }: BreadStatsProps) {
 
     return (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7 animate-in fade-in duration-500">
-            <StatCard title="إجمالي الطلبات" value={String(stats.count)} icon={Package} colorClass="bg-primary/10 text-primary" />
-            <StatCard title="قيمة المبيعات" value={formatCurrency(stats.totalVal)} icon={Landmark} colorClass="bg-emerald-500/10 text-emerald-500" />
-            <StatCard title="إجمالي المحصل" value={formatCurrency(stats.paidVal)} icon={Wallet} colorClass="bg-emerald-500/10 text-emerald-500" />
-            <StatCard title="مستحقات معلقة" value={formatCurrency(stats.unpaidVal)} icon={AlertCircle} colorClass="bg-destructive/10 text-destructive" />
-            <StatCard title="غير مستلم" value={String(stats.unreceived)} icon={Truck} colorClass="bg-amber-500/10 text-amber-500" />
-            <StatCard title="محول للحساب" value={String(stats.transferred)} icon={Landmark} colorClass="bg-blue-500/10 text-blue-500" />
-            <StatCard title="ديون الطلبات" value={formatCurrency(stats.debts)} icon={Wallet} colorClass="bg-purple-500/10 text-purple-500" />
+            <StatCard title="Total Commandes" value={String(stats.count)} icon={Package} colorClass="bg-primary/10 text-primary" />
+            <StatCard title="Valeur Ventes" value={formatCurrency(stats.totalVal)} icon={Landmark} colorClass="bg-emerald-500/10 text-emerald-500" />
+            <StatCard title="Total Encaissé" value={formatCurrency(stats.paidVal)} icon={Wallet} colorClass="bg-emerald-500/10 text-emerald-500" />
+            <StatCard title="Restant Dû" value={formatCurrency(stats.unpaidVal)} icon={AlertCircle} colorClass="bg-destructive/10 text-destructive" />
+            <StatCard title="Non Livré" value={String(stats.unreceived)} icon={Truck} colorClass="bg-amber-500/10 text-amber-500" />
+            <StatCard title="Transféré" value={String(stats.transferred)} icon={Landmark} colorClass="bg-blue-500/10 text-blue-500" />
+            <StatCard title="Dettes Commandes" value={formatCurrency(stats.debts)} icon={Wallet} colorClass="bg-purple-500/10 text-purple-500" />
         </div>
     );
 }
