@@ -18,7 +18,8 @@ import {
     Phone,
     User,
     Sparkles,
-    History
+    History,
+    Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,6 +38,8 @@ import { returnService } from '@/services/return.service';
 import { BreadClientForm } from '@/components/bread/BreadClientForm';
 import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -380,7 +383,6 @@ export default function CustomerDetailClient() {
                             <h4 className="text-[10px] font-semibold uppercase tracking-wide">Situation de Départ</h4>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-[11px] font-medium text-muted-foreground/60">Solde à l'ouverture :</span>
                             <span className="text-sm font-bold text-primary">{formatCurrency(customer.initialBalance)}</span>
                         </div>
                     </div>
@@ -405,18 +407,28 @@ export default function CustomerDetailClient() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-4">
+                        <CardContent className="p-4 space-y-4">
                             {customer.isBreadClient ? (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Récurrence</p>
-                                        <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? 'QUOTIDIEN' : 'PROGRAMMÉ'}</p>
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Récurrence</p>
+                                            <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? 'QUOTIDIEN' : 'PROGRAMMÉ'}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Quantité</p>
+                                            <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? `${customer.bread_quantite_defaut} PCS` : 'VARIABLE'}</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Quantité</p>
-                                        <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? `${customer.bread_quantite_defaut} PCS` : 'VARIABLE'}</p>
-                                    </div>
-                                </div>
+                                    {customer.bread_date_debut && (
+                                        <div className="pt-2 border-t border-white/5 flex items-center gap-2">
+                                            <Calendar className="h-3 w-3 text-primary/40" />
+                                            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">
+                                                Depuis le {format(new Date(customer.bread_date_debut), 'd MMMM yyyy', { locale: fr })}
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-center opacity-40">Aucun abonnement actif</p>
                             )}

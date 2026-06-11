@@ -55,6 +55,7 @@ export interface Customer extends BaseEntity {
     bread_type_recurrence?: 'quotidien' | 'jours_specifiques' | 'aucun';
     bread_quantite_defaut?: number;
     bread_jours_semaine?:   any;
+    bread_date_debut?:      string;
 }
 
 export interface Supplier extends BaseEntity {

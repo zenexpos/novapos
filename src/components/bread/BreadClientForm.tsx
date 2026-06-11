@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { BREAD_WEEK_DAY_LABELS_FULL } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { cn, formatDateToYYYYMMDD } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 // ─── État initial propre ───────────────────────────────────────
@@ -75,6 +75,7 @@ export function BreadClientForm({
                 bread_quantite_defaut: customer.bread_quantite_defaut || 10,
                 bread_jours_semaine:
                     customer.bread_jours_semaine || defaultJoursSemaine,
+                bread_date_debut:      customer.bread_date_debut,
             });
         } else {
             setFormState(initialFormState);
@@ -91,6 +92,7 @@ export function BreadClientForm({
                 const dataToSave: Partial<Customer> = {
                     isBreadClient:         formState.isBreadClient,
                     bread_type_recurrence: formState.bread_type_recurrence,
+                    bread_date_debut:      formState.bread_date_debut || (formState.isBreadClient ? formatDateToYYYYMMDD(new Date()) : undefined)
                 };
 
                 if (formState.bread_type_recurrence === 'quotidien') {
@@ -217,24 +219,20 @@ export function BreadClientForm({
 
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold text-muted-foreground">Fréquence</Label>
-                                    <Select
+                                    <select
                                         value={formState.bread_type_recurrence}
-                                        onValueChange={value => setFormState(s => ({
+                                        onChange={e => setFormState(s => ({
                                             ...s,
-                                            bread_type_recurrence: value as any,
+                                            bread_type_recurrence: e.target.value as any,
                                             bread_quantite_defaut: 0,
                                             bread_jours_semaine:   defaultJoursSemaine,
                                         }))}
+                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     >
-                                        <SelectTrigger className="h-9 font-semibold">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="quotidien">Quotidien (quantité fixe)</SelectItem>
-                                            <SelectItem value="jours_specifiques">Jours spécifiques (calendrier)</SelectItem>
-                                            <SelectItem value="aucun">Manuel (à la demande)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        <option value="quotidien">Quotidien (quantité fixe)</option>
+                                        <option value="jours_specifiques">Jours spécifiques (calendrier)</option>
+                                        <option value="aucun">Manuel (à la demande)</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
