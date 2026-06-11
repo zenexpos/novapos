@@ -16,15 +16,13 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 export const metadata: Metadata = {
   title: "iPOS Zen - Elite Ledger",
   description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
-  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
       { url: '/favicon.ico', sizes: 'any' }
     ],
     apple: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }
+      { url: '/icon.svg', type: 'image/svg+xml' }
     ],
   },
   appleWebApp: { 
