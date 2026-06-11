@@ -37,21 +37,21 @@ import { useNetwork } from '@/hooks/useNetwork';
 
 export function AppHeader() {
     const navLinks = useMemo(() => [
-        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/dashboard',     label: 'Tableau de bord', icon: LayoutDashboard },
         { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
         { href: '/products',      label: 'Produits',  icon: Package },
         { href: '/customers',     label: 'Clients',   icon: Users2 },
-        { href: '/stock',         label: 'Logistique',icon: Archive },
+        { href: '/stock',         label: 'Stock',     icon: Archive },
         { href: '/sales-history', label: 'Journal',   icon: History },
         { href: '/returns',       label: 'Retours',   icon: Undo2 },
         { href: '/debt-alerts',   label: 'Alertes',   icon: BellRing },
-        { href: '/expenses',      label: 'Charges',   icon: Wallet },
+        { href: '/expenses',      label: 'Dépenses',  icon: Wallet },
         { href: '/reports',       label: 'Analyses',  icon: ChartBar },
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
         { href: '/install',       label: 'Installer', icon: Download },
-        { href: '/settings',      label: 'Système',   icon: Settings },
+        { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
     
     const pathname = usePathname();
@@ -89,7 +89,7 @@ export function AppHeader() {
                             iPOS <span className="text-primary">Zen</span>
                         </span>
                         <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">
-                            Titanium Offline
+                            Mode Hors-ligne
                         </span>
                     </div>
                 </Link>
@@ -101,12 +101,12 @@ export function AppHeader() {
                         <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter", 
                             networkStatus === 'degraded' ? "text-amber-400" : "text-emerald-400")}>
                             <Wifi className="h-3 w-3" />
-                            {networkStatus === 'degraded' ? 'Lent' : 'Cloud'}
+                            {networkStatus === 'degraded' ? 'Lent' : 'Connecté'}
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-destructive animate-pulse">
                             <WifiOff className="h-3 w-3" />
-                            Offline
+                            Hors-ligne
                         </div>
                     )}
                 </div>
@@ -157,7 +157,7 @@ export function AppHeader() {
                             className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2 border border-white/10"
                         >
                             <Download className="h-4 w-4" />
-                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Install</span>
+                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer</span>
                         </Button>
                     )}
 

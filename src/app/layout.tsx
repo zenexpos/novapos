@@ -1,5 +1,6 @@
+'use client';
+
 import React from 'react';
-import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ClientProviders } from '@/components/layout/ClientProviders';
 import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
@@ -13,38 +14,12 @@ import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { PWAUpdateNotifier } from '@/components/pwa/PWAUpdateNotifier';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 
-export const metadata: Metadata = {
-  title: "iPOS Zen - Elite Ledger",
-  description: "Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock",
-  manifest: "/manifest.webmanifest",
-  icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
-    ],
-    apple: [
-      { url: '/icon.svg', type: 'image/svg+xml' }
-    ],
-  },
-  appleWebApp: { 
-    capable: true, 
-    statusBarStyle: "default", 
-    title: "iPOS Zen",
-  },
-};
-
-export const viewport: Viewport = {
-  themeColor: "#AFB42B",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr-DZ" suppressHydrationWarning>
+    <html lang="fr-FR" suppressHydrationWarning>
       <head>
+        <title>iPOS Zen - Gestion Simple</title>
+        <meta name="description" content="Système de vente simple et efficace pour gérer vos produits et vos clients" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>

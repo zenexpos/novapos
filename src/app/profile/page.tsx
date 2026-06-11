@@ -11,19 +11,17 @@ import { fr } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 
 /**
- * Page de gestion du profil institutionnel.
- * Permet de configurer l'identité légale de l'établissement pour la facturation et les rapports.
+ * Page de gestion du profil du magasin.
  */
 export default function ProfilePage() {
-    // FIX: Individual selectors to avoid getServerSnapshot loop in React 19
     const companyProfile = useAppStore(state => state.companyProfile);
     const isCompanyProfileLoading = useAppStore(state => state.isCompanyProfileLoading);
 
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-6xl mx-auto pb-32 animate-in fade-in duration-1000">
             <PageHeader 
-                title="Identité Institutionnelle"
-                description="Configuration souveraine de l'établissement pour documents officiels"
+                title="Profil du Magasin"
+                description="Informations de votre entreprise pour vos factures"
             />
 
             <div className="relative group animate-in slide-in-from-top-8 duration-1000">
@@ -49,9 +47,9 @@ export default function ProfilePage() {
                                 ) : (
                                     <>
                                         <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase text-primary/40 tracking-[0.2em]">Établissement Enregistré</p>
+                                            <p className="text-[10px] font-black uppercase text-primary/40 tracking-[0.2em]">Magasin enregistré</p>
                                             <h2 className="text-3xl font-black tracking-tighter text-primary group-hover:scale-[1.01] transition-transform origin-left">
-                                                {companyProfile?.companyName || 'Établissement non identifié'}
+                                                {companyProfile?.companyName || 'Nom non défini'}
                                             </h2>
                                             {companyProfile?.legal_form && (
                                                 <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-40">
@@ -63,7 +61,7 @@ export default function ProfilePage() {
                                             <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-md shadow-inner group-hover:border-primary/10 transition-colors">
                                                 <MapPin className="h-4 w-4 text-primary/60" />
                                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide leading-none">
-                                                    {companyProfile?.city ? `${companyProfile.city}, ALGÉRIE` : 'Localisation Inconnue'}
+                                                    {companyProfile?.city ? `${companyProfile.city}` : 'Ville non définie'}
                                                 </span>
                                             </div>
                                             {companyProfile?.phone && (
@@ -89,15 +87,15 @@ export default function ProfilePage() {
 
                             <div className="hidden xl:flex flex-col items-center gap-4 p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-center min-w-[240px] backdrop-blur-sm relative overflow-hidden group/status">
                                 <Sparkles className="absolute -right-4 -top-4 h-16 w-16 text-emerald-500/10 group-hover/status:opacity-30 transition-opacity" />
-                                <p className="text-[9px] font-black uppercase text-emerald-600/60 mb-1 relative z-10 tracking-[0.2em]">Certification Elite</p>
+                                <p className="text-[9px] font-black uppercase text-emerald-600/60 mb-1 relative z-10 tracking-[0.2em]">Statut du compte</p>
                                 <div className="flex items-center justify-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-widest bg-emerald-500/10 px-6 py-3 rounded-2xl w-full border border-emerald-500/20 relative z-10 shadow-sm">
-                                    <ShieldCheck className="h-4 w-4" /> Actif & Conforme
+                                    <ShieldCheck className="h-4 w-4" /> Actif
                                 </div>
                                 
                                 {companyProfile?.last_sync_at && (
                                     <div className="mt-4 pt-4 border-t border-emerald-500/10 w-full animate-in fade-in duration-700">
                                         <p className="text-[8px] font-bold uppercase text-muted-foreground/40 mb-1.5 flex items-center justify-center gap-1.5">
-                                            <Cloud className="h-2.5 w-2.5" /> Synchronisation Cloud
+                                            <Cloud className="h-2.5 w-2.5" /> Dernière synchro Cloud
                                         </p>
                                         <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-tighter">
                                             {format(new Date(companyProfile.last_sync_at), 'd MMM yyyy, HH:mm', { locale: fr })}
@@ -118,9 +116,9 @@ export default function ProfilePage() {
                                 <Star className="h-8 w-8" />
                             </div>
                             <div>
-                                <CardTitle className="text-2xl font-black tracking-tighter">Configuration des Registres</CardTitle>
+                                <CardTitle className="text-2xl font-black tracking-tighter">Paramètres du Magasin</CardTitle>
                                 <CardDescription className="text-sm font-medium text-muted-foreground/60 mt-1">
-                                    Définissez les paramètres légaux et les compteurs de facturation.
+                                    Remplissez les informations qui apparaîtront sur vos factures.
                                 </CardDescription>
                             </div>
                         </div>

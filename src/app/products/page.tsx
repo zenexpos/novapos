@@ -225,7 +225,7 @@ function ProductsContent() {
             : products;
 
         const csv = Papa.unparse(dataToExport.map(p => ({
-            Désignation: p.name,
+            Nom: p.name,
             Prix_Vente: p.price,
             Prix_Achat: p.purchasePrice,
             Stock: p.quantity,
@@ -235,7 +235,7 @@ function ProductsContent() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `ipos-produits-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `produits-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         toast.success("Exportation terminée.");
     }, [products, selectedProducts]);
@@ -267,8 +267,8 @@ function ProductsContent() {
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
             <PageHeader
-                title="Catalogue Elite"
-                description="Maîtrise absolue du catalogue et des actifs"
+                title="Liste des Produits"
+                description="Gérez vos articles et votre stock facilement"
             >
                 <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5">
@@ -342,7 +342,7 @@ function ProductsContent() {
                                 className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
                             />
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Sélection Elite</span>
+                                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Articles choisis</span>
                                 <span className="text-xs font-semibold text-primary">{selectedProducts.size} produit(s)</span>
                             </div>
                         </div>
@@ -351,7 +351,7 @@ function ProductsContent() {
                                 <Printer className="mr-2 h-4 w-4" /> Étiquettes
                             </Button>
                             <Button variant="ghost" onClick={handleExportCsv} className="rounded-full h-12 px-6 font-semibold text-[10px] uppercase tracking-wide hover:bg-primary/10 hover:text-primary">
-                                <FileUp className="mr-2 h-4 w-4" /> Exporter (.csv)
+                                <FileUp className="mr-2 h-4 w-4" /> Exporter
                             </Button>
                             <Button variant="ghost" onClick={() => setIsBulkDeleteDialogOpen(true)} className="rounded-full h-12 px-6 font-semibold text-[10px] uppercase tracking-wide text-destructive hover:bg-destructive/10">
                                 <Trash2 className="mr-2 h-4 w-4" /> Supprimer
@@ -368,7 +368,7 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Package} title="Catalogue Vide" description={isFiltered ? "Ajustez vos filtres pour trouver ce que vous cherchez." : "Commencez à bâtir votre catalogue."} />
+                    <EmptyState icon={Package} title="Aucun produit" description={isFiltered ? "Ajustez vos filtres pour trouver ce que vous cherchez." : "Commencez à ajouter des articles."} />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">

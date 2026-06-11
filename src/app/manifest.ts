@@ -1,15 +1,14 @@
 import { MetadataRoute } from 'next';
 
 /**
- * iPOS Zen — Manifest Configuration (Elite Production Edition)
- * Optimisation des paramètres pour garantir le respect des critères d'installabilité (Installability Criteria).
+ * iPOS Zen — Configuration PWA simplifiée.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: 'com.iposzen.elite.v2',
-    name: 'iPOS Zen — Elite Ledger',
+    id: 'com.iposzen.v2',
+    name: 'iPOS Zen — Gestion Facile',
     short_name: 'iPOS Zen',
-    description: 'Système comptable souverain, robuste et luxueux pour la gestion des ventes et du stock',
+    description: 'Système simple et efficace pour la gestion des ventes et du stock',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -17,7 +16,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#AFB42B',
     orientation: 'any',
     categories: ['business', 'finance', 'productivity'],
-    lang: 'fr-DZ',
+    lang: 'fr-FR',
     dir: 'ltr',
     icons: [
       {
@@ -41,13 +40,13 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: 'Nouvelle Vente',
+        name: 'Vendre',
         short_name: 'Vendre',
         url: '/sell',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]
       },
       {
-        name: 'État du Stock',
+        name: 'Stock',
         short_name: 'Stock',
         url: '/products',
         icons: [{ src: '/icon.svg', sizes: '192x192' }]

@@ -113,10 +113,10 @@ const SalesChart = React.memo(({ data, isLoading }: { data: SalesByDay[]; isLoad
             </div>
             <div>
                 <CardTitle className="text-base font-black tracking-tight gradient-text">
-                    Courbe des Flux
+                    Évolution des ventes
                 </CardTitle>
                 <CardDescription className="text-[10px] uppercase tracking-widest font-semibold">
-                    Recettes vs Rentabilité · {data.length}j
+                    Ventes et Bénéfices · {data.length}j
                 </CardDescription>
             </div>
         </CardHeader>
@@ -165,7 +165,7 @@ const SalesChart = React.memo(({ data, isLoading }: { data: SalesByDay[]; isLoad
                             itemStyle={{ fontSize: 11, fontWeight: 700 }}
                             formatter={(v: number, name: string) => [
                                 formatCurrency(v),
-                                name === 'total' ? 'Recettes' : 'Marge',
+                                name === 'total' ? 'Recettes' : 'Bénéfice',
                             ]}
                         />
                         <Area type="monotone" dataKey="total"  stroke="hsl(var(--chart-primary))"  strokeWidth={2.5} fill="url(#gRevenue)" />
@@ -185,10 +185,10 @@ const RecentActivity = React.memo(({ sales, returns, isLoading }: {
     <Card className="overflow-hidden">
         <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
             <CardTitle className="text-base font-black tracking-tight gradient-text">
-                Activité Récente
+                Ventes récentes
             </CardTitle>
             <CardDescription className="text-[10px] uppercase tracking-widest font-semibold">
-                Ventes & retours du jour
+                Activité d'aujourd'hui
             </CardDescription>
         </CardHeader>
         <CardContent className="p-3 max-h-80 overflow-y-auto space-y-1.5">
@@ -201,7 +201,7 @@ const RecentActivity = React.memo(({ sales, returns, isLoading }: {
             ) : sales.length === 0 && returns.length === 0 ? (
                 <div className="py-14 flex flex-col items-center gap-3 opacity-25">
                     <Sparkles className="h-10 w-10" />
-                    <p className="text-xs font-bold uppercase tracking-widest">Silence Radio</p>
+                    <p className="text-xs font-bold uppercase tracking-widest">Aucune vente</p>
                 </div>
             ) : (
                 <>
@@ -273,7 +273,7 @@ const LowStockPanel = React.memo(({ products, isLoading }: { products: any[]; is
             <div className="flex items-center gap-2">
                 <TriangleAlert className="h-4 w-4 text-amber-500" />
                 <CardTitle className="text-base font-black tracking-tight">
-                    Stock Critique
+                    Stock bas
                 </CardTitle>
             </div>
         </CardHeader>
@@ -320,9 +320,10 @@ const ProfitRing = React.memo(({
 }: { margin: number; isLoading: boolean }) => {
     const clamped = Math.min(100, Math.max(0, margin));
     const r = 36, stroke = 7;
-    const circ = 2 * Math.PI * r;
+    const circ = 2 * PI * r;
     const dash  = (clamped / 100) * circ;
     const color = clamped >= 20 ? 'hsl(142 65% 42%)' : clamped >= 10 ? 'hsl(38 90% 50%)' : 'hsl(0 80% 55%)';
+    const PI = 3.14159;
 
     return (
         <Card className="overflow-hidden">
@@ -336,7 +337,7 @@ const ProfitRing = React.memo(({
                                 stroke="hsl(var(--muted))" strokeWidth={stroke} />
                             <circle cx="44" cy="44" r={r} fill="none"
                                 stroke={color} strokeWidth={stroke}
-                                strokeDasharray={`${dash} ${circ}`}
+                                strokeDasharray={`${(clamped/100)*2*Math.PI*r} ${2*Math.PI*r}`}
                                 strokeLinecap="round"
                                 style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.22,1,0.36,1)' }}
                             />
@@ -352,7 +353,7 @@ const ProfitRing = React.memo(({
                     </div>
                 )}
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 text-center">
-                    Taux de rentabilité
+                    Rentabilité moyenne
                 </p>
             </CardContent>
         </Card>
@@ -373,7 +374,7 @@ const StockBar = React.memo(({
         <Card className="overflow-hidden lg:col-span-2">
             <CardHeader className="px-5 pt-4 pb-3 border-b border-[var(--glass-border)]">
                 <CardTitle className="text-sm font-black uppercase tracking-widest gradient-text">
-                    Répartition du Stock
+                    État du stock
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-3">
@@ -389,7 +390,7 @@ const StockBar = React.memo(({
                         <div className="flex items-center justify-between">
                             {[
                                 { label: 'En stock', count: ok,         pct: pOk,  cls: 'bg-emerald-500' },
-                                { label: 'Stock bas', count: lowStock,  pct: pLow, cls: 'bg-amber-500'  },
+                                { label: 'Bas',       count: lowStock,  pct: pLow, cls: 'bg-amber-500'  },
                                 { label: 'Rupture',   count: outOfStock,pct: pOut, cls: 'bg-red-500'    },
                             ].map(item => (
                                 <div key={item.label} className="flex items-center gap-2">
@@ -437,13 +438,13 @@ export default function DashboardPage() {
     const isLoading = data.value === undefined || !isMounted;
 
     const statCards = useMemo(() => [
-        { title: 'Recettes Nettes',   value: formatCurrency(dashboardData?.stats.totalRevenue  ?? 0), icon: TrendingUp,    change: dashboardData?.stats.totalRevenueChange,  href: '/sales-history', color: 'primary'  as const },
-        { title: 'Marge Brute',       value: formatCurrency(dashboardData?.stats.netProfit     ?? 0), icon: Percent,       change: dashboardData?.stats.netProfitChange,     color: 'emerald' as const },
+        { title: 'Recettes',          value: formatCurrency(dashboardData?.stats.totalRevenue  ?? 0), icon: TrendingUp,    change: dashboardData?.stats.totalRevenueChange,  href: '/sales-history', color: 'primary'  as const },
+        { title: 'Bénéfice',          value: formatCurrency(dashboardData?.stats.netProfit     ?? 0), icon: Percent,       change: dashboardData?.stats.netProfitChange,     color: 'emerald' as const },
         { title: 'Dépenses',          value: formatCurrency(dashboardData?.stats.totalExpenses ?? 0), icon: Wallet,        change: dashboardData?.stats.totalExpensesChange, positiveIsGood: false, color: 'red' as const },
         { title: 'Ventes',            value: String(dashboardData?.stats.saleCount            ?? 0),  icon: ShoppingCart,  change: dashboardData?.stats.saleCountChange,     href: '/sales-history', color: 'blue'  as const },
-        { title: 'Encours Clients',   value: formatCurrency(dashboardData?.stats.totalOutstandingDebt ?? 0), icon: Users, href: '/customers', color: 'violet' as const },
+        { title: 'Dettes Clients',    value: formatCurrency(dashboardData?.stats.totalOutstandingDebt ?? 0), icon: Users, href: '/customers', color: 'violet' as const },
         { title: 'Panier Moyen',      value: formatCurrency(dashboardData?.stats.averageBasket ?? 0), icon: CreditCard,    color: 'primary' as const },
-        { title: 'Valeur du Stock',   value: formatCurrency(dashboardData?.stats.totalInventoryValue ?? 0), icon: Archive, href: '/products', color: 'emerald' as const },
+        { title: 'Valeur Stock',      value: formatCurrency(dashboardData?.stats.totalInventoryValue ?? 0), icon: Archive, href: '/products', color: 'emerald' as const },
         { title: 'Marge %',           value: `${(dashboardData?.stats.profitMargin ?? 0).toFixed(1)}%`, icon: TrendingUp,  color: 'blue'    as const },
     ], [dashboardData?.stats]);
 
@@ -452,8 +453,8 @@ export default function DashboardPage() {
     return (
         <div className="p-4 sm:p-5 pb-24 max-w-[1800px] mx-auto space-y-5 animate-page-enter">
             <PageHeader
-                title="Dashboard"
-                description="Vue souveraine des indicateurs de performance"
+                title="Tableau de bord"
+                description="Résumé de votre activité en un coup d'oeil"
                 icon={LayoutDashboard}
             >
                 <DateRangePicker date={dateRange} setDate={setDate} />
@@ -490,7 +491,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <Card className="overflow-hidden">
                     <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
-                        <CardTitle className="text-base font-black gradient-text">Top Produits</CardTitle>
+                        <CardTitle className="text-base font-black gradient-text">Meilleurs produits</CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 space-y-1.5 max-h-64 overflow-y-auto">
                         {isLoading ? (
@@ -517,7 +518,7 @@ export default function DashboardPage() {
 
                 <Card className="overflow-hidden">
                     <CardHeader className="px-5 pt-5 pb-4 border-b border-[var(--glass-border)]">
-                        <CardTitle className="text-base font-black gradient-text">Top Clients</CardTitle>
+                        <CardTitle className="text-base font-black gradient-text">Meilleurs clients</CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 space-y-1.5 max-h-64 overflow-y-auto">
                         {isLoading ? (
