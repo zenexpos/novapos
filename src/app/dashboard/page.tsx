@@ -240,7 +240,7 @@ const RecentActivity = React.memo(({ sales, returns, isLoading }: {
                             style={{ animationDelay: `${(sales.length + i) * 40}ms` }}
                             className="flex items-center gap-3 p-3 rounded-xl
                                 border border-transparent
-                                hover:bg-red-500/6 hover:border-red-500/20
+                                hover:bg-red-500/6 hover:bg-red-500/20
                                 transition-all duration-200 group animate-slide-up"
                         >
                             <div className="flex items-center justify-center w-8 h-8 rounded-lg
@@ -521,7 +521,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="p-3 space-y-1.5 max-h-64 overflow-y-auto">
                         {isLoading ? (
-                            [...Array(4)].map((_, i) => <Skeleton className="h-10 w-full rounded-lg" />)
+                            [...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)
                         ) : (dashboardData?.topCustomers ?? []).map((c, i) => (
                             <Link key={c.customerUuid}
                                 href={`/customers/detail?uuid=${c.customerUuid}`}
