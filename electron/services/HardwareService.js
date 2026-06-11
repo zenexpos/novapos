@@ -3,28 +3,39 @@ const PrintService = require('./PrintService');
 
 /**
  * iPOS Hardware Coordinator
- * Manages USB/Serial communication for POS peripherals.
+ * Manages communication with POS peripherals (USB/Serial/Net).
  */
 class HardwareService {
-    constructor() {
-        this.printer = new PrintService();
+    constructor(logger) {
+        this.logger = logger;
+        this.printer = new PrintService(logger);
     }
 
     init() {
-        console.log('[Hardware] Peripherals ready for polling');
+        this.logger.info('Hardware coordinator initialized');
     }
 
     async getPrinters(webContents) {
-        return await webContents.getPrintersAsync();
+        try {
+            return await webContents.getPrintersAsync();
+        } catch (err) {
+            this.logger.error('Failed to enumerate system printers');
+            return [];
+        }
     }
 
-    printReceipt(data) {
-        this.printer.printESC(data);
+    async printReceipt(data) {
+        return await this.printer.printESC(data);
     }
 
     openDrawer() {
-        // Standard ESC/POS pulse for cash drawers: ESC p 0 25 250
-        this.printer.sendRaw([27, 112, 0, 25, 250]);
+        try {
+            this.printer.sendDrawerPulse();
+            return true;
+        } catch (err) {
+            this.logger.error(`Drawer trigger failed: ${err.message}`);
+            return false;
+        }
     }
 }
 

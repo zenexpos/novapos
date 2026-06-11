@@ -14,6 +14,8 @@ module.exports = {
         OPEN_DRAWER: 'open-cash-drawer',
         GET_PRINTERS: 'get-printers',
         OPEN_EXTERNAL: 'open-external',
-        HARDWARE_STATUS: 'hardware-status'
-    }
+        HARDWARE_STATUS: 'hardware-status',
+        PRINTER_ERROR: 'printer-error'
+    },
+    ALLOWED_HOSTS: ['iposzen.com', 'supabase.co', 'wa.me']
 };

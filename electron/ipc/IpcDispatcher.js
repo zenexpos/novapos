@@ -3,6 +3,10 @@ const { ipcMain } = require('electron');
 const IpcValidator = require('./validators/IpcValidator');
 const { CHANNELS } = require('../constants/AppConstants');
 
+/**
+ * iPOS Communication Engine
+ * Orchestrates messages between the React UI and system services.
+ */
 class IpcDispatcher {
     constructor(windowManager, hardware, logger) {
         this.windowManager = windowManager;
@@ -13,17 +17,21 @@ class IpcDispatcher {
 
     register() {
         // 1. Secure Receipt Printing
-        ipcMain.on(CHANNELS.PRINT_RECEIPT, (event, data) => {
+        ipcMain.on(CHANNELS.PRINT_RECEIPT, async (event, data) => {
             if (this.validator.validatePrintData(data)) {
-                this.hardware.printReceipt(data);
-                this.logger.audit('PRINT', `Invoice ${data.invoiceNumber} executed`);
+                try {
+                    await this.hardware.printReceipt(data);
+                    this.logger.audit('PRINT', `Invoice ${data.invoiceNumber} executed`);
+                } catch (err) {
+                    event.sender.send(CHANNELS.PRINTER_ERROR, err.message);
+                }
             } else {
-                this.logger.error(`Invalid print attempt: ${JSON.stringify(data)}`);
-                event.sender.send('printer-error', 'Format de données invalide');
+                this.logger.warn(`Rejected invalid print payload for: ${data?.invoiceNumber}`);
+                event.sender.send(CHANNELS.PRINTER_ERROR, 'Invalid data format');
             }
         });
 
-        // 2. Cash Drawer (Protected)
+        // 2. Cash Drawer (Audit Logged)
         ipcMain.on(CHANNELS.OPEN_DRAWER, (event) => {
             this.hardware.openDrawer();
             this.logger.audit('SECURITY', 'Manual drawer trigger via IPC');
@@ -34,14 +42,14 @@ class IpcDispatcher {
             return await this.hardware.getPrinters(event.sender);
         });
 
-        // 4. Safe External Links
+        // 4. Safe External Redirection
         ipcMain.handle(CHANNELS.OPEN_EXTERNAL, async (event, url) => {
             if (this.validator.isSafeUrl(url)) {
                 const { shell } = require('electron');
                 await shell.openExternal(url);
                 return true;
             }
-            this.logger.warn(`Blocked suspicious URL: ${url}`);
+            this.logger.warn(`Blocked suspicious URL navigation: ${url}`);
             return false;
         });
     }

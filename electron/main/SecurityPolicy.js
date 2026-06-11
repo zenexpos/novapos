@@ -2,12 +2,12 @@
 const { session } = require('electron');
 
 /**
- * iPOS Zen — Security Hardening
- * Implements strict CSP and permissions.
+ * iPOS Zen — Hardened Security Layer
+ * Implements CSP, permission lockdowns, and navigation controls.
  */
 class SecurityPolicy {
     static apply(window) {
-        // 1. Content Security Policy
+        // 1. Content Security Policy (CSP)
         session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
             callback({
                 responseHeaders: {
@@ -19,19 +19,18 @@ class SecurityPolicy {
             });
         });
 
-        // 2. Disable unnecessary features
-        window.webContents.on('will-navigate', (event) => {
-            event.preventDefault();
+        // 2. Restrict Navigation (Anti-Phishing)
+        window.webContents.on('will-navigate', (event, url) => {
+            if (!url.startsWith('file://') && !url.startsWith('http://localhost')) {
+                event.preventDefault();
+                console.warn(`Blocked navigation attempt to: ${url}`);
+            }
         });
 
-        // 3. Permission handler
+        // 3. System Permission Management
         session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-            const allowedPermissions = ['notifications'];
-            if (allowedPermissions.includes(permission)) {
-                callback(true);
-            } else {
-                callback(false);
-            }
+            const allowed = ['notifications']; // Only allow non-intrusive permissions
+            callback(allowed.includes(permission));
         });
     }
 }

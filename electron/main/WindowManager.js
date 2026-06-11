@@ -19,7 +19,7 @@ class WindowManager {
             icon: path.join(__dirname, '../../public/icons/icon-512x512.png'),
             title: 'iPOS Zen — Elite Ledger',
             backgroundColor: '#F8FAFC',
-            show: false, // Prevent flickering
+            show: false,
             webPreferences: {
                 preload: path.join(__dirname, '../preload.js'),
                 contextIsolation: true,
@@ -30,6 +30,7 @@ class WindowManager {
             },
         });
 
+        // Apply strict security headers
         SecurityPolicy.apply(this.mainWindow);
 
         if (isDev) {
@@ -41,13 +42,6 @@ class WindowManager {
 
         this.mainWindow.once('ready-to-show', () => {
             this.mainWindow.show();
-        });
-
-        this.mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-            if (url.startsWith('https://iposzen.com')) {
-                shell.openExternal(url);
-            }
-            return { action: 'deny' };
         });
 
         this.mainWindow.on('closed', () => {
