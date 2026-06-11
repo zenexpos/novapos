@@ -1,7 +1,7 @@
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
-  register: false, // Enregistrement manuel pour assurer la stabilité du moteur hors-ligne
+  register: false, // Manual registration for better control
   skipWaiting: true,
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
@@ -10,26 +10,29 @@ const withPWA = require("@ducanh2912/next-pwa").default({
         urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
         handler: "CacheFirst",
         options: {
-          cacheName: "google-fonts-webfonts",
+          cacheName: "google-fonts",
           expiration: {
-            maxEntries: 4,
-            maxAgeSeconds: 365 * 24 * 60 * 60,
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60 * 24 * 365,
           },
         },
       },
       {
-        urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
         handler: "StaleWhileRevalidate",
         options: {
-          cacheName: "static-image-assets",
+          cacheName: "images",
+          expiration: {
+            maxEntries: 100,
+          },
         },
       },
       {
         urlPattern: /.*/i,
         handler: "NetworkFirst",
         options: {
-          cacheName: "offline-cache",
-          networkTimeoutSeconds: 10,
+          cacheName: "pages-and-data",
+          networkTimeoutSeconds: 5,
         },
       },
     ],
@@ -38,16 +41,14 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  output: "export", // Critical for Electron and static hosting
   trailingSlash: true,
   reactStrictMode: true,
   images: {
-    unoptimized: true,
-  },
-  devIndicators: {
-    appIsrStatus: false,
+    unoptimized: true, // Required for static export
   },
   compress: true,
+  poweredByHeader: false,
 };
 
 module.exports = withPWA(nextConfig);

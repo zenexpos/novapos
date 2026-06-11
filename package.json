@@ -1,8 +1,8 @@
 {
   "name": "ipos-zen",
-  "version": "2.0.0",
-  "description": "iPOS Zen — Point de Vente PWA & Desktop v2 — Next.js 15 + React 19 + Tailwind v4",
-  "author": "iPOS Zen",
+  "version": "2.0.1",
+  "description": "iPOS Zen — Sovereign POS & Elite Ledger v2 — Production Grade",
+  "author": "iPOS Zen Team",
   "main": "electron/main.js",
   "private": true,
   "scripts": {
@@ -77,40 +77,5 @@
   "overrides": {
     "react": "19.0.0",
     "react-dom": "19.0.0"
-  },
-  "build": {
-    "appId": "com.iposzen.app",
-    "productName": "iPOS Zen",
-    "asar": true,
-    "files": [
-      "out/**/*",
-      "electron/main.js",
-      "electron/preload.js",
-      "public/**/*"
-    ],
-    "directories": {
-      "buildResources": "public"
-    },
-    "extraResources": [
-      {
-        "from": "public",
-        "to": "public"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "public/icons/icon.ico",
-      "signAndEditExecutable": false
-    },
-    "mac": {
-      "icon": "public/icons/icon-512x512.png"
-    }
   }
 }
