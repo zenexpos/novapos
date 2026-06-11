@@ -5,10 +5,14 @@ import { startOfDay, endOfDay, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 /**
- * ReportsService — Moteur d'analyse statistique avancée.
+ * iPOS Zen - Reporting & Intelligence Service.
+ * Centralise tous les calculs analytiques pour le Dashboard et les audits.
  */
 class ReportsService {
     
+    /**
+     * Calcule la valeur totale du stock (Prix d'Achat vs Prix de Vente).
+     */
     async getInventoryValuation() {
         const products = await db.products.toArray();
         let totalCostCents = 0;
@@ -25,10 +29,14 @@ class ReportsService {
         return {
             atCost: totalCostCents / 100,
             atRetail: totalRetailCents / 100,
-            potentialProfit: (totalRetailCents - totalCostCents) / 100
+            potentialProfit: (totalRetailCents - totalCostCents) / 100,
+            itemCount: products.length
         };
     }
 
+    /**
+     * Analyse de performance sur une période donnée (Recettes, Dépenses, Flux).
+     */
     async getPeriodPerformance(days = 30) {
         const start = startOfDay(subDays(new Date(), days - 1));
         const end = endOfDay(new Date());
@@ -51,7 +59,8 @@ class ReportsService {
             cashFlow: roundFinancial(totalCashIn - outgoings),
             totalIn: roundFinancial(totalCashIn),
             totalOut: roundFinancial(outgoings),
-            expenseRatio: revenue > 0 ? (outgoings / revenue) * 100 : 0
+            expenseRatio: revenue > 0 ? (outgoings / revenue) * 100 : 0,
+            transactionCount: sales.length
         };
     }
 }

@@ -1,6 +1,6 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 11.0 - Optimisé pour la performance et la traçabilité.
+ * Version 11.0 - Indexation optimisée pour la performance POS.
  */
 
 export const DB_NAME = 'iPOSDatabase';
