@@ -1,5 +1,10 @@
 import type { Customer, DatePreset } from './types';
 
+/**
+ * @fileOverview iPOS Zen Global Constants (Audited).
+ * Removed unused APP_NAME and DB_KEYS constants.
+ */
+
 // ── Bread ────────────────────────────────────────────────────────────────────
 export const BREAD_WEEK_DAYS: (keyof NonNullable<Customer['bread_jours_semaine']>)[] = [
     'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi',

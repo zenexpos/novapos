@@ -1,5 +1,5 @@
-'use client';
 /**
- * @fileOverview Dead code eliminated.
+ * @fileOverview Unused ShadCN component.
+ * Project relies on 'sonner' and 'AlertDialog'.
  */
 export {};

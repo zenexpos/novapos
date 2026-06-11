@@ -1,5 +1,4 @@
-'use client';
 /**
- * @fileOverview Dead code eliminated.
+ * @fileOverview Empty artifact from install error.
  */
 export {};

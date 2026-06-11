@@ -1,5 +1,7 @@
 'use client';
+import React from 'react';
 /**
- * @fileOverview Dead code eliminated. Logic moved to AppSyncManager.
+ * @fileOverview Stub for deprecated component.
+ * Logic migrated to AppSyncManager.
  */
-export const AppBootstrap = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+export const AppBootstrap = ({ children }: { children: React.ReactNode }) => <>{children}</>;

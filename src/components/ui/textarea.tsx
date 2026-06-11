@@ -1,5 +1,5 @@
-'use client';
 /**
- * @fileOverview Dead code eliminated.
+ * @fileOverview Unused ShadCN component.
+ * Forms use standard native textarea or themed input.
  */
 export {};
