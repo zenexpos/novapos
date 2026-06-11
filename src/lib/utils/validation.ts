@@ -3,8 +3,6 @@
  * Ensures data integrity across Sales, Inventory, and Finance domains.
  */
 
-import { FINANCIAL_EPSILON } from './math';
-
 export const Validators = {
     /**
      * Validates Algerian Phone Formats
@@ -29,11 +27,10 @@ export const Validators = {
     },
 
     /**
-     * Checks if stock adjustment is valid (preventing negative inventory if required)
+     * Checks if stock adjustment is valid
      */
-    stockAdjustment: (current: number, change: number, allowNegative = false): boolean => {
-        if (allowNegative) return true;
-        return (current + change) >= -FINANCIAL_EPSILON;
+    stockAdjustment: (current: number, change: number): boolean => {
+        return (current + change) >= 0;
     },
 
     /**

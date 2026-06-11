@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
-    BarChart3, 
+    ChartBar, 
     PieChart, 
     TrendingUp, 
     CalendarCheck, 
@@ -28,7 +28,7 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { toast } from 'sonner';
 
 /**
- * صفحة التقارير المحدثة — مرتبطة بالبيانات الحقيقية 100%.
+ * صفحة التقارير المركزية — مرتبطة بالبيانات الحقيقية 100%.
  */
 export default function ReportsPage() {
     const statsResult = useLiveQuery(() => reportsService.getPeriodPerformance(30), []);
@@ -59,7 +59,7 @@ export default function ReportsPage() {
             <PageHeader 
                 title="مركز التقارير السيادي" 
                 description="تحليل البيانات المالية والمخزون في الوقت الحقيقي"
-                icon={BarChart3}
+                icon={ChartBar}
             >
                 <div className="flex gap-3">
                     <Button variant="outline" className="rounded-xl h-11 border-primary/20 hover:bg-primary/5 gap-2 px-6">

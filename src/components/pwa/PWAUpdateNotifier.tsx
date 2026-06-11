@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { RefreshCw } from 'lucide-react';
 
 /**
  * Enterprise PWA Update Manager.

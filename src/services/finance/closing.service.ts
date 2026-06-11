@@ -6,7 +6,7 @@ import { safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * Service de Clôture Quotidienne (Z-Report).
- * Calcule les revenus réels, les dépenses et les foirages de caisse.
+ * Calcule les revenus réels, les dépenses et les flux de caisse.
  */
 class ClosingService {
     async generateDailyZReport(date: Date = new Date()) {

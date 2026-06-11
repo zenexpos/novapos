@@ -5,14 +5,10 @@ import { startOfDay, endOfDay, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 /**
- * ReportsService — محرك التحليل الإحصائي لـ iPOS Zen.
- * يقوم بتجميع البيانات من جداول المبيعات، المشتريات، والمصاريف لتوليد رؤى تجارية.
+ * ReportsService — محرك التحليل الإحصائي المتقدم.
  */
 class ReportsService {
     
-    /**
-     * حساب قيمة المخزون الحالية (بسعر الشراء وسعر البيع).
-     */
     async getInventoryValuation() {
         const products = await db.products.toArray();
         let totalCostCents = 0;
@@ -33,9 +29,6 @@ class ReportsService {
         };
     }
 
-    /**
-     * أداء الفترة (إيرادات، سيولة، مصاريف).
-     */
     async getPeriodPerformance(days = 30) {
         const start = startOfDay(subDays(new Date(), days - 1));
         const end = endOfDay(new Date());
@@ -60,27 +53,6 @@ class ReportsService {
             totalOut: roundFinancial(outgoings),
             expenseRatio: revenue > 0 ? (outgoings / revenue) * 100 : 0
         };
-    }
-
-    /**
-     * المنتجات الأكثر مبيعاً.
-     */
-    async getTopSellingProducts(limit = 10) {
-        const sales = await db.sales.filter(s => !s.isCancelled).toArray();
-        const productStats = new Map<string, { name: string, qty: number, revenue: number }>();
-
-        sales.forEach(sale => {
-            sale.items.forEach(item => {
-                const current = productStats.get(item.name) || { name: item.name, qty: 0, revenue: 0 };
-                current.qty += safeNumber(item.quantity);
-                current.revenue += preciseMultiply(safeNumber(item.quantity), safeNumber(item.price));
-                productStats.set(item.name, current);
-            });
-        });
-
-        return Array.from(productStats.values())
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, limit);
     }
 }
 
