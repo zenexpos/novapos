@@ -1,24 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Zap, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { RefreshCw, Zap } from 'lucide-react';
 
+/**
+ * Enterprise PWA Update Manager.
+ * Detects new service worker versions and prompts for refresh.
+ */
 export function PWAUpdateNotifier() {
-    const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
-
     useEffect(() => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then((reg) => {
-                setRegistration(reg);
-                
+            const sw = navigator.serviceWorker;
+
+            const onUpdateFound = (reg: ServiceWorkerRegistration) => {
+                toast.info("Mise à jour disponible", {
+                    description: "Une version plus performante d'iPOS Zen est prête.",
+                    duration: Infinity,
+                    action: {
+                        label: "Installer (Restart)",
+                        onClick: () => {
+                            if (reg.waiting) {
+                                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                            window.location.reload();
+                        },
+                    },
+                });
+            };
+
+            sw.ready.then((reg) => {
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     if (newWorker) {
                         newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showUpdateToast(reg);
+                            if (newWorker.state === 'installed' && sw.controller) {
+                                onUpdateFound(reg);
                             }
                         });
                     }
@@ -27,25 +44,5 @@ export function PWAUpdateNotifier() {
         }
     }, []);
 
-    const showUpdateToast = (reg: ServiceWorkerRegistration) => {
-        toast.info("Une nouvelle version est disponible", {
-            description: "iPOS Zen a été mis à jour pour de meilleures performances.",
-            duration: Infinity,
-            action: {
-                label: "Mettre à jour",
-                onClick: () => {
-                    if (reg.waiting) {
-                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                        window.location.reload();
-                    }
-                },
-            },
-            cancel: {
-                label: "Fermer",
-                onClick: () => {},
-            }
-        });
-    };
-
-    return null; // Logic-only component for now
+    return null;
 }

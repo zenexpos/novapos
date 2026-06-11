@@ -1,22 +1,45 @@
 /**
- * @fileOverview Centralized Validation Helpers for iPOS Zen Forms.
+ * @fileOverview Centralized Enterprise Validation Engine for iPOS Zen.
+ * Ensures data integrity across Sales, Inventory, and Finance domains.
  */
 
-export const isValidPhone = (phone: string): boolean => {
-    const regex = /^(05|06|07|02)\d{8}$/; // Standard Algerian format
-    return regex.test(phone.replace(/\s/g, ''));
-};
+import { FINANCIAL_EPSILON } from './math';
 
-export const isValidEmail = (email: string): boolean => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-};
+export const Validators = {
+    /**
+     * Validates Algerian Phone Formats
+     */
+    phone: (val: string): boolean => {
+        const cleaned = val.replace(/\s/g, '');
+        return /^(05|06|07|02)\d{8}$/.test(cleaned);
+    },
 
-export const isRequired = (val: any): boolean => {
-    if (typeof val === 'string') return val.trim().length > 0;
-    return val !== null && val !== undefined;
-};
+    /**
+     * Validates NIF (Numéro d'Identification Fiscale) - 15 digits
+     */
+    nif: (val: string): boolean => {
+        return /^\d{15}$/.test(val);
+    },
 
-export const isValidNIF = (nif: string): boolean => {
-    return /^\d{15}$/.test(nif);
+    /**
+     * Validates Currency Amounts
+     */
+    amount: (val: number): boolean => {
+        return typeof val === 'number' && val >= 0;
+    },
+
+    /**
+     * Checks if stock adjustment is valid (preventing negative inventory if required)
+     */
+    stockAdjustment: (current: number, change: number, allowNegative = false): boolean => {
+        if (allowNegative) return true;
+        return (current + change) >= -FINANCIAL_EPSILON;
+    },
+
+    /**
+     * Mandatory string validation
+     */
+    required: (val: string | null | undefined): boolean => {
+        return !!val && val.trim().length > 0;
+    }
 };

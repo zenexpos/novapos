@@ -45,11 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr-DZ" suppressHydrationWarning>
       <head>
-        {/* رابط المانيفست لضمان التقاطه من قبل المتصفحات القديمة والحديثة */}
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className="antialiased bg-background text-foreground overflow-hidden">
+      <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
@@ -58,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <div className="flex h-screen flex-col bg-background relative overflow-hidden">
                         <AppHeaderWrapper />
                         <SaleInfoBarWrapper />
-                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background">
+                        <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background custom-scrollbar">
                               {children}
                         </main>
                         <BottomNavBarWrapper />
