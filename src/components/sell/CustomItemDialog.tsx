@@ -67,7 +67,7 @@ export function CustomItemDialog({ children, isOpen: controlledOpen, onOpenChang
             purchasePrice: 0,
             quantity: 999999, // Virtuel : stock illimité pour le panier
             category: 'Personnalisé',
-            unite: 'Pièce',
+            unit: 'Pièce',
         }, `custom-${uuidv4()}`);
 
         addItemToCart(customProduct);

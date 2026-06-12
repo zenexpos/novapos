@@ -143,7 +143,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                             )}
                         />
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unite || 'pcs'}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unit || 'pcs'}</span>
                     
                     {isSellingAtLoss && (
                         <TooltipProvider>

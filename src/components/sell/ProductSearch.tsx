@@ -38,7 +38,7 @@ const SearchResultItem = React.memo(({ product, onSelect }: { product: Product, 
 
             <div className="relative z-10 mt-6 flex items-center justify-between">
                 <div className="flex flex-col">
-                    <span className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground opacity-50">Stock: {product.quantity} {product.unite}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground opacity-50">Stock: {product.quantity} {product.unit}</span>
                     <span className="text-xl font-black text-primary tracking-tighter tabular-nums">{formatCurrency(product.price)}</span>
                 </div>
             </div>

@@ -219,7 +219,7 @@ class DashboardService {
                         name: p.name,
                         quantity: p.quantity,
                         minStockLevel: p.minStockLevel,
-                        unite: p.unite
+                        unit: p.unit
                     } as LowStockProduct)),
             };
         } catch (error) {
