@@ -120,7 +120,7 @@ export const useAppStore = create<AppState>()(
                     if (currentSync === 'syncing') return;
 
                     const profile = get().companyProfile;
-                    if (!profile?.supabase_url || !profile?.supabase_key) {
+                    if (!profile?.supabaseUrl || !profile?.supabaseKey) {
                         toast.error('Cloud Saphir non configuré');
                         return;
                     }
@@ -128,10 +128,10 @@ export const useAppStore = create<AppState>()(
                     set({ syncStatus: 'syncing' });
                     try {
                         if (mode === 'pull') {
-                            await supabaseSyncService.pull(profile.supabase_url, profile.supabase_key);
+                            await supabaseSyncService.pull(profile.supabaseUrl, profile.supabaseKey);
                             toast.success('Données récupérées avec succès');
                         } else {
-                            await supabaseSyncService.push(profile.supabase_url, profile.supabase_key);
+                            await supabaseSyncService.push(profile.supabaseUrl, profile.supabaseKey);
                             toast.success('Données sauvegardées avec succès');
                         }
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
@@ -145,13 +145,13 @@ export const useAppStore = create<AppState>()(
 
                 performBackgroundSync: async () => {
                     const profile = get().companyProfile;
-                    if (!profile?.supabase_url || !profile?.supabase_key) return;
+                    if (!profile?.supabaseUrl || !profile?.supabaseKey) return;
                     if (get().syncStatus === 'syncing') return;
                     if (get().networkStatus === 'offline') return;
 
                     set({ syncStatus: 'syncing' });
                     try {
-                        await supabaseSyncService.smartSync(profile.supabase_url, profile.supabase_key);
+                        await supabaseSyncService.smartSync(profile.supabaseUrl, profile.supabaseKey);
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
                         setTimeout(() => set({ syncStatus: 'idle' }), 2000);
                     } catch {
@@ -161,7 +161,7 @@ export const useAppStore = create<AppState>()(
 
                 triggerSmartSync: () => {
                     const profile = get().companyProfile;
-                    if (!profile?.supabase_url || !profile?.supabase_key) return;
+                    if (!profile?.supabaseUrl || !profile?.supabaseKey) return;
                     
                     // Throttle background sync
                     setTimeout(() => {
@@ -225,7 +225,7 @@ export const useAppStore = create<AppState>()(
                                         quantity:      0,
                                         minStockLevel: 0,
                                         barcodes:      item.barcodes || [],
-                                        unite:         item.unite,
+                                        unit:          item.unit,
                                         supplierUuid:  supplier.uuid,
                                         stockStatus:   'out_of_stock',
                                         createdAt:     new Date(),

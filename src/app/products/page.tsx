@@ -229,7 +229,7 @@ function ProductsContent() {
             Prix_Vente: p.price,
             Prix_Achat: p.purchasePrice,
             Stock: p.quantity,
-            Unité: p.unite,
+            Unité: p.unit,
         })));
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);

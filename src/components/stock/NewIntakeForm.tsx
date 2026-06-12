@@ -62,7 +62,7 @@ export function NewIntakeForm() {
             quantityDamaged: 0,
             purchasePrice: product.purchasePrice || 0,
             price: product.price,
-            unite: product.unite || 'Pièce',
+            unit: product.unit || 'Pièce',
             isNew: false
         };
         setItems(prev => [newItem, ...prev]);
@@ -77,7 +77,7 @@ export function NewIntakeForm() {
             quantityDamaged: 0,
             purchasePrice: 0,
             price: 0,
-            unite: 'Pièce',
+            unit: 'Pièce',
             isNew: true
         };
         setItems(prev => [newItem, ...prev]);

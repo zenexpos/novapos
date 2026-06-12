@@ -78,7 +78,7 @@ export default function DashboardPage() {
                                 ) : dashboardData.lowStockProducts.map((p: LowStockProduct) => (
                                     <Link key={p.uuid} href="/products" className="flex items-center justify-between p-3 rounded-xl bg-black/20 hover:bg-amber-500/10 transition-all border border-transparent hover:border-amber-500/20">
                                         <span className="text-sm font-bold truncate max-w-[150px]">{p.name}</span>
-                                        <span className="text-xs font-black text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg">{p.quantity} {p.unite}</span>
+                                        <span className="text-xs font-black text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg">{p.quantity} {p.unit}</span>
                                     </Link>
                                 ))}
                             </div>

@@ -53,7 +53,7 @@ class ProductService {
     }
     
     async getProductsByUuids(uuids: string[]): Promise<Product[]> {
-        return db.products.where('uuid').anyOf(uuids).filter(p => !p.deletedAt).toArray();
+        return db.products.where('uuid').anyOf(uuuids).filter(p => !p.deletedAt).toArray();
     }
 
     async filterProducts(filters: {

@@ -52,7 +52,7 @@ export interface LowStockProduct {
     name: string;
     quantity: number;
     minStockLevel: number;
-    unite?: string;
+    unit?: string;
 }
 
 export interface SalesByDay {

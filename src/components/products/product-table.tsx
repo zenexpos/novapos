@@ -209,9 +209,9 @@ export function ProductTable({
                                             {product.name}
                                         </span>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            {product.unite && (
+                                            {product.unit && (
                                                 <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-wider">
-                                                    {product.unite}
+                                                    {product.unit}
                                                 </span>
                                             )}
                                             {expiryDays !== null && expiryDays <= 30 && (
@@ -275,7 +275,7 @@ export function ProductTable({
                                                 {product.quantity}
                                             </p>
                                             <p className="text-[8px] font-semibold text-muted-foreground/30 uppercase">
-                                                {product.unite ?? 'u'}
+                                                {product.unit ?? 'u'}
                                             </p>
                                         </div>
                                     </div>
