@@ -25,12 +25,12 @@ class BreadService {
 
     private async generateOrderNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
-        const currentCounter = profile?.bread_counter || 1;
+        const currentCounter = profile?.breadCounter || 1;
         const number = `BRD-${String(currentCounter).padStart(6, '0')}`;
         
         if (profile?.id) {
             await db.company_profile.update(profile.id, {
-                bread_counter: currentCounter + 1,
+                breadCounter: currentCounter + 1,
                 updatedAt: new Date()
             });
         }
@@ -74,7 +74,7 @@ class BreadService {
 
     async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
-        const price = data.unitPrice || profile?.prix_pain || 10;
+        const price = data.unitPrice || profile?.breadPrice || 10;
         const total = roundFinancial(data.quantity * price);
 
         const newOrder: BreadOrder = {
@@ -95,7 +95,7 @@ class BreadService {
             isDelivered: false,
             isPaid: false,
             transferredToCustomerAccount: false,
-            venteUuid: null,
+            saleUuid: null,
             syncStatus: 'pending',
             version: 1,
             createdAt: new Date(),
@@ -118,7 +118,7 @@ class BreadService {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
-                if (order.venteUuid || order.deletedAt) continue;
+                if (order.saleUuid || order.deletedAt) continue;
 
                 const sale = await salesService.createSale({
                     items: [{
@@ -135,7 +135,7 @@ class BreadService {
                 });
 
                 await db.bread_orders.update(order.id!, {
-                    venteUuid: sale.uuid,
+                    saleUuid: sale.uuid,
                     paymentStatus: 'paid',
                     isPaid: true,
                     transferredToCustomerAccount: true,
@@ -151,7 +151,7 @@ class BreadService {
     async billAllRemainingOrdersForDate(date: string, breadPrice: number): Promise<number> {
         const pendingOrders = await db.bread_orders
             .where('date').equals(date)
-            .filter(o => !o.venteUuid && !o.deletedAt)
+            .filter(o => !o.saleUuid && !o.deletedAt)
             .toArray();
 
         const uuids = pendingOrders.map(o => o.uuid);
@@ -163,7 +163,7 @@ class BreadService {
 
     async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.venteUuid) return;
+        if (!order || order.saleUuid) return;
 
         const total = roundFinancial(newQuantity * order.unitPrice);
         await db.bread_orders.update(order.id!, {
@@ -189,7 +189,7 @@ class BreadService {
 
     async deleteBreadOrder(uuid: string): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.venteUuid) {
+        if (!order || order.saleUuid) {
             throw new Error("Impossible de supprimer une commande facturée.");
         }
         await db.bread_orders.update(order.id!, { deletedAt: new Date(), updatedAt: new Date() });
@@ -200,7 +200,7 @@ class BreadService {
         const dayIndex = parseISO(date).getDay();
         const dayOfWeek = BREAD_WEEK_DAYS[dayIndex];
         const profile = await db.company_profile.toCollection().first();
-        const unitPrice = profile?.prix_pain || 0;
+        const unitPrice = profile?.breadPrice || 0;
 
         const activeBreadClients = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
@@ -241,7 +241,7 @@ class BreadService {
                     isDelivered: false,
                     isPaid: false,
                     transferredToCustomerAccount: false,
-                    venteUuid: null,
+                    saleUuid: null,
                     syncStatus: 'pending',
                     version: 1,
                     createdAt: new Date(),
@@ -259,7 +259,7 @@ class BreadService {
     async processEndOfDayTransfers(): Promise<number> {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const profile = await db.company_profile.toCollection().first();
-        const price = profile?.prix_pain || 10;
+        const price = profile?.breadPrice || 10;
         
         const pendingOrders = await db.bread_orders
             .filter(o => 

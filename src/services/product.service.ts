@@ -21,7 +21,6 @@ class ProductService {
 
     /**
      * FACTORY PATTERN: Centralise la création d'une entité Produit valide.
-     * Garantit que toutes les métadonnées de synchronisation et d'audit sont présentes.
      */
     createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
         const now = new Date();
@@ -36,7 +35,7 @@ class ProductService {
             quantity,
             minStockLevel,
             barcodes: input.barcodes || [],
-            unite: input.unite || 'Pièce',
+            unit: input.unit || 'Pièce',
             category: input.category || 'Général',
             dateExpiration: input.dateExpiration,
             supplierUuid: input.supplierUuid,
@@ -100,6 +99,8 @@ class ProductService {
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 return isAsc ? valA - valB : valB - valA;
             });
+        } else {
+             products.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         }
 
         return products;
@@ -127,7 +128,7 @@ class ProductService {
         return newProduct;
     }
 
-    async updateProduct(uuid: string, data: Partial<Product>): Promise<void> {
+    async updateProduct(uuid: string, data: Partial<ProductCreateInput>): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error("Produit non trouvé");
 
@@ -152,25 +153,6 @@ class ProductService {
         triggerSync();
     }
 
-    async updateProductFromIntake(uuid: string, data: { purchasePrice: number; price?: number; barcodes?: string[] }): Promise<void> {
-        const existing = await db.products.where('uuid').equals(uuid).first();
-        if (!existing?.id) return;
-
-        const update: Partial<Product> = {
-            purchasePrice: data.purchasePrice,
-            updatedAt: new Date(),
-            syncStatus: 'pending'
-        };
-
-        if (data.price !== undefined) update.price = data.price;
-        if (data.barcodes) {
-            const newBarcodes = Array.from(new Set([...(existing.barcodes || []), ...data.barcodes]));
-            update.barcodes = newBarcodes;
-        }
-
-        await db.products.update(existing.id, update);
-    }
-
     async deleteProduct(uuid: string): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;
@@ -189,98 +171,6 @@ class ProductService {
                 payload: { uuid },
                 timestamp: Date.now()
             });
-        });
-
-        triggerSync();
-    }
-
-    async duplicateProduct(uuid: string): Promise<Product> {
-        const existing = await db.products.where('uuid').equals(uuid).first();
-        if (!existing) throw new Error("Produit source introuvable.");
-
-        const { id, uuid: oldUuid, createdAt, updatedAt, syncStatus, version, ...rest } = existing;
-        return this.addProduct({
-            ...rest,
-            name: `${rest.name} (Copie)`,
-            quantity: 0,
-        });
-    }
-
-    async bulkDelete(uuids: string[]): Promise<void> {
-        for (const uuid of uuids) {
-            await this.deleteProduct(uuid);
-        }
-    }
-
-    async analyzeImport(file: File): Promise<ProductImportAnalysis> {
-        return new Promise((resolve, reject) => {
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: async (results) => {
-                    const existingProducts = await this.getProducts();
-                    const existingMap = new Map(existingProducts.map(p => [p.name.toLowerCase(), p]));
-
-                    const analysis: ProductImportAnalysis = {
-                        productsToAdd: [],
-                        productsToUpdate: [],
-                        skippedRows: [],
-                        errorRows: [],
-                        totalRows: results.data.length
-                    };
-
-                    for (const row of results.data as any[]) {
-                        const name = row.name || row.Désignation || row.Nom;
-                        if (!name) {
-                            analysis.errorRows.push({ ...row, error: "Nom manquant" });
-                            continue;
-                        }
-
-                        const productData: Partial<Product> = {
-                            name: name.trim(),
-                            category: row.category || row.Catégorie || 'Général',
-                            price: safeNumber(row.price || row.Prix_Vente),
-                            purchasePrice: safeNumber(row.purchasePrice || row.Prix_Achat),
-                            quantity: safeNumber(row.quantity || row.Stock),
-                            minStockLevel: safeNumber(row.minStockLevel || row.Alerte || 10),
-                            unite: row.unite || row.Unité || 'Pièce',
-                        };
-
-                        const existing = existingMap.get(name.trim().toLowerCase());
-                        if (existing) {
-                            analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid });
-                        } else {
-                            analysis.productsToAdd.push(productData);
-                        }
-                    }
-                    resolve(analysis);
-                },
-                error: (err) => reject(err)
-            });
-        });
-    }
-
-    async executeImport(confirmedData: { toAdd: any[], toUpdate: any[] }): Promise<void> {
-        const now = new Date();
-        
-        await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
-            for (const item of confirmedData.toAdd) {
-                const p = this.createProductEntity(item);
-                await db.products.add(p);
-                if (p.quantity !== 0) {
-                    await inventoryService.adjustStock(p.uuid, p.quantity, 'manual_adjustment', 'IMPORT');
-                }
-                await db.sync_queue.add({ table: 'products', operation: 'CREATE', payload: p, timestamp: Date.now() });
-            }
-
-            for (const item of confirmedData.toUpdate) {
-                const existing = await db.products.where('uuid').equals(item.uuid).first();
-                if (existing) {
-                    const update = { ...item, updatedAt: now, syncStatus: 'pending' };
-                    await db.products.update(existing.id!, update);
-                    await db.sync_queue.add({ table: 'products', operation: 'UPDATE', payload: { ...existing, ...update }, timestamp: Date.now() });
-                }
-            }
         });
 
         triggerSync();

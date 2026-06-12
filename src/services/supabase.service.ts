@@ -6,7 +6,7 @@ import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
 
 /**
  * Titanium Sync Engine — Version Entreprise
- * Gère la synchronisation bidirectionnelle incrémentale.
+ * Gère la synchronisation bidirectionnelle incrémentale avec mapping Camel/Snake.
  */
 class SupabaseSyncService {
     private isSyncing = false;
@@ -38,14 +38,14 @@ class SupabaseSyncService {
 
             // 2. PULL : Récupérer les nouveautés du Cloud
             const profile = await db.company_profile.toCollection().first();
-            const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
+            const lastSync = profile?.lastSyncAt ? new Date(profile.lastSyncAt).toISOString() : new Date(0).toISOString();
             
             await this.pullRemoteChanges(supabase, lastSync);
 
             // 3. FINALISATION
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
-                    last_sync_at: new Date(),
+                    lastSyncAt: new Date(),
                     syncStatus: 'synced'
                 });
             }
@@ -159,7 +159,7 @@ class SupabaseSyncService {
     async push(url: string, key: string) { await this.processSyncQueue(getSupabaseClient(url, key)); }
     async pull(url: string, key: string) { 
         const profile = await db.company_profile.toCollection().first();
-        const lastSync = profile?.last_sync_at ? new Date(profile.last_sync_at).toISOString() : new Date(0).toISOString();
+        const lastSync = profile?.lastSyncAt ? new Date(profile.lastSyncAt).toISOString() : new Date(0).toISOString();
         await this.pullRemoteChanges(getSupabaseClient(url, key), lastSync); 
     }
 }

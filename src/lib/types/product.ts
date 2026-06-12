@@ -9,11 +9,11 @@ export interface Product extends BaseEntity {
     quantity: number;
     minStockLevel: number;
     barcodes: string[];
-    unite?: 'Pièce' | 'Kg' | 'Litre' | 'Boîte' | 'Carton' | 'Sachet' | 'Bouteille';
+    unit?: 'Pièce' | 'Kg' | 'Litre' | 'Boîte' | 'Carton' | 'Sachet' | 'Bouteille';
     category?: string;
     dateExpiration?: Date;
     supplierUuid?: string;
-    dateMajPrix?: Date;
+    priceUpdatedAt?: Date;
     stockStatus: StockStatus;
     flash?: boolean;
 }
@@ -24,11 +24,11 @@ export interface Product extends BaseEntity {
 export interface ProductCreateInput {
     name: string;
     price: number;
-    purchasePrice?: number;
+    purchasePrice: number;
     quantity?: number;
     minStockLevel?: number;
     barcodes?: string[];
-    unite?: Product['unite'];
+    unit?: Product['unit'];
     category?: string;
     dateExpiration?: Date;
     supplierUuid?: string;

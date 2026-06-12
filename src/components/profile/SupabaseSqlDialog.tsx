@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 const SUPABASE_SQL_SCRIPT = `-- ══════════════════════════════════════════════════════════
--- iPOS Zen — Schéma Cloud Elite (Certifié v2.0.1)
+-- iPOS Zen — Schéma Cloud Elite (Certifié v2.9.5)
 -- ══════════════════════════════════════════════════════════
 
 -- 0. PRÉREQUIS : Extension pour les UUID
@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS company_profile (
     company_name          TEXT NOT NULL DEFAULT 'Mon Commerce',
     address               TEXT,
     city                  TEXT,
+    zip_code              TEXT,
     country               TEXT DEFAULT 'Algérie',
     phone                 TEXT,
     email                 TEXT,
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS company_profile (
     invoice_prefix        TEXT DEFAULT 'FAC',
     invoice_counter       BIGINT DEFAULT 1,
     gold_price_per_gram   NUMERIC(15,2) DEFAULT 0,
-    prix_pain             NUMERIC(15,2) DEFAULT 0,
+    bread_price           NUMERIC(15,2) DEFAULT 10,
     zakat_use_sale_price  BOOLEAN DEFAULT true,
     last_sync_at          TIMESTAMPTZ,
     created_at            TIMESTAMPTZ DEFAULT NOW(),
@@ -54,7 +55,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
     phone           TEXT,
     balance         NUMERIC(15,2) DEFAULT 0,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ DEFAULT NOW()
+    updated_at      TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at      TIMESTAMPTZ
 );
 
 -- 3. FICHIER CLIENTS
@@ -67,12 +69,10 @@ CREATE TABLE IF NOT EXISTS customers (
     credit_limit          NUMERIC(15,2) DEFAULT 0,
     outstanding_balance   NUMERIC(15,2) DEFAULT 0,
     is_bread_client       BOOLEAN DEFAULT false,
-    bread_recurrence_type TEXT,
-    bread_default_quantity NUMERIC(15,3) DEFAULT 0,
-    bread_weekly_schedule JSONB DEFAULT '{}',
-    bread_start_date      DATE,
+    bread_profile         JSONB DEFAULT '{}',
     created_at            TIMESTAMPTZ DEFAULT NOW(),
-    updated_at            TIMESTAMPTZ DEFAULT NOW()
+    updated_at            TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at            TIMESTAMPTZ
 );
 
 -- 4. CATALOGUE PRODUITS
@@ -84,10 +84,11 @@ CREATE TABLE IF NOT EXISTS products (
     quantity          NUMERIC(15,3) DEFAULT 0,
     min_stock_level   NUMERIC(15,3) DEFAULT 10,
     barcodes          TEXT[],
-    unite             TEXT DEFAULT 'Pièce',
+    unit              TEXT DEFAULT 'Pièce',
     stock_status      TEXT DEFAULT 'in_stock',
     created_at        TIMESTAMPTZ DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ DEFAULT NOW()
+    updated_at        TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at        TIMESTAMPTZ
 );
 
 -- 5. GRAND LIVRE DES VENTES
@@ -100,6 +101,7 @@ CREATE TABLE IF NOT EXISTS sales (
     remaining_balance NUMERIC(15,2) DEFAULT 0,
     payment_status    TEXT NOT NULL DEFAULT 'unpaid',
     customer_uuid     UUID REFERENCES customers(uuid) ON DELETE SET NULL,
+    is_cancelled      BOOLEAN DEFAULT false,
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -113,7 +115,7 @@ CREATE TABLE IF NOT EXISTS bread_orders (
     quantity          NUMERIC(15,3) NOT NULL,
     is_paid           BOOLEAN DEFAULT false,
     is_delivered      BOOLEAN DEFAULT false,
-    vente_uuid        UUID REFERENCES sales(uuid) ON DELETE SET NULL,
+    sale_uuid         UUID REFERENCES sales(uuid) ON DELETE SET NULL,
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -125,6 +127,7 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
     change            NUMERIC(15,3) NOT NULL,
     new_quantity      NUMERIC(15,3) NOT NULL,
     reason            TEXT NOT NULL,
+    related_uuid      UUID,
     created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 `;
@@ -165,7 +168,7 @@ export function SupabaseSqlDialog() {
                                 </div>
                                 <div>
                                     <DialogTitle className="text-lg font-semibold tracking-tight">Initialisation Saphir Elite</DialogTitle>
-                                    <DialogDescription className="font-medium text-[10px] uppercase text-primary/50">Schéma souverain certifié compatible v2.0.1</DialogDescription>
+                                    <DialogDescription className="font-medium text-[10px] uppercase text-primary/50">Schéma souverain certifié compatible v2.9.5</DialogDescription>
                                 </div>
                             </div>
                             <Button onClick={handleCopy} className="rounded-2xl h-12 px-6 font-semibold text-xs uppercase tracking-wide shadow-xl shadow-sm gap-2 transition-all active:scale-95">

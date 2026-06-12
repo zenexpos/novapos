@@ -29,7 +29,7 @@ export interface BreadOrder extends BaseEntity {
     notes?: string;
     transferredToCustomerAccount: boolean;
     transferredAt?: Date;
-    venteUuid: string | null;
+    saleUuid: string | null;
 }
 
 /**
