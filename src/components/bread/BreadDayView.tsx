@@ -27,9 +27,9 @@ export function BreadDayView({ orders, currentDate, onOrdersChange }: BreadDayVi
     const [selectedOrders, setSelectedOrders] = useState(new Set<string>());
     const [isConverting, setIsConverting] = useState(false);
     const [isClosingDay, setIsClosingDay] = useState(false);
-    const breadPrice = useAppStore((state) => state.companyProfile?.prix_pain) || 0;
+    const breadPrice = useAppStore((state) => state.companyProfile?.breadPrice) || 0;
 
-    const unbilledOrders = useMemo(() => orders.filter(o => !o.venteUuid), [orders]);
+    const unbilledOrders = useMemo(() => orders.filter(o => !o.saleUuid), [orders]);
     const unbilledOrdersCount = unbilledOrders.length;
 
     const handleToggleSelection = (orderUuid: string) => {

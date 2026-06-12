@@ -28,7 +28,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
     const [selectedClientUuid, setSelectedClientUuid] = useState<string>('');
     const [customName, setCustomName] = useState('');
     const [quantity, setQuantity] = useState(10);
-    const [unitPrice, setUnitPrice] = useState(profile?.prix_pain || 10);
+    const [unitPrice, setUnitPrice] = useState(profile?.breadPrice || 10);
     const [pickupTime, setPickupTime] = useState('08:00');
     const [isRecurring, setIsRecurring] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -38,8 +38,8 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
         if(isOpen && mode === 'registered') {
             customerService.getCustomers().then(setManualClients);
         }
-        if (profile?.prix_pain) setUnitPrice(profile.prix_pain);
-    }, [isOpen, mode, profile?.prix_pain]);
+        if (profile?.breadPrice) setUnitPrice(profile.breadPrice);
+    }, [isOpen, mode, profile?.breadPrice]);
 
     const handleAdd = async () => {
         if (mode === 'registered' && !selectedClientUuid) {
