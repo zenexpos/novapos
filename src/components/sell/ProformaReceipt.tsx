@@ -42,7 +42,7 @@ export const ProformaReceipt = React.forwardRef<HTMLDivElement, ProformaReceiptP
             </thead>
             <tbody>
               {proforma.items.map((item, idx) => (
-                <tr key={idx}>
+                <tr key={idx} className="border-b border-gray-100">
                   <td className="py-1 pr-2 leading-tight uppercase font-bold text-[7.5pt]">{item.name}</td>
                   <td className="text-center py-1 font-bold">{item.quantity}</td>
                   <td className="text-right py-1 font-bold">{formatNum(item.quantity * item.price)}</td>
@@ -86,9 +86,9 @@ export const ProformaReceipt = React.forwardRef<HTMLDivElement, ProformaReceiptP
         <table className="w-full border-collapse mb-10">
             <thead>
               <tr className="border-y-2 border-black bg-white text-black">
-                <th className="text-left p-4 text-xs font-black uppercase border-r border-black/10">Désignation</th>
-                <th className="text-center p-4 text-xs font-black uppercase border-r border-black/10">Qté</th>
-                <th className="text-right p-4 text-xs font-black uppercase border-r border-black/10">Prix Unitaire</th>
+                <th className="text-left p-4 text-xs font-black uppercase border-r border-gray-200">Désignation</th>
+                <th className="text-center p-4 text-xs font-black uppercase border-r border-gray-200">Qté</th>
+                <th className="text-right p-4 text-xs font-black uppercase border-r border-gray-200">Prix Unitaire</th>
                 <th className="text-right p-4 text-xs font-black uppercase">Total</th>
               </tr>
             </thead>
