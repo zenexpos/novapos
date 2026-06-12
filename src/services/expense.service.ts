@@ -1,10 +1,9 @@
 'use client';
 
-import type { Expense, ExpenseCategory } from '@/lib/types';
+import type { Expense, ExpenseFormData } from '@/lib/types';
 import { db } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, endOfDay } from 'date-fns';
-import { safeNumber } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 const triggerSync = () => {
@@ -52,7 +51,10 @@ class ExpenseService {
         );
     }
 
-    async addExpense(data: Omit<Expense, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<Expense> {
+    /**
+     * Ajoute une dépense. Injecte les métadonnées de synchronisation.
+     */
+    async addExpense(data: ExpenseFormData): Promise<Expense> {
         const now = new Date();
         const expense: Expense = {
             ...data,
@@ -73,14 +75,28 @@ class ExpenseService {
         return expense;
     }
 
-    async updateExpense(uuid: string, data: Partial<Expense>): Promise<void> {
+    /**
+     * Met à jour une dépense. Gère l'incrémentation de version et le statut pending.
+     */
+    async updateExpense(uuid: string, data: ExpenseFormData): Promise<void> {
         const existing = await db.expenses.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Dépense introuvable');
         
-        const update = { ...data, updatedAt: new Date(), syncStatus: 'pending' as const };
+        const update: Partial<Expense> = { 
+            ...data, 
+            updatedAt: new Date(), 
+            syncStatus: 'pending',
+            version: (existing.version || 1) + 1
+        };
+
         await db.transaction('rw', [db.expenses, db.sync_queue], async () => {
             await db.expenses.update(existing.id!, update);
-            await db.sync_queue.add({ table: 'expenses', operation: 'UPDATE', payload: { ...existing, ...update }, timestamp: Date.now() });
+            await db.sync_queue.add({ 
+                table: 'expenses', 
+                operation: 'UPDATE', 
+                payload: { ...existing, ...update }, 
+                timestamp: Date.now() 
+            });
         });
 
         triggerSync();
@@ -93,7 +109,12 @@ class ExpenseService {
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
         await db.transaction('rw', [db.expenses, db.sync_queue], async () => {
             await db.expenses.update(existing.id!, update);
-            await db.sync_queue.add({ table: 'expenses', operation: 'DELETE', payload: { uuid }, timestamp: Date.now() });
+            await db.sync_queue.add({
+                table: 'expenses',
+                operation: 'DELETE',
+                payload: { uuid },
+                timestamp: Date.now()
+            });
         });
 
         triggerSync();

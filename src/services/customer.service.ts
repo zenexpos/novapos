@@ -1,10 +1,10 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow } from '@/lib/types';
+import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow, CustomerFormData } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
-import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
+import { startOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -97,7 +97,10 @@ class CustomerService {
         return customers;
     }
 
-    async addCustomer(customerData: Partial<Omit<Customer, 'uuid' | 'syncStatus' | 'version'>>): Promise<Customer> {
+    /**
+     * Ajoute un client. Injecte les métadonnées techniques.
+     */
+    async addCustomer(customerData: CustomerFormData): Promise<Customer> {
         if (!customerData.firstName || !customerData.lastName) {
             throw new Error('Prénom et nom requis.');
         }
@@ -122,7 +125,9 @@ class CustomerService {
             createdAt: now,
             updatedAt: now,
             syncStatus: 'pending',
-            version: 1
+            version: 1,
+            debtStatus: initialBal > 0 ? 'due_soon' : 'none',
+            isOverLimit: false
         };
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
@@ -135,7 +140,10 @@ class CustomerService {
         return newCustomer;
     }
 
-    async updateCustomer(uuid: string, customerData: Partial<Customer>): Promise<Customer> {
+    /**
+     * Met à jour un client. Gère l'incrémentation de version.
+     */
+    async updateCustomer(uuid: string, customerData: CustomerFormData): Promise<Customer> {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
@@ -147,7 +155,8 @@ class CustomerService {
             ...customerData,
             searchName,
             updatedAt: new Date(),
-            syncStatus: 'pending'
+            syncStatus: 'pending',
+            version: (existing.version || 1) + 1
         };
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
@@ -188,9 +197,6 @@ class CustomerService {
         triggerSync();
     }
 
-    /**
-     * Supprime plusieurs clients en lot.
-     */
     async bulkDelete(uuids: string[]): Promise<void> {
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             for (const uuid of uuids) {
@@ -335,7 +341,7 @@ class CustomerService {
                             continue;
                         }
 
-                        const data: Partial<Customer> = {
+                        const data: CustomerFormData = {
                             firstName: firstName.trim(),
                             lastName: lastName.trim(),
                             phone: (row.phone || row.Téléphone || row.Telephone || '').toString().trim(),
@@ -350,9 +356,9 @@ class CustomerService {
                         );
 
                         if (existing) {
-                            analysis.customersToUpdate.push({ ...data, uuid: existing.uuid });
+                            analysis.customersToUpdate.push({ ...data, uuid: existing.uuid } as any);
                         } else {
-                            analysis.customersToAdd.push(data);
+                            analysis.customersToAdd.push(data as any);
                         }
                     }
                     resolve(analysis);

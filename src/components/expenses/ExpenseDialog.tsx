@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import type { Expense, ExpenseCategory } from '@/lib/types';
+import type { Expense, ExpenseCategory, ExpenseFormData } from '@/lib/types';
 import { Loader2, Banknote, FileText, Coins, CheckCircle2 } from 'lucide-react';
 import { expenseService } from '@/services/expense.service';
 import { DatePicker } from '../ui/date-picker';
@@ -24,7 +24,7 @@ interface ExpenseDialogProps {
     existingCategories: string[];
 }
 
-const initialFormState: Omit<Expense, 'uuid' | 'createdAt' | 'updatedAt'> = {
+const initialFormState: ExpenseFormData = {
     description: '',
     category: 'Autre',
     amount: 0,
@@ -32,7 +32,7 @@ const initialFormState: Omit<Expense, 'uuid' | 'createdAt' | 'updatedAt'> = {
 };
 
 export default function ExpenseDialog({ isOpen, onOpenChange, expense, onSuccess, existingCategories }: ExpenseDialogProps) {
-    const [formState, setFormState] = useState(initialFormState);
+    const [formState, setFormState] = useState<ExpenseFormData>(initialFormState);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -77,18 +77,12 @@ export default function ExpenseDialog({ isOpen, onOpenChange, expense, onSuccess
             return;
         }
 
-        const dataToSave = {
-            ...formState,
-            amount: amountNum,
-            expenseDate: new Date(formState.expenseDate)
-        };
-
         try {
             if (expense && expense.uuid) {
-                await expenseService.updateExpense(expense.uuid, dataToSave);
+                await expenseService.updateExpense(expense.uuid, formState);
                 toast.success(`Dépense mise à jour.`);
             } else {
-                await expenseService.addExpense(dataToSave);
+                await expenseService.addExpense(formState);
                 toast.success(`Dépense enregistrée avec succès.`);
             }
             onSuccess();
@@ -101,7 +95,6 @@ export default function ExpenseDialog({ isOpen, onOpenChange, expense, onSuccess
         }
     };
 
-    // Raccourcis pour le dialogue de dépense
     useKeyboardShortcuts([
         {
             key: 'Enter',

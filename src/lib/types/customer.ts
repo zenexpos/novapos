@@ -2,6 +2,9 @@ import { BaseEntity } from './common';
 
 export type DebtStatus = 'none' | 'due_soon' | 'overdue';
 
+/**
+ * Entité complète stockée en base de données.
+ */
 export interface Customer extends BaseEntity {
     firstName: string;
     lastName: string;
@@ -17,12 +20,26 @@ export interface Customer extends BaseEntity {
     debtStatus: DebtStatus;
     isOverLimit: boolean;
     
-    // Bread Module (Normalised English)
+    // Bread Module
     isBreadClient: boolean;
     breadRecurrenceType?: 'quotidien' | 'jours_specifiques' | 'aucun';
     breadDefaultQuantity?: number;
     breadWeeklySchedule?: Record<string, { actif: boolean; quantite: number }>;
     breadStartDate?: string;
+}
+
+/**
+ * Modèle de données pour le formulaire client (UI).
+ */
+export interface CustomerFormData {
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    address?: string;
+    settlementDay?: number;
+    creditLimit?: number;
+    initialBalance: number;
+    isBreadClient?: boolean;
 }
 
 export interface Payment extends BaseEntity {

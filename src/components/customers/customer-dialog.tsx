@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import type { Customer } from '@/lib/types';
+import type { Customer, CustomerFormData } from '@/lib/types';
 import { Loader2, User, Phone, MapPin, Calendar, ShieldCheck, Coins, Landmark } from 'lucide-react';
 import { customerService } from '@/services/customer.service';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -19,18 +19,18 @@ interface CustomerDialogProps {
     onSuccess: (customer?: Customer) => void;
 }
 
-const initialFormState = {
+const initialFormState: CustomerFormData = {
     firstName: '',
     lastName: '',
     phone: '',
     address: '',
-    settlementDay: '',
-    creditLimit: '',
-    initialBalance: '0',
+    settlementDay: undefined,
+    creditLimit: undefined,
+    initialBalance: 0,
 };
 
 export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: CustomerDialogProps) {
-    const [formState, setFormState] = useState(initialFormState);
+    const [formState, setFormState] = useState<CustomerFormData>(initialFormState);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -41,18 +41,21 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                 lastName: customer.lastName,
                 phone: customer.phone || '',
                 address: customer.address || '',
-                settlementDay: String(customer.settlementDay || ''),
-                creditLimit: String(customer.creditLimit || ''),
-                initialBalance: String(customer.initialBalance || 0),
+                settlementDay: customer.settlementDay,
+                creditLimit: customer.creditLimit,
+                initialBalance: customer.initialBalance || 0,
             });
-        } else {
+        } else if (!customer && isOpen) {
             setFormState(initialFormState);
         }
     }, [customer, isOpen]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setFormState(prev => ({ ...prev, [id]: value }));
+        const { id, value, type } = e.target;
+        setFormState(prev => ({ 
+            ...prev, 
+            [id]: type === 'number' ? (value === '' ? 0 : parseFloat(value)) : value 
+        }));
     };
 
     const onInputFocus = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
@@ -62,26 +65,14 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
         setError(null);
         setIsLoading(true);
 
-        const { firstName, lastName, phone, address, settlementDay, creditLimit, initialBalance } = formState;
-
-        const customerData = {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            phone: phone.trim() || undefined,
-            address: address.trim() || undefined,
-            settlementDay: settlementDay ? parseInt(settlementDay, 10) : undefined,
-            creditLimit: creditLimit ? parseFloat(creditLimit) : undefined,
-            initialBalance: initialBalance ? parseFloat(initialBalance) : 0,
-        };
-
         try {
-            if (customer) { // Editing
-                const updatedCustomer = await customerService.updateCustomer(customer.uuid, customerData);
-                toast.success(`Profil de ${firstName} mis à jour.`);
+            if (customer) {
+                const updatedCustomer = await customerService.updateCustomer(customer.uuid, formState);
+                toast.success(`Profil de ${formState.firstName} mis à jour.`);
                 onSuccess(updatedCustomer);
-            } else { // Adding
-                const newCustomer = await customerService.addCustomer(customerData);
-                toast.success(`Nouveau client ${firstName} enregistré.`);
+            } else {
+                const newCustomer = await customerService.addCustomer(formState);
+                toast.success(`Nouveau client ${formState.firstName} enregistré.`);
                 onSuccess(newCustomer);
             }
             onOpenChange(false);
@@ -180,7 +171,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                     <Label htmlFor="settlementDay" className="text-[10px] font-bold uppercase text-primary ml-1">Jour de règlement</Label>
                                     <div className="relative">
                                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30" />
-                                        <Input id="settlementDay" type="number" min="1" max="31" placeholder="Ex: 30" value={formState.settlementDay} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-9 rounded-2xl bg-background border-none shadow-sm font-black text-xl text-primary text-center" />
+                                        <Input id="settlementDay" type="number" min="1" max="31" placeholder="Ex: 30" value={formState.settlementDay || ''} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-9 rounded-2xl bg-background border-none shadow-sm font-black text-xl text-primary text-center" />
                                     </div>
                                     <p className="text-[9px] text-muted-foreground/50 font-medium italic">Échéance mensuelle pour déclencher l'alerte retard.</p>
                                 </div>
@@ -188,7 +179,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                     <Label htmlFor="creditLimit" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Plafond de Crédit</Label>
                                     <div className="relative">
                                         <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
-                                        <Input id="creditLimit" type="number" placeholder="0.00" value={formState.creditLimit} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-9 rounded-2xl bg-background border-none shadow-sm font-black text-xl text-center" />
+                                        <Input id="creditLimit" type="number" placeholder="0.00" value={formState.creditLimit || ''} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-9 rounded-2xl bg-background border-none shadow-sm font-black text-xl text-center" />
                                     </div>
                                     <p className="text-[9px] text-muted-foreground/50 font-medium italic">Limite avant blocage systématique des ventes à crédit.</p>
                                 </div>
@@ -201,7 +192,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                 <Label htmlFor="initialBalance" className="text-[10px] font-bold uppercase text-destructive/70 ml-1">Solde Initial (Dette importée)</Label>
                                 <div className="relative">
                                     <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive/30" />
-                                    <Input id="initialBalance" type="number" placeholder="0.00" value={formState.initialBalance} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-12 rounded-xl bg-background border-none shadow-inner font-black text-xl text-destructive text-center" />
+                                    <Input id="initialBalance" type="number" placeholder="0.00" value={formState.initialBalance || ''} onChange={handleInputChange} onFocus={onInputFocus} className="pl-11 h-12 rounded-xl bg-background border-none shadow-inner font-black text-xl text-destructive text-center" />
                                 </div>
                                 <p className="text-[9px] text-destructive/50 italic text-center">Dette contractée hors système iPOS Zen avant l'ouverture du dossier.</p>
                             </div>
