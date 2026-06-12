@@ -3,6 +3,16 @@ import { BaseEntity } from './common';
 export type DebtStatus = 'none' | 'due_soon' | 'overdue';
 
 /**
+ * Profil logistique pour le module Pain.
+ */
+export interface BreadProfile {
+    recurrenceType: 'quotidien' | 'jours_specifiques' | 'aucun';
+    defaultQuantity: number;
+    weeklySchedule: Record<string, { actif: boolean; quantite: number }>;
+    startDate?: string;
+}
+
+/**
  * Entité complète stockée en base de données.
  */
 export interface Customer extends BaseEntity {
@@ -20,17 +30,13 @@ export interface Customer extends BaseEntity {
     debtStatus: DebtStatus;
     isOverLimit: boolean;
     
-    // Bread Module
+    // Bread Module Extension
     isBreadClient: boolean;
-    breadRecurrenceType?: 'quotidien' | 'jours_specifiques' | 'aucun';
-    breadDefaultQuantity?: number;
-    breadWeeklySchedule?: Record<string, { actif: boolean; quantite: number }>;
-    breadStartDate?: string;
+    breadProfile?: BreadProfile;
 }
 
 /**
  * Modèle de données pour le formulaire de CRÉATION (UI).
- * Tous les champs de saisie texte sont obligatoires pour éviter undefined dans les inputs.
  */
 export interface CustomerFormData {
     firstName: string;
@@ -45,13 +51,10 @@ export interface CustomerFormData {
 
 /**
  * Modèle pour la MISE À JOUR (DTO).
- * Permet des modifications partielles sans polluer avec les métadonnées techniques.
  */
-export type CustomerUpdateInput = Partial<CustomerFormData> & {
-    breadRecurrenceType?: 'quotidien' | 'jours_specifiques' | 'aucun';
-    breadWeeklySchedule?: Record<string, { actif: boolean; quantite: number }>;
-    breadStartDate?: string;
-};
+export interface CustomerUpdateInput extends Partial<CustomerFormData> {
+    breadProfile?: Partial<BreadProfile>;
+}
 
 export interface Payment extends BaseEntity {
     customerUuid: string;

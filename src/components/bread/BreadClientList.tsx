@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Edit, Users, Wheat, Star, ChevronRight, UserCheck } from 'lucide-react';
+import { Wheat, Star, ChevronRight, UserCheck } from 'lucide-react';
 import { BreadClientForm } from './BreadClientForm';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,9 +48,9 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
     };
 
     const getRecurrenceBadge = (client: Customer) => {
-        if (!client.isBreadClient) return null;
+        if (!client.isBreadClient || !client.breadProfile) return null;
         
-        switch (client.breadRecurrenceType) {
+        switch (client.breadProfile.recurrenceType) {
             case 'quotidien':
                 return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[8px] font-semibold uppercase px-2 py-0.5">QUOTIDIEN</Badge>;
             case 'jours_specifiques':
@@ -88,17 +88,17 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
                                     className="group/item flex items-center p-4 rounded-lg bg-black/20 border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all duration-500 cursor-pointer shadow-inner"
                                 >
                                     <div className="flex-grow min-w-0">
-                                        <p className="font-semibold text-sm tracking-tight truncate group-hover/item:text-primary transition-colors">
+                                        <p className="font-semibold text-sm tracking-tight truncate group-item:text-primary transition-colors">
                                             {client.firstName} {client.lastName}
                                         </p>
                                         <div className="flex items-center gap-3 mt-2">
                                             {getRecurrenceBadge(client)}
-                                            {client.breadRecurrenceType === 'quotidien' && (
-                                                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wide">×{client.breadDefaultQuantity} pcs</span>
+                                            {client.breadProfile?.recurrenceType === 'quotidien' && (
+                                                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wide">×{client.breadProfile.defaultQuantity} pcs</span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 group-hover/item:text-primary group-hover/item:bg-primary/10 transition-all">
+                                    <div className="h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground/20 group-item:text-primary group-item:bg-primary/10 transition-all">
                                         <ChevronRight className="h-5 w-5" />
                                     </div>
                                 </div>

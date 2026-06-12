@@ -14,10 +14,9 @@ import {
 import { Input }  from '@/components/ui/input';
 import { Label }  from '@/components/ui/label';
 import { toast }  from 'sonner';
-import type { Customer, CustomerUpdateInput } from '@/lib/types';
+import type { Customer, CustomerUpdateInput, BreadProfile } from '@/lib/types';
 import {
-    Loader2, Wheat, Settings, Calendar,
-    Package, CheckCircle2,
+    Loader2, Wheat, CheckCircle2,
 } from 'lucide-react';
 import { customerService } from '@/services/customer.service';
 import { Switch } from '@/components/ui/switch';
@@ -35,13 +34,6 @@ const defaultJoursSemaine = {
     dimanche: { actif: true,  quantite: 10 },
 };
 
-const initialFormState: Partial<CustomerUpdateInput> = {
-    isBreadClient:         true,
-    breadRecurrenceType: 'quotidien',
-    breadDefaultQuantity: 10,
-    breadWeeklySchedule:   defaultJoursSemaine,
-};
-
 interface BreadClientFormProps {
     isOpen:       boolean;
     onOpenChange: (isOpen: boolean) => void;
@@ -55,21 +47,21 @@ export function BreadClientForm({
     customer,
     onSuccess,
 }: BreadClientFormProps) {
-    const [formState, setFormState] = useState(initialFormState);
+    const [isBreadClient, setIsBreadClient] = useState(false);
+    const [recurrenceType, setRecurrenceType] = useState<BreadProfile['recurrenceType']>('quotidien');
+    const [defaultQuantity, setDefaultQuantity] = useState(10);
+    const [weeklySchedule, setWeeklySchedule] = useState<BreadProfile['weeklySchedule']>(defaultJoursSemaine);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (!isOpen) return;
         if (customer) {
-            setFormState({
-                isBreadClient:         customer.isBreadClient ?? true,
-                breadRecurrenceType: customer.breadRecurrenceType || 'aucun',
-                breadDefaultQuantity: customer.breadDefaultQuantity || 10,
-                breadWeeklySchedule: customer.breadWeeklySchedule || defaultJoursSemaine,
-                breadStartDate:      customer.breadStartDate,
-            });
-        } else {
-            setFormState(initialFormState);
+            setIsBreadClient(customer.isBreadClient);
+            if (customer.breadProfile) {
+                setRecurrenceType(customer.breadProfile.recurrenceType);
+                setDefaultQuantity(customer.breadProfile.defaultQuantity);
+                setWeeklySchedule(customer.breadProfile.weeklySchedule || defaultJoursSemaine);
+            }
         }
     }, [customer, isOpen]);
 
@@ -80,20 +72,17 @@ export function BreadClientForm({
 
             setIsLoading(true);
             try {
-                const dataToSave: CustomerUpdateInput = {
-                    isBreadClient:         formState.isBreadClient,
-                    breadRecurrenceType: formState.breadRecurrenceType,
-                    breadStartDate:      formState.breadStartDate || (formState.isBreadClient ? formatDateToYYYYMMDD(new Date()) : undefined)
+                const updatePayload: CustomerUpdateInput = {
+                    isBreadClient,
+                    breadProfile: {
+                        recurrenceType,
+                        defaultQuantity: recurrenceType === 'quotidien' ? defaultQuantity : 0,
+                        weeklySchedule: recurrenceType === 'jours_specifiques' ? weeklySchedule : {},
+                        startDate: customer.breadProfile?.startDate || formatDateToYYYYMMDD(new Date())
+                    }
                 };
 
-                if (formState.breadRecurrenceType === 'quotidien') {
-                    dataToSave.breadDefaultQuantity = formState.breadDefaultQuantity;
-                } else if (formState.breadRecurrenceType === 'jours_specifiques') {
-                    dataToSave.breadWeeklySchedule = formState.breadWeeklySchedule;
-                    dataToSave.breadDefaultQuantity = 0;
-                }
-
-                await customerService.updateCustomer(customer.uuid, dataToSave);
+                await customerService.updateCustomer(customer.uuid, updatePayload);
                 toast.success(`Programme pain mis à jour pour ${customer.firstName}.`);
                 onSuccess();
                 onOpenChange(false);
@@ -103,30 +92,21 @@ export function BreadClientForm({
                 setIsLoading(false);
             }
         },
-        [formState, customer, onOpenChange, onSuccess],
+        [isBreadClient, recurrenceType, defaultQuantity, weeklySchedule, customer, onOpenChange, onSuccess],
     );
 
     const handleDayToggle = (day: string) => {
-        setFormState(prev => ({
+        setWeeklySchedule(prev => ({
             ...prev,
-            breadWeeklySchedule: {
-                ...prev.breadWeeklySchedule!,
-                [day]: {
-                    ...prev.breadWeeklySchedule![day],
-                    actif: !prev.breadWeeklySchedule![day].actif,
-                },
-            },
+            [day]: { ...prev[day], actif: !prev[day].actif },
         }));
     };
 
     const handleDayQuantityChange = (day: string, value: string) => {
         const quantite = parseFloat(value) || 0;
-        setFormState(prev => ({
+        setWeeklySchedule(prev => ({
             ...prev,
-            breadWeeklySchedule: {
-                ...prev.breadWeeklySchedule!,
-                [day]: { ...prev.breadWeeklySchedule![day], quantite },
-            },
+            [day]: { ...prev[day], quantite },
         }));
     };
 
@@ -156,16 +136,16 @@ export function BreadClientForm({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold text-muted-foreground">Statut</Label>
-                                    <div className={cn('flex items-center justify-between p-3 rounded-lg border', formState.isBreadClient ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/30 border-border')}>
-                                        <span className={cn('text-xs font-bold uppercase', formState.isBreadClient ? 'text-emerald-600' : 'text-muted-foreground')}>
-                                            {formState.isBreadClient ? 'ACTIF' : 'INACTIF'}
+                                    <div className={cn('flex items-center justify-between p-3 rounded-lg border', isBreadClient ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/30 border-border')}>
+                                        <span className={cn('text-xs font-bold uppercase', isBreadClient ? 'text-emerald-600' : 'text-muted-foreground')}>
+                                            {isBreadClient ? 'ACTIF' : 'INACTIF'}
                                         </span>
-                                        <Switch checked={formState.isBreadClient} onCheckedChange={checked => setFormState(s => ({ ...s, isBreadClient: checked }))} />
+                                        <Switch checked={isBreadClient} onCheckedChange={setIsBreadClient} />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold text-muted-foreground">Fréquence</Label>
-                                    <select value={formState.breadRecurrenceType} onChange={e => setFormState(s => ({ ...s, breadRecurrenceType: e.target.value as any }))} className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+                                    <select value={recurrenceType} onChange={e => setRecurrenceType(e.target.value as any)} className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
                                         <option value="quotidien">Quotidien</option>
                                         <option value="jours_specifiques">Programmé</option>
                                         <option value="aucun">Manuel</option>
@@ -174,18 +154,18 @@ export function BreadClientForm({
                             </div>
                         </div>
 
-                        {formState.breadRecurrenceType === 'quotidien' && (
+                        {recurrenceType === 'quotidien' && (
                             <div className="p-4 rounded-lg border border-primary/15 bg-primary/5">
                                 <Label className="text-sm">Quantité fixe:</Label>
-                                <Input type="number" step="0.5" value={formState.breadDefaultQuantity} onChange={e => setFormState(s => ({ ...s, breadDefaultQuantity: parseFloat(e.target.value) || 0 }))} className="h-10 text-center font-bold text-lg mt-2" />
+                                <Input type="number" step="0.5" value={defaultQuantity} onChange={e => setDefaultQuantity(parseFloat(e.target.value) || 0)} className="h-10 text-center font-bold text-lg mt-2" />
                             </div>
                         )}
 
-                        {formState.breadRecurrenceType === 'jours_specifiques' && (
+                        {recurrenceType === 'jours_specifiques' && (
                             <div className="p-4 rounded-lg border border-border bg-muted/10">
                                 <div className="space-y-2">
                                     {Object.entries(BREAD_WEEK_DAY_LABELS_FULL).map(([key, label]) => {
-                                        const dayData = formState.breadWeeklySchedule?.[key] || { actif: false, quantite: 0 };
+                                        const dayData = weeklySchedule[key] || { actif: false, quantite: 0 };
                                         return (
                                             <div key={key} className={cn('flex items-center gap-3 p-2.5 rounded-lg border', dayData.actif ? 'bg-card border-border' : 'opacity-40 border-transparent')}>
                                                 <Switch checked={dayData.actif} onCheckedChange={() => handleDayToggle(key)} />

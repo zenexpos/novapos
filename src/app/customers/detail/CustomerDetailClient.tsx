@@ -405,28 +405,28 @@ export default function CustomerDetailClient() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
-                            {customer.isBreadClient ? (
+                            {customer.isBreadClient && customer.breadProfile ? (
                                 <>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Récurrence</p>
                                             <p className="font-semibold text-sm">
-                                                {customer.breadRecurrenceType === 'quotidien' ? 'QUOTIDIEN' : 
-                                                 customer.breadRecurrenceType === 'jours_specifiques' ? 'PROGRAMMÉ' : 'AUCUN'}
+                                                {customer.breadProfile.recurrenceType === 'quotidien' ? 'QUOTIDIEN' : 
+                                                 customer.breadProfile.recurrenceType === 'jours_specifiques' ? 'PROGRAMMÉ' : 'AUCUN'}
                                             </p>
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Quantité</p>
                                             <p className="font-semibold text-sm">
-                                                {customer.breadRecurrenceType === 'quotidien' ? `${customer.breadDefaultQuantity} PCS` : 'VARIABLE'}
+                                                {customer.breadProfile.recurrenceType === 'quotidien' ? `${customer.breadProfile.defaultQuantity} PCS` : 'VARIABLE'}
                                             </p>
                                         </div>
                                     </div>
-                                    {customer.breadStartDate && (
+                                    {customer.breadProfile.startDate && (
                                         <div className="pt-2 border-t border-white/5 flex items-center gap-2">
                                             <Calendar className="h-3 w-3 text-primary/40" />
                                             <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">
-                                                Depuis le {format(new Date(customer.breadStartDate), 'd MMMM yyyy', { locale: fr })}
+                                                Depuis le {format(new Date(customer.breadProfile.startDate), 'd MMMM yyyy', { locale: fr })}
                                             </p>
                                         </div>
                                     )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow, CustomerFormData, CustomerUpdateInput } from '@/lib/types';
+import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format } from 'date-fns';
@@ -97,9 +97,6 @@ class CustomerService {
         return customers;
     }
 
-    /**
-     * Ajoute un client. Injecte les métadonnées techniques.
-     */
     async addCustomer(customerData: CustomerFormData): Promise<Customer> {
         if (!customerData.firstName || !customerData.lastName) {
             throw new Error('Prénom et nom requis.');
@@ -127,7 +124,12 @@ class CustomerService {
             syncStatus: 'pending',
             version: 1,
             debtStatus: initialBal > 0 ? 'due_soon' : 'none',
-            isOverLimit: false
+            isOverLimit: false,
+            breadProfile: {
+                recurrenceType: 'aucun',
+                defaultQuantity: 0,
+                weeklySchedule: {},
+            }
         };
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
@@ -140,31 +142,34 @@ class CustomerService {
         return newCustomer;
     }
 
-    /**
-     * Met à jour un client. Gère l'incrémentation de version.
-     */
-    async updateCustomer(uuid: string, customerData: CustomerUpdateInput): Promise<Customer> {
+    async updateCustomer(uuid: string, updateData: CustomerUpdateInput): Promise<Customer> {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
-        const firstName = customerData.firstName !== undefined ? customerData.firstName : existing.firstName;
-        const lastName  = customerData.lastName !== undefined ? customerData.lastName : existing.lastName;
+        // Fusion intelligente des profils imbriqués
+        const breadProfile = updateData.breadProfile 
+            ? { ...existing.breadProfile, ...updateData.breadProfile } 
+            : existing.breadProfile;
+
+        const firstName = updateData.firstName !== undefined ? updateData.firstName : existing.firstName;
+        const lastName  = updateData.lastName !== undefined ? updateData.lastName : existing.lastName;
         const searchName = `${firstName} ${lastName}`.toLowerCase().trim();
 
-        const update: Partial<Customer> = {
-            ...customerData,
+        const finalUpdate: Partial<Customer> = {
+            ...updateData,
             searchName,
+            breadProfile: breadProfile as any,
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: (existing.version || 1) + 1
         };
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
-            await db.customers.update(existing.id!, update);
+            await db.customers.update(existing.id!, finalUpdate);
             await db.sync_queue.add({
                 table: 'customers',
                 operation: 'UPDATE',
-                payload: { ...existing, ...update },
+                payload: { ...existing, ...finalUpdate },
                 timestamp: Date.now()
             });
         });
