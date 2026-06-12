@@ -24,6 +24,19 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* Override default gray scale to HSL to prevent oklch parsing errors in html2canvas */
+  --color-gray-50: hsl(210 40% 98%);
+  --color-gray-100: hsl(210 40% 96.1%);
+  --color-gray-200: hsl(214.3 31.8% 91.4%);
+  --color-gray-300: hsl(212.7 26.8% 83.9%);
+  --color-gray-400: hsl(215 20.2% 65.1%);
+  --color-gray-500: hsl(215.4 16.3% 46.9%);
+  --color-gray-600: hsl(215.3 19.3% 34.5%);
+  --color-gray-700: hsl(215.3 25% 26.7%);
+  --color-gray-800: hsl(217.2 32.6% 17.5%);
+  --color-gray-900: hsl(222.2 47.4% 11.2%);
+  --color-gray-950: hsl(222.2 84% 4.9%);
+
   /* Elite Chart Palette */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
