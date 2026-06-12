@@ -63,7 +63,7 @@ class SyncService {
                 if (queueItems.length < 50) hasMore = false;
             }
 
-            // 3. Mise à jour de l'horodatage de synchronisation (Correction Type: camelCase)
+            // 3. Mise à jour de l'horodatage de synchronisation
             const profile = await db.company_profile.toCollection().first();
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {

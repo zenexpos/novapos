@@ -132,7 +132,11 @@ class ProductService {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error("Produit non trouvé");
 
-        const update = { ...data, updatedAt: new Date(), syncStatus: 'pending' as const };
+        const update: Partial<Product> = { 
+            ...data, 
+            updatedAt: new Date(), 
+            syncStatus: 'pending' as const 
+        };
         
         if (data.quantity !== undefined || data.minStockLevel !== undefined) {
             const finalQty = data.quantity !== undefined ? safeNumber(data.quantity) : existing.quantity;
@@ -177,7 +181,7 @@ class ProductService {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;
 
-        const update: any = {
+        const update: Partial<Product> = {
             purchasePrice: data.purchasePrice,
             updatedAt: new Date(),
             syncStatus: 'pending'
