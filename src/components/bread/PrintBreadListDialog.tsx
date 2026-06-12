@@ -10,11 +10,12 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Printer, X } from 'lucide-react';
+import { Printer, X, Loader2 } from 'lucide-react';
 import type { BreadOrderWithCustomer, CompanyProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAppStore } from '@/stores/appStore';
+import { usePrint } from '@/hooks/usePrint';
 
 interface PrintBreadListDialogProps {
     orders: BreadOrderWithCustomer[];
@@ -26,7 +27,7 @@ const PrintableList = React.forwardRef<HTMLDivElement, { orders: BreadOrderWithC
     const formattedDate = format(new Date(currentDate.replace(/-/g, '/')), 'EEEE d MMMM yyyy', { locale: fr });
     
     return (
-        <div ref={ref} className="p-4 bg-white text-black font-sans w-[210mm] min-h-[297mm]">
+        <div ref={ref} id="bread-list-source" className="p-4 bg-white text-black font-sans w-[210mm] min-h-[297mm]">
             <header className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">
                 <div>
                     <h1 className="text-xl font-semibold uppercase">{profile?.companyName || 'iPOS Manager'}</h1>
@@ -92,21 +93,13 @@ PrintableList.displayName = 'PrintableList';
 export function PrintBreadListDialog({ orders, currentDate }: PrintBreadListDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
     const profile = useAppStore((state) => state.companyProfile);
-    const printRef = useRef<HTMLDivElement>(null);
+    const { printElement, isPrinting } = usePrint();
 
     const handlePrint = () => {
-        const printableContent = document.getElementById('receipt-for-print');
-        const listElement = printRef.current;
-
-        if (!printableContent || !listElement) return;
-
-        const listClone = listElement.cloneNode(true) as HTMLDivElement;
-        listClone.classList.add('a4-receipt');
-
-        printableContent.innerHTML = '';
-        printableContent.appendChild(listClone);
-
-        setTimeout(() => window.print(), 100);
+        printElement('bread-list-source', {
+            title: `Liste_Distribution_${currentDate}`,
+            thermal: false
+        });
     };
 
     return (
@@ -128,9 +121,9 @@ export function PrintBreadListDialog({ orders, currentDate }: PrintBreadListDial
                         </div>
                     </DialogHeader>
                     
-                    <div id="label-print-area-wrapper" className="flex-grow overflow-y-auto bg-muted/50 p-4 custom-scrollbar">
-                        <div id="label-print-area" className="bg-white mx-auto shadow-sm" style={{ width: '210mm', minHeight: '297mm' }}>
-                            <PrintableList ref={printRef} orders={orders} currentDate={currentDate} profile={profile || null} />
+                    <div className="flex-grow overflow-y-auto bg-muted/50 p-4 custom-scrollbar">
+                        <div className="bg-white mx-auto shadow-sm" style={{ width: '210mm', minHeight: '297mm' }}>
+                            <PrintableList orders={orders} currentDate={currentDate} profile={profile || null} />
                         </div>
                     </div>
 
@@ -138,8 +131,9 @@ export function PrintBreadListDialog({ orders, currentDate }: PrintBreadListDial
                         <Button variant="ghost" onClick={() => setIsOpen(false)} className="rounded-xl h-12 font-bold flex-1">
                             <X className="mr-2 h-4 w-4" /> Fermer
                         </Button>
-                        <Button onClick={handlePrint} className="rounded-xl h-12 font-bold flex-1 shadow-lg shadow-sm">
-                            <Printer className="mr-2 h-4 w-4" /> Imprimer [A4]
+                        <Button onClick={handlePrint} disabled={isPrinting} className="rounded-xl h-12 font-bold flex-1 shadow-lg shadow-sm">
+                            {isPrinting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Printer className="mr-2 h-4 w-4" />}
+                            Imprimer [A4]
                         </Button>
                     </DialogFooter>
                 </DialogContent>
