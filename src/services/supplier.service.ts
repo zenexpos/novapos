@@ -86,8 +86,8 @@ class SupplierService {
             const newBalance = roundFinancial(safeNumber(supplier.balance) - safeNumber(paymentData.amount));
             
             await db.suppliers.update(supplier.id, { 
-                balance: newBalance,
-                updatedAt: now,
+                balance: newBalance, 
+                updatedAt: now, 
                 syncStatus: 'pending'
             });
 
