@@ -2,7 +2,7 @@
 
 import { parseISO, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { BreadOrder, BreadOrderWithCustomer } from '@/lib/types';
+import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
@@ -11,7 +11,7 @@ import { roundFinancial } from '@/lib/utils';
 
 /**
  * iPOS Zen - Bread Distribution Domain Service.
- * Gère le cycle de vie des commandes de pain avec nommage unifié.
+ * Gère le cycle de vie des commandes de pain avec une précision Elite.
  */
 class BreadService {
 
@@ -24,6 +24,9 @@ class BreadService {
         }
     }
 
+    /**
+     * Génère un numéro de commande unique (BRD-XXXXXX).
+     */
     private async generateOrderNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
         const currentCounter = profile?.bread_counter || 1;
@@ -38,6 +41,9 @@ class BreadService {
         return number;
     }
 
+    /**
+     * Récupère les commandes pour une date spécifique avec jointure client.
+     */
     async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
         if (!date) return [];
 
@@ -58,6 +64,9 @@ class BreadService {
         })).sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
     }
 
+    /**
+     * Assure que les commandes automatiques sont générées pour une date donnée.
+     */
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
         const activeBreadClientsCount = await db.customers
@@ -73,13 +82,11 @@ class BreadService {
         }
     }
 
-    async addManualBreadOrder(data: {
-        customerUuid?: string;
-        customName?: string;
-        date: string;
-        quantity: number;
-        unitPrice?: number;
-    }): Promise<void> {
+    /**
+     * Ajout manuel d'une commande (Flux direct ou Client Premium).
+     * @param data DTO de création conforme aux règles TypeScript.
+     */
+    async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
         const price = data.unitPrice || profile?.prix_pain || 10;
         const total = roundFinancial(data.quantity * price);
@@ -91,6 +98,7 @@ class BreadService {
             customName: data.customName,
             date: data.date,
             pickupDate: parseISO(data.date),
+            pickupTime: data.pickupTime,
             quantity: data.quantity,
             unitPrice: price,
             totalAmount: total,
@@ -106,12 +114,16 @@ class BreadService {
             version: 1,
             createdAt: new Date(),
             updatedAt: new Date(),
+            notes: data.notes
         };
 
         await db.bread_orders.add(newOrder);
         this.triggerSync();
     }
 
+    /**
+     * Convertit une ou plusieurs commandes de pain en transactions de vente réelles.
+     */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
@@ -135,7 +147,7 @@ class BreadService {
                     } as any],
                     discountType: 'fixed',
                     discountValue: 0,
-                    amountPaid: order.amountPaid || 0,
+                    amountPaid: 0, // Par défaut, transformé en dette sur compte
                     customerUuid: order.customerUuid || undefined,
                 });
 
@@ -153,6 +165,9 @@ class BreadService {
         this.triggerSync();
     }
 
+    /**
+     * Clôture toutes les commandes en attente pour une date.
+     */
     async billAllRemainingOrdersForDate(date: string, breadPrice: number): Promise<number> {
         const pendingOrders = await db.bread_orders
             .where('date').equals(date)
@@ -201,6 +216,9 @@ class BreadService {
         this.triggerSync();
     }
 
+    /**
+     * Génère automatiquement les commandes quotidiennes à partir des abonnements clients.
+     */
     private async createDayOrders(date: string): Promise<void> {
         const dayIndex = parseISO(date).getDay();
         const dayOfWeek = BREAD_WEEK_DAYS[dayIndex];
@@ -260,6 +278,9 @@ class BreadService {
         }
     }
 
+    /**
+     * Automatisation : Transfère les commandes non réglées aux comptes clients en fin de journée.
+     */
     async processEndOfDayTransfers(): Promise<number> {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const profile = await db.company_profile.toCollection().first();

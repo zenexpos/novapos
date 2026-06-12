@@ -68,9 +68,9 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 const client = manualClients.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
                     isBreadClient: true,
-                    bread_type_recurrence: 'quotidien',
-                    bread_quantite_defaut: quantity,
-                    bread_date_debut: client?.bread_date_debut || currentDate,
+                    breadRecurrenceType: 'quotidien',
+                    breadDefaultQuantity: quantity,
+                    breadStartDate: client?.breadStartDate || currentDate,
                     updatedAt: new Date()
                 });
                 toast.success("Abonnement quotidien activé pour ce client.");
@@ -81,7 +81,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             onOpenChange(false);
             resetForm();
         } catch(e: any) {
-            toast.error(e.message);
+            toast.error(e.message || "Une erreur est survenue.");
         } finally {
             setIsLoading(false);
         }
@@ -92,6 +92,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
         setCustomName('');
         setQuantity(10);
         setIsRecurring(false);
+        setPickupTime('08:00');
     };
 
     return (
@@ -169,14 +170,14 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Prix Unitaire</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Heure de retrait</Label>
                                 <div className="relative group">
-                                    <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                                     <Input 
-                                        type="number" 
+                                        type="time" 
                                         className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
-                                        value={unitPrice}
-                                        onChange={e => setUnitPrice(Number(e.target.value))}
+                                        value={pickupTime}
+                                        onChange={e => setPickupTime(e.target.value)}
                                     />
                                 </div>
                             </div>

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Plus, User, UserPlus } from 'lucide-react';
+import { Plus, User, UserPlus, Clock } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -25,6 +25,7 @@ export function ManualAddDialog({ currentDate, onSuccess }: ManualAddDialogProps
     const [selectedClientUuid, setSelectedClientUuid] = useState<string>('');
     const [customName, setCustomName] = useState('');
     const [quantity, setQuantity] = useState(10);
+    const [pickupTime, setPickupTime] = useState('08:00');
     const [manualClients, setManualClients] = useState<Customer[]>([]);
 
     useEffect(() => {
@@ -54,9 +55,10 @@ export function ManualAddDialog({ currentDate, onSuccess }: ManualAddDialogProps
                 customerUuid: mode === 'registered' ? selectedClientUuid : undefined,
                 customName: mode === 'external' ? customName.trim() : undefined,
                 date: currentDate,
-                quantity: quantity
+                quantity: quantity,
+                pickupTime: pickupTime
             });
-            toast.success("Commande ajoutée.");
+            toast.success("Commande ajoutée au registre.");
             onSuccess();
             setIsOpen(false);
             resetForm();
@@ -84,19 +86,24 @@ export function ManualAddDialog({ currentDate, onSuccess }: ManualAddDialogProps
         setSelectedClientUuid('');
         setCustomName('');
         setQuantity(10);
+        setPickupTime('08:00');
         setMode('registered');
     };
 
     return (
         <>
-            <Button variant="outline" onClick={() => setIsOpen(true)} className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 font-bold">
-                <Plus className="mr-2 h-4 w-4 text-primary" /> Ajout Manuel
-            </Button>
+            <button 
+                onClick={() => setIsOpen(true)} 
+                className="inline-flex items-center justify-center rounded-xl h-10 px-4 font-bold border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all gap-2"
+            >
+                <Plus className="h-4 w-4" /> Ajout Manuel
+            </button>
+            
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-sm">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-semibold tracking-tight">Ajouter une Commande</DialogTitle>
-                        <DialogDescription className="font-medium">Ajouter une commande pour le {currentDate} (Client ou Externe).</DialogDescription>
+                        <DialogDescription className="font-medium">Saisie rapide d'un flux de distribution pour le {currentDate}.</DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6 py-4">
@@ -146,21 +153,34 @@ export function ManualAddDialog({ currentDate, onSuccess }: ManualAddDialogProps
                                     className="h-12 rounded-xl bg-muted/30 border-none shadow-inner font-bold"
                                     value={customName}
                                     onChange={e => setCustomName(e.target.value)}
-                                    autoFocus
                                 />
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground ml-1">Quantité demandée</Label>
-                            <div className="relative">
-                                <Input 
-                                    type="number" 
-                                    className="h-9 text-lg font-semibold text-center rounded-xl bg-muted/30 border-none shadow-inner focus-visible:ring-primary"
-                                    value={quantity} 
-                                    onChange={e => setQuantity(parseInt(e.target.value) || 0)} 
-                                />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-xs text-muted-foreground opacity-30">PCS</div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground ml-1">Quantité (Pains)</Label>
+                                <div className="relative">
+                                    <Input 
+                                        type="number" 
+                                        className="h-11 text-lg font-bold text-center rounded-xl bg-muted/30 border-none shadow-inner"
+                                        value={quantity} 
+                                        onChange={e => setQuantity(parseInt(e.target.value) || 0)} 
+                                    />
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-[10px] opacity-20 uppercase">PCS</div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground ml-1">Heure de retrait</Label>
+                                <div className="relative">
+                                    <Input 
+                                        type="time" 
+                                        className="h-11 text-lg font-bold text-center rounded-xl bg-muted/30 border-none shadow-inner"
+                                        value={pickupTime} 
+                                        onChange={e => setPickupTime(e.target.value)} 
+                                    />
+                                    <Clock className="absolute right-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-20" />
+                                </div>
                             </div>
                         </div>
                     </div>
