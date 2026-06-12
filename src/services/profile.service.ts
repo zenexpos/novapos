@@ -4,15 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/db';
 import type { CompanyProfile } from '@/lib/types';
 
-/**
- * Service de gestion du profil établissement iPOS Zen.
- * Gère le cycle de vie du singleton CompanyProfile dans IndexedDB.
- */
 class CompanyProfileService {
 
-    /**
-     * Récupère le profil unique. Initialise une entité complète si absente.
-     */
     async getProfile(): Promise<CompanyProfile | null> {
         const profile = await db.company_profile.toCollection().first();
         if (!profile) {
@@ -40,10 +33,6 @@ class CompanyProfileService {
         return profile;
     }
 
-    /**
-     * Upsert — crée si absent, met à jour si existant.
-     * Garantit qu'aucune propriété de BaseEntity ne manque.
-     */
     async upsertProfile(profileData: Partial<CompanyProfile>): Promise<CompanyProfile> {
         const existing = await db.company_profile.toCollection().first();
         const now = new Date();
@@ -67,7 +56,7 @@ class CompanyProfileService {
             updatedAt: now,
             syncStatus: 'pending',
             version: 1
-        };
+        } as CompanyProfile;
         const id = await db.company_profile.add(newProfile);
         newProfile.id = id;
         return newProfile;

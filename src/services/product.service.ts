@@ -19,9 +19,6 @@ const triggerSync = () => {
 
 class ProductService {
 
-    /**
-     * FACTORY PATTERN: Centralise la création d'une entité Produit valide.
-     */
     createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
         const now = new Date();
         const quantity = safeNumber(input.quantity);
@@ -97,7 +94,7 @@ class ProductService {
                 let valA: any = a[field as keyof Product] || 0;
                 let valB: any = b[field as keyof Product] || 0;
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                return isAsc ? valA - valB : valB - valA;
+                return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
             });
         } else {
              products.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
@@ -153,9 +150,6 @@ class ProductService {
         triggerSync();
     }
 
-    /**
-     * Duplique un produit existant pour faciliter la création d'articles similaires.
-     */
     async duplicateProduct(uuid: string): Promise<Product> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing) throw new Error("Produit original introuvable");
@@ -223,9 +217,6 @@ class ProductService {
         triggerSync();
     }
 
-    /**
-     * Supprime plusieurs produits simultanément.
-     */
     async bulkDelete(uuids: string[]): Promise<void> {
         await db.transaction('rw', [db.products, db.sync_queue], async () => {
             for (const uuid of uuids) {
@@ -234,9 +225,6 @@ class ProductService {
         });
     }
 
-    /**
-     * Analyse un fichier CSV pour identifier les nouveaux produits et les mises à jour.
-     */
     async analyzeImport(file: File): Promise<ProductImportAnalysis> {
         return new Promise((resolve, reject) => {
             Papa.parse(file, {
@@ -285,9 +273,6 @@ class ProductService {
         });
     }
 
-    /**
-     * Exécute l'importation massive de produits confirmée par l'utilisateur.
-     */
     async executeImport(data: { toAdd: any[], toUpdate: any[] }): Promise<void> {
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
             for (const item of data.toAdd) {

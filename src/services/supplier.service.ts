@@ -1,4 +1,3 @@
-
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +18,6 @@ const triggerSync = () => {
 class SupplierService {
 
     async getSuppliers(): Promise<Supplier[]> {
-        // CORRECT PATTERN: Fetch filtered collection then sort in memory
         const suppliers = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return suppliers.sort((a, b) => a.name.localeCompare(b.name));
     }
