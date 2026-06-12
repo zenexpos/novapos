@@ -50,7 +50,7 @@ class ProductService {
     }
     
     async getProductsByUuids(uuids: string[]): Promise<Product[]> {
-        return db.products.where('uuid').anyOf(uuuids).filter(p => !p.deletedAt).toArray();
+        return db.products.where('uuid').anyOf(uuids).filter(p => !p.deletedAt).toArray();
     }
 
     async filterProducts(filters: {
@@ -94,7 +94,7 @@ class ProductService {
                 let valA: any = a[field as keyof Product] || 0;
                 let valB: any = b[field as keyof Product] || 0;
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+                return isAsc ? (valA as number) - (vb as number) : (vb as number) - (valA as number);
             });
         } else {
              products.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
@@ -258,7 +258,7 @@ class ProductService {
                             barcodes: row.barcodes ? row.barcodes.split(',').map((b: string) => b.trim()) : []
                         };
 
-                        const existing = existingProducts.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+                    const existing = existingProducts.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
 
                         if (existing) {
                             analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid } as any);
