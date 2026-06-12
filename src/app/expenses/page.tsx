@@ -35,12 +35,12 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, cn, safeNumber } from '@/lib/utils';
+import { formatCurrency, cn, safeNumber, formatDate } from '@/lib/utils';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/appStore';
-import { differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
+import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -187,7 +187,7 @@ export default function ExpensesPage() {
         }
 
         const csv = Papa.unparse(dataToExport.map(e => ({
-            Date: new Date(e.expenseDate).toLocaleDateString('fr-FR'),
+            Date: formatDate(e.expenseDate),
             Description: e.description,
             Catégorie: e.category,
             Montant: e.amount
@@ -210,7 +210,9 @@ export default function ExpensesPage() {
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
 
-        const dateStr = dateRange?.from ? `${format(dateRange.from, 'dd/MM/yyyy')} au ${format(dateRange.to!, 'dd/MM/yyyy')}` : 'Toutes les dates';
+        const dateStr = dateRange?.from 
+            ? `${formatDate(dateRange.from)} au ${formatDate(dateRange.to!)}` 
+            : 'Toutes les dates';
 
         const html = `
             <html>
@@ -250,7 +252,7 @@ export default function ExpensesPage() {
                         <tbody>
                             ${allExpenses.map(e => `
                                 <tr>
-                                    <td>${format(new Date(e.expenseDate), 'dd/MM/yyyy')}</td>
+                                    <td>${formatDate(e.expenseDate)}</td>
                                     <td><b>${e.description}</b></td>
                                     <td>${e.category}</td>
                                     <td class="amount">${formatCurrency(e.amount)}</td>
