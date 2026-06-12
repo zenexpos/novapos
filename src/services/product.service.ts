@@ -3,7 +3,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Product, ProductCreateInput, ProductImportAnalysis } from '@/lib/types';
 import { db } from '@/lib/db';
-import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
+import { calculateStockStatus, safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 import { inventoryService } from './inventory.service';
 import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
@@ -103,7 +103,7 @@ class ProductService {
                 return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
             });
         } else {
-             products.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+             products.sort((a, b) => safeToDate(b.updatedAt).getTime() - safeToDate(a.updatedAt).getTime());
         }
 
         return products;

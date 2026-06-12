@@ -5,7 +5,7 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
+import { safeNumber, preciseMultiply, roundFinancial, safeToDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
@@ -204,7 +204,7 @@ class SalesService {
       results = results.filter(s => s.invoiceNumber.toLowerCase().includes(q));
     }
 
-    return results.sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+    return results.sort((a, b) => safeToDate(b.createdAt).getTime() - safeToDate(a.createdAt).getTime());
   }
 }
 
