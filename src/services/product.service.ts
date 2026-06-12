@@ -153,6 +153,29 @@ class ProductService {
         triggerSync();
     }
 
+    /**
+     * Duplique un produit existant pour faciliter la création d'articles similaires.
+     */
+    async duplicateProduct(uuid: string): Promise<Product> {
+        const existing = await db.products.where('uuid').equals(uuid).first();
+        if (!existing) throw new Error("Produit original introuvable");
+
+        const newInput: ProductCreateInput = {
+            name: `${existing.name} (Copie)`,
+            price: existing.price,
+            purchasePrice: existing.purchasePrice,
+            quantity: 0,
+            minStockLevel: existing.minStockLevel,
+            barcodes: [],
+            unit: existing.unit,
+            category: existing.category,
+            dateExpiration: existing.dateExpiration,
+            supplierUuid: existing.supplierUuid
+        };
+
+        return this.addProduct(newInput);
+    }
+
     async updateProductFromIntake(uuid: string, data: { purchasePrice: number, price?: number, barcodes?: string[] }): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;
@@ -198,6 +221,83 @@ class ProductService {
         });
 
         triggerSync();
+    }
+
+    /**
+     * Supprime plusieurs produits simultanément.
+     */
+    async bulkDelete(uuids: string[]): Promise<void> {
+        await db.transaction('rw', [db.products, db.sync_queue], async () => {
+            for (const uuid of uuids) {
+                await this.deleteProduct(uuid);
+            }
+        });
+    }
+
+    /**
+     * Analyse un fichier CSV pour identifier les nouveaux produits et les mises à jour.
+     */
+    async analyzeImport(file: File): Promise<ProductImportAnalysis> {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    const existingProducts = await this.getProducts();
+                    const analysis: ProductImportAnalysis = {
+                        productsToAdd: [],
+                        productsToUpdate: [],
+                        skippedRows: [],
+                        errorRows: [],
+                        totalRows: results.data.length
+                    };
+
+                    for (const row of results.data as any[]) {
+                        const name = row.name || row.Nom;
+                        if (!name) {
+                            analysis.errorRows.push({ ...row, error: "Nom manquant" });
+                            continue;
+                        }
+
+                        const productData: ProductCreateInput = {
+                            name: name.trim(),
+                            price: safeNumber(row.price || row.Prix_Vente || row.Prix),
+                            purchasePrice: safeNumber(row.purchasePrice || row.Prix_Achat || row.PMP),
+                            quantity: safeNumber(row.quantity || row.Stock || 0),
+                            minStockLevel: safeNumber(row.minStockLevel || row.Seuil || 10),
+                            unit: (row.unit || row.Unité || row.Unite || 'Pièce') as any,
+                            category: row.category || row.Catégorie || row.Categorie || 'Général',
+                            barcodes: row.barcodes ? row.barcodes.split(',').map((b: string) => b.trim()) : []
+                        };
+
+                        const existing = existingProducts.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+
+                        if (existing) {
+                            analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid } as any);
+                        } else {
+                            analysis.productsToAdd.push(productData as any);
+                        }
+                    }
+                    resolve(analysis);
+                },
+                error: (err) => reject(err)
+            });
+        });
+    }
+
+    /**
+     * Exécute l'importation massive de produits confirmée par l'utilisateur.
+     */
+    async executeImport(data: { toAdd: any[], toUpdate: any[] }): Promise<void> {
+        await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
+            for (const item of data.toAdd) {
+                await this.addProduct(item);
+            }
+            for (const item of data.toUpdate) {
+                const { uuid, ...rest } = item;
+                await this.updateProduct(uuid, rest);
+            }
+        });
     }
 }
 
