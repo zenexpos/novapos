@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput } from '@/lib/types';
+import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format } from 'date-fns';
