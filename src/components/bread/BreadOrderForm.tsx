@@ -63,15 +63,17 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 pickupTime
             });
 
-            // 2. Si récurrent et client enregistré, mettre à jour le profil client
+            // 2. Si récurrent et client enregistré, mettre à jour le profil client via le modèle imbriqué
             if (mode === 'registered' && isRecurring && selectedClientUuid) {
                 const client = manualClients.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
                     isBreadClient: true,
-                    breadRecurrenceType: 'quotidien',
-                    breadDefaultQuantity: quantity,
-                    breadStartDate: client?.breadStartDate || currentDate,
-                    updatedAt: new Date()
+                    breadProfile: {
+                        recurrenceType: 'quotidien',
+                        defaultQuantity: quantity,
+                        startDate: client?.breadProfile?.startDate || currentDate,
+                        weeklySchedule: client?.breadProfile?.weeklySchedule || {}
+                    }
                 });
                 toast.success("Abonnement quotidien activé pour ce client.");
             }
