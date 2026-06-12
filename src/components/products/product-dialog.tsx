@@ -34,13 +34,13 @@ const initialFormState: Partial<Product> & { supplierName?: string } = {
     quantity: 0,
     minStockLevel: 10,
     barcodes: [],
-    unite: 'Pièce',
+    unit: 'Pièce',
     dateExpiration: undefined,
     supplierUuid: undefined,
     supplierName: '',
 };
 
-const units: NonNullable<Product['unite']>[] = ['Pièce', 'Kg', 'Litre', 'Boîte', 'Carton', 'Sachet', 'Bouteille'];
+const units: NonNullable<Product['unit']>[] = ['Pièce', 'Kg', 'Litre', 'Boîte', 'Carton', 'Sachet', 'Bouteille'];
 
 export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSuccess }: ProductDialogProps) {
     const [formState, setFormState] = useState(initialFormState);
@@ -181,7 +181,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground ml-1">Unité</Label>
-                                        <Select value={formState.unite} onValueChange={(value) => setFormState(s => ({ ...s, unite: value as any }))}>
+                                        <Select value={formState.unit} onValueChange={(value) => setFormState(s => ({ ...s, unit: value as any }))}>
                                             <SelectTrigger className="h-12 rounded-xl bg-muted/20 border-none shadow-inner font-bold"><SelectValue /></SelectTrigger>
                                             <SelectContent className="rounded-2xl shadow-sm border-white/5">{units.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                                         </Select>

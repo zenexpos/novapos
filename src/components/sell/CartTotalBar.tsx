@@ -24,19 +24,16 @@ function CartTotalBarContent() {
         const zeroItems    = cart.items.filter(i => i.cartQuantity === 0);
         const totals       = calculateCartTotals({ ...cart, items: activeItems });
 
-        // TVA calculation
-        const tvaRate = safeNumber(companyProfile?.tva_rate ?? 0);
-        const isTvaExempt = companyProfile?.is_tva_exempt ?? true;
+        const tvaRate = safeNumber(companyProfile?.tvaRate ?? 0);
+        const isTvaExempt = companyProfile?.isTvaExempt ?? true;
         let tvaAmount = 0;
         let htAmount  = totals.total;
 
         if (!isTvaExempt && tvaRate > 0) {
-            // Prices are TTC — extract HT
             htAmount  = roundFinancial(ttcToHt(totals.total, tvaRate));
             tvaAmount = roundFinancial(totals.total - htAmount);
         }
 
-        // Item count
         const itemCount = activeItems.reduce((s, i) => s + i.cartQuantity, 0);
 
         return {
@@ -48,7 +45,7 @@ function CartTotalBarContent() {
             zeroCount: zeroItems.length,
             itemCount,
         };
-    }, [cart, companyProfile?.tva_rate, companyProfile?.is_tva_exempt]);
+    }, [cart, companyProfile?.tvaRate, companyProfile?.isTvaExempt]);
 
     if (!isMounted || !cart || !stats) return null;
 
@@ -57,7 +54,6 @@ function CartTotalBarContent() {
 
     return (
         <div className="space-y-2">
-            {/* Zero-qty warning */}
             {stats.zeroCount > 0 && (
                 <div className={cn(
                     'flex items-center gap-2 px-3 py-1.5 rounded-lg',
@@ -71,10 +67,8 @@ function CartTotalBarContent() {
                 </div>
             )}
 
-            {/* Detail rows — only shown when there's something to show */}
             {(hasDiscount || hasTva) && (
                 <div className="px-1 space-y-1 animate-fade-in">
-                    {/* Subtotal */}
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground/50">
                         <div className="flex items-center gap-1">
                             <Receipt className="h-3 w-3" />
@@ -85,7 +79,6 @@ function CartTotalBarContent() {
                         <span className="font-bold tabular-nums">{formatCurrency(stats.subtotal)}</span>
                     </div>
 
-                    {/* Discount */}
                     {hasDiscount && (
                         <div className="flex items-center justify-between text-[10px] text-emerald-500">
                             <div className="flex items-center gap-1">
@@ -98,7 +91,6 @@ function CartTotalBarContent() {
                         </div>
                     )}
 
-                    {/* TVA */}
                     {hasTva && (
                         <div className="flex items-center justify-between text-[10px] text-muted-foreground/40">
                             <span className="font-semibold uppercase tracking-wide">
@@ -110,12 +102,10 @@ function CartTotalBarContent() {
                         </div>
                     )}
 
-                    {/* Separator */}
                     <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                 </div>
             )}
 
-            {/* TOTAL — primary display */}
             <div className="flex items-center justify-between px-1">
                 <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase text-muted-foreground/50 tracking-widest">

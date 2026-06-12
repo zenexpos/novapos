@@ -37,7 +37,7 @@ export interface StockIntakeItem {
     quantityDamaged: number;
     purchasePrice: number;
     price: number;
-    unite: string;
+    unit: string;
     isNew: boolean;
 }
 

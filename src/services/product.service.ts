@@ -153,6 +153,30 @@ class ProductService {
         triggerSync();
     }
 
+    async updateProductFromIntake(uuid: string, data: { purchasePrice: number, price?: number, barcodes?: string[] }): Promise<void> {
+        const existing = await db.products.where('uuid').equals(uuid).first();
+        if (!existing?.id) return;
+
+        const update: any = {
+            purchasePrice: data.purchasePrice,
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        };
+
+        if (data.price !== undefined) {
+            update.price = data.price;
+            update.priceUpdatedAt = new Date();
+        }
+
+        if (data.barcodes) {
+            const merged = Array.from(new Set([...(existing.barcodes || []), ...data.barcodes]));
+            update.barcodes = merged;
+        }
+
+        await db.products.update(existing.id, update);
+        triggerSync();
+    }
+
     async deleteProduct(uuid: string): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;

@@ -89,9 +89,7 @@ export default function SettingsPage() {
                     db.inventory_logs.count()
                 ]);
                 setStats({ products: p, customers: c, sales: s, logs: l });
-            } catch (err) {
-                // Silently handled via UI feedback
-            }
+            } catch (err) {}
         };
         fetchStats();
 
@@ -124,13 +122,13 @@ export default function SettingsPage() {
     }, []);
 
     const testCloudConnection = async () => {
-        if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) {
+        if (!companyProfile?.supabaseUrl || !companyProfile?.supabaseKey) {
             toast.error("Veuillez configurer Supabase dans votre profil.");
             return;
         }
         setIsTestingConnection(true);
         try {
-            const isValid = await supabaseSyncService.testConnection(companyProfile.supabase_url, companyProfile.supabase_key);
+            const isValid = await supabaseSyncService.testConnection(companyProfile.supabaseUrl, companyProfile.supabaseKey);
             setConnectionStatus(isValid ? 'success' : 'error');
             if (isValid) toast.success("Connexion au Cloud établie.");
             else toast.error("Échec de connexion au Cloud.");
@@ -162,7 +160,7 @@ export default function SettingsPage() {
         try { localStorage.setItem('ipos-autoprint-enabled', String(checked)); } catch (_) {}
     };
 
-    const isSupabaseConfigured = companyProfile?.supabase_url && companyProfile?.supabase_key;
+    const isSupabaseConfigured = !!(companyProfile?.supabaseUrl && companyProfile?.supabaseKey);
 
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto pb-32 animate-in fade-in duration-1000">
@@ -311,17 +309,16 @@ export default function SettingsPage() {
                                 </>
                             )}
 
-                            {companyProfile?.last_sync_at && (
+                            {companyProfile?.lastSyncAt && (
                                 <div className="flex items-center justify-center gap-3 px-6 py-3 bg-primary/5 rounded-2xl border border-primary/10 w-fit mx-auto">
                                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                                     <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">
-                                        Dernière mise à jour Cloud : {format(new Date(companyProfile.last_sync_at), 'd MMMM yyyy, HH:mm', { locale: fr })}
+                                        Dernière mise à jour Cloud : {format(new Date(companyProfile.lastSyncAt), 'd MMMM yyyy, HH:mm', { locale: fr })}
                                     </span>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
-
 
                     <Card className="app-card rounded-lg overflow-hidden">
                         <CardHeader className="bg-primary/5 border-b border-border p-4">

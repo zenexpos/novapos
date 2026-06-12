@@ -26,24 +26,12 @@ interface ProductCardProps {
     isSelectionActive: boolean;
 }
 
-type StockState = 'ok' | 'low' | 'out';
-
-function getStockState(product: Product): StockState {
-    if (product.quantity <= 0) return 'out';
-    if (product.quantity <= product.minStockLevel && product.minStockLevel > 0) return 'low';
-    return 'ok';
-}
-
-const stockConfig = {
-    ok:  { label: 'En stock',   bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
-    low: { label: 'Stock bas',  bg: 'bg-amber-500/10',   text: 'text-amber-500',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
-    out: { label: 'Rupture',    bg: 'bg-red-500/10',     text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
+const stockCfg = {
+    in_stock:    { label: 'En stock',   bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
+    low_stock:   { label: 'Stock bas',  bg: 'bg-amber-500/10',   text: 'text-amber-500',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
+    out_of_stock: { label: 'Rupture',    bg: 'bg-red-500/10',     text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
 };
 
-/**
- * Highly Optimized Product Card
- * - Uses React.memo with exhaustive checks to prevent jank during selection/search.
- */
 const ProductCardComponent = ({
     product, onEdit, onDuplicate, onHistory, onDelete,
     isSelected, onToggleSelection, isSelectionActive,
@@ -51,8 +39,7 @@ const ProductCardComponent = ({
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => { setIsMounted(true); }, []);
 
-    const stockState = getStockState(product);
-    const stock = stockConfig[stockState];
+    const stock = stockCfg[product.stockStatus ?? 'in_stock'];
     const marginRate = calculateMarginRate(product.price, product.purchasePrice);
     const isGoodMargin = marginRate >= 20;
 
@@ -71,12 +58,10 @@ const ProductCardComponent = ({
     }, [isMounted, product.updatedAt]);
 
     const handleCardClick = (e: React.MouseEvent) => {
-        // Prevent click if we target an interactive element inside the card
         if ((e.target as HTMLElement).closest('button, input, [role="menuitem"]')) return;
         if (isSelectionActive) { onToggleSelection(); } else { onEdit(product); }
     };
 
-    // Progress bar for stock (relative to alert threshold)
     const stockPercent = product.minStockLevel > 0
         ? Math.min(100, (product.quantity / (product.minStockLevel * 3)) * 100)
         : Math.min(100, product.quantity * 10);
@@ -93,12 +78,11 @@ const ProductCardComponent = ({
                     : 'border-[var(--glass-border)] hover:border-primary/30 hover:shadow-sm',
             )}
         >
-            {/* Colored top accent bar */}
             <div className={cn(
                 'absolute inset-x-0 top-0 h-0.5 transition-all duration-300',
-                stockState === 'ok'  && 'bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent',
-                stockState === 'low' && 'bg-gradient-to-r from-transparent via-amber-500/60 to-transparent',
-                stockState === 'out' && 'bg-gradient-to-r from-transparent via-red-500/60 to-transparent',
+                product.stockStatus === 'in_stock'  && 'bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent',
+                product.stockStatus === 'low_stock' && 'bg-gradient-to-r from-transparent via-amber-500/60 to-transparent',
+                product.stockStatus === 'out_of_stock' && 'bg-gradient-to-r from-transparent via-red-500/60 to-transparent',
             )} />
 
             <div className="flex items-start justify-between p-4 pb-2">
@@ -156,9 +140,9 @@ const ProductCardComponent = ({
                 </h3>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    {product.unite && (
+                    {product.unit && (
                         <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 px-2 py-0.5 rounded-md bg-muted/40 border border-muted">
-                            {product.unite}
+                            {product.unit}
                         </span>
                     )}
                     {product.barcodes && product.barcodes.length > 0 && (
@@ -193,23 +177,23 @@ const ProductCardComponent = ({
                     </div>
                     <span className={cn('text-sm font-black tabular-nums', stock.text)}>
                         {product.quantity}
-                        <span className="text-[9px] font-semibold text-muted-foreground/40 ml-1">{product.unite ?? 'u'}</span>
+                        <span className="text-[9px] font-semibold text-muted-foreground/40 ml-1">{product.unit ?? 'u'}</span>
                     </span>
                 </div>
                 <div className="h-1 w-full bg-muted/40 rounded-full overflow-hidden">
                     <div
                         className={cn(
                             'h-full rounded-full transition-all duration-700',
-                            stockState === 'ok'  && 'bg-emerald-500',
-                            stockState === 'low' && 'bg-amber-500',
-                            stockState === 'out' && 'bg-red-500',
+                            product.stockStatus === 'in_stock'  && 'bg-emerald-500',
+                            product.stockStatus === 'low_stock' && 'bg-amber-500',
+                            product.stockStatus === 'out_of_stock' && 'bg-red-500',
                         )}
                         style={{ width: `${Math.max(3, stockPercent)}%` }}
                     />
                 </div>
                 {product.minStockLevel > 0 && (
                     <p className="text-[8px] font-semibold text-muted-foreground/30 mt-1 uppercase tracking-wide">
-                        Seuil min: {product.minStockLevel} {product.unite ?? 'u'}
+                        Seuil min: {product.minStockLevel} {product.unit ?? 'u'}
                     </p>
                 )}
             </div>
@@ -249,7 +233,6 @@ const ProductCardComponent = ({
     );
 };
 
-// CRITICAL PERFORMANCE: Exhaustive memoization for list stability
 export const ProductCard = React.memo(ProductCardComponent, (prev, next) => {
     return (
         prev.isSelected === next.isSelected &&

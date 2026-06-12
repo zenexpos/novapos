@@ -23,9 +23,9 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
     const [quantity, setQuantity] = useState(order.quantity);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const debouncedQuantity = useDebounce(quantity, 500);
-    const breadPrice = useAppStore((state) => state.companyProfile?.prix_pain) || 0;
+    const breadPrice = useAppStore((state) => state.companyProfile?.breadPrice) || 0;
 
-    const isPaid = !!order.venteUuid;
+    const isPaid = !!order.saleUuid;
     const isDelivered = order.isDelivered;
     const isExternal = !order.customerUuid;
     const displayName = order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Inconnu');

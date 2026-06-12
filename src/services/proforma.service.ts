@@ -22,17 +22,17 @@ class ProformaService {
     }
 
     /**
-     * Génère un numéro de proforma unique séquentiel (PF-XXXXXX).
+     * Génère un numéro de proforma unique séquentiel.
      */
     private async generateProformaNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
-        const currentCounter = profile?.proforma_counter || 1;
-        const prefix = profile?.invoice_prefix || 'PF';
+        const currentCounter = profile?.proformaCounter || 1;
+        const prefix = profile?.invoicePrefix || 'PF';
         const number = `${prefix}-${String(currentCounter).padStart(6, '0')}`;
 
         if (profile?.id) {
             await db.company_profile.update(profile.id, {
-                proforma_counter: currentCounter + 1,
+                proformaCounter: currentCounter + 1,
                 updatedAt: new Date()
             });
         }
@@ -51,7 +51,6 @@ class ProformaService {
         const now = new Date();
         let proformaNumber = '';
 
-        // Calcul précision Elite en centimes
         const subtotalCents = cart.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -76,7 +75,7 @@ class ProformaService {
 
         const newProforma: ProformaInvoice = {
             uuid: uuidv4(),
-            proformaNumber: '', // Will be set inside transaction
+            proformaNumber: '', 
             items,
             subtotal: subtotalCents / 100,
             total: totalCents / 100,
@@ -93,7 +92,6 @@ class ProformaService {
             newProforma.proformaNumber = proformaNumber;
             await db.proforma_invoices.add(newProforma);
             
-            // Traçabilité obligatoire dans le journal d'audit (sans impact stock)
             await db.inventory_logs.add({
                 uuid: uuidv4(),
                 productUuid: null,

@@ -9,7 +9,7 @@ export interface SaleItem {
     price: number;
     purchasePrice: number;
     quantity: number;
-    tva_rate?: number;
+    tvaRate?: number;
 }
 
 export interface Sale extends BaseEntity {

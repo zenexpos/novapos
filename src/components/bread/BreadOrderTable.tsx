@@ -94,9 +94,9 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                             <TableCell className="p-4 text-center">
                                 <Badge className={cn(
                                     "text-[8px] font-black uppercase px-2 py-0.5 border-none",
-                                    order.venteUuid ? "bg-emerald-500 text-white" : "bg-destructive text-white"
+                                    order.saleUuid ? "bg-emerald-500 text-white" : "bg-destructive text-white"
                                 )}>
-                                    {order.venteUuid ? 'Vendu' : 'En attente'}
+                                    {order.saleUuid ? 'Vendu' : 'En attente'}
                                 </Badge>
                             </TableCell>
                             <TableCell className="p-4 text-center">
@@ -126,7 +126,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                 )}
                             </TableCell>
                             <TableCell className="p-4 text-right">
-                                {!order.venteUuid && (
+                                {!order.saleUuid && (
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
