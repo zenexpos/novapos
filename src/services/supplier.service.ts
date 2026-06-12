@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Supplier, SupplierPayment } from '@/lib/types';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/stores/appStore';
+import { safeNumber, roundFinancial } from '@/lib/utils';
 
 const triggerSync = () => {
     if (typeof window !== 'undefined') {
@@ -58,8 +59,12 @@ class SupplierService {
         const supplier = await db.suppliers.where('uuid').equals(uuid).first();
         if (!supplier?.id) return;
         
-        const newBalance = supplier.balance + amountChange;
-        await db.suppliers.update(supplier.id, { balance: newBalance, updatedAt: new Date(), syncStatus: 'pending' });
+        const newBalance = roundFinancial(safeNumber(supplier.balance) + safeNumber(amountChange));
+        await db.suppliers.update(supplier.id, { 
+            balance: newBalance, 
+            updatedAt: new Date(), 
+            syncStatus: 'pending' 
+        });
     }
 
     async processSupplierPayment(paymentData: Omit<SupplierPayment, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<void> {
@@ -78,8 +83,10 @@ class SupplierService {
             };
 
             await db.supplier_payments.add(newPayment);
+            const newBalance = roundFinancial(safeNumber(supplier.balance) - safeNumber(paymentData.amount));
+            
             await db.suppliers.update(supplier.id, { 
-                balance: supplier.balance - paymentData.amount,
+                balance: newBalance,
                 updatedAt: now,
                 syncStatus: 'pending'
             });
@@ -106,17 +113,46 @@ class SupplierService {
         const supplier = await db.suppliers.where('uuid').equals(uuid).first();
         if (!supplier?.id) return;
 
-        if (Math.abs(supplier.balance) > 0.01) {
-            throw new Error("Révocation impossible : le solde n'est pas nul.");
+        if (Math.abs(safeNumber(supplier.balance)) > 0.01) {
+            throw new Error(`Révocation impossible : le solde de "${supplier.name}" n'est pas nul (${supplier.balance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
         await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
             await db.suppliers.update(supplier.id!, update);
-            await db.sync_queue.add({ table: 'suppliers', operation: 'DELETE', payload: { uuid }, timestamp: Date.now() });
+            await db.sync_queue.add({
+                table: 'suppliers',
+                operation: 'DELETE',
+                payload: { uuid },
+                timestamp: Date.now()
+            });
         });
         
         triggerSync();
+    }
+
+    /**
+     * Supprime plusieurs fournisseurs en lot.
+     * La suppression individuelle gère la vérification du solde nul.
+     */
+    async bulkDelete(uuids: string[]): Promise<void> {
+        for (const uuid of uuids) {
+            await this.deleteSupplier(uuid);
+        }
+    }
+
+    async getSupplierActivity(supplierUuid: string): Promise<any[]> {
+        const [intakes, payments] = await Promise.all([
+            db.stock_intakes.where('supplierUuid').equals(supplierUuid).toArray(),
+            db.supplier_payments.where('supplierUuid').equals(supplierUuid).toArray(),
+        ]);
+
+        const activity = [
+            ...intakes.map(i => ({ ...i, type: 'intake', date: i.createdAt })),
+            ...payments.map(p => ({ ...p, type: 'payment', date: p.paymentDate })),
+        ];
+
+        return activity.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
     }
 }
 
