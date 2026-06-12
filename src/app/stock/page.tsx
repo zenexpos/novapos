@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
@@ -59,6 +60,7 @@ export default function StockPage() {
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
 
     const suppliersResult = useLiveQuery<Supplier[]>(async () => {
+        // Repair: Collection does not have orderBy. Fetch and then sort.
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
