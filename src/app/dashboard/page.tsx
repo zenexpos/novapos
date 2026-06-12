@@ -16,11 +16,12 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import type { DashboardData, LowStockProduct } from '@/lib/types';
 
 export default function DashboardPage() {
     const { dateRange, setDate, isMounted } = useDateRange(29);
     
-    const dataResult = useLiveQuery(
+    const dataResult = useLiveQuery<DashboardData | null>(
         async () => {
             if (!isMounted || !dateRange?.from || !dateRange?.to) return null;
             return await dashboardService.getDashboardData(dateRange.from, dateRange.to);
@@ -28,11 +29,6 @@ export default function DashboardPage() {
         [isMounted, dateRange],
     );
     const dashboardData = dataResult.value;
-
-    const stockSummary = useLiveQuery(
-        async () => inventoryService.getStockSummary(),
-        [],
-    );
 
     const isLoading = dataResult.isLoading || !isMounted;
 
@@ -77,9 +73,9 @@ export default function DashboardPage() {
                     <CardContent className="p-4">
                         {isLoading ? <Skeleton className="h-40 w-full rounded-xl" /> : (
                             <div className="space-y-2">
-                                {dashboardData?.lowStockProducts.length === 0 ? (
+                                {!dashboardData?.lowStockProducts || dashboardData.lowStockProducts.length === 0 ? (
                                     <p className="text-center text-xs text-muted-foreground py-8">Tout est en stock</p>
-                                ) : dashboardData?.lowStockProducts.map(p => (
+                                ) : dashboardData.lowStockProducts.map((p: LowStockProduct) => (
                                     <Link key={p.uuid} href="/products" className="flex items-center justify-between p-3 rounded-xl bg-black/20 hover:bg-amber-500/10 transition-all border border-transparent hover:border-amber-500/20">
                                         <span className="text-sm font-bold truncate max-w-[150px]">{p.name}</span>
                                         <span className="text-xs font-black text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg">{p.quantity} {p.unite}</span>
