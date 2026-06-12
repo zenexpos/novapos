@@ -4,7 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
-import { startOfDay } from 'date-fns';
+import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
@@ -71,9 +72,9 @@ class CustomerService {
         }
 
         if (filters.sortBy) {
-            const lastUnderscore = filters.sortBy.lastIndexOf('_');
-            const rawField = filters.sortBy.substring(0, lastUnderscore);
-            const order = filters.sortBy.substring(lastUnderscore + 1);
+            const parts = filters.sortBy.split('_');
+            const order = parts.pop();
+            const rawField = parts.join('_');
             
             const field = (ALLOWED_SORT_FIELDS[rawField] ?? 'createdAt') as keyof Customer;
             const isAsc = order === 'asc';
@@ -103,7 +104,6 @@ class CustomerService {
 
         const now = new Date();
         const searchName = `${customerData.firstName} ${customerData.lastName}`.toLowerCase().trim();
-
         const initialBal = roundFinancial(safeNumber(customerData.initialBalance));
 
         const newCustomer: Customer = {
@@ -169,7 +169,6 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(uuid).first();
         if (!customer?.id) return;
 
-        // TITANIUM RULE: Soft delete only. Check for active debt before allowing deletion.
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
             throw new Error("Révocation impossible : le solde débiteur n'est pas nul.");
         }
@@ -225,7 +224,7 @@ class CustomerService {
 
         let debtStatus: Customer['debtStatus'] = 'none';
         if (newBalance > 0.009) {
-            debtStatus = 'due_soon'; // Simplified logic for performance
+            debtStatus = 'due_soon'; 
         }
 
         const customerUpdate: Partial<Customer> = {
@@ -261,6 +260,106 @@ class CustomerService {
 
         activity.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
         return activity.slice((page - 1) * limit, page * limit);
+    }
+
+    async getCustomerMonthlySpending(customerUuid: string): Promise<{ month: string, total: number }[]> {
+        const sales = await db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled).toArray();
+        const last6Months = Array.from({ length: 6 }).map((_, i) => {
+            const date = subMonths(new Date(), i);
+            return {
+                start: startOfMonth(date),
+                label: format(date, 'MMM yy', { locale: fr })
+            };
+        }).reverse();
+
+        return last6Months.map(period => {
+            const monthTotalCents = sales
+                .filter(s => {
+                    const d = new Date(s.createdAt!);
+                    return d >= period.start && d < startOfMonth(subMonths(period.start, -1));
+                })
+                .reduce((sum, s) => sum + Math.round(safeNumber(s.total) * 100), 0);
+            
+            return {
+                month: period.label,
+                total: monthTotalCents / 100
+            };
+        });
+    }
+
+    async getCustomerStatementData(customerUuid: string): Promise<{ customer: Customer, unpaidSales: Sale[] }> {
+        const [customer, sales] = await Promise.all([
+            this.getCustomerByUuid(customerUuid),
+            db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
+        ]);
+
+        if (!customer) throw new Error("Client non trouvé");
+
+        return {
+            customer,
+            unpaidSales: sales.sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())
+        };
+    }
+
+    async analyzeImport(file: File): Promise<ImportAnalysis> {
+        return new Promise((resolve, reject) => {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    const existingCustomers = await this.getCustomers();
+                    const analysis: ImportAnalysis = {
+                        customersToAdd: [],
+                        customersToUpdate: [],
+                        errorRows: [],
+                        totalRows: results.data.length
+                    };
+
+                    for (const row of results.data as ImportRow[]) {
+                        const firstName = row.firstName || row.Prénom || row.Prenom;
+                        const lastName = row.lastName || row.Nom;
+
+                        if (!firstName || !lastName) {
+                            analysis.errorRows.push({ ...row, error: "Identité incomplète" });
+                            continue;
+                        }
+
+                        const data: Partial<Customer> = {
+                            firstName: firstName.trim(),
+                            lastName: lastName.trim(),
+                            phone: (row.phone || row.Téléphone || row.Telephone || '').toString().trim(),
+                            address: (row.address || row.Adresse || '').toString().trim(),
+                            initialBalance: safeNumber(row.initialBalance || row.Solde_Initial || 0),
+                            creditLimit: safeNumber(row.creditLimit || row.Limite_Crédit || 0),
+                        };
+
+                        const existing = existingCustomers.find(c => 
+                            c.firstName.toLowerCase() === data.firstName?.toLowerCase() && 
+                            c.lastName.toLowerCase() === data.lastName?.toLowerCase()
+                        );
+
+                        if (existing) {
+                            analysis.customersToUpdate.push({ ...data, uuid: existing.uuid });
+                        } else {
+                            analysis.customersToAdd.push(data);
+                        }
+                    }
+                    resolve(analysis);
+                },
+                error: (err) => reject(err)
+            });
+        });
+    }
+
+    async executeImport(confirmedData: { toAdd: any[], toUpdate: any[] }): Promise<void> {
+        await db.transaction('rw', [db.customers, db.sync_queue], async () => {
+            for (const item of confirmedData.toAdd) {
+                await this.addCustomer(item);
+            }
+            for (const item of confirmedData.toUpdate) {
+                await this.updateCustomer(item.uuid, item);
+            }
+        });
     }
 }
 

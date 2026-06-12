@@ -38,3 +38,13 @@ export interface ImportAnalysis {
     errorRows: any[];
     totalRows: number;
 }
+
+export interface ImportRow {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    address?: string;
+    initialBalance?: string | number;
+    creditLimit?: string | number;
+    [key: string]: any;
+}
