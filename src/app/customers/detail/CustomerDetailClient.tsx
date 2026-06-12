@@ -58,14 +58,12 @@ export default function CustomerDetailClient() {
     const [selectedReturn, setSelectedReturn] = useState<ProductReturn | null>(null);
     const [isReturnDetailsOpen, setIsReturnDetailsOpen] = useState(false);
 
-    // FIX: Typed union replaces activity: any[] — eliminates any-casting
     type ActivityItem =
         | ({ type: 'sale';    date: Date } & Sale)
         | ({ type: 'payment'; date: Date } & Payment)
         | ({ type: 'return';  date: Date } & ProductReturn)
         | { type: 'initial_balance'; date: Date; uuid: string; amount: number; notes: string };
 
-    // FIX: useReducer replaces two separate useState calls — eliminates double render on reset
     const [activityState, dispatchActivity] = React.useReducer(
         (state: { items: ActivityItem[]; page: number }, action:
             | { type: 'reset' }
@@ -376,7 +374,6 @@ export default function CustomerDetailClient() {
                         </div>
                     </div>
 
-                    {/* Section spécifique pour le solde initial */}
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 space-y-3 shadow-inner group">
                         <div className="flex items-center gap-3 text-primary">
                             <History className="h-4 w-4" />
@@ -413,18 +410,23 @@ export default function CustomerDetailClient() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Récurrence</p>
-                                            <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? 'QUOTIDIEN' : 'PROGRAMMÉ'}</p>
+                                            <p className="font-semibold text-sm">
+                                                {customer.breadRecurrenceType === 'quotidien' ? 'QUOTIDIEN' : 
+                                                 customer.breadRecurrenceType === 'jours_specifiques' ? 'PROGRAMMÉ' : 'AUCUN'}
+                                            </p>
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-[9px] font-semibold uppercase text-primary/60 tracking-wide">Quantité</p>
-                                            <p className="font-semibold text-sm">{customer.bread_type_recurrence === 'quotidien' ? `${customer.bread_quantite_defaut} PCS` : 'VARIABLE'}</p>
+                                            <p className="font-semibold text-sm">
+                                                {customer.breadRecurrenceType === 'quotidien' ? `${customer.breadDefaultQuantity} PCS` : 'VARIABLE'}
+                                            </p>
                                         </div>
                                     </div>
-                                    {customer.bread_date_debut && (
+                                    {customer.breadStartDate && (
                                         <div className="pt-2 border-t border-white/5 flex items-center gap-2">
                                             <Calendar className="h-3 w-3 text-primary/40" />
                                             <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">
-                                                Depuis le {format(new Date(customer.bread_date_debut), 'd MMMM yyyy', { locale: fr })}
+                                                Depuis le {format(new Date(customer.breadStartDate), 'd MMMM yyyy', { locale: fr })}
                                             </p>
                                         </div>
                                     )}

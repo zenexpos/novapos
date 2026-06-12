@@ -50,7 +50,7 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
     const getRecurrenceBadge = (client: Customer) => {
         if (!client.isBreadClient) return null;
         
-        switch (client.bread_type_recurrence) {
+        switch (client.breadRecurrenceType) {
             case 'quotidien':
                 return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[8px] font-semibold uppercase px-2 py-0.5">QUOTIDIEN</Badge>;
             case 'jours_specifiques':
@@ -79,7 +79,7 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
                 <CardContent className="flex-grow min-h-0 p-6">
                     <ScrollArea className="h-full pr-4 -mr-4">
                         <div className="space-y-3">
-                            {isLoading && [...Array(6)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-3xl bg-white/5 animate-pulse" />)}
+                            {isLoading && [...Array(6)].map((_, i) => <Skeleton className="h-20 w-full rounded-3xl bg-white/5 animate-pulse" />)}
                             
                             {!isLoading && clients?.map(client => (
                                 <div 
@@ -93,8 +93,8 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
                                         </p>
                                         <div className="flex items-center gap-3 mt-2">
                                             {getRecurrenceBadge(client)}
-                                            {client.bread_type_recurrence === 'quotidien' && (
-                                                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wide">×{client.bread_quantite_defaut} pcs</span>
+                                            {client.breadRecurrenceType === 'quotidien' && (
+                                                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wide">×{client.breadDefaultQuantity} pcs</span>
                                             )}
                                         </div>
                                     </div>
