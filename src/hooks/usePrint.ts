@@ -28,19 +28,22 @@ export function usePrint() {
     const clone = source.cloneNode(true) as HTMLElement;
     
     // STRIP ANIMATIONS & PREVIEW CONSTRAINTS
-    // Animations cause opacity: 0 during cloning if not stripped
     const items = clone.querySelectorAll('*');
     items.forEach(el => {
         el.classList.remove(
             'animate-in', 'fade-in', 'zoom-in', 'duration-1000', 'duration-700', 'duration-500',
             'slide-in-from-bottom-4', 'slide-in-from-left-4', 'slide-in-from-right-4', 'slide-in-from-top-4',
-            'opacity-0', 'hidden'
+            'opacity-0', 'hidden', 'scale-90', 'scale-95', 'scale-100', 'scale-105'
         );
         el.removeAttribute('aria-hidden');
-        (el as HTMLElement).style.opacity = '1';
-        (el as HTMLElement).style.visibility = 'visible';
+        const style = (el as HTMLElement).style;
+        style.opacity = '1';
+        style.visibility = 'visible';
+        style.transform = 'none';
+        style.animation = 'none';
     });
 
+    // Reset base clone styling for print
     clone.style.maxHeight = 'none';
     clone.style.height = 'auto';
     clone.style.overflow = 'visible';
@@ -67,13 +70,11 @@ export function usePrint() {
       document.title = options.title;
     }
     
-    // Force a small delay for DOM synchronization and image rendering
+    // delay for DOM synchronization
     setTimeout(() => {
       window.print();
       document.title = originalTitle;
       setIsPrinting(false);
-      // Optional: Cleanup portal after print dialog closes
-      // target.innerHTML = '';
     }, 500);
   }, []);
 
