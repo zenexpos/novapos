@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import type { Customer, CustomerFormData } from '@/lib/types';
+import type { Customer, CustomerFormData, CustomerUpdateInput } from '@/lib/types';
 import { Loader2, User, Phone, MapPin, Calendar, ShieldCheck, Coins, Landmark } from 'lucide-react';
 import { customerService } from '@/services/customer.service';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -27,6 +27,7 @@ const initialFormState: CustomerFormData = {
     settlementDay: undefined,
     creditLimit: undefined,
     initialBalance: 0,
+    isBreadClient: false
 };
 
 export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: CustomerDialogProps) {
@@ -44,6 +45,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                 settlementDay: customer.settlementDay,
                 creditLimit: customer.creditLimit,
                 initialBalance: customer.initialBalance || 0,
+                isBreadClient: customer.isBreadClient || false
             });
         } else if (!customer && isOpen) {
             setFormState(initialFormState);
@@ -54,7 +56,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
         const { id, value, type } = e.target;
         setFormState(prev => ({ 
             ...prev, 
-            [id]: type === 'number' ? (value === '' ? 0 : parseFloat(value)) : value 
+            [id]: type === 'number' ? (value === '' ? undefined : parseFloat(value)) : value 
         }));
     };
 
@@ -67,7 +69,9 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
 
         try {
             if (customer) {
-                const updatedCustomer = await customerService.updateCustomer(customer.uuid, formState);
+                // Pour la mise à jour, on utilise le type UpdateInput
+                const updatePayload: CustomerUpdateInput = { ...formState };
+                const updatedCustomer = await customerService.updateCustomer(customer.uuid, updatePayload);
                 toast.success(`Profil de ${formState.firstName} mis à jour.`);
                 onSuccess(updatedCustomer);
             } else {

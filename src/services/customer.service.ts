@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow, CustomerFormData } from '@/lib/types';
+import type { Customer, Sale, ImportAnalysis, Payment, ProductReturn, ImportRow, CustomerFormData, CustomerUpdateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format } from 'date-fns';
@@ -114,8 +114,8 @@ class CustomerService {
             firstName: customerData.firstName.trim(),
             lastName: customerData.lastName.trim(),
             searchName,
-            phone: customerData.phone?.trim(),
-            address: customerData.address?.trim(),
+            phone: customerData.phone.trim() || undefined,
+            address: customerData.address.trim() || undefined,
             settlementDay: customerData.settlementDay,
             creditLimit: roundFinancial(safeNumber(customerData.creditLimit)),
             initialBalance: initialBal,
@@ -143,12 +143,12 @@ class CustomerService {
     /**
      * Met à jour un client. Gère l'incrémentation de version.
      */
-    async updateCustomer(uuid: string, customerData: CustomerFormData): Promise<Customer> {
+    async updateCustomer(uuid: string, customerData: CustomerUpdateInput): Promise<Customer> {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
-        const firstName = customerData.firstName || existing.firstName;
-        const lastName  = customerData.lastName  || existing.lastName;
+        const firstName = customerData.firstName !== undefined ? customerData.firstName : existing.firstName;
+        const lastName  = customerData.lastName !== undefined ? customerData.lastName : existing.lastName;
         const searchName = `${firstName} ${lastName}`.toLowerCase().trim();
 
         const update: Partial<Customer> = {
@@ -348,11 +348,12 @@ class CustomerService {
                             address: (row.address || row.Adresse || '').toString().trim(),
                             initialBalance: safeNumber(row.initialBalance || row.Solde_Initial || 0),
                             creditLimit: safeNumber(row.creditLimit || row.Limite_Crédit || 0),
+                            isBreadClient: false
                         };
 
                         const existing = existingCustomers.find(c => 
-                            c.firstName.toLowerCase() === data.firstName?.toLowerCase() && 
-                            c.lastName.toLowerCase() === data.lastName?.toLowerCase()
+                            c.firstName.toLowerCase() === data.firstName.toLowerCase() && 
+                            c.lastName.toLowerCase() === data.lastName.toLowerCase()
                         );
 
                         if (existing) {
@@ -374,7 +375,8 @@ class CustomerService {
                 await this.addCustomer(item);
             }
             for (const item of confirmedData.toUpdate) {
-                await this.updateCustomer(item.uuid, item);
+                const { uuid, ...rest } = item;
+                await this.updateCustomer(uuid, rest);
             }
         });
     }

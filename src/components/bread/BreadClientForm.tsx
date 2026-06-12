@@ -14,7 +14,7 @@ import {
 import { Input }  from '@/components/ui/input';
 import { Label }  from '@/components/ui/label';
 import { toast }  from 'sonner';
-import type { Customer } from '@/lib/types';
+import type { Customer, CustomerUpdateInput } from '@/lib/types';
 import {
     Loader2, Wheat, Settings, Calendar,
     Package, CheckCircle2,
@@ -35,7 +35,7 @@ const defaultJoursSemaine = {
     dimanche: { actif: true,  quantite: 10 },
 };
 
-const initialFormState: Partial<Customer> = {
+const initialFormState: Partial<CustomerUpdateInput> = {
     isBreadClient:         true,
     breadRecurrenceType: 'quotidien',
     breadDefaultQuantity: 10,
@@ -80,7 +80,7 @@ export function BreadClientForm({
 
             setIsLoading(true);
             try {
-                const dataToSave: Partial<Customer> = {
+                const dataToSave: CustomerUpdateInput = {
                     isBreadClient:         formState.isBreadClient,
                     breadRecurrenceType: formState.breadRecurrenceType,
                     breadStartDate:      formState.breadStartDate || (formState.isBreadClient ? formatDateToYYYYMMDD(new Date()) : undefined)
@@ -88,7 +88,6 @@ export function BreadClientForm({
 
                 if (formState.breadRecurrenceType === 'quotidien') {
                     dataToSave.breadDefaultQuantity = formState.breadDefaultQuantity;
-                    dataToSave.breadWeeklySchedule = undefined;
                 } else if (formState.breadRecurrenceType === 'jours_specifiques') {
                     dataToSave.breadWeeklySchedule = formState.breadWeeklySchedule;
                     dataToSave.breadDefaultQuantity = 0;

@@ -29,18 +29,29 @@ export interface Customer extends BaseEntity {
 }
 
 /**
- * Modèle de données pour le formulaire client (UI).
+ * Modèle de données pour le formulaire de CRÉATION (UI).
+ * Tous les champs de saisie texte sont obligatoires pour éviter undefined dans les inputs.
  */
 export interface CustomerFormData {
     firstName: string;
     lastName: string;
-    phone?: string;
-    address?: string;
+    phone: string;
+    address: string;
     settlementDay?: number;
     creditLimit?: number;
     initialBalance: number;
-    isBreadClient?: boolean;
+    isBreadClient: boolean;
 }
+
+/**
+ * Modèle pour la MISE À JOUR (DTO).
+ * Permet des modifications partielles sans polluer avec les métadonnées techniques.
+ */
+export type CustomerUpdateInput = Partial<CustomerFormData> & {
+    breadRecurrenceType?: 'quotidien' | 'jours_specifiques' | 'aucun';
+    breadWeeklySchedule?: Record<string, { actif: boolean; quantite: number }>;
+    breadStartDate?: string;
+};
 
 export interface Payment extends BaseEntity {
     customerUuid: string;
