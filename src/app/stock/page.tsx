@@ -58,7 +58,10 @@ export default function StockPage() {
     const [isDeleteSupplierOpen, setIsDeleteSupplierOpen] = useState(false);
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
 
-    const suppliersResult = useLiveQuery<Supplier[]>(() => db.suppliers.orderBy('name').toArray());
+    const suppliersResult = useLiveQuery<Supplier[]>(async () => {
+        const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
+        return arr.sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
     const suppliers = suppliersResult.value ?? [];
     
     const stockIntakesResult = useLiveQuery<StockIntake[]>(async () => {
@@ -268,7 +271,7 @@ export default function StockPage() {
                 {activeTab === 'suppliers' ? (
                     <div className="grid gap-6 md:grid-cols-3">
                         {isLoading ? (
-                            [...Array(3)].map((_, i) => <Skeleton className="h-32 w-full rounded-lg bg-card/40" />)
+                            [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />)
                         ) : (
                             <>
                                 <div className="app-card p-6 rounded-lg glass flex items-center justify-between group overflow-hidden">

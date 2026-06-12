@@ -18,7 +18,8 @@ const triggerSync = () => {
 class SupplierService {
 
     async getSuppliers(): Promise<Supplier[]> {
-        return db.suppliers.filter(s => !s.deletedAt).orderBy('name').toArray();
+        const suppliers = await db.suppliers.filter(s => !s.deletedAt).toArray();
+        return suppliers.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     async getSupplierByUuid(uuid: string): Promise<Supplier | undefined> {
@@ -131,10 +132,6 @@ class SupplierService {
         triggerSync();
     }
 
-    /**
-     * Supprime plusieurs fournisseurs en lot.
-     * La suppression individuelle gère la vérification du solde nul.
-     */
     async bulkDelete(uuids: string[]): Promise<void> {
         await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
             for (const uuid of uuids) {
