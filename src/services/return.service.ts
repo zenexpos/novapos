@@ -43,9 +43,6 @@ class ReturnService {
         return returns;
     }
 
-    // FIX: addReturn now runs inside a full Dexie transaction
-    // Previously it added the return record THEN adjusted stock separately —
-    // a crash between the two would leave stock incorrect.
     async addReturn(returnData: {
         originalSaleUuid: string;
         items: ReturnItem[];
@@ -57,7 +54,6 @@ class ReturnService {
         const sale = await db.sales.where('uuid').equals(returnData.originalSaleUuid).first();
         if (!sale) throw new Error('La vente originale est introuvable.');
 
-        // FIX: Validate return quantities do not exceed original sale quantities
         for (const returnItem of returnData.items) {
             if (!returnItem.productUuid) continue;
             const saleItem = sale.items.find(i => i.productUuid === returnItem.productUuid);
@@ -80,16 +76,17 @@ class ReturnService {
             createdAt: now,
             updatedAt: now,
             notes: returnData.notes,
+            syncStatus: 'pending',
+            version: 1
         };
 
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
-            db.customers, db.sales, db.payments
+            db.customers, db.sales, db.payments, db.sync_queue
         ], async () => {
             const id = await db.product_returns.add(newReturn);
             newReturn.id = id;
 
-            // Restock items marked for restocking
             for (const item of returnData.items) {
                 if (item.wasRestocked && item.productUuid) {
                     await inventoryService.adjustStock(
@@ -104,6 +101,13 @@ class ReturnService {
             if (returnData.customerUuid) {
                 await customerService.recalculateCustomerStatus(returnData.customerUuid);
             }
+
+            await db.sync_queue.add({
+                table: 'product_returns',
+                operation: 'CREATE',
+                payload: newReturn,
+                timestamp: Date.now()
+            });
         });
 
         triggerSync();
@@ -114,11 +118,13 @@ class ReturnService {
     async processReturnCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [
             db.product_returns, db.products, db.customers,
-            db.inventory_logs, db.sales, db.payments
+            db.inventory_logs, db.sales, db.payments, db.sync_queue
         ], async () => {
             const productReturn = await this.getReturnByUuid(uuid);
             if (!productReturn || !productReturn.id) throw new Error('Retour non trouvé.');
+            
             await db.product_returns.delete(productReturn.id);
+            
             for (const item of productReturn.items) {
                 if (item.wasRestocked && item.productUuid) {
                     await inventoryService.adjustStock(
@@ -126,9 +132,17 @@ class ReturnService {
                     );
                 }
             }
+            
             if (productReturn.customerUuid) {
                 await customerService.recalculateCustomerStatus(productReturn.customerUuid);
             }
+
+            await db.sync_queue.add({
+                table: 'product_returns',
+                operation: 'DELETE',
+                payload: { uuid },
+                timestamp: Date.now()
+            });
         });
 
         triggerSync();

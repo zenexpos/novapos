@@ -15,46 +15,48 @@ const triggerSync = () => {
     }
 };
 
+/**
+ * Service de gestion des règlements clients.
+ * Utilise un Factory Pattern pour garantir l'intégrité des entités Offline-First.
+ */
 class PaymentService {
 
     /**
-     * Enregistre un nouveau versement client avec garantie d'atomicité.
-     * Injecte les métadonnées de synchronisation hors-ligne.
+     * FACTORY : Centralise la création d'une entité Payment valide.
      */
-    async addPayment(input: PaymentCreateInput): Promise<void> {
-        const { customerUuid, notes } = input;
-
-        const amount = roundFinancial(safeNumber(input.amount));
-        if (amount <= 0) throw new Error('Le montant du paiement doit être positif.');
-
-        const paymentDate = safeToDate(input.paymentDate);
-        if (paymentDate.getTime() === 0) throw new Error('Date de paiement invalide.');
-
-        const customer = await db.customers.where('uuid').equals(customerUuid).first();
-        if (!customer) throw new Error('Client non trouvé.');
-
+    private createPaymentEntity(input: PaymentCreateInput): Payment {
         const now = new Date();
-        
-        // FACTORY LOGIC: Encapsulation de la création de l'entité
-        const newPayment: Payment = {
+        return {
             uuid: uuidv4(),
-            customerUuid,
-            amount,
-            paymentDate,
-            notes: notes || undefined,
+            customerUuid: input.customerUuid,
+            amount: roundFinancial(safeNumber(input.amount)),
+            paymentDate: safeToDate(input.paymentDate),
+            notes: input.notes?.trim() || undefined,
             createdAt: now,
             updatedAt: now,
             syncStatus: 'pending',
             version: 1
         };
+    }
+
+    /**
+     * Enregistre un nouveau versement client avec garantie d'atomicité.
+     */
+    async addPayment(input: PaymentCreateInput): Promise<void> {
+        if (safeNumber(input.amount) <= 0) throw new Error('Le montant du paiement doit être positif.');
+
+        const customer = await db.customers.where('uuid').equals(input.customerUuid).first();
+        if (!customer) throw new Error('Client non trouvé.');
+
+        const newPayment = this.createPaymentEntity(input);
 
         await db.transaction('rw', [db.payments, db.customers, db.sales, db.product_returns, db.sync_queue], async () => {
             await db.payments.add(newPayment);
             
-            // Audit client
-            await customerService.recalculateCustomerStatus(customerUuid);
+            // Recalcul du solde client (Audit financier)
+            await customerService.recalculateCustomerStatus(input.customerUuid);
 
-            // Mise en file d'attente de synchronisation
+            // Inscription dans la file de synchronisation Cloud
             await db.sync_queue.add({ 
                 table: 'payments', 
                 operation: 'CREATE', 

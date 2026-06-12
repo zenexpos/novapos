@@ -33,19 +33,23 @@ class StockService {
         return intakes.sort((a,b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
     }
     
-    async addStockIntake(intakeData: Omit<StockIntake, 'uuid' | 'createdAt' | 'updatedAt'>): Promise<StockIntake> {
+    async addStockIntake(intakeData: Omit<StockIntake, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<StockIntake> {
         const now = new Date();
         const newIntake: StockIntake = {
             ...intakeData,
             uuid: uuidv4(),
             createdAt: now,
             updatedAt: now,
+            syncStatus: 'pending',
+            version: 1
         };
         const id = await db.stock_intakes.add(newIntake);
         newIntake.id = id;
 
         // Trigger Cloud Sync
-        useAppStore.getState().actions.triggerSmartSync();
+        if (typeof window !== 'undefined') {
+            useAppStore.getState().actions.triggerSmartSync();
+        }
 
         return newIntake;
     }
@@ -72,7 +76,9 @@ class StockService {
         });
 
         // Trigger Cloud Sync
-        useAppStore.getState().actions.triggerSmartSync();
+        if (typeof window !== 'undefined') {
+            useAppStore.getState().actions.triggerSmartSync();
+        }
     }
 }
 
