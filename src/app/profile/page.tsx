@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { CompanyProfileForm } from "@/components/profile/company-profile-form";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAppStore } from "@/stores/appStore";
-import { Building, MapPin, Phone, Globe, ShieldCheck, Share2, Sparkles, Star, Cloud, Landmark, Hash } from "lucide-react";
+import { Building, MapPin, Phone, ShieldCheck, Share2, Sparkles, Star, Cloud, Landmark, Hash, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -72,14 +72,21 @@ export default function ProfilePage() {
                                                     </span>
                                                 </div>
                                             )}
-                                            {companyProfile?.nif && (
-                                                <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10 backdrop-blur-md shadow-inner">
-                                                    <Hash className="h-4 w-4 text-primary/60" />
-                                                    <span className="text-[10px] font-black text-primary uppercase tracking-tighter leading-none">
-                                                        NIF: {companyProfile.nif}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            
+                                            <div className="flex flex-wrap gap-2">
+                                                {companyProfile?.nif && (
+                                                    <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-xl border border-primary/10 shadow-sm">
+                                                        <Hash className="h-3 w-3 text-primary/60" />
+                                                        <span className="text-[9px] font-black text-primary uppercase">NIF: {companyProfile.nif}</span>
+                                                    </div>
+                                                )}
+                                                {companyProfile?.rcNumber && (
+                                                    <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-xl border border-white/5 shadow-sm">
+                                                        <FileText className="h-3 w-3 text-muted-foreground/40" />
+                                                        <span className="text-[9px] font-black text-muted-foreground/60 uppercase">RC: {companyProfile.rcNumber}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </>
                                 )}

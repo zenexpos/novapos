@@ -69,7 +69,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                     <p className="text-[7.5pt] opacity-70">{profile?.address}</p>
                     <p className="text-[7.5pt] font-bold">Tél: {profile?.phone}</p>
                     <div className="grid grid-cols-2 gap-x-4 mt-1 text-[7pt] font-mono opacity-60">
-                        {profile?.rc_number && <span>RC: {profile.rc_number}</span>}
+                        {profile?.rcNumber && <span>RC: {profile.rcNumber}</span>}
                         {profile?.nif && <span>NIF: {profile.nif}</span>}
                     </div>
                 </div>

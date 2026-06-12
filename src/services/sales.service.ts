@@ -166,13 +166,13 @@ class SalesService {
 
   private async generateInvoiceNumber(): Promise<string> {
     const profile = await db.company_profile.toCollection().first();
-    const currentCounter = profile?.invoice_counter ?? 1;
-    const prefix = profile?.invoice_prefix || String(new Date().getFullYear());
+    const currentCounter = profile?.invoiceCounter ?? 1;
+    const prefix = profile?.invoicePrefix || String(new Date().getFullYear());
     const invoiceNumber = `${prefix}-${String(currentCounter).padStart(6, '0')}`;
 
     if (profile?.id) {
       await db.company_profile.update(profile.id, {
-        invoice_counter: currentCounter + 1,
+        invoiceCounter: currentCounter + 1,
         updatedAt: new Date()
       });
     }

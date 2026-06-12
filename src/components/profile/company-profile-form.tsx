@@ -5,18 +5,14 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import type { CompanyProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { 
-    Loader2, Building, Cloud, Key, ShieldCheck, 
-    RotateCcw, Scale, Coins, Wheat, Receipt, Landmark,
-    Link as LinkIcon, Eye, EyeOff
+    Loader2, Building, Cloud, ShieldCheck, 
+    Scale, Wheat, Eye, EyeOff, FileText, Landmark
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { SupabaseSqlDialog } from './SupabaseSqlDialog';
 
 export function CompanyProfileForm() {
@@ -101,7 +97,30 @@ export function CompanyProfileForm() {
                     </div>
                 </div>
 
-                {/* 2. CLOUD */}
+                {/* 2. REGISTRATION */}
+                <div className="space-y-6 pt-12 border-t border-white/5">
+                    <SectionTitle title="Identifiants Fiscaux & Légaux" icon={FileText} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="rcNumber" className="text-[10px] font-bold uppercase ml-1 opacity-40">Registre de Commerce (RC)</Label>
+                            <Input id="rcNumber" value={formState.rcNumber || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-mono" placeholder="N° RC..." disabled={isSaving}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="nif" className="text-[10px] font-bold uppercase ml-1 opacity-40">Numéro Identification Fiscale (NIF)</Label>
+                            <Input id="nif" value={formState.nif || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-mono" placeholder="N° NIF..." disabled={isSaving}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="aiNumber" className="text-[10px] font-bold uppercase ml-1 opacity-40">Article d'Imposition (AI)</Label>
+                            <Input id="aiNumber" value={formState.aiNumber || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-mono" placeholder="N° AI..." disabled={isSaving}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="nisNumber" className="text-[10px] font-bold uppercase ml-1 opacity-40">Numéro Identification Statistique (NIS)</Label>
+                            <Input id="nisNumber" value={formState.nisNumber || ''} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-mono" placeholder="N° NIS..." disabled={isSaving}/>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. CLOUD */}
                 <div className="space-y-6 pt-12 border-t border-white/5">
                     <SectionTitle title="Configuration Cloud Saphir" icon={Cloud} extra={<SupabaseSqlDialog />} />
                     <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 space-y-6">
@@ -121,7 +140,7 @@ export function CompanyProfileForm() {
                     </div>
                 </div>
 
-                {/* 3. BREAD & ZAKAT */}
+                {/* 4. BREAD & ZAKAT */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-12 border-t border-white/5">
                     <div className="space-y-6">
                         <SectionTitle title="Logistique Pain" icon={Wheat} />
