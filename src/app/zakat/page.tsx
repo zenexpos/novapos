@@ -38,7 +38,7 @@ export default function ZakatPage() {
     const [isLoading, setIsLoading] = useState(true);
     
     // Connect evaluation method to profile state
-    const useSalePrice = profile?.zakat_use_sale_price ?? true;
+    const useSalePrice = profile?.zakatUseSalePrice ?? true;
 
     const [cashInHand, setCashInHand] = useState<number>(0);
     const [cashInBank, setCashInBank] = useState<number>(0);
@@ -72,7 +72,7 @@ export default function ZakatPage() {
     }, [data, useSalePrice, cashInHand, cashInBank]);
 
     const handleToggleMethod = (checked: boolean) => {
-        updateCompanyProfile({ zakat_use_sale_price: checked });
+        updateCompanyProfile({ zakatUseSalePrice: checked });
         toast.info(checked ? "Méthode : Prix de Vente activée." : "Méthode : Prix d'Achat (PMP) activée.");
     };
 
@@ -303,7 +303,7 @@ export default function ZakatPage() {
                     </Card>
 
                     <Card className="rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-xl">
-                        <CardHeader className="p-4 pb-4">
+                        <CardHeader className="p-4 pt-4">
                             <CardTitle className="text-sm font-semibold uppercase tracking-wide text-primary/60">Configuration Nissab</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 pt-0 space-y-6">
