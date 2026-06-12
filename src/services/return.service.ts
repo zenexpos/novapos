@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
 import { useAppStore } from '@/stores/appStore';
+import { safeToDate } from '@/lib/utils';
 
 const triggerSync = () => {
     if (typeof window !== 'undefined') {
@@ -28,18 +29,27 @@ class ReturnService {
         to?: Date;
     }): Promise<ProductReturn[]> {
         let collection = db.product_returns.toCollection();
-        if (filters.from)
-            collection = collection.filter(r => new Date(r.createdAt!) >= filters.from!);
-        if (filters.to)
-            collection = collection.filter(r => new Date(r.createdAt!) <= filters.to!);
+        if (filters.from) {
+            const start = filters.from;
+            collection = collection.filter(r => safeToDate(r.createdAt) >= start);
+        }
+        if (filters.to) {
+            const end = filters.to;
+            collection = collection.filter(r => safeToDate(r.createdAt) <= end);
+        }
+        
         let returns = await collection.toArray();
+        
         if (filters.query) {
-            const lowerQuery = filters.query.toLowerCase();
+            const lowerQuery = filters.query.toLowerCase().trim();
             returns = returns.filter(r =>
                 r.originalInvoiceNumber.toLowerCase().includes(lowerQuery),
             );
         }
-        returns.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.date!).getTime());
+        
+        // Use createdAt for sorting (newest first)
+        returns.sort((a, b) => safeToDate(b.createdAt).getTime() - safeToDate(a.createdAt).getTime());
+        
         return returns;
     }
 
