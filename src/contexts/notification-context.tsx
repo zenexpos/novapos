@@ -1,5 +1,4 @@
-'use client';
 /**
- * @fileOverview Fichier supprimé. Utilisez src/contexts/NotificationContext.tsx
+ * @fileOverview Fichier supprimé. Utilisez src/contexts/NotificationContext.tsx (PascalCase).
  */
-export * from './NotificationContext';
+export {};

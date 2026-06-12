@@ -1,5 +1,4 @@
-'use client';
 /**
- * @fileOverview Fichier supprimé. Utilisez le hook centralisé : src/hooks/useLiveQuery.ts
+ * @fileOverview Fichier supprimé. Utilisez src/hooks/useLiveQuery.ts directement.
  */
-export * from '../useLiveQuery';
+export {};

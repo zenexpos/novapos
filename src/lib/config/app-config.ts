@@ -4,9 +4,9 @@
 
 export const APP_CONFIG = {
     name: 'iPOS Zen',
-    version: '2.9.5',
+    version: '2.0.2',
     edition: 'Sovereign Elite',
-    company: 'Titanium Systems',
+    company: 'iPOS Zen Team',
     domain: 'iposzen.com',
     
     offline: {

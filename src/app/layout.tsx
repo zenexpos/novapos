@@ -6,34 +6,24 @@ import { BottomNavBarWrapper } from '@/components/layout/BottomNavBarWrapper';
 import { SaleInfoBarWrapper } from '@/components/layout/SaleInfoBarWrapper';
 import { AppSyncManager } from '@/components/layout/AppSyncManager';
 import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
-import { KeyboardShortcutsHelp } from '@/components/layout/KeyboardShortcutsHelp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 import { Metadata, Viewport } from 'next';
 
 /**
- * RootLayout - Server Component (Enterprise Standard).
+ * RootLayout - Enterprise Server Component.
  * Utilise l'API Metadata pour éviter les erreurs d'hydratation et optimiser le SEO.
  */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
-  description: 'Gestion de point de vente locale et sécurisée',
+  description: 'Gestion de point de vente locale, sécurisée et hors-ligne.',
   icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
-    apple: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     shortcut: ['/icon.svg'],
+    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
   manifest: '/manifest.webmanifest',
-  appleWebApp: {
-    capable: true,
-    title: 'iPOS Zen',
-    statusBarStyle: 'default',
-  },
 };
 
 export const viewport: Viewport = {
@@ -60,7 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     {children}
                   </main>
                   <BottomNavBarWrapper />
-                  <KeyboardShortcutsHelp />
                   <PWAInstallPrompt />
                 </div>
               </AppSyncManager>

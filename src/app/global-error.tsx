@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Barrière de sécurité ultime contre les crashs critiques.
- * Permet à l'utilisateur de redémarrer l'application sans perdre les données locales IndexedDB.
+ * Barrière de sécurité ultime iPOS Zen.
+ * Permet à l'utilisateur de redémarrer sans perdre les données IndexedDB locales.
  */
 export default function GlobalError({
   error,
@@ -26,37 +26,19 @@ export default function GlobalError({
           <div className="p-10 rounded-full bg-red-500/10 border-2 border-red-500/20 mb-8 animate-pulse shadow-xl">
             <ShieldAlert className="h-20 w-20 text-red-600" />
           </div>
-          
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4 text-slate-900">
-            Erreur Système
-          </h1>
-          
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-4 text-slate-900">Erreur Système</h1>
           <p className="text-slate-500 font-medium mb-10 leading-relaxed">
-            Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span> dans votre navigateur. 
-            Veuillez redémarrer le module pour continuer votre activité.
+            Une interruption majeure est survenue. Vos données locales sont <span className="font-bold text-emerald-600">en sécurité</span> dans votre navigateur.
           </p>
-          
           <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <Button 
-                onClick={() => reset()} 
-                size="lg" 
-                className="flex-1 rounded-2xl shadow-xl gap-2 font-black uppercase text-xs h-14"
-            >
+            <Button onClick={() => reset()} size="lg" className="flex-1 rounded-2xl shadow-xl gap-2 font-black uppercase text-xs h-14">
               <RefreshCcw className="h-5 w-5" /> Tenter Reprise
             </Button>
-            <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/'} 
-                size="lg" 
-                className="flex-1 rounded-2xl border-slate-200 bg-white gap-2 font-black uppercase text-xs h-14"
-            >
+            <Button variant="outline" onClick={() => window.location.href = '/'} size="lg" className="flex-1 rounded-2xl border-slate-200 bg-white gap-2 font-black uppercase text-xs h-14">
               <Home className="h-5 w-5" /> Accueil
             </Button>
           </div>
-          
-          <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.4em]">
-            iPOS Zen Sovereign Ledger • Enterprise Recovery Boundary
-          </p>
+          <p className="mt-20 text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.4em]">iPOS Zen Sovereign Ledger • Enterprise Recovery Boundary</p>
         </div>
       </body>
     </html>

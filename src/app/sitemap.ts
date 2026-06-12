@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 /**
- * Génération dynamique du sitemap.
+ * Génération dynamique du sitemap iPOS Zen.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://iposzen.com';
@@ -25,5 +25,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    {
+        url: `${baseUrl}/dashboard`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.9,
+    }
   ];
 }
