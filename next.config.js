@@ -34,12 +34,11 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
-  trailingSlash: true,
+  trailingSlash: false, // Recommandé pour éviter les problèmes de chemins sur fichiers manifest/robots
   reactStrictMode: true,
   images: { unoptimized: true },
   compress: true,
   poweredByHeader: false,
-  // Security Headers for Electron compatibility
   typescript: { ignoreBuildErrors: false },
   eslint: { ignoreDuringBuilds: false },
 };

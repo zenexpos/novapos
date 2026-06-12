@@ -1,9 +1,12 @@
 import { MetadataRoute } from 'next';
 import { APP_CONFIG } from '@/lib/config/app-config';
 
+export const dynamic = 'force-static';
+
 /**
  * Enterprise PWA Manifest.
  * Defines visual identity and installability standards.
+ * Generated as /manifest.webmanifest
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

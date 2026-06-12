@@ -1,7 +1,10 @@
 import { MetadataRoute } from 'next';
 
+export const dynamic = 'force-static';
+
 /**
  * Génération dynamique du sitemap iPOS Zen.
+ * Generated as /sitemap.xml
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://iposzen.com';
