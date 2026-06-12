@@ -88,13 +88,16 @@ class ProductService {
         }
 
         if (filters.sortBy) {
-            const [field, order] = filters.sortBy.split('_');
+            const parts = filters.sortBy.split('_');
+            const order = parts.pop();
+            const field = parts.join('_');
             const isAsc = order === 'asc';
+
             products.sort((a, b) => {
                 let valA: any = a[field as keyof Product] || 0;
                 let valB: any = b[field as keyof Product] || 0;
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                return isAsc ? (valA as number) - (vb as number) : (vb as number) - (valA as number);
+                return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
             });
         } else {
              products.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
