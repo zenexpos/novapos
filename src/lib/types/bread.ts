@@ -17,6 +17,7 @@ export interface BreadOrder extends BaseEntity {
     pickupDate: Date;
     pickupTime?: string; // Format HH:mm
     quantity: number;
+    originalQuantity?: number;
     unitPrice: number;
     totalAmount: number;
     amountPaid: number;

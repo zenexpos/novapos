@@ -22,7 +22,7 @@ interface PrintBreadListDialogProps {
 }
 
 const PrintableList = React.forwardRef<HTMLDivElement, { orders: BreadOrderWithCustomer[], currentDate: string, profile: CompanyProfile | null }>(({ orders, currentDate, profile }, ref) => {
-    const totalQuantity = orders.reduce((acc, order) => acc + order.quantite, 0);
+    const totalQuantity = orders.reduce((acc, order) => acc + order.quantity, 0);
     const formattedDate = format(new Date(currentDate.replace(/-/g, '/')), 'EEEE d MMMM yyyy', { locale: fr });
     
     return (
@@ -59,14 +59,18 @@ const PrintableList = React.forwardRef<HTMLDivElement, { orders: BreadOrderWithC
                                     <p className="font-bold text-xl">{displayName}</p>
                                 </td>
                                 <td className="py-5 px-4 text-center">
-                                    <span className="text-xl font-semibold">{order.quantite}</span>
+                                    <span className="text-xl font-semibold">{order.quantity}</span>
                                 </td>
                                 <td className="py-5 px-4">
                                     <div className="w-12 h-12 border border-gray-300 mx-auto rounded-md"></div>
                                 </td>
                             </tr>
                         );
-                    })}
+                    }).length === 0 && (
+                        <tr>
+                            <td colSpan={3} className="py-10 text-center text-gray-400 italic">Aucune commande pour cette date.</td>
+                        </tr>
+                    )}
                 </tbody>
                 <tfoot>
                     <tr className="bg-gray-50 font-semibold border-t-2 border-black">
@@ -107,8 +111,8 @@ export function PrintBreadListDialog({ orders, currentDate }: PrintBreadListDial
 
     return (
         <>
-            <Button variant="outline" onClick={() => setIsOpen(true)} className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 font-bold">
-                <Printer className="mr-2 h-4 w-4 text-primary" /> Imprimer Liste
+            <Button variant="outline" onClick={() => setIsOpen(true)} className="rounded-xl h-10 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 font-bold">
+                <Printer className="mr-2 h-4 w-4" /> Imprimer Liste
             </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-sm rounded-3xl">

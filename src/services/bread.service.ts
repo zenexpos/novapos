@@ -84,7 +84,6 @@ class BreadService {
 
     /**
      * Ajout manuel d'une commande (Flux direct ou Client Premium).
-     * @param data DTO de création conforme aux règles TypeScript.
      */
     async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
