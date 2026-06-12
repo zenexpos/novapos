@@ -96,18 +96,24 @@ export function BreadClientForm({
     );
 
     const handleDayToggle = (day: string) => {
-        setWeeklySchedule(prev => ({
-            ...prev,
-            [day]: { ...prev[day], actif: !prev[day].actif },
-        }));
+        setWeeklySchedule(prev => {
+            const currentDay = prev[day] || { actif: false, quantite: 0 };
+            return {
+                ...prev,
+                [day]: { ...currentDay, actif: !currentDay.actif },
+            };
+        });
     };
 
     const handleDayQuantityChange = (day: string, value: string) => {
         const quantite = parseFloat(value) || 0;
-        setWeeklySchedule(prev => ({
-            ...prev,
-            [day]: { ...prev[day], quantite },
-        }));
+        setWeeklySchedule(prev => {
+            const currentDay = prev[day] || { actif: false, quantite: 0 };
+            return {
+                ...prev,
+                [day]: { ...currentDay, quantite },
+            };
+        });
     };
 
     useKeyboardShortcuts([
