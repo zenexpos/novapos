@@ -346,20 +346,20 @@ export default function SalesHistoryPage() {
                                     <AreaChart data={chartData}>
                                         <defs>
                                             <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="hsl(var(--chart-primary))" stopOpacity={0.4}/>
-                                                <stop offset="95%" stopColor="hsl(var(--chart-primary))" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/>
+                                                <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
                                             </linearGradient>
                                             <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="hsl(var(--chart-tertiary))" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="hsl(var(--chart-tertiary))" stopOpacity={0}/>
+                                                <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.2)" />
                                         <XAxis dataKey="date" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={15} />
                                         <YAxis fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dx={-15} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
                                         <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(16px)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }} formatter={(v: number, name: string) => [formatCurrency(v), name === 'total' ? 'Chiffre Affaire' : 'Flux Reçu']} />
-                                        <Area type="monotone" dataKey="total" name="total" stroke="hsl(var(--chart-primary))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} isAnimationActive={false} />
-                                        <Area type="monotone" dataKey="received" name="received" stroke="hsl(var(--chart-tertiary))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} />
+                                        <Area type="monotone" dataKey="total" name="total" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} isAnimationActive={false} />
+                                        <Area type="monotone" dataKey="received" name="received" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : <div className="h-full flex flex-col items-center justify-center opacity-20 uppercase text-[10px] font-black italic gap-4">

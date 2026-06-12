@@ -23,6 +23,13 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Elite Chart Palette */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
 }
 
 @layer base {
@@ -47,6 +54,13 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 62 60% 44%;
     --radius: 0.75rem;
+
+    /* Standardized Chart Variables */
+    --chart-1: 62 60% 44%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 46 65% 52%;
+    --chart-4: 215 25% 27%;
+    --chart-5: 25 95% 53%;
 
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(15, 23, 42, 0.05);
@@ -73,6 +87,12 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 62 60% 50%;
+
+    --chart-1: 62 60% 50%;
+    --chart-2: 160 60% 50%;
+    --chart-3: 46 65% 52%;
+    --chart-4: 215 25% 40%;
+    --chart-5: 25 95% 60%;
 
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: rgba(255, 255, 255, 0.04);
