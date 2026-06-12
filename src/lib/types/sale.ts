@@ -1,4 +1,5 @@
 import { BaseEntity } from './common';
+import { Product } from './product';
 
 export type SaleStatus = 'paid' | 'partial' | 'unpaid';
 
@@ -25,4 +26,38 @@ export interface Sale extends BaseEntity {
     dueDate?: Date;
     isCancelled?: boolean;
     cancelledAt?: Date;
+}
+
+export interface CartItem extends Product {
+    cartQuantity: number;
+}
+
+export interface Cart {
+    id: string;
+    name: string;
+    items: CartItem[];
+    customerUuid: string | null;
+    discount: {
+        type: 'fixed' | 'percentage';
+        value: number;
+    };
+}
+
+export interface ReturnItem {
+    productUuid: string | null;
+    productName: string;
+    quantity: number;
+    price: number;
+    purchasePrice: number;
+    wasRestocked: boolean;
+}
+
+export interface ProductReturn extends BaseEntity {
+    originalSaleUuid: string;
+    originalInvoiceNumber: string;
+    items: ReturnItem[];
+    totalReturnValue: number;
+    amountRefunded: number;
+    customerUuid?: string;
+    notes?: string;
 }
