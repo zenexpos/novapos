@@ -2,20 +2,10 @@
 
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-
-export type NotificationType = 'info' | 'success' | 'warning' | 'error';
-
-export interface AppNotification {
-    id: string;
-    type: NotificationType;
-    title: string;
-    message?: string;
-    read: boolean;
-    createdAt: Date;
-}
+import type { Notification, NotificationType } from '@/lib/types';
 
 interface NotificationState {
-    notifications: AppNotification[];
+    notifications: Notification[];
     unreadCount: number;
     addNotification: (type: NotificationType, title: string, message?: string) => void;
     markAsRead: (id: string) => void;
@@ -28,7 +18,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     unreadCount: 0,
 
     addNotification: (type, title, message) => set((state) => {
-        const newNotif: AppNotification = {
+        const newNotif: Notification = {
             id: uuidv4(),
             type,
             title,

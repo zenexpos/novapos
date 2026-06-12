@@ -13,3 +13,4 @@ export * from './types/zakat';
 export * from './types/proforma';
 export * from './types/expense';
 export * from './types/dashboard';
+export * from './types/notification';
