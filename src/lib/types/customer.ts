@@ -56,7 +56,20 @@ export interface CustomerUpdateInput extends Partial<CustomerFormData> {
     breadProfile?: Partial<BreadProfile>;
 }
 
+/**
+ * Entité de paiement liée à un client.
+ */
 export interface Payment extends BaseEntity {
+    customerUuid: string;
+    amount: number;
+    paymentDate: Date;
+    notes?: string;
+}
+
+/**
+ * DTO pour la création d'un versement client.
+ */
+export interface PaymentCreateInput {
     customerUuid: string;
     amount: number;
     paymentDate: Date;

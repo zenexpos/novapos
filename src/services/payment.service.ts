@@ -1,6 +1,6 @@
 'use client';
 import { v4 as uuidv4 } from 'uuid';
-import type { Payment } from '@/lib/types';
+import type { Payment, PaymentCreateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import { customerService } from './customer.service';
 import { safeNumber, safeToDate, roundFinancial } from '@/lib/utils';
@@ -17,42 +17,50 @@ const triggerSync = () => {
 
 class PaymentService {
 
-    async addPayment(paymentData: {
-        customerUuid: string;
-        amount: number;
-        paymentDate: Date;
-        notes?: string;
-    }): Promise<void> {
-        const { customerUuid, notes } = paymentData;
+    /**
+     * Enregistre un nouveau versement client avec garantie d'atomicité.
+     * Injecte les métadonnées de synchronisation hors-ligne.
+     */
+    async addPayment(input: PaymentCreateInput): Promise<void> {
+        const { customerUuid, notes } = input;
 
-        // FIX: Validate amount > 0 — prevents recording zero/negative payments
-        const amount = roundFinancial(safeNumber(paymentData.amount));
+        const amount = roundFinancial(safeNumber(input.amount));
         if (amount <= 0) throw new Error('Le montant du paiement doit être positif.');
 
-        // FIX: Normalize paymentDate with safeToDate — avoids ISO string sort bugs after backup restore
-        const paymentDate = safeToDate(paymentData.paymentDate);
+        const paymentDate = safeToDate(input.paymentDate);
         if (paymentDate.getTime() === 0) throw new Error('Date de paiement invalide.');
 
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer) throw new Error('Client non trouvé.');
 
         const now = new Date();
+        
+        // FACTORY LOGIC: Encapsulation de la création de l'entité
         const newPayment: Payment = {
             uuid: uuidv4(),
             customerUuid,
             amount,
-            // FIX: Store normalized Date object, not raw string
             paymentDate,
-            notes,
+            notes: notes || undefined,
             createdAt: now,
             updatedAt: now,
+            syncStatus: 'pending',
+            version: 1
         };
 
-        // FIX: addPayment wrapped in db.transaction — if recalculateCustomerStatus fails,
-        // the payment is rolled back. No more orphaned payments with stale customer balance.
-        await db.transaction('rw', [db.payments, db.customers, db.sales, db.product_returns], async () => {
+        await db.transaction('rw', [db.payments, db.customers, db.sales, db.product_returns, db.sync_queue], async () => {
             await db.payments.add(newPayment);
+            
+            // Audit client
             await customerService.recalculateCustomerStatus(customerUuid);
+
+            // Mise en file d'attente de synchronisation
+            await db.sync_queue.add({ 
+                table: 'payments', 
+                operation: 'CREATE', 
+                payload: newPayment, 
+                timestamp: Date.now() 
+            });
         });
 
         triggerSync();
@@ -62,17 +70,22 @@ class PaymentService {
         const payment = await db.payments.where('uuid').equals(uuid).first();
         if (!payment?.id) throw new Error('Paiement non trouvé.');
 
-        await db.transaction('rw', [db.payments, db.customers, db.sales, db.product_returns], async () => {
+        await db.transaction('rw', [db.payments, db.customers, db.sales, db.product_returns, db.sync_queue], async () => {
             await db.payments.delete(payment.id!);
             await customerService.recalculateCustomerStatus(payment.customerUuid);
+            
+            await db.sync_queue.add({
+                table: 'payments',
+                operation: 'DELETE',
+                payload: { uuid },
+                timestamp: Date.now()
+            });
         });
 
         triggerSync();
     }
 
     async getPaymentsByCustomerUuid(customerUuid: string): Promise<Payment[]> {
-        // FIX: Sort after toArray() — paymentDate stored as Date object sorts correctly in JS
-        // even after backup/restore if safeToDate was applied on addPayment
         const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
         return payments.sort(
             (a, b) => safeToDate(b.paymentDate).getTime() - safeToDate(a.paymentDate).getTime()
