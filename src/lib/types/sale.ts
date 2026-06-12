@@ -61,3 +61,15 @@ export interface ProductReturn extends BaseEntity {
     customerUuid?: string;
     notes?: string;
 }
+
+/**
+ * DTO pour la création d'un retour marchandise.
+ */
+export interface ReturnCreateInput {
+    originalSaleUuid: string;
+    items: ReturnItem[];
+    totalReturnValue: number;
+    amountRefunded: number;
+    customerUuid?: string;
+    notes?: string;
+}

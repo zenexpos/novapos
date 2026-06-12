@@ -171,7 +171,8 @@ export const useAppStore = create<AppState>()(
 
                 processReturn: async (returnData) => {
                     try {
-                        await returnService.addReturn({ ...returnData, syncStatus: 'pending' as any });
+                        // FIX: Utilise le service sans polluer le DTO avec des props Entity
+                        await returnService.addReturn(returnData);
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
@@ -225,7 +226,7 @@ export const useAppStore = create<AppState>()(
                                         quantity:      0,
                                         minStockLevel: 0,
                                         barcodes:      item.barcodes || [],
-                                        unit:          item.unit,
+                                        unit:          (item.unit as any) || 'Pièce',
                                         supplierUuid:  supplier.uuid,
                                         stockStatus:   'out_of_stock',
                                         createdAt:     new Date(),

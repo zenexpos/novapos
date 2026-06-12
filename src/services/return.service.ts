@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { ProductReturn, ReturnItem } from '@/lib/types';
+import type { ProductReturn, ReturnItem, ReturnCreateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
@@ -39,22 +39,19 @@ class ReturnService {
                 r.originalInvoiceNumber.toLowerCase().includes(lowerQuery),
             );
         }
-        returns.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+        returns.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.date!).getTime());
         return returns;
     }
 
-    async addReturn(returnData: {
-        originalSaleUuid: string;
-        items: ReturnItem[];
-        totalReturnValue: number;
-        amountRefunded: number;
-        customerUuid?: string;
-        notes?: string;
-    }): Promise<ProductReturn> {
-        const sale = await db.sales.where('uuid').equals(returnData.originalSaleUuid).first();
+    /**
+     * FACTORY & PERSISTENCE : Enregistre un retour.
+     * Génère l'entité complète avec métadonnées système.
+     */
+    async addReturn(input: ReturnCreateInput): Promise<ProductReturn> {
+        const sale = await db.sales.where('uuid').equals(input.originalSaleUuid).first();
         if (!sale) throw new Error('La vente originale est introuvable.');
 
-        for (const returnItem of returnData.items) {
+        for (const returnItem of input.items) {
             if (!returnItem.productUuid) continue;
             const saleItem = sale.items.find(i => i.productUuid === returnItem.productUuid);
             if (saleItem && returnItem.quantity > saleItem.quantity) {
@@ -67,15 +64,15 @@ class ReturnService {
         const now = new Date();
         const newReturn: ProductReturn = {
             uuid: uuidv4(),
-            originalSaleUuid: returnData.originalSaleUuid,
+            originalSaleUuid: input.originalSaleUuid,
             originalInvoiceNumber: sale.invoiceNumber,
-            items: returnData.items,
-            totalReturnValue: returnData.totalReturnValue,
-            amountRefunded: returnData.amountRefunded,
-            customerUuid: returnData.customerUuid,
+            items: input.items,
+            totalReturnValue: input.totalReturnValue,
+            amountRefunded: input.amountRefunded,
+            customerUuid: input.customerUuid,
             createdAt: now,
             updatedAt: now,
-            notes: returnData.notes,
+            notes: input.notes,
             syncStatus: 'pending',
             version: 1
         };
@@ -87,7 +84,7 @@ class ReturnService {
             const id = await db.product_returns.add(newReturn);
             newReturn.id = id;
 
-            for (const item of returnData.items) {
+            for (const item of input.items) {
                 if (item.wasRestocked && item.productUuid) {
                     await inventoryService.adjustStock(
                         item.productUuid,
@@ -98,8 +95,8 @@ class ReturnService {
                 }
             }
 
-            if (returnData.customerUuid) {
-                await customerService.recalculateCustomerStatus(returnData.customerUuid);
+            if (input.customerUuid) {
+                await customerService.recalculateCustomerStatus(input.customerUuid);
             }
 
             await db.sync_queue.add({

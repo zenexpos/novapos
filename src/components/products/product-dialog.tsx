@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import type { Product, Supplier } from '@/lib/types';
+import type { Product, Supplier, ProductCreateInput } from '@/lib/types';
 import { Loader2, X, AlertTriangle, ChevronsUpDown, Plus, Package, Hash, Box, Building, Coins, FileText, CheckCircle2 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -95,16 +95,22 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         setError(null);
         setIsLoading(true);
         try {
-            const finalData = {
-                ...formState,
+            // FIX: Création d'un objet Input propre conforme au Type System Elite
+            const finalData: ProductCreateInput = {
+                name: formState.name || '',
                 price: safeNumber(formState.price),
                 purchasePrice: safeNumber(formState.purchasePrice),
                 quantity: safeNumber(formState.quantity),
                 minStockLevel: safeNumber(formState.minStockLevel),
+                unit: formState.unit as Product['unit'],
+                category: formState.category,
+                barcodes: formState.barcodes,
+                dateExpiration: formState.dateExpiration,
+                supplierUuid: formState.supplierUuid
             };
 
-            if (product) await productService.updateProduct(product.uuid, finalData as any);
-            else await productService.addProduct(finalData as any);
+            if (product) await productService.updateProduct(product.uuid, finalData);
+            else await productService.addProduct(finalData);
             
             toast.success(`Fiche produit synchronisée.`);
             onSuccess();
