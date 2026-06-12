@@ -1,12 +1,11 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Product, ProductImportAnalysis, InventoryLog } from '@/lib/types';
+import type { Product, ProductCreateInput, ProductImportAnalysis } from '@/lib/types';
 import { db } from '@/lib/db';
 import { calculateStockStatus, safeNumber, roundFinancial } from '@/lib/utils';
 import { inventoryService } from './inventory.service';
 import Papa from 'papaparse';
-import { supplierService } from './supplier.service';
 import { useAppStore } from '@/stores/appStore';
 
 const triggerSync = () => {
@@ -19,6 +18,36 @@ const triggerSync = () => {
 };
 
 class ProductService {
+
+    /**
+     * FACTORY PATTERN: Centralise la création d'une entité Produit valide.
+     * Garantit que toutes les métadonnées de synchronisation et d'audit sont présentes.
+     */
+    createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
+        const now = new Date();
+        const quantity = safeNumber(input.quantity);
+        const minStockLevel = safeNumber(input.minStockLevel || 10);
+        
+        return {
+            uuid: customUuid || uuidv4(),
+            name: input.name.trim(),
+            price: safeNumber(input.price),
+            purchasePrice: safeNumber(input.purchasePrice),
+            quantity,
+            minStockLevel,
+            barcodes: input.barcodes || [],
+            unite: input.unite || 'Pièce',
+            category: input.category || 'Général',
+            dateExpiration: input.dateExpiration,
+            supplierUuid: input.supplierUuid,
+            stockStatus: calculateStockStatus(quantity, minStockLevel),
+            createdAt: now,
+            updatedAt: now,
+            syncStatus: 'pending',
+            version: 1,
+            flash: false
+        };
+    }
 
     async getProducts(): Promise<Product[]> {
         return db.products.filter(p => !p.deletedAt).toArray();
@@ -62,7 +91,6 @@ class ProductService {
             );
         }
 
-        // Sorting logic based on sortBy string
         if (filters.sortBy) {
             const [field, order] = filters.sortBy.split('_');
             const isAsc = order === 'asc';
@@ -77,28 +105,14 @@ class ProductService {
         return products;
     }
 
-    async addProduct(productData: Omit<Product, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<Product> {
-        const now = new Date();
-        const quantity = safeNumber(productData.quantity);
-        const minStockLevel = safeNumber(productData.minStockLevel);
-
-        const newProduct: Product = {
-            ...productData,
-            uuid: uuidv4(),
-            quantity,
-            minStockLevel,
-            stockStatus: calculateStockStatus(quantity, minStockLevel),
-            createdAt: now,
-            updatedAt: now,
-            syncStatus: 'pending',
-            version: 1
-        };
+    async addProduct(input: ProductCreateInput): Promise<Product> {
+        const newProduct = this.createProductEntity(input);
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
             await db.products.add(newProduct);
             
-            if (quantity !== 0) {
-                await inventoryService.adjustStock(newProduct.uuid, quantity, 'manual_adjustment', 'INITIAL_STOCK');
+            if (newProduct.quantity !== 0) {
+                await inventoryService.adjustStock(newProduct.uuid, newProduct.quantity, 'manual_adjustment', 'INITIAL_STOCK');
             }
 
             await db.sync_queue.add({
@@ -155,14 +169,12 @@ class ProductService {
         }
 
         await db.products.update(existing.id, update);
-        // Sync queue will be handled by the parent transaction in appStore
     }
 
     async deleteProduct(uuid: string): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;
 
-        // TITANIUM RULE: Soft delete only
         const update = { 
             deletedAt: new Date(), 
             updatedAt: new Date(), 
@@ -186,11 +198,11 @@ class ProductService {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing) throw new Error("Produit source introuvable.");
 
-        const { id, uuid: oldUuid, createdAt, updatedAt, ...rest } = existing;
+        const { id, uuid: oldUuid, createdAt, updatedAt, syncStatus, version, ...rest } = existing;
         return this.addProduct({
             ...rest,
             name: `${rest.name} (Copie)`,
-            quantity: 0, // Ne pas dupliquer le stock physique
+            quantity: 0,
         });
     }
 
@@ -252,25 +264,15 @@ class ProductService {
         const now = new Date();
         
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
-            // Processing additions
             for (const item of confirmedData.toAdd) {
-                const uuid = uuidv4();
-                const p: Product = {
-                    ...item,
-                    uuid,
-                    createdAt: now,
-                    updatedAt: now,
-                    syncStatus: 'pending',
-                    version: 1
-                };
+                const p = this.createProductEntity(item);
                 await db.products.add(p);
                 if (p.quantity !== 0) {
-                    await inventoryService.adjustStock(uuid, p.quantity, 'manual_adjustment', 'IMPORT');
+                    await inventoryService.adjustStock(p.uuid, p.quantity, 'manual_adjustment', 'IMPORT');
                 }
                 await db.sync_queue.add({ table: 'products', operation: 'CREATE', payload: p, timestamp: Date.now() });
             }
 
-            // Processing updates
             for (const item of confirmedData.toUpdate) {
                 const existing = await db.products.where('uuid').equals(item.uuid).first();
                 if (existing) {

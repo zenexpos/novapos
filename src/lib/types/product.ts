@@ -18,6 +18,22 @@ export interface Product extends BaseEntity {
     flash?: boolean;
 }
 
+/**
+ * DTO pour la création d'un produit (UI -> Service)
+ */
+export interface ProductCreateInput {
+    name: string;
+    price: number;
+    purchasePrice?: number;
+    quantity?: number;
+    minStockLevel?: number;
+    barcodes?: string[];
+    unite?: Product['unite'];
+    category?: string;
+    dateExpiration?: Date;
+    supplierUuid?: string;
+}
+
 export interface ProductImportAnalysis {
     productsToAdd: Partial<Product>[];
     productsToUpdate: Partial<Product>[];

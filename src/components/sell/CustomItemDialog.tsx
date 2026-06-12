@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useCartActions } from '@/stores/cartStore';
-import type { Product } from '@/lib/types';
+import { productService } from '@/services/product.service';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CustomItemDialogProps {
@@ -28,7 +28,7 @@ interface CustomItemDialogProps {
 
 /**
  * Fenêtre d'ajout d'article personnalisé (manuel).
- * Supporte le contrôle interne ou externe.
+ * Architecture corrigée : utilise productService pour l'instanciation de l'entité.
  */
 export function CustomItemDialog({ children, isOpen: controlledOpen, onOpenChange: setControlledOpen }: CustomItemDialogProps) {
     const [internalOpen, setInternalOpen] = useState(false);
@@ -44,7 +44,6 @@ export function CustomItemDialog({ children, isOpen: controlledOpen, onOpenChang
     const [isLoading, setIsLoading] = useState(false);
     const { addItemToCart } = useCartActions();
 
-    // Réinitialisation des champs à l'ouverture
     useEffect(() => {
         if (isOpen) {
             setName('');
@@ -61,16 +60,15 @@ export function CustomItemDialog({ children, isOpen: controlledOpen, onOpenChang
 
         setIsLoading(true);
 
-        const customProduct: Product = {
-            uuid: `custom-${uuidv4()}`,
+        // ARCHITECTURE FIX: Delegation de la creation de l'entité à la Factory Service
+        const customProduct = productService.createProductEntity({
             name: name.trim(),
             price: priceNum,
             purchasePrice: 0,
-            quantity: Infinity, // Les articles personnalisés n'ont pas de stock
-            minStockLevel: 0,
+            quantity: 999999, // Virtuel : stock illimité pour le panier
             category: 'Personnalisé',
             unite: 'Pièce',
-        };
+        }, `custom-${uuidv4()}`);
 
         addItemToCart(customProduct);
         
