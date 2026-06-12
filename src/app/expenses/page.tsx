@@ -40,7 +40,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/appStore';
-import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
