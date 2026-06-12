@@ -11,7 +11,7 @@ export const APP_CONFIG = {
     
     offline: {
         dbName: 'iPOSDatabase',
-        dbVersion: 6,
+        dbVersion: 15,
         syncIntervalMs: 5 * 60 * 1000, // 5 minutes
         backupReminderDays: 7,
     },
