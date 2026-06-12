@@ -1,10 +1,11 @@
 /**
  * iPOS Zen — Centralized Enterprise Configuration.
+ * Pro-grade settings for financial precision, sync intervals, and environment.
  */
 
 export const APP_CONFIG = {
     name: 'iPOS Zen',
-    version: '2.0.2',
+    version: '2.9.5',
     edition: 'Sovereign Elite',
     company: 'iPOS Zen Team',
     domain: 'iposzen.com',

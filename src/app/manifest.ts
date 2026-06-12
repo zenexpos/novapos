@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
+import { APP_CONFIG } from '@/lib/config/app-config';
 
 /**
- * Manifeste PWA Enterprise - iPOS Zen.
- * Définit l'identity visuelle et garantit l'installabilité native sur Desktop et Mobile.
+ * Enterprise PWA Manifest.
+ * Defines visual identity and installability standards.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -14,8 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'any',
-    background_color: '#F8FAFC',
-    theme_color: '#AFB42B',
+    background_color: APP_CONFIG.pwa.backgroundColor,
+    theme_color: APP_CONFIG.pwa.themeColor,
     categories: ['business', 'finance', 'productivity'],
     icons: [
       {

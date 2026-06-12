@@ -1,13 +1,13 @@
 /**
- * Moteur de calcul financier précis iPOS Math Engine.
- * Résout les problèmes de virgule flottante en JavaScript pour garantir la précision des factures.
+ * iPOS Math Engine — Professional Precision Core.
+ * Solves floating point issues to ensure accounting-grade accuracy.
  */
 
 export const FINANCIAL_PRECISION = 2;
 export const FINANCIAL_EPSILON = 0.001;
 
 /**
- * Arrondi financier standard (2 décimales).
+ * Standard Financial Rounding (2 decimals).
  */
 export function roundFinancial(value: number): number {
     const multiplier = Math.pow(10, FINANCIAL_PRECISION);
@@ -15,7 +15,7 @@ export function roundFinancial(value: number): number {
 }
 
 /**
- * Nettoie et sécurise un nombre, évite les NaN.
+ * Cleans and secures a number, avoids NaN.
  */
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) ? 0 : val;
@@ -25,21 +25,21 @@ export function safeNumber(val: any): number {
 }
 
 /**
- * Multiplication avec précision financière.
+ * Multiplication with financial precision.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));
 }
 
 /**
- * Addition avec précision financière.
+ * Addition with financial precision.
  */
 export function preciseAdd(a: number, b: number): number {
     return roundFinancial(safeNumber(a) + safeNumber(b));
 }
 
 /**
- * Calcul des totaux du panier avec précision absolue.
+ * Calculate cart totals with absolute precision.
  */
 export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
     const subtotal = cart.items.reduce((acc, item) => {
@@ -67,7 +67,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
 }
 
 /**
- * Convertit un montant TTC en HT.
+ * Converts TTC amount to HT.
  */
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
     const rate = safeNumber(tvaRate);
@@ -76,7 +76,7 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 }
 
 /**
- * Calcule le montant de la TVA.
+ * Calculates TVA amount.
  */
 export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
@@ -84,14 +84,14 @@ export function calculateTVA(totalTTC: number, tvaRate: number): number {
 }
 
 /**
- * Calcule le seuil du Nissab (85g d'or).
+ * Calculates Nissab threshold (85g gold).
  */
 export function calculateNisab(goldPrice: number): number {
     return roundFinancial(safeNumber(goldPrice) * 85);
 }
 
 /**
- * Calcule le montant de la Zakat (2.5% des actifs nets).
+ * Calculates Zakat amount (2.5% of net assets).
  */
 export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
     const nisab = calculateNisab(goldPrice);

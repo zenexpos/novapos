@@ -3,8 +3,8 @@
 import { ZenLoader } from '@/components/shared/loaders/ZenLoader';
 
 /**
- * Écran de chargement unifié (Enterprise Segment).
- * Prévient les flashs de contenu non stylisé (FOUC) pendant le chargement des données IndexedDB.
+ * Standard Global Loading UI.
+ * Prevents FOUC (Flash of Unstyled Content) while IndexedDB is mounting.
  */
 export default function GlobalLoading() {
     return (

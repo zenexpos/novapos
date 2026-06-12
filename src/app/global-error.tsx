@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, RefreshCcw, Home } from 'lucide-react';
 
 /**
- * Barrière de sécurité ultime iPOS Zen.
- * Permet à l'utilisateur de redémarrer sans perdre les données IndexedDB locales.
+ * Ultimate Safety Boundary.
+ * Provides emergency recovery for the entire Next.js context.
  */
 export default function GlobalError({
   error,

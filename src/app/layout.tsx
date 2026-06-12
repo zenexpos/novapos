@@ -10,10 +10,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister';
 import { Metadata, Viewport } from 'next';
+import { APP_CONFIG } from '@/lib/config/app-config';
 
 /**
  * RootLayout - Enterprise Server Component.
- * Utilise l'API Metadata pour éviter les erreurs d'hydratation et optimiser le SEO.
+ * Using Metadata API to prevent hydration errors and optimize SEO.
  */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#AFB42B',
+  themeColor: APP_CONFIG.pwa.themeColor,
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </KeyboardShortcutsProvider>
           </TooltipProvider>
         </ClientProviders>
+        {/* Hidden Portal for Print Engine */}
         <div id="receipt-for-print" className="hidden print:block bg-white min-h-screen w-full"></div>
       </body>
     </html>
