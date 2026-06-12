@@ -1,5 +1,5 @@
 /**
- * @fileOverview Security Layer — Input Sanitization & XSS Prevention.
+ * Security Layer — Input Sanitization & XSS Prevention.
  */
 
 export const sanitizeString = (str: string): string => {

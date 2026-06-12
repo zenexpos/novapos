@@ -1,5 +1,5 @@
 /**
- * @fileOverview iPOS Zen — Centralized Enterprise Configuration.
+ * iPOS Zen — Centralized Enterprise Configuration.
  */
 
 export const APP_CONFIG = {

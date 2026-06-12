@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 
 /**
  * Manifeste PWA Enterprise - iPOS Zen.
- * Définit l'identité visuelle et garantit l'installabilité native sur Desktop et Mobile.
+ * Définit l'identity visuelle et garantit l'installabilité native sur Desktop et Mobile.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
