@@ -136,9 +136,11 @@ class SupplierService {
      * La suppression individuelle gère la vérification du solde nul.
      */
     async bulkDelete(uuids: string[]): Promise<void> {
-        for (const uuid of uuids) {
-            await this.deleteSupplier(uuid);
-        }
+        await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
+            for (const uuid of uuids) {
+                await this.deleteSupplier(uuid);
+            }
+        });
     }
 
     async getSupplierActivity(supplierUuid: string): Promise<any[]> {

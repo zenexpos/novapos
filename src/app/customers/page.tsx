@@ -125,9 +125,7 @@ function CustomersContent() {
     const handleConfirmBulkDeleteCustomers = useCallback(async () => {
         if (selectedCustomers.size === 0) return;
         try {
-            await Promise.all(
-                Array.from(selectedCustomers).map(uuid => customerService.deleteCustomer(uuid)),
-            );
+            await customerService.bulkDelete(Array.from(selectedCustomers));
             setIsBulkDeleteDialogOpen(false);
             setSelectedCustomers(new Set());
             await fetchCustomers();
@@ -422,7 +420,7 @@ function CustomersContent() {
                             <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Trier par</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
-                                {Object.entries(sortOptions).map(([key, value]) => (
+                                {sortOptions && Object.entries(sortOptions).map(([key, value]) => (
                                     <DropdownMenuRadioItem key={key} value={key} className="text-xs font-bold">{value}</DropdownMenuRadioItem>
                                 ))}
                             </DropdownMenuRadioGroup>

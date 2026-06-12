@@ -170,7 +170,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error("Révocation impossible : le solde débiteur n'est pas nul.");
+            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul.`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
@@ -186,6 +186,17 @@ class CustomerService {
         });
 
         triggerSync();
+    }
+
+    /**
+     * Supprime plusieurs clients en lot.
+     */
+    async bulkDelete(uuids: string[]): Promise<void> {
+        await db.transaction('rw', [db.customers, db.sync_queue], async () => {
+            for (const uuid of uuids) {
+                await this.deleteCustomer(uuid);
+            }
+        });
     }
 
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
