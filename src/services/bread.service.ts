@@ -5,15 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
-import { customerService } from './customer.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 import { roundFinancial } from '@/lib/utils';
-import { toast } from 'sonner';
 
 /**
  * iPOS Zen - Bread Distribution Domain Service.
- * Gère le cycle de vie des commandes de pain, la facturation différée et la logistique.
+ * Gère le cycle de vie des commandes de pain avec nommage unifié.
  */
 class BreadService {
 
@@ -26,9 +24,6 @@ class BreadService {
         }
     }
 
-    /**
-     * Génère un numéro de commande séquentiel unique.
-     */
     private async generateOrderNumber(): Promise<string> {
         const profile = await db.company_profile.toCollection().first();
         const currentCounter = profile?.bread_counter || 1;
@@ -43,9 +38,6 @@ class BreadService {
         return number;
     }
 
-    /**
-     * Récupère les commandes pour une date spécifique avec jointure client.
-     */
     async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
         if (!date) return [];
 
@@ -66,16 +58,11 @@ class BreadService {
         })).sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
     }
 
-    /**
-     * Assure que les commandes automatiques sont générées pour une date donnée.
-     */
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
-
         const activeBreadClientsCount = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
             .count();
-
         const existingCount = await db.bread_orders
             .where('date').equals(date)
             .filter(o => !o.deletedAt)
@@ -86,16 +73,12 @@ class BreadService {
         }
     }
 
-    /**
-     * Ajoute une commande manuelle (Client ou Externe).
-     */
     async addManualBreadOrder(data: {
         customerUuid?: string;
         customName?: string;
         date: string;
         quantity: number;
         unitPrice?: number;
-        pickupTime?: string;
     }): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
         const price = data.unitPrice || profile?.prix_pain || 10;
@@ -115,6 +98,8 @@ class BreadService {
             remainingAmount: total,
             paymentStatus: 'unpaid',
             pickupStatus: 'unreceived',
+            isDelivered: false,
+            isPaid: false,
             transferredToCustomerAccount: false,
             venteUuid: null,
             syncStatus: 'pending',
@@ -127,9 +112,6 @@ class BreadService {
         this.triggerSync();
     }
 
-    /**
-     * Convertit manuellement des commandes de pain en ventes réelles (Dettes clients).
-     */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
@@ -143,10 +125,9 @@ class BreadService {
             for (const order of orders) {
                 if (order.venteUuid || order.deletedAt) continue;
 
-                // Création de la vente dans le système central
                 const sale = await salesService.createSale({
                     items: [{
-                        productUuid: 'BREAD_PRODUCT', // Identifiant interne pour le pain
+                        productUuid: 'BREAD_PRODUCT',
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
@@ -158,10 +139,10 @@ class BreadService {
                     customerUuid: order.customerUuid || undefined,
                 });
 
-                // Mise à jour de l'ordre
                 await db.bread_orders.update(order.id!, {
                     venteUuid: sale.uuid,
-                    paymentStatus: order.amountPaid >= order.totalAmount ? 'paid' : 'unpaid',
+                    paymentStatus: 'paid',
+                    isPaid: true,
                     transferredToCustomerAccount: true,
                     transferredAt: new Date(),
                     updatedAt: new Date()
@@ -172,9 +153,6 @@ class BreadService {
         this.triggerSync();
     }
 
-    /**
-     * Facture toutes les commandes non traitées pour une date donnée.
-     */
     async billAllRemainingOrdersForDate(date: string, breadPrice: number): Promise<number> {
         const pendingOrders = await db.bread_orders
             .where('date').equals(date)
@@ -188,9 +166,6 @@ class BreadService {
         return uuids.length;
     }
 
-    /**
-     * Met à jour la quantité d'une commande (si non facturée).
-     */
     async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.venteUuid) return;
@@ -205,33 +180,24 @@ class BreadService {
         this.triggerSync();
     }
 
-    /**
-     * Change le statut de livraison.
-     */
     async updateBreadOrderDeliveryStatus(uuid: string, isDelivered: boolean): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order) return;
 
         await db.bread_orders.update(order.id!, {
+            isDelivered,
             pickupStatus: isDelivered ? 'received' : 'unreceived',
             updatedAt: new Date()
         });
         this.triggerSync();
     }
 
-    /**
-     * Supprime une commande (si non facturée).
-     */
     async deleteBreadOrder(uuid: string): Promise<void> {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.venteUuid) {
             throw new Error("Impossible de supprimer une commande facturée.");
         }
-
-        await db.bread_orders.update(order.id!, {
-            deletedAt: new Date(),
-            updatedAt: new Date()
-        });
+        await db.bread_orders.update(order.id!, { deletedAt: new Date(), updatedAt: new Date() });
         this.triggerSync();
     }
 
@@ -248,17 +214,17 @@ class BreadService {
         const ordersToCreate: BreadOrder[] = [];
 
         for (const client of activeBreadClients) {
-            if (client.bread_date_debut && date < client.bread_date_debut) continue;
-            if (client.bread_type_recurrence === 'aucun') continue;
+            if (client.breadStartDate && date < client.breadStartDate) continue;
+            if (client.breadRecurrenceType === 'aucun') continue;
 
             let quantity = 0;
-            if (client.bread_type_recurrence === 'quotidien') {
-                quantity = client.bread_quantite_defaut || 0;
+            if (client.breadRecurrenceType === 'quotidien') {
+                quantity = client.breadDefaultQuantity || 0;
             } else if (
-                client.bread_type_recurrence === 'jours_specifiques' &&
-                client.bread_jours_semaine?.[dayOfWeek]?.actif
+                client.breadRecurrenceType === 'jours_specifiques' &&
+                client.breadWeeklySchedule?.[dayOfWeek]?.actif
             ) {
-                quantity = client.bread_jours_semaine[dayOfWeek].quantite || 0;
+                quantity = client.breadWeeklySchedule[dayOfWeek].quantite || 0;
             }
 
             if (quantity > 0) {
@@ -276,6 +242,8 @@ class BreadService {
                     remainingAmount: total,
                     paymentStatus: 'unpaid',
                     pickupStatus: 'unreceived',
+                    isDelivered: false,
+                    isPaid: false,
                     transferredToCustomerAccount: false,
                     venteUuid: null,
                     syncStatus: 'pending',
@@ -292,9 +260,6 @@ class BreadService {
         }
     }
 
-    /**
-     * Traite le transfert automatique des commandes non soldées vers les comptes courants à 23:00.
-     */
     async processEndOfDayTransfers(): Promise<number> {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const profile = await db.company_profile.toCollection().first();
@@ -309,37 +274,9 @@ class BreadService {
             .toArray();
 
         if (pendingOrders.length === 0) return 0;
-
         const uuids = pendingOrders.map(o => o.uuid);
         await this.convertBreadOrdersToSales(uuids, price);
         return uuids.length;
-    }
-
-    async updateStatuses(uuid: string, updates: { 
-        paymentStatus?: BreadOrder['paymentStatus'], 
-        pickupStatus?: BreadOrder['pickupStatus']
-    }): Promise<void> {
-        const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.deletedAt) return;
-
-        const newUpdates: Partial<BreadOrder> = { ...updates, updatedAt: new Date() };
-
-        if (updates.paymentStatus === 'paid') {
-            newUpdates.amountPaid = order.totalAmount;
-            newUpdates.remainingAmount = 0;
-        }
-
-        await db.bread_orders.update(order.id!, newUpdates);
-        this.triggerSync();
-    }
-
-    async deleteOrder(uuid: string): Promise<void> {
-        const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.transferredToCustomerAccount) {
-            throw new Error("Impossible de supprimer une commande déjà transférée en compte.");
-        }
-        await db.bread_orders.update(order.id!, { deletedAt: new Date() });
-        this.triggerSync();
     }
 }
 

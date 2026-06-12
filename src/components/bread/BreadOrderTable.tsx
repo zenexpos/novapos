@@ -10,14 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { 
-    CheckCircle2, 
-    XCircle, 
     Trash2, 
     User, 
     Hash, 
-    Info, 
-    CreditCard, 
-    Truck,
     CloudUpload
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -33,22 +28,16 @@ interface BreadOrderTableProps {
 export function BreadOrderTable({ orders }: BreadOrderTableProps) {
     const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
-    const handleTogglePayment = async (order: BreadOrderWithCustomer) => {
-        const newStatus = order.paymentStatus === 'paid' ? 'unpaid' : 'paid';
-        await breadService.updateStatuses(order.uuid, { paymentStatus: newStatus });
-        toast.success(newStatus === 'paid' ? 'Commande marquée comme payée' : 'Paiement annulé');
-    };
-
     const handleTogglePickup = async (order: BreadOrderWithCustomer) => {
-        const newStatus = order.pickupStatus === 'received' ? 'unreceived' : 'received';
-        await breadService.updateStatuses(order.uuid, { pickupStatus: newStatus });
-        toast.success(newStatus === 'received' ? 'Article livré' : 'Livraison annulée');
+        const newState = !order.isDelivered;
+        await breadService.updateBreadOrderDeliveryStatus(order.uuid, newState);
+        toast.success(newState ? 'Article livré' : 'Livraison annulée');
     };
 
     const handleDelete = async () => {
         if (!orderToDelete) return;
         try {
-            await breadService.deleteOrder(orderToDelete);
+            await breadService.deleteBreadOrder(orderToDelete);
             toast.success("Commande supprimée.");
         } catch (e: any) {
             toast.error(e.message);
@@ -63,13 +52,13 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
             <Table>
                 <TableHeader className="bg-muted/50 border-b border-white/5">
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-[120px] p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">N° Commande</TableHead>
+                        <TableHead className="w-[120px] p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Ref</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Client</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Quantité</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Total</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut Paiement</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut Livraison</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Compte Courant</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Paiement</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Livraison</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Compte</TableHead>
                         <TableHead className="w-[100px]"></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -91,10 +80,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                     <div className="p-2 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
                                         <User className="h-3.5 w-3.5" />
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-sm tracking-tight">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
-                                        {order.notes && <span className="text-[9px] text-muted-foreground/50 truncate max-w-[150px]">{order.notes}</span>}
-                                    </div>
+                                    <span className="font-bold text-sm tracking-tight">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
                                 </div>
                             </TableCell>
                             <TableCell className="p-4 text-center">
@@ -106,32 +92,23 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                 {formatCurrency(order.totalAmount)}
                             </TableCell>
                             <TableCell className="p-4 text-center">
-                                <div className="flex flex-col items-center gap-2">
-                                    <Badge className={cn(
-                                        "text-[8px] font-black uppercase px-2 py-0.5 border-none",
-                                        order.paymentStatus === 'paid' ? "bg-emerald-500 text-white" : 
-                                        order.paymentStatus === 'partial' ? "bg-amber-500 text-white" : "bg-destructive text-white"
-                                    )}>
-                                        {order.paymentStatus === 'paid' ? 'Payé' : order.paymentStatus === 'partial' ? 'Partiel' : 'Impayé'}
-                                    </Badge>
-                                    <Switch 
-                                        checked={order.paymentStatus === 'paid'} 
-                                        onCheckedChange={() => handleTogglePayment(order)}
-                                        className="data-[state=checked]:bg-emerald-500"
-                                    />
-                                </div>
+                                <Badge className={cn(
+                                    "text-[8px] font-black uppercase px-2 py-0.5 border-none",
+                                    order.venteUuid ? "bg-emerald-500 text-white" : "bg-destructive text-white"
+                                )}>
+                                    {order.venteUuid ? 'Vendu' : 'En attente'}
+                                </Badge>
                             </TableCell>
                             <TableCell className="p-4 text-center">
                                 <div className="flex flex-col items-center gap-2">
                                     <Badge className={cn(
                                         "text-[8px] font-black uppercase px-2 py-0.5 border-none",
-                                        order.pickupStatus === 'received' ? "bg-emerald-500 text-white" : 
-                                        order.pickupStatus === 'partial' ? "bg-amber-500 text-white" : "bg-destructive text-white"
+                                        order.isDelivered ? "bg-emerald-500 text-white" : "bg-destructive text-white"
                                     )}>
-                                        {order.pickupStatus === 'received' ? 'Reçu' : order.pickupStatus === 'partial' ? 'Partiel' : 'En attente'}
+                                        {order.isDelivered ? 'Livré' : 'À livrer'}
                                     </Badge>
                                     <Switch 
-                                        checked={order.pickupStatus === 'received'} 
+                                        checked={order.isDelivered} 
                                         onCheckedChange={() => handleTogglePickup(order)}
                                         className="data-[state=checked]:bg-emerald-500"
                                     />
@@ -149,7 +126,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                 )}
                             </TableCell>
                             <TableCell className="p-4 text-right">
-                                {!order.transferredToCustomerAccount && (
+                                {!order.venteUuid && (
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
@@ -170,9 +147,9 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
             isOpen={!!orderToDelete}
             onOpenChange={(open) => !open && setOrderToDelete(null)}
             title="Supprimer la commande ?"
-            description="Êtes-vous sûr de vouloir supprimer cette commande de pain ? Cette action est irréversible et ne peut être effectuée sur les commandes déjà transférées aux comptes courants."
+            description="Cette action est irréversible."
             onConfirm={handleDelete}
-            confirmText="Supprimer définitivement"
+            confirmText="Supprimer"
         />
         </>
     );

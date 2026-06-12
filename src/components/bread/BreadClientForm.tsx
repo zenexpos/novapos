@@ -20,19 +20,11 @@ import {
     Package, CheckCircle2,
 } from 'lucide-react';
 import { customerService } from '@/services/customer.service';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { BREAD_WEEK_DAY_LABELS_FULL } from '@/lib/constants';
 import { cn, formatDateToYYYYMMDD } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-// ─── État initial propre ───────────────────────────────────────
 const defaultJoursSemaine = {
     lundi:    { actif: true,  quantite: 10 },
     mardi:    { actif: true,  quantite: 10 },
@@ -45,9 +37,9 @@ const defaultJoursSemaine = {
 
 const initialFormState: Partial<Customer> = {
     isBreadClient:         true,
-    bread_type_recurrence: 'quotidien',
-    bread_quantite_defaut: 10,
-    bread_jours_semaine:   defaultJoursSemaine,
+    breadRecurrenceType: 'quotidien',
+    breadDefaultQuantity: 10,
+    breadWeeklySchedule:   defaultJoursSemaine,
 };
 
 interface BreadClientFormProps {
@@ -71,11 +63,10 @@ export function BreadClientForm({
         if (customer) {
             setFormState({
                 isBreadClient:         customer.isBreadClient ?? true,
-                bread_type_recurrence: customer.bread_type_recurrence || 'aucun',
-                bread_quantite_defaut: customer.bread_quantite_defaut || 10,
-                bread_jours_semaine:
-                    customer.bread_jours_semaine || defaultJoursSemaine,
-                bread_date_debut:      customer.bread_date_debut,
+                breadRecurrenceType: customer.breadRecurrenceType || 'aucun',
+                breadDefaultQuantity: customer.breadDefaultQuantity || 10,
+                breadWeeklySchedule: customer.breadWeeklySchedule || defaultJoursSemaine,
+                breadStartDate:      customer.breadStartDate,
             });
         } else {
             setFormState(initialFormState);
@@ -91,16 +82,16 @@ export function BreadClientForm({
             try {
                 const dataToSave: Partial<Customer> = {
                     isBreadClient:         formState.isBreadClient,
-                    bread_type_recurrence: formState.bread_type_recurrence,
-                    bread_date_debut:      formState.bread_date_debut || (formState.isBreadClient ? formatDateToYYYYMMDD(new Date()) : undefined)
+                    breadRecurrenceType: formState.breadRecurrenceType,
+                    breadStartDate:      formState.breadStartDate || (formState.isBreadClient ? formatDateToYYYYMMDD(new Date()) : undefined)
                 };
 
-                if (formState.bread_type_recurrence === 'quotidien') {
-                    dataToSave.bread_quantite_defaut = formState.bread_quantite_defaut;
-                    dataToSave.bread_jours_semaine = undefined;
-                } else if (formState.bread_type_recurrence === 'jours_specifiques') {
-                    dataToSave.bread_jours_semaine = formState.bread_jours_semaine;
-                    dataToSave.bread_quantite_defaut = 0;
+                if (formState.breadRecurrenceType === 'quotidien') {
+                    dataToSave.breadDefaultQuantity = formState.breadDefaultQuantity;
+                    dataToSave.breadWeeklySchedule = undefined;
+                } else if (formState.breadRecurrenceType === 'jours_specifiques') {
+                    dataToSave.breadWeeklySchedule = formState.breadWeeklySchedule;
+                    dataToSave.breadDefaultQuantity = 0;
                 }
 
                 await customerService.updateCustomer(customer.uuid, dataToSave);
@@ -119,11 +110,11 @@ export function BreadClientForm({
     const handleDayToggle = (day: string) => {
         setFormState(prev => ({
             ...prev,
-            bread_jours_semaine: {
-                ...prev.bread_jours_semaine!,
+            breadWeeklySchedule: {
+                ...prev.breadWeeklySchedule!,
                 [day]: {
-                    ...prev.bread_jours_semaine![day],
-                    actif: !prev.bread_jours_semaine![day].actif,
+                    ...prev.breadWeeklySchedule![day],
+                    actif: !prev.breadWeeklySchedule![day].actif,
                 },
             },
         }));
@@ -133,48 +124,19 @@ export function BreadClientForm({
         const quantite = parseFloat(value) || 0;
         setFormState(prev => ({
             ...prev,
-            bread_jours_semaine: {
-                ...prev.bread_jours_semaine!,
-                [day]: { ...prev.bread_jours_semaine![day], quantite },
+            breadWeeklySchedule: {
+                ...prev.breadWeeklySchedule!,
+                [day]: { ...prev.breadWeeklySchedule![day], quantite },
             },
         }));
     };
 
-    // Raccourcis pour le formulaire d'abonnement
     useKeyboardShortcuts([
-        {
-            key: 'Enter',
-            ctrl: true,
-            action: () => handleSubmit(),
-            description: 'Enregistrer l\'abonnement',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'Escape',
-            action: () => onOpenChange(false),
-            description: 'Fermer',
-            ignoreInputFocus: true
-        }
+        { key: 'Enter', ctrl: true, action: () => handleSubmit(), description: 'Enregistrer', ignoreInputFocus: true },
+        { key: 'Escape', action: () => onOpenChange(false), description: 'Fermer', ignoreInputFocus: true }
     ], 'AbonnementPain', isOpen);
 
     if (!customer) return null;
-
-    const SectionTitle = ({
-        title,
-        icon: Icon,
-    }: {
-        title: string;
-        icon: any;
-    }) => (
-        <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                <Icon className="h-3.5 w-3.5" />
-            </div>
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {title}
-            </h4>
-        </div>
-    );
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -182,113 +144,54 @@ export function BreadClientForm({
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="bg-primary/5 p-4 border-b border-border">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary text-primary-foreground">
-                                <Wheat className="h-5 w-5" />
-                            </div>
+                            <div className="p-2 rounded-lg bg-primary text-primary-foreground"><Wheat className="h-5 w-5" /></div>
                             <div>
-                                <DialogTitle className="text-base font-semibold">
-                                    Programme Pain
-                                </DialogTitle>
-                                <DialogDescription className="text-xs">
-                                    Commandes récurrentes pour {customer.firstName} {customer.lastName}
-                                </DialogDescription>
+                                <DialogTitle className="text-base font-semibold">Programme Pain Elite</DialogTitle>
+                                <DialogDescription className="text-xs">Commandes pour {customer.firstName} {customer.lastName}</DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
 
                     <div className="p-4 space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar">
                         <div className="p-4 rounded-lg border border-border bg-muted/20 space-y-4">
-                            <SectionTitle title="Abonnement & Fréquence" icon={Settings} />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-muted-foreground">Statut du programme</Label>
-                                    <div className={cn(
-                                        'flex items-center justify-between p-3 rounded-lg border transition-colors',
-                                        formState.isBreadClient ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/30 border-border',
-                                    )}>
+                                    <Label className="text-xs font-semibold text-muted-foreground">Statut</Label>
+                                    <div className={cn('flex items-center justify-between p-3 rounded-lg border', formState.isBreadClient ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/30 border-border')}>
                                         <span className={cn('text-xs font-bold uppercase', formState.isBreadClient ? 'text-emerald-600' : 'text-muted-foreground')}>
                                             {formState.isBreadClient ? 'ACTIF' : 'INACTIF'}
                                         </span>
-                                        <Switch
-                                            checked={formState.isBreadClient}
-                                            onCheckedChange={checked => setFormState(s => ({ ...s, isBreadClient: checked }))}
-                                            className="data-[state=checked]:bg-emerald-500"
-                                        />
+                                        <Switch checked={formState.isBreadClient} onCheckedChange={checked => setFormState(s => ({ ...s, isBreadClient: checked }))} />
                                     </div>
                                 </div>
-
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-semibold text-muted-foreground">Fréquence</Label>
-                                    <select
-                                        value={formState.bread_type_recurrence}
-                                        onChange={e => setFormState(s => ({
-                                            ...s,
-                                            bread_type_recurrence: e.target.value as any,
-                                            bread_quantite_defaut: 0,
-                                            bread_jours_semaine:   defaultJoursSemaine,
-                                        }))}
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    >
-                                        <option value="quotidien">Quotidien (quantité fixe)</option>
-                                        <option value="jours_specifiques">Jours spécifiques (calendrier)</option>
-                                        <option value="aucun">Manuel (à la demande)</option>
+                                    <select value={formState.breadRecurrenceType} onChange={e => setFormState(s => ({ ...s, breadRecurrenceType: e.target.value as any }))} className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm">
+                                        <option value="quotidien">Quotidien</option>
+                                        <option value="jours_specifiques">Programmé</option>
+                                        <option value="aucun">Manuel</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
 
-                        {formState.bread_type_recurrence === 'quotidien' && (
-                            <div className="p-4 rounded-lg border border-primary/15 bg-primary/5 animate-in fade-in duration-200">
-                                <SectionTitle title="Quantité fixe par jour" icon={Package} />
-                                <div className="flex items-center justify-center gap-3">
-                                    <Label className="text-sm">Quantité:</Label>
-                                    <div className="relative w-32">
-                                        <Input
-                                            type="number"
-                                            step="0.5"
-                                            min="0"
-                                            value={formState.bread_quantite_defaut}
-                                            onChange={e => setFormState(s => ({
-                                                ...s,
-                                                bread_quantite_defaut: parseFloat(e.target.value) || 0,
-                                            }))}
-                                            className="h-10 text-center font-bold text-lg"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-40 uppercase">pcs</span>
-                                    </div>
-                                </div>
+                        {formState.breadRecurrenceType === 'quotidien' && (
+                            <div className="p-4 rounded-lg border border-primary/15 bg-primary/5">
+                                <Label className="text-sm">Quantité fixe:</Label>
+                                <Input type="number" step="0.5" value={formState.breadDefaultQuantity} onChange={e => setFormState(s => ({ ...s, breadDefaultQuantity: parseFloat(e.target.value) || 0 }))} className="h-10 text-center font-bold text-lg mt-2" />
                             </div>
                         )}
 
-                        {formState.bread_type_recurrence === 'jours_specifiques' && (
-                            <div className="p-4 rounded-lg border border-border bg-muted/10 animate-in fade-in duration-200">
-                                <SectionTitle title="Calendrier hebdomadaire" icon={Calendar} />
+                        {formState.breadRecurrenceType === 'jours_specifiques' && (
+                            <div className="p-4 rounded-lg border border-border bg-muted/10">
                                 <div className="space-y-2">
                                     {Object.entries(BREAD_WEEK_DAY_LABELS_FULL).map(([key, label]) => {
-                                        const dayData = formState.bread_jours_semaine?.[key] || { actif: false, quantite: 0 };
+                                        const dayData = formState.breadWeeklySchedule?.[key] || { actif: false, quantite: 0 };
                                         return (
-                                            <div key={key} className={cn(
-                                                'flex items-center gap-3 p-2.5 rounded-lg border transition-opacity',
-                                                dayData.actif ? 'bg-card border-border' : 'opacity-40 border-transparent',
-                                            )}>
-                                                <Switch
-                                                    checked={dayData.actif}
-                                                    onCheckedChange={() => handleDayToggle(key)}
-                                                    className="data-[state=checked]:bg-primary"
-                                                />
+                                            <div key={key} className={cn('flex items-center gap-3 p-2.5 rounded-lg border', dayData.actif ? 'bg-card border-border' : 'opacity-40 border-transparent')}>
+                                                <Switch checked={dayData.actif} onCheckedChange={() => handleDayToggle(key)} />
                                                 <Label className="flex-1 text-xs font-semibold uppercase tracking-wide">{label}</Label>
-                                                <div className="relative w-24">
-                                                    <Input
-                                                        type="number"
-                                                        step="0.5"
-                                                        min="0"
-                                                        className="h-8 text-center text-sm font-bold"
-                                                        value={dayData.quantite}
-                                                        onChange={e => handleDayQuantityChange(key, e.target.value)}
-                                                        disabled={!dayData.actif}
-                                                    />
-                                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] opacity-30 uppercase">pcs</span>
-                                                </div>
+                                                <Input type="number" step="0.5" className="h-8 w-24 text-center font-bold" value={dayData.quantite} onChange={e => handleDayQuantityChange(key, e.target.value)} disabled={!dayData.actif} />
                                             </div>
                                         );
                                     })}

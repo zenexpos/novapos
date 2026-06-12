@@ -17,6 +17,8 @@ export interface BreadOrder extends BaseEntity {
     remainingAmount: number;
     paymentStatus: BreadPaymentStatus;
     pickupStatus: BreadPickupStatus;
+    isDelivered: boolean;
+    isPaid: boolean;
     notes?: string;
     transferredToCustomerAccount: boolean;
     transferredAt?: Date;

@@ -20,13 +20,13 @@ interface BreadOrderCardProps {
 }
 
 export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate }: BreadOrderCardProps) {
-    const [quantity, setQuantity] = useState(order.quantite);
+    const [quantity, setQuantity] = useState(order.quantity);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const debouncedQuantity = useDebounce(quantity, 500);
     const breadPrice = useAppStore((state) => state.companyProfile?.prix_pain) || 0;
 
     const isPaid = !!order.venteUuid;
-    const isDelivered = order.est_livre;
+    const isDelivered = order.isDelivered;
     const isExternal = !order.customerUuid;
     const displayName = order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Inconnu');
 
@@ -41,14 +41,14 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
     }, [order.uuid, onUpdate, isPaid]);
 
     useEffect(() => {
-        if (debouncedQuantity !== order.quantite && !isPaid) {
+        if (debouncedQuantity !== order.quantity && !isPaid) {
             handleQuantityChange(debouncedQuantity);
         }
-    }, [debouncedQuantity, order.quantite, handleQuantityChange, isPaid]);
+    }, [debouncedQuantity, order.quantity, handleQuantityChange, isPaid]);
     
     useEffect(() => {
-        setQuantity(order.quantite);
-    }, [order.quantite]);
+        setQuantity(order.quantity);
+    }, [order.quantity]);
 
     const toggleDelivery = async () => {
         setIsUpdatingStatus(true);
@@ -64,7 +64,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
 
     const handleQuickPay = async () => {
         if (breadPrice <= 0) {
-            toast.error("Prix du pain non défini.", { description: "Veuillez le régler dans Profil > Configuration." });
+            toast.error("Prix du pain non défini.");
             return;
         }
         setIsUpdatingStatus(true);
@@ -97,33 +97,19 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
             isPaid ? "opacity-80" : "bg-card",
             isExternal && !isPaid && "border-l-4 border-l-amber-500/30"
         )}>
-            {/* Background Texture */}
             <div className="absolute -right-4 -top-4 opacity-[0.02] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none">
                 <Sparkles className="h-32 w-32 rotate-12" />
             </div>
 
-            {/* Actions toolbar - Isolated Container */}
-            <div 
-                className="absolute top-6 right-6 z-10 flex gap-3 items-center"
-                onClick={(e) => e.stopPropagation()}
-            >
+            <div className="absolute top-6 right-6 z-10 flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isPaid && (
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                        onClick={handleDelete}
-                    >
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" onClick={handleDelete}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
                 {!isPaid ? (
                     <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm">
-                        <Checkbox 
-                            checked={isSelected} 
-                            onCheckedChange={() => onToggleSelection(order.uuid)} 
-                            className="h-6 w-6 border-primary data-[state=checked]:bg-primary rounded-lg transition-transform active:scale-90"
-                        />
+                        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelection(order.uuid)} className="h-6 w-6 border-primary data-[state=checked]:bg-primary" />
                     </div>
                 ) : (
                     <div className="p-2 rounded-xl bg-emerald-500/10 shadow-inner">
@@ -157,7 +143,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
             </CardHeader>
 
             <CardContent className="p-4 pt-2 space-y-6 relative z-10">
-                {/* Minimalist Quantity Display */}
                 <div className="flex items-center gap-4 bg-black/20 rounded-lg p-3 border border-white/5 group-hover:border-primary/20 transition-all shadow-inner">
                     <div className="p-2.5 rounded-xl bg-muted text-muted-foreground shadow-inner">
                         <Package className="h-5 w-5" />
@@ -175,7 +160,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                     </div>
                 </div>
 
-                {/* Compact Action Buttons */}
                 <div className="grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
                     <Button 
                         variant={isDelivered ? "secondary" : "outline"} 
@@ -184,7 +168,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                         disabled={isUpdatingStatus || isPaid}
                         className={cn(
                             "rounded-2xl h-12 font-semibold text-[10px] uppercase tracking-wide gap-2 shadow-sm transition-all active:scale-95",
-                            isDelivered ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20" : "border-white/5 bg-card/40"
+                            isDelivered ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                         )}
                     >
                         {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}

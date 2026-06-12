@@ -17,12 +17,12 @@ export interface Customer extends BaseEntity {
     debtStatus: DebtStatus;
     isOverLimit: boolean;
     
-    // Bread Module
+    // Bread Module (Normalised English)
     isBreadClient: boolean;
-    bread_type_recurrence?: 'quotidien' | 'jours_specifiques' | 'aucun';
-    bread_quantite_defaut?: number;
-    bread_jours_semaine?: Record<string, { actif: boolean; quantite: number }>;
-    bread_date_debut?: string;
+    breadRecurrenceType?: 'quotidien' | 'jours_specifiques' | 'aucun';
+    breadDefaultQuantity?: number;
+    breadWeeklySchedule?: Record<string, { actif: boolean; quantite: number }>;
+    breadStartDate?: string;
 }
 
 export interface Payment extends BaseEntity {
