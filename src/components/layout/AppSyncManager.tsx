@@ -22,7 +22,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
     // Synchronisation initiale et tâches d'automatisation
     useEffect(() => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
-        if (!companyProfile?.supabase_url || !companyProfile?.supabase_key) return;
+        if (!companyProfile?.supabaseUrl || !companyProfile?.supabaseKey) return;
         if (isSyncing || initialSyncTriggered.current) return;
 
         initialSyncTriggered.current = true;
@@ -50,7 +50,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
     // Écouteurs de connectivité
     useEffect(() => {
         const handleOnline = () => {
-            if (companyProfile?.supabase_url && companyProfile?.supabase_key) {
+            if (companyProfile?.supabaseUrl && companyProfile?.supabaseKey) {
                 performBackgroundSync();
                 breadService.processEndOfDayTransfers();
             }

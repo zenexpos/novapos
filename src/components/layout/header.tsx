@@ -165,7 +165,7 @@ export function AppHeader() {
                         <Clock />
                     </div>
 
-                    {companyProfile?.supabase_url && isOnline && (
+                    {companyProfile?.supabaseUrl && isOnline && (
                         <Button
                             variant="ghost"
                             size="icon"

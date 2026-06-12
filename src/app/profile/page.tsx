@@ -51,9 +51,9 @@ export default function ProfilePage() {
                                             <h2 className="text-3xl font-black tracking-tighter text-primary group-hover:scale-[1.01] transition-transform origin-left">
                                                 {companyProfile?.companyName || 'Nom non défini'}
                                             </h2>
-                                            {companyProfile?.legal_form && (
+                                            {companyProfile?.legalForm && (
                                                 <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-40">
-                                                    Forme : {companyProfile.legal_form}
+                                                    Forme : {companyProfile.legalForm}
                                                 </span>
                                             )}
                                         </div>
@@ -92,13 +92,13 @@ export default function ProfilePage() {
                                     <ShieldCheck className="h-4 w-4" /> Actif
                                 </div>
                                 
-                                {companyProfile?.last_sync_at && (
+                                {companyProfile?.lastSyncAt && (
                                     <div className="mt-4 pt-4 border-t border-emerald-500/10 w-full animate-in fade-in duration-700">
                                         <p className="text-[8px] font-bold uppercase text-muted-foreground/40 mb-1.5 flex items-center justify-center gap-1.5">
                                             <Cloud className="h-2.5 w-2.5" /> Dernière synchro Cloud
                                         </p>
                                         <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-tighter">
-                                            {format(new Date(companyProfile.last_sync_at), 'd MMM yyyy, HH:mm', { locale: fr })}
+                                            {format(new Date(companyProfile.lastSyncAt), 'd MMM yyyy, HH:mm', { locale: fr })}
                                         </p>
                                     </div>
                                 )}
