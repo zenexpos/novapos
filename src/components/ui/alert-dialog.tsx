@@ -30,8 +30,8 @@ const AlertDialogContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
     /**
-     * CRITICAL UI RECOVERY HOOK
-     * Restores pointer interaction on unmount.
+     * CRITICAL UI RECOVERY HOOK (FORENSIC FIX)
+     * Restores pointer interaction and scrolling on unmount.
      */
     React.useEffect(() => {
         return () => {

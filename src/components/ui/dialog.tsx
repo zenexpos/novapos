@@ -32,15 +32,15 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   /**
-   * CRITICAL UI RECOVERY HOOK
-   * Ensures that if the component is unmounted prematurely (e.g. by a parent refresh)
-   * before Radix can clean up its styles, the UI interaction is manually restored.
-   * This fixes the "Keyboard works, Mouse doesn't" bug.
+   * CRITICAL UI RECOVERY HOOK (FORENSIC FIX)
+   * Ensures that if the component is unmounted prematurely (e.g. by a router push or state refresh)
+   * before Radix can clean up its styles, the body interaction is manually restored.
+   * This specifically fixes the "Keyboard works, Mouse doesn't" bug.
    */
   React.useEffect(() => {
     return () => {
       if (typeof document !== 'undefined') {
-        // Delay ensures React finished the unmount cycle
+        // Minor delay to let React finish the DOM unmount cycle
         setTimeout(() => {
           const body = document.body;
           if (body) {

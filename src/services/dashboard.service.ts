@@ -6,8 +6,8 @@ import { startOfDay, endOfDay, subDays, format, eachDayOfInterval, isAfter, diff
 import { safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 
 /**
- * Optimized Dashboard Service
- * Uses Cursors and Batching to avoid main thread starvation (UI Freezes).
+ * iPOS Zen - Optimized Dashboard Service (FORENSIC FIX)
+ * Uses cursors and batched reducers to avoid thread starvation on large datasets.
  */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
@@ -18,7 +18,7 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch primary data sets in parallel using indexed queries
+        // Fetch primary datasets using strictly indexed queries
         const [
             sales,
             prevSales,
@@ -56,16 +56,17 @@ class DashboardService {
         const currProfit = currRev - currExp;
         const prevProfit = prevRev - prevExp;
 
-        // KPI Calculations using indexed count
+        // KPI Calculations using indexed fast-count
         const activeCustomersCount = await db.customers.filter(c => !c.deletedAt).count();
         const activeProductsCount = await db.products.filter(p => !p.deletedAt).count();
 
-        // Optimized iteration via Cursor for Debt Aging and Inventory Value
+        // Optimized Aggregation via Cursors (Avoid toArray() on huge tables)
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
         let lowStock = 0;
         let healthy = 0;
+        
         const debtAging: DebtAging[] = [
             { label: 'Récent (0-7j)', value: 0, count: 0 },
             { label: 'Relance (8-30j)', value: 0, count: 0 },
@@ -74,7 +75,7 @@ class DashboardService {
 
         const today = new Date();
 
-        // Fast customer scan using .each() instead of .toArray() to keep memory low
+        // FAST SCAN: Customers
         await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0).each(c => {
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
@@ -84,7 +85,7 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // Fast product scan
+        // FAST SCAN: Products
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
             totalInventoryValue += (qty * safeNumber(p.purchasePrice));
@@ -118,7 +119,6 @@ class DashboardService {
             return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
         });
 
-        // Aggregate activity feed
         const recentActivity: RecentActivity[] = [
             ...recentSales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Compte Client' : 'Client passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
             ...recentPayments.map(p => ({ id: p.uuid, type: 'payment' as const, title: 'Paiement Reçu', description: 'Sur dette client', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'info' as const })),
@@ -127,7 +127,6 @@ class DashboardService {
             ...recentExpenses.map(e => ({ id: e.uuid, type: 'expense' as const, title: `Dépense: ${e.description}`, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'error' as const }))
         ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 20);
 
-        // Product profitability ranking
         const productStats = new Map<string, { qty: number, rev: number, margin: number, name: string }>();
         sales.forEach(s => {
             s.items.forEach(item => {

@@ -155,15 +155,15 @@ export const useAppStore = create<AppState>()(
                 },
 
                 /**
-                 * Debounced Smart Sync to avoid "Sync Storms"
-                 * Cancels previous scheduled syncs before starting a new one.
+                 * Debounced Smart Sync (FORENSIC FIX)
+                 * Prevents "Sync Storms" by canceling previous scheduled timers.
                  */
                 triggerSmartSync: () => {
                     if (_syncTimer) clearTimeout(_syncTimer);
                     _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
                         _syncTimer = null;
-                    }, 8000); // 8 second cool-down to prevent DB deadlocks
+                    }, 8000); // 8 second cool-down period
                 },
 
                 processReturn: async (returnData) => {
