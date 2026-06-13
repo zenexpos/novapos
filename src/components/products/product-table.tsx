@@ -15,7 +15,7 @@ import {
     MoreHorizontal, Edit, Trash2, CalendarClock, Package,
     Copy, History, Building, ChevronUp, ChevronDown, ChevronsUpDown,
     TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
-    ExternalLink
+    ExternalLink, Tag
 } from 'lucide-react';
 import {
     cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate,
@@ -40,7 +40,7 @@ interface ProductTableProps {
     suppliers: Supplier[];
 }
 
-type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt' | 'stockStatus';
+type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt' | 'stockStatus' | 'totalSold';
 type SortDir  = 'asc' | 'desc';
 
 const stockCfg = {
@@ -79,7 +79,7 @@ export function ProductTable({
     };
 
     const sorted = useMemo(() => {
-        return [...products].sort((a, b) => {
+        return [...products].sort((a: any, b: any) => {
             let va: any = 0;
             let vb: any = 0;
             
@@ -94,6 +94,10 @@ export function ProductTable({
             else if (sortKey === 'updatedAt') {
                 va = safeToDate(a.updatedAt).getTime();
                 vb = safeToDate(b.updatedAt).getTime();
+            }
+            else if (sortKey === 'totalSold') {
+                va = a.totalSold || 0;
+                vb = b.totalSold || 0;
             }
             else if (sortKey === 'stockStatus') {
                 va = a.stockStatus; vb = b.stockStatus;
@@ -135,7 +139,7 @@ export function ProductTable({
                             </button>
                         </TableHead>
 
-                        <TableHead className={cn(thCls, 'hidden lg:table-cell')}>Fournisseur</TableHead>
+                        <TableHead className={cn(thCls, 'hidden lg:table-cell')}>Catégorie</TableHead>
 
                         <TableHead className={thCls}>
                             <button className={thBtn} onClick={() => toggleSort('quantity')}>
@@ -172,16 +176,8 @@ export function ProductTable({
                         const marginRate = calculateMarginRate(product.price, product.purchasePrice);
                         const isGoodMargin = marginRate >= 20;
 
-                        const expiryDays = product.dateExpiration
-                            ? differenceInDays(new Date(product.dateExpiration), new Date())
-                            : null;
-
                         const updatedAt = isMounted && product.updatedAt
                             ? formatDistanceToNow(safeToDate(product.updatedAt), { addSuffix: true, locale: fr })
-                            : null;
-
-                        const supplierName = product.supplierUuid
-                            ? supplierMap.get(product.supplierUuid)
                             : null;
 
                         return (
@@ -212,11 +208,6 @@ export function ProductTable({
                                                     <Barcode className="h-2 w-2" /> {product.barcodes[0]}
                                                 </span>
                                             )}
-                                            {product.unit && (
-                                                <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-wider">
-                                                    {product.unit}
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                 </TableCell>
@@ -232,18 +223,9 @@ export function ProductTable({
                                 </TableCell>
 
                                 <TableCell className="px-3 py-4 hidden lg:table-cell">
-                                    {supplierName ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-1.5 rounded-lg bg-muted text-muted-foreground/40">
-                                                <Building className="h-3 w-3" />
-                                            </div>
-                                            <span className="text-[11px] font-semibold text-muted-foreground/70 truncate max-w-[150px]">
-                                                {supplierName}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] text-muted-foreground/20 italic tracking-widest uppercase font-black">Libre</span>
-                                    )}
+                                    <Badge variant="outline" className="gap-1.5 px-3 py-1 rounded-xl border-white/10 bg-muted/20 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/60">
+                                        <Tag className="h-2.5 w-2.5 opacity-40" /> {product.category || 'Général'}
+                                    </Badge>
                                 </TableCell>
 
                                 <TableCell className="px-3 py-4">

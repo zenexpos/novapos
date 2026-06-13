@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, DollarSign, Percent } from 'lucide-react';
-import { differenceInDays, startOfDay } from 'date-fns';
+import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, DollarSign, Percent, ShoppingBag, Calendar } from 'lucide-react';
+import { differenceInDays, startOfDay, startOfMonth } from 'date-fns';
 import { formatCurrency, cn, safeNumber, preciseMultiply, calculateMarginRate } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { Product } from '@/lib/types';
+import { Product, Sale } from '@/lib/types';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
     <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
@@ -27,10 +27,13 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
 
 export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boolean }) => {
     const productsResult = useLiveQuery<Product[]>(() => db.products.toArray());
+    const salesResult = useLiveQuery<Sale[]>(() => db.sales.where('createdAt').above(startOfMonth(new Date())).toArray());
+    
     const products = productsResult.value ?? [];
+    const salesMonth = salesResult.value ?? [];
 
     const stats = useMemo(() => {
-        if (!products) return { total: 0, low: 0, out: 0, expiring: 0, totalValue: 0, avgMargin: 0 };
+        if (!products) return { total: 0, low: 0, out: 0, expiring: 0, totalValue: 0, avgMargin: 0, soldMonth: 0 };
         const now = startOfDay(new Date());
         
         let totalValAccumulatorCents = 0;
@@ -69,20 +72,23 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
             }
         });
 
+        const soldMonthCount = salesMonth.reduce((acc, s) => acc + s.items.reduce((sum, i) => sum + i.quantity, 0), 0);
+
         return {
             total: products.length,
             low: lowCount,
             out: outCount,
             expiring: expiringCount,
             totalValue: totalValAccumulatorCents / 100,
-            avgMargin: marginCount > 0 ? totalMargin / marginCount : 0
+            avgMargin: marginCount > 0 ? totalMargin / marginCount : 0,
+            soldMonth: soldMonthCount
         };
-    }, [products]);
+    }, [products, salesMonth]);
 
     if (productsResult.value === undefined || externalLoading) {
         return (
-             <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
-                {[...Array(5)].map((_, i) => (
+             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+                {[...Array(8)].map((_, i) => (
                     <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />
                 ))}
             </div>
@@ -90,7 +96,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
     }
 
     return (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             <StatCard 
                 title="Valeur Stock" 
                 value={formatCurrency(stats.totalValue)} 
@@ -110,7 +116,14 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 value={`${stats.avgMargin.toFixed(1)}%`} 
                 icon={Percent} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle="Rentabilité théorique" 
+                subtitle="Rentabilité" 
+            />
+            <StatCard 
+                title="Vendus (Mois)" 
+                value={String(Math.round(stats.soldMonth))} 
+                icon={ShoppingBag} 
+                colorClass="bg-violet-500/10 text-violet-500" 
+                subtitle="Volume sortie" 
             />
             <StatCard 
                 title="Stock Faible" 
@@ -123,8 +136,22 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 title="Ruptures" 
                 value={String(stats.out)} 
                 icon={PackageX} 
-                colorClass="bg-destructive/10 text-destructive" 
+                colorClass="bg-red-500/10 text-red-500" 
                 subtitle="Ventes perdues" 
+            />
+            <StatCard 
+                title="Péremption" 
+                value={String(stats.expiring)} 
+                icon={CalendarClock} 
+                colorClass="bg-orange-500/10 text-orange-500" 
+                subtitle="Prochain mois" 
+            />
+             <StatCard 
+                title="Mise à jour" 
+                value="Aujourd'hui" 
+                icon={Calendar} 
+                colorClass="bg-muted text-muted-foreground" 
+                subtitle="Audit Elite" 
             />
         </div>
     );

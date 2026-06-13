@@ -17,6 +17,8 @@ export interface Product extends BaseEntity {
     stockStatus: StockStatus;
     flash?: boolean;
     lastSaleDate?: Date;
+    totalSold?: number;
+    totalRevenue?: number;
 }
 
 /**

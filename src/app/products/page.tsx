@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Product, Supplier, ProductImportAnalysis } from '@/lib/types';
@@ -22,7 +22,8 @@ import {
     X,
     FileDown,
     FilterX,
-    Archive
+    Archive,
+    Filter
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductTable } from '@/components/products/product-table';
@@ -42,6 +43,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -58,12 +60,12 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 type StockStatusFilter = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'expired';
 
 const sortOptions: { [key: string]: string } = {
+    'updatedAt_desc': 'Dernières mises à jour',
     'name_asc': 'Désignation (A-Z)',
     'price_desc': 'Prix Vente (Max)',
     'price_asc': 'Prix Vente (Min)',
     'quantity_desc': 'Stock (Décroissant)',
     'margin_desc': 'Marge (Plus rentables)',
-    'updatedAt_desc': 'Dernières mises à jour',
 };
 
 function ProductsContent() {
@@ -289,7 +291,7 @@ function ProductsContent() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-card/20 p-2.5 rounded-lg border border-white/5 backdrop-blur-sm shadow-inner">
                 <div className="relative group flex-grow max-w-xl px-4">
                     <Search className={cn(
-                        "absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-500",
+                        "absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-500",
                         searchQuery ? "text-primary" : "text-muted-foreground/30"
                     )} />
                     <Input 
@@ -310,8 +312,32 @@ function ProductsContent() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest px-6 gap-3">
+                                <Filter className="h-4 w-4 opacity-50" />
+                                {stockStatus === 'all' ? 'Tous les Stocks' : 
+                                 stockStatus === 'low_stock' ? 'Stock Faible' : 
+                                 stockStatus === 'out_of_stock' ? 'Rupture' : 
+                                 stockStatus === 'expiring_soon' ? 'Péremption' : 'Filtrer'}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="rounded-2xl border-white/5 shadow-2xl min-w-[240px] bg-card/95 backdrop-blur-md">
+                            <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 px-4 py-3">Statut du Stock</DropdownMenuLabel>
+                            <DropdownMenuSeparator className="opacity-10" />
+                            <DropdownMenuRadioGroup value={stockStatus} onValueChange={(v: any) => setStockStatus(v)}>
+                                <DropdownMenuRadioItem value="all" className="text-xs font-bold py-3 px-4">Tous les articles</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="in_stock" className="text-xs font-bold py-3 px-4 text-emerald-500">En Stock</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="low_stock" className="text-xs font-bold py-3 px-4 text-amber-500">Stock Faible</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="out_of_stock" className="text-xs font-bold py-3 px-4 text-red-500">Rupture de Stock</DropdownMenuRadioItem>
+                                <DropdownMenuSeparator className="opacity-10" />
+                                <DropdownMenuRadioItem value="expiring_soon" className="text-xs font-bold py-3 px-4">Péremption proche</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest px-6 gap-3">
                                 <SortAsc className="h-4 w-4 opacity-50" />
-                                {sortOptions[sortBy] || 'Trier le catalogue'}
+                                {sortOptions[sortBy] || 'Trier'}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-2xl border-white/5 shadow-2xl min-w-[240px] bg-card/95 backdrop-blur-md">

@@ -44,7 +44,9 @@ class ProductService {
             updatedAt: now,
             syncStatus: 'pending',
             version: 1,
-            flash: false
+            flash: false,
+            totalSold: 0,
+            totalRevenue: 0
         };
     }
 
@@ -96,14 +98,13 @@ class ProductService {
             const field = parts.join('_');
             const isAsc = order === 'asc';
 
-            products.sort((a, b) => {
-                let valA: any = a[field as keyof Product] || 0;
-                let valB: any = b[field as keyof Product] || 0;
+            products.sort((a: any, b: any) => {
+                let valA: any = a[field] ?? 0;
+                let valB: any = b[field] ?? 0;
                 
                 if (field === 'margin') {
-                    const marginA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
-                    const marginB = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
-                    return isAsc ? marginA - marginB : marginB - marginA;
+                    valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
+                    valB = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }
 
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -165,6 +166,23 @@ class ProductService {
         });
 
         triggerSync();
+    }
+
+    async updateProductFromIntake(uuid: string, data: { purchasePrice: number; price?: number }): Promise<void> {
+        const existing = await db.products.where('uuid').equals(uuid).first();
+        if (!existing?.id) return;
+
+        const update: Partial<Product> = {
+            purchasePrice: data.purchasePrice,
+            updatedAt: new Date(),
+            syncStatus: 'pending' as const
+        };
+
+        if (data.price !== undefined) {
+            update.price = data.price;
+        }
+
+        await db.products.update(existing.id!, update);
     }
 
     async duplicateProduct(uuid: string): Promise<Product> {
@@ -234,7 +252,7 @@ class ProductService {
                     };
 
                     for (const row of results.data as any[]) {
-                        const name = row.name || row.Nom;
+                        const name = row.name || row.Nom || row.Désignation;
                         if (!name) {
                             analysis.errorRows.push({ ...row, error: "Nom manquant" });
                             continue;
