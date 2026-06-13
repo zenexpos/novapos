@@ -22,6 +22,10 @@ interface ConfirmAlertDialogProps {
     cancelText?: string;
 }
 
+/**
+ * OPTIMISATION FORENSIC : La fermeture est déclenchée AVANT l'exécution de l'action lourde 
+ * pour libérer le thread UI et les verrous body de Radix immédiatement.
+ */
 export function ConfirmAlertDialog({ 
     isOpen, 
     onOpenChange, 
@@ -36,19 +40,24 @@ export function ConfirmAlertDialog({
     const handleConfirm = async () => {
         setIsMutating(true);
         try {
-            // Close dialog FIRST to ensure pointer-events cleanup starts
+            // Signal de fermeture immédiat pour déverrouiller la souris
             onOpenChange(false);
-            await onConfirm();
+            
+            // Délai minimal pour laisser le cycle de rendu Radix se terminer
+            setTimeout(async () => {
+                try {
+                    await onConfirm();
+                } catch (error: any) {
+                    toast.error(error.message || "L'opération a échoué.");
+                }
+            }, 10);
         } catch (error: any) {
-            toast.error(error.message || "L'opération a échoué.", {
-                description: "Veuillez réessayer ou contacter le support technique."
-            });
+            toast.error(error.message || "Erreur de transition.");
         } finally {
             setIsMutating(false);
         }
     };
 
-    // Raccourcis pour les dialogues de confirmation
     useKeyboardShortcuts([
         {
             key: 'Enter',

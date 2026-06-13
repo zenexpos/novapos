@@ -15,7 +15,8 @@ export interface ShortcutConfig {
 
 /**
  * Registre Singleton hors du cycle de vie React pour une performance maximale.
- * OPTIMISÉ : Utilise des itérations directes pour éviter le lag lors de la frappe.
+ * OPTIMISATION FORENSIC : Utilise une itération directe sur les listes pour éviter Array.from() 
+ * et les ralentissements sur keydown.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -47,9 +48,10 @@ function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // OPTIMISATION : Itération directe sur les valeurs de la Map (évite Array.from)
+    // OPTIMISATION : Itération directe sur les valeurs de la Map (évite les allocations mémoire inutiles)
     for (const shortcuts of _registry.values()) {
-        for (const config of shortcuts) {
+        for (let i = 0; i < shortcuts.length; i++) {
+            const config = shortcuts[i];
             if (!config.key) continue;
 
             const matchKey = config.key.toLowerCase() === pressedKey.toLowerCase();
@@ -61,6 +63,7 @@ function _globalHandler(event: KeyboardEvent) {
                 const focused = isInputFocused();
                 const isUniversal = pressedKey === 'Escape' || (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
+                // Bloquer les raccourcis locaux si un input est focus, sauf pour Escape/Enter
                 if (!isUniversal && focused && !config.ignoreInputFocus) continue;
 
                 if (config.preventDefault !== false) event.preventDefault();
@@ -81,6 +84,7 @@ export function useKeyboardShortcuts(
     id: string,
     active: boolean = true
 ): void {
+    // Utilisation d'une ref pour stabiliser les actions sans re-render
     const shortcutsRef = useRef(shortcuts);
     shortcutsRef.current = shortcuts;
 
@@ -88,7 +92,7 @@ export function useKeyboardShortcuts(
         if (typeof window === 'undefined') return;
 
         if (!_listenerAttached) {
-            window.addEventListener('keydown', _globalHandler);
+            window.addEventListener('keydown', _globalHandler, { passive: false });
             _listenerAttached = true;
         }
 

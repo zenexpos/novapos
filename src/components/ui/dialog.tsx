@@ -31,10 +31,15 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // CRITICAL SAFETY: Ensure mouse is NEVER stuck after dialog unmount
+  /**
+   * EMERGENCY RECOVERY HOOK
+   * Ensures that if the component is unmounted (e.g. by route change or parent refresh)
+   * before Radix can clean up its styles, the UI interaction is manually restored.
+   */
   React.useEffect(() => {
     return () => {
       if (typeof document !== 'undefined') {
+        // Force restore interaction and scrolling
         document.body.style.pointerEvents = 'auto';
         document.body.style.overflow = 'auto';
       }

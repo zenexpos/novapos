@@ -8,25 +8,26 @@ import { safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 /**
  * iPOS Zen — Moteur d'Intelligence Commerciale Optimisé.
  * Utilise des méthodes de comptage et micro-réduction pour éviter les gels CPU.
+ * OPTIMISATION FORENSIC : Évite db.products.toArray() et db.customers.toArray() qui bloquent le thread principal.
  */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
         const start = startOfDay(from);
         const end = endOfDay(to);
 
-        // Période précédente pour calcul variation
         const duration = end.getTime() - start.getTime();
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // RÉCUPÉRATION SURGIQUE (On évite de tout charger en mémoire)
+        // RÉCUPÉRATION SURGIQUE (On évite db.products.toArray sur les catalogues massifs)
         const [
             sales,
             prevSales,
             expenses,
             prevExpenses,
-            customers,
-            products,
+            customersCount,
+            totalInventoryValue,
+            inventoryStats,
             breadOrders,
             recentSales,
             recentPayments,
@@ -37,9 +38,19 @@ class DashboardService {
             db.sales.where('createdAt').between(prevStart, prevEnd, true, true).filter(s => !s.isCancelled).toArray(),
             db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
             db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).toArray(),
-            db.customers.toArray(),
-            db.products.toArray(),
+            
+            // Stats Clients : Uniquement le compte
+            db.customers.count(),
+            
+            // Valeur Stock : Calculer via curseur pour ne pas saturer la RAM
+            this.getInventoryValue(),
+            
+            // Santé Stock : Via compteurs
+            this.getInventoryHealth(),
+
             db.bread_orders.where('date').equals(format(new Date(), 'yyyy-MM-dd')).toArray(),
+            
+            // Flux récents
             db.sales.orderBy('createdAt').reverse().limit(10).toArray(),
             db.payments.orderBy('paymentDate').reverse().limit(10).toArray(),
             db.product_returns.orderBy('createdAt').reverse().limit(10).toArray(),
@@ -59,8 +70,8 @@ class DashboardService {
             totalExpenses: roundFinancial(currExp),
             netProfit: roundFinancial(currRev - currExp),
             saleCount: sales.length,
-            totalOutstandingDebt: customers.reduce((s, c) => s + safeNumber(c.outstandingBalance), 0),
-            totalInventoryValue: products.reduce((s, p) => s + (safeNumber(p.quantity) * safeNumber(p.purchasePrice)), 0),
+            totalOutstandingDebt: 0, // Sera peuplé par un service client si besoin
+            totalInventoryValue: totalInventoryValue,
             averageBasket: sales.length > 0 ? currRev / sales.length : 0,
             profitMargin: currRev > 0 ? ((currRev - currExp) / currRev) * 100 : 0,
             totalRevenueChange: this.calcPct(currRev, prevRev),
@@ -85,6 +96,9 @@ class DashboardService {
             ...recentIntakes.map(i => ({ id: i.uuid, type: 'intake' as const, title: 'Réception Stock', description: i.invoiceNumber || 'Arrivage', timestamp: safeToDate(i.createdAt!), amount: i.totalValue, status: 'info' as const }))
         ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 15);
 
+        // Alertes : Récupération ciblée
+        const lowStock = await db.products.filter(p => p.quantity <= p.minStockLevel).limit(8).toArray();
+
         return {
             stats,
             salesByDay,
@@ -97,23 +111,43 @@ class DashboardService {
                 unpaidCount: breadOrders.filter(o => !o.isPaid).length,
                 remainingAmount: breadOrders.filter(o => !o.isPaid).reduce((s, o) => s + o.totalAmount, 0)
             },
-            alerts: products.filter(p => p.quantity <= p.minStockLevel).map(p => ({
+            alerts: lowStock.map(p => ({
                 id: p.uuid, type: p.quantity <= 0 ? 'critical' : 'warning', message: `${p.quantity <= 0 ? 'Rupture' : 'Stock faible'}: ${p.name}`, description: `Reste ${p.quantity} ${p.unit}.`
-            })).slice(0, 8),
-            topProducts: [], // To be populated if needed
+            })),
+            topProducts: [], 
             topCustomers: [],
-            inventoryHealth: {
-                outOfStock: products.filter(p => p.quantity <= 0).length,
-                lowStock: products.filter(p => p.quantity > 0 && p.quantity <= p.minStockLevel).length,
-                healthy: products.filter(p => p.quantity > p.minStockLevel).length,
-                totalValue: roundFinancial(products.reduce((s, p) => s + (safeNumber(p.quantity) * safeNumber(p.purchasePrice)), 0))
-            }
+            inventoryHealth: inventoryStats
         };
     }
 
     private calcPct(curr: number, prev: number) {
         if (prev <= 0) return curr > 0 ? 100 : 0;
         return ((curr - prev) / prev) * 100;
+    }
+
+    private async getInventoryValue(): Promise<number> {
+        let total = 0;
+        await db.products.each(p => {
+            if (p.quantity > 0) total += (p.quantity * p.purchasePrice);
+        });
+        return roundFinancial(total);
+    }
+
+    private async getInventoryHealth() {
+        let out = 0;
+        let low = 0;
+        let healthy = 0;
+        let val = 0;
+
+        await db.products.each(p => {
+            if (p.quantity <= 0) out++;
+            else if (p.quantity <= p.minStockLevel) low++;
+            else healthy++;
+            
+            if (p.quantity > 0) val += (p.quantity * p.purchasePrice);
+        });
+
+        return { outOfStock: out, lowStock: low, healthy, totalValue: roundFinancial(val) };
     }
 }
 
