@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useContext, useRef } from 'react';
-import { KeyboardShortcutsActionsContext } from '@/contexts/KeyboardShortcutsContext';
+import { useEffect, useRef } from 'react';
 
 export interface ShortcutConfig {
-  key: string;            // 'Enter', 'Escape', 'F2', '+', '-', '?'
+  key: string;
   ctrl?: boolean;
   shift?: boolean;
   alt?: boolean;
@@ -15,9 +14,12 @@ export interface ShortcutConfig {
 }
 
 /**
- * Enhanced input focus detection for accessible UI components.
- * Catches native elements and Radix-based primitives (Combobox, Select, Spinbuttons).
+ * Registre Singleton hors du cycle de vie React pour une performance maximale.
+ * Évite les re-rendus globaux lors de l'enregistrement de nouveaux raccourcis.
  */
+const _registry = new Map<string, ShortcutConfig[]>();
+let _listenerAttached = false;
+
 const isInputFocused = (): boolean => {
     if (typeof document === 'undefined') return false;
     const el = document.activeElement;
@@ -41,24 +43,15 @@ const isInputFocused = (): boolean => {
     );
 };
 
-/**
- * Singleton Keyboard Dispatcher
- * A single listener on window prevents memory leaks and ensures 
- * predictable shortcut execution across hundreds of components.
- */
-const _registry = new Map<string, ShortcutConfig[]>();
-let _listenerAttached = false;
-
 function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // Iterate through registered buckets
+    // Parcours du registre singleton
     for (const shortcuts of Array.from(_registry.values())) {
         for (const config of shortcuts) {
             if (!config.key) continue;
 
-            // Match keys (Alphanumeric case-insensitive, special keys exact)
             const matchKey = config.key.toLowerCase() === pressedKey.toLowerCase();
             const matchCtrl  = !!config.ctrl  === (event.ctrlKey  || event.metaKey);
             const matchShift = !!config.shift === event.shiftKey;
@@ -66,82 +59,47 @@ function _globalHandler(event: KeyboardEvent) {
 
             if (matchKey && matchCtrl && matchShift && matchAlt) {
                 const focused = isInputFocused();
-                
-                // Universal keys (Esc, Ctrl+Enter) always fire unless explicitly ignored
-                const isUniversal =
-                    pressedKey === 'Escape' ||
-                    (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
+                const isUniversal = pressedKey === 'Escape' || (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
-                if (!isUniversal && focused && !config.ignoreInputFocus) {
-                    continue;
-                }
+                if (!isUniversal && focused && !config.ignoreInputFocus) continue;
 
-                if (config.preventDefault !== false) {
-                    event.preventDefault();
-                }
-                
+                if (config.preventDefault !== false) event.preventDefault();
                 config.action();
-                return; // Singleton execution: first matching shortcut wins
+                return;
             }
         }
     }
 }
 
-function _ensureListener() {
-    if (_listenerAttached || typeof window === 'undefined') return;
-    window.addEventListener('keydown', _globalHandler);
-    _listenerAttached = true;
-}
-
 /**
- * useKeyboardShortcuts
- * Registers a set of shortcuts in the global dispatcher.
- * Automatically handles registration in the Shortcut Help Overlay.
+ * Expose le registre pour le dialogue d'aide sans passer par l'état React.
  */
+export const getShortcutRegistry = () => Object.fromEntries(_registry);
+
 export function useKeyboardShortcuts(
     shortcuts: ShortcutConfig[],
     id: string,
     active: boolean = true
 ): void {
-    const actions = useContext(KeyboardShortcutsActionsContext);
     const shortcutsRef = useRef(shortcuts);
     shortcutsRef.current = shortcuts;
 
-    // Update help overlay context
     useEffect(() => {
-        if (active && actions) {
-            actions.registerShortcuts(id, shortcutsRef.current);
-            return () => actions.unregisterShortcuts(id);
-        }
-    }, [id, active, actions]);
+        if (typeof window === 'undefined') return;
 
-    // Update singleton registry
-    useEffect(() => {
-        if (!active) {
-            _registry.delete(id);
-            return;
+        if (!_listenerAttached) {
+            window.addEventListener('keydown', _globalHandler);
+            _listenerAttached = true;
         }
-        
-        _ensureListener();
-        
-        // Proxy ensures registry always points to latest shortcut references
-        _registry.set(
-          id,
-          new Proxy([] as ShortcutConfig[], {
-            get(_, prop) {
-              const arr = shortcutsRef.current as any;
-              if (prop === Symbol.iterator) {
-                return arr[Symbol.iterator].bind(arr);
-              }
-              return typeof prop === 'string'
-                ? arr[prop as keyof ShortcutConfig[]]
-                : (arr as any)[prop];
-            }
-          })
-        );
-        
+
+        if (active) {
+            _registry.set(id, shortcuts);
+        } else {
+            _registry.delete(id);
+        }
+
         return () => {
             _registry.delete(id);
         };
-    }, [id, active]);
+    }, [id, active, shortcuts]); // Dépendance sur shortcuts pour mettre à jour le registre si nécessaire
 }

@@ -15,6 +15,9 @@ import { productService }        from '@/services/product.service';
 import { supabaseSyncService }   from '@/services/supabase.service';
 import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
+// Timer persistant pour le debounce du sync
+let _syncTimer: NodeJS.Timeout | null = null;
+
 interface AppState {
     companyProfile:          CompanyProfile | null;
     isCompanyProfileLoading: boolean;
@@ -163,15 +166,17 @@ export const useAppStore = create<AppState>()(
                     const profile = get().companyProfile;
                     if (!profile?.supabaseUrl || !profile?.supabaseKey) return;
                     
-                    // Throttle background sync
-                    setTimeout(() => {
+                    // DEBOUNCE EFFECTIF : On annule le précédent timer
+                    if (_syncTimer) clearTimeout(_syncTimer);
+                    
+                    _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
-                    }, 5000);
+                        _syncTimer = null;
+                    }, 8000); // 8 secondes de délai après la dernière action
                 },
 
                 processReturn: async (returnData) => {
                     try {
-                        // FIX: Utilise le service sans polluer le DTO avec des props Entity
                         await returnService.addReturn(returnData);
                         get().actions.triggerSmartSync();
                         return true;
