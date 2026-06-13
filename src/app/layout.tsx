@@ -3,7 +3,6 @@ import './globals.css';
 import { ClientProviders } from '@/components/layout/ClientProviders';
 import { AppHeaderWrapper } from '@/components/layout/AppHeaderWrapper';
 import { BottomNavBarWrapper } from '@/components/layout/BottomNavBarWrapper';
-import { SaleInfoBarWrapper } from '@/components/layout/SaleInfoBarWrapper';
 import { AppSyncManager } from '@/components/layout/AppSyncManager';
 import { KeyboardShortcutsProvider } from '@/contexts/KeyboardShortcutsContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -46,7 +45,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AppSyncManager>
                 <div className="flex h-screen flex-col bg-background relative overflow-hidden">
                   <AppHeaderWrapper />
-                  <SaleInfoBarWrapper />
                   <main className="flex-1 overflow-y-auto pb-14 md:pb-0 bg-background custom-scrollbar">
                     {children}
                   </main>

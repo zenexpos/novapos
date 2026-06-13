@@ -12,6 +12,10 @@ import { Button } from '@/components/ui/button';
 import { AddPaymentDialog } from '@/components/payments/AddPaymentDialog';
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * Barre d'information spécifique à la vente.
+ * Restreinte à la page /sell via son layout dédié.
+ */
 export function SaleInfoBar() {
     const cart      = useActiveCart();
     const pathname  = usePathname();
@@ -39,8 +43,10 @@ export function SaleInfoBar() {
 
     const hasItems  = !!(cart && cart.items.length > 0);
     const hasCustomer = !!cart?.customerUuid;
-    const isSellPage = pathname === '/sell';
+    const isSellPage = pathname.startsWith('/sell');
 
+    // Sécurité supplémentaire : bien que le layout gère l'affichage,
+    // on ne rend rien si on n'est pas sur la page de vente ou si le panier est vide sans client.
     if (!cart || (!hasItems && !isSellPage && !hasCustomer)) return null;
 
     const { total, discountAmount } = calculateCartTotals(cart);
@@ -49,7 +55,7 @@ export function SaleInfoBar() {
 
     return (
         <>
-            <div className="print-hide info-bar-solid text-sm z-30">
+            <div className="print-hide info-bar-solid text-sm z-30 border-b border-border shadow-sm">
                 <div className="mx-auto grid w-full gap-3 px-4 py-3 sm:px-4 sm:py-4 md:grid-cols-[auto_1fr_auto] md:items-center">
                     {/* Session badge */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
