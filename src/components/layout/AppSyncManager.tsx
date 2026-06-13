@@ -11,6 +11,7 @@ import { breadService } from '@/services/bread.service';
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
     const companyProfile = useAppStore(state => state.companyProfile);
+    
     const initialSyncTriggered = useRef(false);
     const profileFetched = useRef(false);
 
@@ -22,7 +23,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         }
     }, [fetchCompanyProfile]);
 
-    // Background sync - stabilized
+    // Background sync - stabilized dependency check
     useEffect(() => {
         const url = companyProfile?.supabaseUrl;
         const key = companyProfile?.supabaseKey;
@@ -34,6 +35,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         
         const timeoutId = setTimeout(async () => {
             try {
+                // Background tasks that shouldn't block the UI
                 await breadService.processEndOfDayTransfers();
                 await performBackgroundSync();
             } catch (e) {

@@ -129,7 +129,9 @@ export const useAppStore = create<AppState>()(
                             toast.success('Données sauvegardées');
                         }
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
-                        setTimeout(() => set({ syncStatus: 'idle' }), 3000);
+                        setTimeout(() => {
+                            set({ syncStatus: 'idle' });
+                        }, 3000);
                     } catch (err: any) {
                         set({ syncStatus: 'error' });
                         toast.error('Échec sync', { description: err.message });
@@ -144,7 +146,9 @@ export const useAppStore = create<AppState>()(
                     try {
                         await supabaseSyncService.smartSync(profile.supabaseUrl, profile.supabaseKey);
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
-                        setTimeout(() => set({ syncStatus: 'idle' }), 2000);
+                        setTimeout(() => {
+                            set({ syncStatus: 'idle' });
+                        }, 2000);
                     } catch {
                         set({ syncStatus: 'idle' });
                     }
@@ -152,13 +156,14 @@ export const useAppStore = create<AppState>()(
 
                 /**
                  * Debounced Smart Sync to avoid "Sync Storms"
+                 * Cancels previous scheduled syncs before starting a new one.
                  */
                 triggerSmartSync: () => {
                     if (_syncTimer) clearTimeout(_syncTimer);
                     _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
                         _syncTimer = null;
-                    }, 8000); // 8 second cool-down
+                    }, 8000); // 8 second cool-down to prevent DB deadlocks
                 },
 
                 processReturn: async (returnData) => {

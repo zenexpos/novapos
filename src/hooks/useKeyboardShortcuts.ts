@@ -43,11 +43,14 @@ const isInputFocused = (): boolean => {
     );
 };
 
+/**
+ * Optimized global handler using simple loop for zero-latency detection.
+ */
 function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // Use a direct for...of iterator for speed over registry values
+    // Direct iterator for performance
     for (const shortcuts of _registry.values()) {
         const len = shortcuts.length;
         for (let i = 0; i < len; i++) {
@@ -63,7 +66,7 @@ function _globalHandler(event: KeyboardEvent) {
                 const focused = isInputFocused();
                 const isUniversal = pressedKey === 'Escape' || (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
-                // Blocker local context shortcuts if input is focused, unless Universal
+                // Block context shortcuts if input is focused, unless it's a Universal command
                 if (!isUniversal && focused && !config.ignoreInputFocus) continue;
 
                 if (config.preventDefault !== false) event.preventDefault();

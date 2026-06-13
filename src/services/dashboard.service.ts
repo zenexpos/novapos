@@ -18,7 +18,7 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch primary data sets in parallel
+        // Fetch primary data sets in parallel using indexed queries
         const [
             sales,
             prevSales,
@@ -74,7 +74,7 @@ class DashboardService {
 
         const today = new Date();
 
-        // Fast customer scan
+        // Fast customer scan using .each() instead of .toArray() to keep memory low
         await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0).each(c => {
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
@@ -118,7 +118,7 @@ class DashboardService {
             return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
         });
 
-        // Aggregate activity feed (last 20 items)
+        // Aggregate activity feed
         const recentActivity: RecentActivity[] = [
             ...recentSales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Compte Client' : 'Client passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
             ...recentPayments.map(p => ({ id: p.uuid, type: 'payment' as const, title: 'Paiement Reçu', description: 'Sur dette client', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'info' as const })),
@@ -154,7 +154,7 @@ class DashboardService {
 
         const alerts: DashboardAlert[] = [];
         if (outOfStock > 0) alerts.push({ id: 'alert-oos', type: 'critical', message: `${outOfStock} produits en rupture de stock`, description: 'Ventes manquées potentielles.' });
-        if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} produits sous le seuil d'alerte`, description: 'Pensez à commander chez vos fournisseurs.' });
+        if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} produits sous le seuil d'alerte`, description: 'Réapprovisionnement suggéré.' });
 
         return {
             stats,
@@ -170,7 +170,7 @@ class DashboardService {
             },
             alerts,
             topProducts,
-            topCustomers: [], // UI-heavy logic delegated to client list
+            topCustomers: [], 
             debtAging,
             inventoryHealth: {
                 outOfStock,
