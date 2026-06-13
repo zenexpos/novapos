@@ -3,14 +3,14 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, DollarSign, Percent, ShoppingBag, Calendar } from 'lucide-react';
+import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, Percent, ShoppingBag, Calendar, ArrowUpRight } from 'lucide-react';
 import { differenceInDays, startOfDay, startOfMonth } from 'date-fns';
 import { formatCurrency, cn, safeNumber, preciseMultiply, calculateMarginRate } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import { Product, Sale } from '@/lib/types';
 
-const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
+const StatCard = ({ title, value, icon: Icon, colorClass, subtitle, trend }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string, trend?: number }) => (
     <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
             <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
@@ -19,8 +19,16 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
             </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left mb-1 tabular-nums">{value}</div>
-            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40">{subtitle}</p>}
+            <div className="flex items-baseline gap-2">
+                <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+                {trend !== undefined && (
+                    <div className={cn("flex items-center text-[10px] font-bold", trend >= 0 ? "text-emerald-500" : "text-destructive")}>
+                        <ArrowUpRight className={cn("h-3 w-3", trend < 0 && "rotate-90")} />
+                        {Math.abs(trend)}%
+                    </div>
+                )}
+            </div>
+            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
 );
@@ -33,7 +41,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
     const salesMonth = salesResult.value ?? [];
 
     const stats = useMemo(() => {
-        if (!products) return { total: 0, low: 0, out: 0, expiring: 0, totalValue: 0, avgMargin: 0, soldMonth: 0 };
+        if (!products) return { total: 0, active: 0, low: 0, out: 0, expiring: 0, totalValue: 0, avgMargin: 0, soldMonth: 0 };
         const now = startOfDay(new Date());
         
         let totalValAccumulatorCents = 0;
@@ -42,6 +50,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
         let expiringCount = 0;
         let totalMargin = 0;
         let marginCount = 0;
+        let activeCount = 0;
 
         products.forEach(p => {
             const qty = safeNumber(p.quantity);
@@ -50,6 +59,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
 
             if (qty > 0) {
                 totalValAccumulatorCents += Math.round(preciseMultiply(qty, cost) * 100);
+                activeCount++;
             }
 
             if (qty <= 0) {
@@ -76,6 +86,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
 
         return {
             total: products.length,
+            active: activeCount,
             low: lowCount,
             out: outCount,
             expiring: expiringCount,
@@ -109,7 +120,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 value={String(stats.total)} 
                 icon={Package} 
                 colorClass="bg-primary/10 text-primary" 
-                subtitle="Articles actifs" 
+                subtitle={`${stats.active} actifs`} 
             />
             <StatCard 
                 title="Marge Moyenne" 
@@ -147,11 +158,11 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 subtitle="Prochain mois" 
             />
              <StatCard 
-                title="Mise à jour" 
-                value="Aujourd'hui" 
+                title="Audit" 
+                value="Standard" 
                 icon={Calendar} 
                 colorClass="bg-muted text-muted-foreground" 
-                subtitle="Audit Elite" 
+                subtitle="Elite Mode" 
             />
         </div>
     );

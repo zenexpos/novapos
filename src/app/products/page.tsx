@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 
-import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Product, Supplier, ProductImportAnalysis } from '@/lib/types';
@@ -23,7 +23,9 @@ import {
     FileDown,
     FilterX,
     Archive,
-    Filter
+    Filter,
+    ChevronRight,
+    ArrowRight
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductTable } from '@/components/products/product-table';
@@ -35,6 +37,7 @@ import { PrintLabelsDialog } from '@/components/products/PrintLabelsDialog';
 import { InventoryStats } from '@/components/products/InventoryStats';
 import { ProductImportPreviewDialog } from '@/components/products/ProductImportPreviewDialog';
 import { ProductHistoryDialog } from '@/components/products/ProductHistoryDialog';
+import { ProductDetailsSheet } from '@/components/products/ProductDetailsSheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +46,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -51,13 +53,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { productService } from '@/services/product.service';
 import { supplierService } from '@/services/supplier.service';
 import { useAppStore } from '@/stores/appStore';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-type StockStatusFilter = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'expired';
+type StockStatusFilter = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'overstock' | 'expiring_soon' | 'expired';
 
 const sortOptions: { [key: string]: string } = {
     'updatedAt_desc': 'Dernières mises à jour',
@@ -85,6 +87,7 @@ function ProductsContent() {
     const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
     const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
     const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+    const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
@@ -103,7 +106,6 @@ function ProductsContent() {
     const products = productsResult.value ?? [];
 
     const [suppliers, setSuppliers] = useState<Supplier[] | undefined>(undefined);
-    
     const isLoading = productsResult.isLoading || suppliers === undefined;
     
     const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
@@ -114,8 +116,6 @@ function ProductsContent() {
     useEffect(() => {
         const statusFromQuery = searchParams.get('stockStatus') as StockStatusFilter;
         if (statusFromQuery) setStockStatus(statusFromQuery);
-        const queryFromUrl = searchParams.get('query');
-        if (queryFromUrl) setSearchQuery(queryFromUrl);
     }, [searchParams]);
 
     const fetchMeta = useCallback(async () => {
@@ -143,6 +143,11 @@ function ProductsContent() {
     const handleEditProduct = useCallback((product: Product) => {
         setSelectedProduct(product);
         setIsProductDialogOpen(true);
+    }, []);
+
+    const handleSelectProduct = useCallback((product: Product) => {
+        setSelectedProduct(product);
+        setIsDetailsSheetOpen(true);
     }, []);
 
     const handleDuplicateProduct = useCallback(async (product: Product) => {
@@ -175,22 +180,17 @@ function ProductsContent() {
         else setSelectedProducts(new Set(products.map(p => p.uuid)));
     }, [products, selectedProducts.size]);
 
-    const handleConfirmDeleteProduct = useCallback(async () => {
-        if (!selectedProduct) return;
-        await productService.deleteProduct(selectedProduct.uuid);
-        setIsDeleteDialogOpen(false);
-        productsResult.refresh();
-        fetchMeta();
-    }, [selectedProduct, productsResult, fetchMeta]);
-
-    const handleConfirmDeleteMultipleProducts = useCallback(async () => {
+    const handleBulkCategoryChange = async (category: string) => {
         if (selectedProducts.size === 0) return;
-        await productService.bulkDelete(Array.from(selectedProducts));
-        setIsBulkDeleteDialogOpen(false);
-        setSelectedProducts(new Set());
-        productsResult.refresh();
-        fetchMeta();
-    }, [selectedProducts, productsResult, fetchMeta]);
+        try {
+            await productService.bulkUpdate(Array.from(selectedProducts), { category });
+            toast.success(`${selectedProducts.size} produits mis à jour.`);
+            setSelectedProducts(new Set());
+            productsResult.refresh();
+        } catch (e) {
+            toast.error("Échec de la mise à jour groupée.");
+        }
+    };
 
     const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -243,7 +243,7 @@ function ProductsContent() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `catalogue-elite-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `inventaire-elite-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         toast.success("Manifeste exporté.");
     }, [products, selectedProducts]);
@@ -316,7 +316,7 @@ function ProductsContent() {
                                 {stockStatus === 'all' ? 'Tous les Stocks' : 
                                  stockStatus === 'low_stock' ? 'Stock Faible' : 
                                  stockStatus === 'out_of_stock' ? 'Rupture' : 
-                                 stockStatus === 'expiring_soon' ? 'Péremption' : 'Filtrer'}
+                                 stockStatus === 'overstock' ? 'Excédent' : 'Filtrer'}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-2xl border-white/5 shadow-2xl min-w-[240px] bg-card/95 backdrop-blur-md">
@@ -327,8 +327,7 @@ function ProductsContent() {
                                 <DropdownMenuRadioItem value="in_stock" className="text-xs font-bold py-3 px-4 text-emerald-500">En Stock</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="low_stock" className="text-xs font-bold py-3 px-4 text-amber-500">Stock Faible</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="out_of_stock" className="text-xs font-bold py-3 px-4 text-red-500">Rupture de Stock</DropdownMenuRadioItem>
-                                <DropdownMenuSeparator className="opacity-10" />
-                                <DropdownMenuRadioItem value="expiring_soon" className="text-xs font-bold py-3 px-4">Péremption proche</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="overstock" className="text-xs font-bold py-3 px-4 text-blue-500">Excédent de Stock</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -430,6 +429,7 @@ function ProductsContent() {
                             onDuplicate={handleDuplicateProduct} 
                             onHistory={handleViewHistory} 
                             onDelete={(p) => { setSelectedProduct(p); setIsDeleteDialogOpen(true); }} 
+                            onSelect={handleSelectProduct}
                             selectedProducts={selectedProducts} 
                             onToggleProductSelection={handleToggleSelection} 
                             onToggleSelectAll={handleToggleSelectAll} 
@@ -440,11 +440,16 @@ function ProductsContent() {
             </div>
 
             <ProductDialog isOpen={isProductDialogOpen} onOpenChange={setIsProductDialogOpen} product={selectedProduct} suppliers={suppliers || []} onSuccess={onDialogSuccess} />
-            <DeleteProductDialog isOpen={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} name={selectedProduct?.name} onConfirm={handleConfirmDeleteProduct} />
+            <DeleteProductDialog isOpen={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} name={selectedProduct?.name} onConfirm={() => {
+                if (selectedProduct) productService.deleteProduct(selectedProduct.uuid).then(() => { setIsDeleteDialogOpen(false); productsResult.refresh(); });
+            }} />
             <PrintLabelsDialog isOpen={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen} productUuids={Array.from(selectedProducts)} />
-            <DeleteMultipleProductsDialog isOpen={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen} count={selectedProducts.size} onConfirm={handleConfirmDeleteMultipleProducts} />
+            <DeleteMultipleProductsDialog isOpen={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen} count={selectedProducts.size} onConfirm={() => {
+                productService.bulkDelete(Array.from(selectedProducts)).then(() => { setIsBulkDeleteDialogOpen(false); setSelectedProducts(new Set()); productsResult.refresh(); });
+            }} />
             <ProductImportPreviewDialog isOpen={isImportPreviewOpen} onOpenChange={setIsImportPreviewOpen} analysis={importAnalysis} onConfirm={handleConfirmImport} isImporting={isImporting} />
             <ProductHistoryDialog isOpen={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen} product={selectedProduct} />
+            <ProductDetailsSheet isOpen={isDetailsSheetOpen} onOpenChange={setIsDetailsSheetOpen} product={selectedProduct} onEdit={() => { setIsDetailsSheetOpen(false); if(selectedProduct) handleEditProduct(selectedProduct); }} />
         </div>
     );
 }

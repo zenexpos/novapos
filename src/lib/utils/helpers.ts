@@ -5,9 +5,10 @@
 /**
  * Determines stock status based on current quantity and threshold.
  */
-export function calculateStockStatus(quantity: number, minStockLevel: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+export function calculateStockStatus(quantity: number, minStockLevel: number): 'in_stock' | 'low_stock' | 'out_of_stock' | 'overstock' {
     if (quantity <= 0) return 'out_of_stock';
     if (quantity <= minStockLevel) return 'low_stock';
+    if (quantity > minStockLevel * 10) return 'overstock';
     return 'in_stock';
 }
 

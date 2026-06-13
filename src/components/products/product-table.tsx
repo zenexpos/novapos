@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Product, Supplier } from '@/lib/types';
 import {
     Table, TableBody, TableCell, TableHead,
@@ -15,19 +15,18 @@ import {
     MoreHorizontal, Edit, Trash2, CalendarClock, Package,
     Copy, History, Building, ChevronUp, ChevronDown, ChevronsUpDown,
     TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
-    ExternalLink, Tag
+    Tag, Coins, Box, Calculator
 } from 'lucide-react';
 import {
-    cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate,
+    cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate, safeNumber,
 } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { differenceInDays, format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-    Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from '../ui/tooltip';
-import Link from 'next/link';
+import { Input } from '../ui/input';
+import { productService } from '@/services/product.service';
+import { toast } from 'sonner';
 
 interface ProductTableProps {
     products: Product[];
@@ -35,23 +34,24 @@ interface ProductTableProps {
     onDuplicate: (p: Product) => void;
     onHistory:   (p: Product) => void;
     onDelete:    (p: Product) => void;
+    onSelect:    (p: Product) => void;
     selectedProducts: Set<string>;
     onToggleProductSelection: (uuid: string) => void;
     onToggleSelectAll: () => void;
     suppliers: Supplier[];
 }
 
-type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt' | 'stockStatus' | 'totalSold';
+type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt' | 'stockStatus';
 type SortDir  = 'asc' | 'desc';
 
 const stockCfg = {
     in_stock:    { Icon: CheckCircle2,  cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', label: 'En stock'   },
     low_stock:   { Icon: AlertTriangle, cls: 'text-amber-500  bg-amber-500/10  border-amber-500/20',  label: 'Stock bas'  },
     out_of_stock:{ Icon: XCircle,       cls: 'text-red-500    bg-red-500/10    border-red-500/20',    label: 'Rupture'    },
+    overstock:   { Icon: Package,       cls: 'text-blue-500   bg-blue-500/10   border-blue-500/20',   label: 'Excédent'   },
 } as const;
 
-function SortIcon({ col, sortKey, sortDir }:
-    { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
     if (col !== sortKey) return <ChevronsUpDown className="h-3 w-3 opacity-30" />;
     return sortDir === 'asc'
         ? <ChevronUp   className="h-3 w-3 text-primary" />
@@ -59,25 +59,31 @@ function SortIcon({ col, sortKey, sortDir }:
 }
 
 export function ProductTable({
-    products, onEdit, onDuplicate, onHistory, onDelete,
+    products, onEdit, onDuplicate, onHistory, onDelete, onSelect,
     selectedProducts, onToggleProductSelection, onToggleSelectAll,
     suppliers,
 }: ProductTableProps) {
     const [isMounted, setIsMounted] = useState(false);
     const [sortKey, setSortKey]     = useState<SortKey>('updatedAt');
     const [sortDir, setSortDir]     = useState<SortDir>('desc');
+    const [editingCell, setEditingCell] = useState<{ uuid: string, field: string } | null>(null);
 
     useEffect(() => { setIsMounted(true); }, []);
-
-    const supplierMap = useMemo(
-        () => new Map(suppliers.map(s => [s.uuid, s.name])),
-        [suppliers],
-    );
 
     const toggleSort = (key: SortKey) => {
         if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
         else { setSortKey(key); setSortDir('desc'); }
     };
+
+    const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
+        try {
+            await productService.updateProduct(uuid, { [field]: safeNumber(value) });
+            setEditingCell(null);
+            toast.success("Mise à jour effectuée");
+        } catch (e) {
+            toast.error("Erreur de mise à jour");
+        }
+    }, []);
 
     const sorted = useMemo(() => {
         return [...products].sort((a: any, b: any) => {
@@ -95,10 +101,6 @@ export function ProductTable({
             else if (sortKey === 'updatedAt') {
                 va = safeToDate(a.updatedAt).getTime();
                 vb = safeToDate(b.updatedAt).getTime();
-            }
-            else if (sortKey === 'totalSold') {
-                va = a.totalSold || 0;
-                vb = b.totalSold || 0;
             }
             else if (sortKey === 'stockStatus') {
                 va = a.stockStatus; vb = b.stockStatus;
@@ -177,18 +179,14 @@ export function ProductTable({
                         const marginRate = calculateMarginRate(product.price, product.purchasePrice);
                         const isGoodMargin = marginRate >= 20;
 
-                        const updatedAt = isMounted && product.updatedAt
-                            ? formatDistanceToNow(safeToDate(product.updatedAt), { addSuffix: true, locale: fr })
-                            : null;
-
                         return (
                             <TableRow
                                 key={product.uuid}
-                                onClick={() => onToggleProductSelection(product.uuid)}
                                 className={cn(
                                     'group border-b border-white/5 cursor-pointer transition-all duration-150',
                                     isSelected ? 'bg-primary/10' : 'hover:bg-white/5',
                                 )}
+                                onClick={() => onSelect(product)}
                             >
                                 <TableCell className="px-6" onClick={e => e.stopPropagation()}>
                                     <Checkbox
@@ -229,16 +227,30 @@ export function ProductTable({
                                     </Badge>
                                 </TableCell>
 
-                                <TableCell className="px-3 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={cn(
-                                            "h-9 w-12 rounded-xl flex items-center justify-center font-mono font-black text-sm shadow-inner transition-all",
-                                            product.stockStatus === 'out_of_stock' ? "bg-red-500/10 text-red-500" : "bg-black/20 text-foreground"
-                                        )}>
-                                            {product.quantity}
+                                <TableCell className="px-3 py-4" onClick={e => e.stopPropagation()}>
+                                    {editingCell?.uuid === product.uuid && editingCell?.field === 'quantity' ? (
+                                        <Input 
+                                            type="number" 
+                                            defaultValue={product.quantity} 
+                                            className="w-20 h-8 font-black"
+                                            autoFocus
+                                            onBlur={(e) => handleQuickEdit(product.uuid, 'quantity', e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleQuickEdit(product.uuid, 'quantity', (e.target as any).value)}
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="flex items-center gap-3 hover:bg-muted/50 p-1 rounded-lg transition-all"
+                                            onClick={() => setEditingCell({ uuid: product.uuid, field: 'quantity' })}
+                                        >
+                                            <div className={cn(
+                                                "h-8 w-10 rounded-lg flex items-center justify-center font-mono font-black text-xs shadow-inner",
+                                                product.stockStatus === 'out_of_stock' ? "bg-red-500/10 text-red-500" : "bg-black/20"
+                                            )}>
+                                                {product.quantity}
+                                            </div>
+                                            <span className="text-[8px] font-black uppercase text-muted-foreground/20">{product.unit ?? 'PCS'}</span>
                                         </div>
-                                        <span className="text-[8px] font-black uppercase text-muted-foreground/20 tracking-tighter">{product.unit ?? 'PCS'}</span>
-                                    </div>
+                                    )}
                                 </TableCell>
 
                                 <TableCell className="px-3 py-4 text-right hidden md:table-cell">
@@ -247,10 +259,24 @@ export function ProductTable({
                                     </span>
                                 </TableCell>
 
-                                <TableCell className="px-3 py-4 text-right">
-                                    <span className="font-mono text-base font-black text-primary tabular-nums tracking-tighter">
-                                        {formatCurrency(product.price)}
-                                    </span>
+                                <TableCell className="px-3 py-4 text-right" onClick={e => e.stopPropagation()}>
+                                    {editingCell?.uuid === product.uuid && editingCell?.field === 'price' ? (
+                                        <Input 
+                                            type="number" 
+                                            defaultValue={product.price} 
+                                            className="w-24 h-8 text-right font-black text-primary"
+                                            autoFocus
+                                            onBlur={(e) => handleQuickEdit(product.uuid, 'price', e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleQuickEdit(product.uuid, 'price', (e.target as any).value)}
+                                        />
+                                    ) : (
+                                        <span 
+                                            className="font-mono text-base font-black text-primary tabular-nums tracking-tighter hover:bg-muted/50 p-1 rounded-lg transition-all"
+                                            onClick={() => setEditingCell({ uuid: product.uuid, field: 'price' })}
+                                        >
+                                            {formatCurrency(product.price)}
+                                        </span>
+                                    )}
                                 </TableCell>
 
                                 <TableCell className="px-3 py-4 text-right hidden sm:table-cell">
@@ -268,8 +294,7 @@ export function ProductTable({
                                 <TableCell className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon"
-                                                className="h-10 w-10 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all">
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all">
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -284,8 +309,7 @@ export function ProductTable({
                                                 <History className="mr-3 h-4 w-4" /> Historique Flux
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator className="opacity-10" />
-                                            <DropdownMenuItem onClick={() => onDelete(product)}
-                                                className="text-destructive focus:text-destructive rounded-xl p-3">
+                                            <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive focus:text-destructive rounded-xl p-3">
                                                 <Trash2 className="mr-3 h-4 w-4" /> Révoquer Item
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -296,22 +320,6 @@ export function ProductTable({
                     })}
                 </TableBody>
             </Table>
-
-            {products.length > 0 && (
-                <div className="flex items-center justify-between px-8 py-3 border-t border-white/5 bg-black/20">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-[0.2em]">
-                        {products.length} articles référencés
-                        {selectedProducts.size > 0 && (
-                            <span className="ml-4 text-primary opacity-100">
-                                · {selectedProducts.size} sélectionnés pour exécution
-                            </span>
-                        )}
-                    </p>
-                    <p className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-widest">
-                        Tri Elite : {sortKey} {sortDir === 'asc' ? '↑' : '↓'}
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

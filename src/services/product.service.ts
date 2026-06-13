@@ -7,6 +7,7 @@ import { calculateStockStatus, safeNumber, roundFinancial, safeToDate } from '@/
 import { inventoryService } from './inventory.service';
 import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
+import { startOfDay, startOfMonth } from 'date-fns';
 
 const triggerSync = () => {
     if (typeof window !== 'undefined') {
@@ -61,7 +62,7 @@ class ProductService {
     async filterProducts(filters: {
         query?: string;
         supplierUuid?: string;
-        stockStatus?: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'expired';
+        stockStatus?: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'overstock' | 'expiring_soon' | 'expired';
         sortBy?: string;
         signal?: AbortSignal;
     }): Promise<Product[]> {
@@ -74,7 +75,7 @@ class ProductService {
             collection = collection.filter(p => !!p.dateExpiration && new Date(p.dateExpiration) < now);
         } else if (filters.stockStatus === 'expiring_soon') {
             collection = collection.filter(p => !!p.dateExpiration && new Date(p.dateExpiration) >= now && new Date(p.dateExpiration) <= thirtyDaysFromNow);
-        } else if (filters.stockStatus && ['in_stock', 'low_stock', 'out_of_stock'].includes(filters.stockStatus)) {
+        } else if (filters.stockStatus && ['in_stock', 'low_stock', 'out_of_stock', 'overstock'].includes(filters.stockStatus)) {
             collection = collection.filter(p => p.stockStatus === filters.stockStatus);
         }
 
@@ -100,15 +101,15 @@ class ProductService {
 
             products.sort((a: any, b: any) => {
                 let valA: any = a[field] ?? 0;
-                let valB: any = b[field] ?? 0;
+                let vbA: any = b[field] ?? 0;
                 
                 if (field === 'margin') {
                     valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
-                    valB = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
+                    vbA = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }
 
-                if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+                if (typeof valA === 'string') return isAsc ? valA.localeCompare(vbA) : vbA.localeCompare(valA);
+                return isAsc ? (valA as number) - (vbA as number) : (vbA as number) - (valA as number);
             });
         } else {
              products.sort((a, b) => safeToDate(b.updatedAt).getTime() - safeToDate(a.updatedAt).getTime());
@@ -168,23 +169,6 @@ class ProductService {
         triggerSync();
     }
 
-    async updateProductFromIntake(uuid: string, data: { purchasePrice: number; price?: number }): Promise<void> {
-        const existing = await db.products.where('uuid').equals(uuid).first();
-        if (!existing?.id) return;
-
-        const update: Partial<Product> = {
-            purchasePrice: data.purchasePrice,
-            updatedAt: new Date(),
-            syncStatus: 'pending' as const
-        };
-
-        if (data.price !== undefined) {
-            update.price = data.price;
-        }
-
-        await db.products.update(existing.id!, update);
-    }
-
     async duplicateProduct(uuid: string): Promise<Product> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing) throw new Error("Produit original introuvable");
@@ -232,6 +216,14 @@ class ProductService {
         await db.transaction('rw', [db.products, db.sync_queue], async () => {
             for (const uuid of uuids) {
                 await this.deleteProduct(uuid);
+            }
+        });
+    }
+
+    async bulkUpdate(uuids: string[], data: Partial<ProductCreateInput>): Promise<void> {
+        await db.transaction('rw', [db.products, db.sync_queue], async () => {
+            for (const uuid of uuids) {
+                await this.updateProduct(uuid, data);
             }
         });
     }
