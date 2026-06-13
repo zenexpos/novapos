@@ -186,8 +186,10 @@
     border: 2px solid #000 !important;
     padding: 10mm !important;
     border-radius: 4px !important;
-    height: 100% !important;
+    height: calc(297mm - 20mm) !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .print-table {

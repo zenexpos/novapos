@@ -20,22 +20,26 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
           <div className="print-frame">
             {/* Header */}
             <header className="flex justify-between items-start pb-6 border-b-2 border-black mb-8">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-black uppercase tracking-tighter">{profile?.companyName || 'iPOS ZEN'}</h1>
-                    <p className="text-[9pt] font-medium opacity-70">{profile?.address}</p>
-                    <p className="text-[9pt] font-medium opacity-70">{profile?.city}, {profile?.country}</p>
-                    <p className="text-[9pt] font-bold mt-2">Tél: {profile?.phone}</p>
+                <div className="space-y-1 max-w-[65%]">
+                    <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">{profile?.companyName || 'iPOS ZEN'}</h1>
+                    <p className="text-[8.5pt] opacity-80 leading-tight">{profile?.address}</p>
+                    <p className="text-[9pt] font-bold">Tél: {profile?.phone} | {profile?.email}</p>
+                    
+                    <div className="grid grid-cols-2 gap-x-6 mt-4 text-[8pt] font-mono border-t border-gray-200 pt-2">
+                        {profile?.nif && <p><span className="opacity-50">NIF:</span> {profile.nif}</p>}
+                        {profile?.rcNumber && <p><span className="opacity-50">RC:</span> {profile.rcNumber}</p>}
+                    </div>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-xl font-black bg-black text-white px-6 py-2 inline-block mb-2">RELEVÉ DE COMPTE</h2>
-                    <p className="text-[9pt] font-bold uppercase tracking-widest text-gray-500">Date : {format(new Date(), 'd MMMM yyyy', { locale: fr })}</p>
+                    <h2 className="text-xl font-black bg-black text-white px-6 py-2 inline-block mb-3 tracking-widest uppercase">RELEVÉ DE COMPTE</h2>
+                    <p className="text-[9pt] font-bold uppercase tracking-widest text-gray-500">Date : {format(new Date(), 'dd MMMM yyyy', { locale: fr })}</p>
                 </div>
             </header>
 
             {/* Customer & Summary Frame */}
-            <div className="grid grid-cols-2 gap-8 mb-10">
-                <section className="print-box space-y-4">
-                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 tracking-widest">Destinataire / Client</h3>
+            <div className="grid grid-cols-2 gap-8 mb-8">
+                <section className="print-box space-y-4 border-l-[6px] border-l-black">
+                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 tracking-widest">Partenaire Client</h3>
                     <div className="space-y-1">
                         <p className="text-xl font-black uppercase">{customer.firstName} {customer.lastName}</p>
                         <p className="text-[9pt] font-medium opacity-60 italic">{customer.address || '—'}</p>
@@ -45,8 +49,8 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
 
                 <section className="print-box bg-gray-50/50 flex flex-col justify-center text-center space-y-4 border-2">
                     <div>
-                        <p className="text-[7.5pt] font-black uppercase text-gray-400 tracking-widest mb-1">Solde Débiteur Actuel</p>
-                        <p className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(customer.outstandingBalance)}</p>
+                        <p className="text-[7.5pt] font-black uppercase text-gray-400 tracking-widest mb-1">Situation Débitrice</p>
+                        <p className="text-3xl font-black text-red-600 tracking-tighter tabular-nums">{formatCurrency(customer.outstandingBalance)}</p>
                     </div>
                     <div className="h-px bg-gray-200 w-1/2 mx-auto" />
                     <div className="flex justify-around text-[9px] font-black uppercase opacity-50">
@@ -57,7 +61,7 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
             </div>
 
             {/* Table with borders */}
-            <section className="mb-10">
+            <section className="flex-grow mb-12">
                 <h3 className="text-[8pt] font-black uppercase mb-4 flex items-center gap-3">
                     <div className="h-2 w-2 bg-black rounded-full" />
                     Détail des Factures en Souffrance
@@ -67,9 +71,9 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
                         <tr className="bg-gray-100">
                             <th className="text-left p-3 text-[8pt] font-black uppercase">Date</th>
                             <th className="text-left p-3 text-[8pt] font-black uppercase">N° Facture</th>
-                            <th className="text-right p-3 text-[8pt] font-black uppercase">Total</th>
-                            <th className="text-right p-3 text-[8pt] font-black uppercase">Payé</th>
-                            <th className="text-right p-3 text-[8pt] font-black uppercase">Solde Dû</th>
+                            <th className="text-right p-3 text-[8pt] font-black uppercase">Total TTC</th>
+                            <th className="text-right p-3 text-[8pt] font-black uppercase">Déjà Versé</th>
+                            <th className="text-right p-3 text-[8pt] font-black uppercase">Solde Net Dû</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -78,25 +82,25 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
                                 <td className="p-3 text-[9pt] font-bold">{format(safeToDate(sale.createdAt!), 'dd/MM/yyyy')}</td>
                                 <td className="p-3 text-[9pt] font-mono font-bold">#{sale.invoiceNumber}</td>
                                 <td className="p-3 text-right text-[9pt] font-medium">{formatCurrency(sale.total)}</td>
-                                <td className="p-3 text-right text-[9pt] font-medium text-emerald-600">{formatCurrency(sale.amountPaid)}</td>
-                                <td className="p-3 text-right text-[9.5pt] font-black tracking-tighter">{formatCurrency(sale.remainingBalance)}</td>
+                                <td className="p-3 text-right text-[9pt] font-medium text-emerald-600">-{formatCurrency(sale.amountPaid)}</td>
+                                <td className="p-3 text-right text-[9.5pt] font-black tracking-tighter tabular-nums">{formatCurrency(sale.remainingBalance)}</td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot>
                         <tr className="bg-gray-50 font-black border-t-2 border-black">
-                            <td colSpan={4} className="p-4 text-right text-[10pt] uppercase">Total Cumulé des Créances</td>
-                            <td className="p-4 text-right text-xl text-red-600 tracking-tighter">{formatCurrency(totalRemaining)}</td>
+                            <td colSpan={4} className="p-4 text-right text-[11pt] uppercase">Reliquat Global des Créances</td>
+                            <td className="p-4 text-right text-2xl text-red-600 tracking-tighter font-mono">{formatCurrency(totalRemaining)}</td>
                         </tr>
                     </tfoot>
                 </table>
             </section>
 
             {/* Verification Footer */}
-            <footer className="mt-20 pt-8 border-t border-dashed border-gray-300 grid grid-cols-2 text-center">
+            <footer className="mt-auto pt-8 border-t border-gray-100 grid grid-cols-2 text-center no-break">
                 <div className="space-y-16">
-                    <p className="text-[8pt] font-black uppercase tracking-widest opacity-40">Visa & Cachet Établissement</p>
-                    <div className="h-24 w-24 mx-auto border-4 border-gray-100 rounded-full flex items-center justify-center opacity-10">
+                    <p className="text-[8pt] font-black uppercase tracking-widest opacity-40">Visa & Cachet Magasin</p>
+                    <div className="h-20 w-20 mx-auto border-4 border-gray-100 rounded-full flex items-center justify-center opacity-10">
                         <span className="text-[8px]">STAMP</span>
                     </div>
                 </div>
@@ -106,8 +110,8 @@ export const CustomerStatement = React.forwardRef<HTMLDivElement, CustomerStatem
                 </div>
             </footer>
 
-            <p className="text-center mt-20 text-[7pt] font-black uppercase tracking-[0.4em] text-gray-200">
-                Document généré informatiquement par iPOS ZEN SYSTEM — SOUVERAINETÉ TOTALE
+            <p className="text-center mt-12 text-[7pt] font-black uppercase tracking-[0.4em] text-gray-200">
+                Généré par iPOS ZEN SYSTEM — SOVEREIGN AUDIT — {new Date().toLocaleDateString()}
             </p>
           </div>
         </div>

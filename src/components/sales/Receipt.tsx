@@ -89,7 +89,7 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
 };
 
 /**
- * A4 Invoice Layout - Modern Business Standard with Framing
+ * A4 Invoice Layout - Modern ERP Standard
  */
 const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -122,7 +122,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
 
             {/* Customer Info Frame */}
             <div className="grid grid-cols-2 gap-8 mb-8">
-                <div className="print-box">
+                <div className="print-box border-l-[6px] border-l-black">
                     <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire / Client</h3>
                     <p className="text-lg font-black uppercase">{customerName || 'Client de passage'}</p>
                     {sale.customerUuid && <p className="text-[8pt] opacity-60 mt-1 italic">Compte Elite Certifié</p>}
@@ -134,30 +134,32 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
             </div>
 
             {/* Products Table with full borders */}
-            <table className="print-table mb-8">
-                <thead>
-                    <tr className="bg-gray-100">
-                        <th className="text-left font-black uppercase text-[8pt] w-[50%]">Désignation des Articles</th>
-                        <th className="text-center font-black uppercase text-[8pt] w-16">Qté</th>
-                        <th className="text-right font-black uppercase text-[8pt] w-24">P.U (DA)</th>
-                        <th className="text-right font-black uppercase text-[8pt] w-32">Montant</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                    {sale.items.map((item, idx) => (
-                        <tr key={idx}>
-                            <td className="uppercase font-medium text-[8.5pt]">{item.name}</td>
-                            <td className="text-center font-bold text-[8.5pt]">{item.quantity}</td>
-                            <td className="text-right font-mono text-[8pt]">{fmt(item.price)}</td>
-                            <td className="text-right font-bold font-mono text-[8.5pt]">{fmt(item.price * item.quantity)}</td>
+            <div className="flex-grow">
+                <table className="print-table mb-8">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th className="text-left font-black uppercase text-[8pt] w-[50%]">Désignation des Articles</th>
+                            <th className="text-center font-black uppercase text-[8pt] w-16">Qté</th>
+                            <th className="text-right font-black uppercase text-[8pt] w-24">P.U (DA)</th>
+                            <th className="text-right font-black uppercase text-[8pt] w-32">Montant Total</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {sale.items.map((item, idx) => (
+                            <tr key={idx}>
+                                <td className="uppercase font-medium text-[8.5pt]">{item.name}</td>
+                                <td className="text-center font-bold text-[8.5pt]">{item.quantity}</td>
+                                <td className="text-right font-mono text-[8pt]">{fmt(item.price)}</td>
+                                <td className="text-right font-bold font-mono text-[8.5pt]">{fmt(item.price * item.quantity)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             {/* Summary Block - Bordered */}
-            <div className="flex justify-end mb-8">
-                <div className="w-80 print-box bg-gray-50/30">
+            <div className="flex justify-end mb-8 no-break">
+                <div className="w-96 print-box bg-gray-50/30 border-2">
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                             <span className="opacity-60 uppercase font-bold text-[7.5pt]">Total Marchandise:</span>
@@ -169,9 +171,9 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                                 <span className="font-mono">-{fmt(sale.discountAmount)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between border-t border-black pt-2">
+                        <div className="flex justify-between border-t border-black pt-2 mb-2">
                             <span className="font-black uppercase text-[10pt]">Net à Payer (TTC):</span>
-                            <span className="text-xl font-black tracking-tighter font-mono">{fmt(sale.total)}</span>
+                            <span className="text-2xl font-black tracking-tighter font-mono">{fmt(sale.total)}</span>
                         </div>
                         
                         <div className="space-y-1 pt-3 border-t border-gray-200">
@@ -179,7 +181,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                                 <span>Versement reçu:</span>
                                 <span className="font-mono">-{fmt(safeNumber(sale.amountPaid))}</span>
                             </div>
-                            <div className="flex justify-between text-[9.5pt] font-black pt-1">
+                            <div className="flex justify-between text-[11pt] font-black pt-1 bg-white px-2 py-1 rounded border border-gray-100">
                                 <span className="uppercase">Solde à Recouvrer:</span>
                                 <span className="font-mono text-red-600">{fmt(newBalance)} DA</span>
                             </div>
@@ -189,13 +191,13 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
             </div>
 
             {/* Legal Text */}
-            <div className="print-box bg-gray-50 border-dashed mb-16">
+            <div className="print-box bg-gray-50 border-dashed mb-10 no-break">
                 <p className="text-[7pt] font-black uppercase text-gray-400 mb-1 tracking-widest">Arrêtée la présente facture à la somme de :</p>
-                <p className="text-[9pt] font-bold italic text-black">{numberToFrenchWords(sale.total)}</p>
+                <p className="text-[9.5pt] font-bold italic text-black">{numberToFrenchWords(sale.total)}</p>
             </div>
 
             {/* Signatures */}
-            <div className="flex justify-between text-center px-12 mt-20">
+            <div className="flex justify-between text-center px-12 mb-12 no-break">
                 <div className="w-48 pt-2 border-t-2 border-dashed border-gray-300 text-[8pt] font-bold uppercase opacity-40">Cachet Établissement</div>
                 <div className="w-48 pt-2 border-t-2 border-dashed border-gray-300 text-[8pt] font-bold uppercase opacity-40">Signature Client</div>
             </div>
@@ -203,7 +205,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
             {/* Legal Footer */}
             <footer className="mt-auto pt-6 border-t border-gray-100 flex justify-between items-center text-[7.5pt] text-gray-400 font-black uppercase tracking-[0.2em]">
                 <span>iPOS ZEN v2.9 — SOVEREIGN LEDGER</span>
-                <span>Document Commercial — Copie Client</span>
+                <span>Généré le {format(new Date(), 'dd/MM/yyyy HH:mm')} — Document Commercial</span>
             </footer>
           </div>
         </div>
