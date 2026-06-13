@@ -23,8 +23,8 @@ interface ConfirmAlertDialogProps {
 }
 
 /**
- * OPTIMISATION FORENSIC : La fermeture est déclenchée AVANT l'exécution de l'action lourde 
- * pour libérer le thread UI et les verrous body de Radix immédiatement.
+ * FORENSIC OPTIMIZATION: Close is triggered BEFORE the heavy action
+ * to release the UI thread and Radix body locks immediately.
  */
 export function ConfirmAlertDialog({ 
     isOpen, 
@@ -40,10 +40,10 @@ export function ConfirmAlertDialog({
     const handleConfirm = async () => {
         setIsMutating(true);
         try {
-            // Signal de fermeture immédiat pour déverrouiller la souris
+            // Signal immediate closure to unlock mouse
             onOpenChange(false);
             
-            // Délai minimal pour laisser le cycle de rendu Radix se terminer
+            // Minimal delay to let Radix render cycle finish cleanup
             setTimeout(async () => {
                 try {
                     await onConfirm();

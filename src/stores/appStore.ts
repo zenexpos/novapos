@@ -101,7 +101,6 @@ export const useAppStore = create<AppState>()(
 
                 updateCompanyProfile: async (profileData) => {
                     try {
-                        const existing = get().companyProfile;
                         await companyProfileService.upsertProfile({ ...profileData, syncStatus: 'pending' });
                         const updated = await companyProfileService.getProfile();
                         set({ companyProfile: updated });
@@ -151,12 +150,15 @@ export const useAppStore = create<AppState>()(
                     }
                 },
 
+                /**
+                 * Debounced Smart Sync to avoid "Sync Storms"
+                 */
                 triggerSmartSync: () => {
                     if (_syncTimer) clearTimeout(_syncTimer);
                     _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
                         _syncTimer = null;
-                    }, 8000);
+                    }, 8000); // 8 second cool-down
                 },
 
                 processReturn: async (returnData) => {

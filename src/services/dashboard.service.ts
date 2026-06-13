@@ -5,12 +5,11 @@ import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, Dashboard
 import { startOfDay, endOfDay, subDays, format, eachDayOfInterval, isAfter, differenceInDays } from 'date-fns';
 import { safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 
+/**
+ * Optimized Dashboard Service
+ * Uses Cursors and Batching to avoid main thread starvation (UI Freezes).
+ */
 class DashboardService {
-    /**
-     * getDashboardData Optimized
-     * Avoids full table scans (toArray) for calculations.
-     * Uses iterators and limited queries to prevent UI freezing.
-     */
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
         const start = startOfDay(from);
         const end = endOfDay(to);
@@ -19,7 +18,7 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // OPTIMIZATION: Only fetch what's visible or strictly needed in RAM
+        // Fetch primary data sets in parallel
         const [
             sales,
             prevSales,
@@ -57,11 +56,11 @@ class DashboardService {
         const currProfit = currRev - currExp;
         const prevProfit = prevRev - prevExp;
 
-        // KPI Calculations using indexed count when possible
+        // KPI Calculations using indexed count
         const activeCustomersCount = await db.customers.filter(c => !c.deletedAt).count();
         const activeProductsCount = await db.products.filter(p => !p.deletedAt).count();
 
-        // Calculate Debt Aging & Stock Value via Cursor to avoid 100% CPU lock
+        // Optimized iteration via Cursor for Debt Aging and Inventory Value
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -75,7 +74,7 @@ class DashboardService {
 
         const today = new Date();
 
-        // High Perf iteration over customers
+        // Fast customer scan
         await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0).each(c => {
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
@@ -85,7 +84,7 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // High Perf iteration over products
+        // Fast product scan
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
             totalInventoryValue += (qty * safeNumber(p.purchasePrice));
@@ -103,10 +102,10 @@ class DashboardService {
             totalInventoryValue: roundFinancial(totalInventoryValue),
             averageBasket: sales.length > 0 ? currRev / sales.length : 0,
             profitMargin: currRev > 0 ? (currProfit / currRev) * 100 : 0,
-            totalRevenueChange: this.calcPct(currRev, prevRev),
-            netProfitChange: this.calcPct(currProfit, prevProfit),
-            totalExpensesChange: this.calcPct(currExp, prevExp),
-            saleCountChange: this.calcPct(sales.length, prevSales.length)
+            totalRevenueChange: this.calcTrend(currRev, prevRev),
+            netProfitChange: this.calcTrend(currProfit, prevProfit),
+            totalExpensesChange: this.calcTrend(currExp, prevExp),
+            saleCountChange: this.calcTrend(sales.length, prevSales.length)
         };
 
         const days = eachDayOfInterval({ start, end });
@@ -119,7 +118,7 @@ class DashboardService {
             return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
         });
 
-        // Activity aggregation
+        // Aggregate activity feed (last 20 items)
         const recentActivity: RecentActivity[] = [
             ...recentSales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Compte Client' : 'Client passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
             ...recentPayments.map(p => ({ id: p.uuid, type: 'payment' as const, title: 'Paiement Reçu', description: 'Sur dette client', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'info' as const })),
@@ -128,15 +127,16 @@ class DashboardService {
             ...recentExpenses.map(e => ({ id: e.uuid, type: 'expense' as const, title: `Dépense: ${e.description}`, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'error' as const }))
         ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 20);
 
-        // Top Products Logic
+        // Product profitability ranking
         const productStats = new Map<string, { qty: number, rev: number, margin: number, name: string }>();
         sales.forEach(s => {
             s.items.forEach(item => {
-                const curr = productStats.get(item.productUuid || item.name) || { qty: 0, rev: 0, margin: 0, name: item.name };
+                const key = item.productUuid || item.name;
+                const curr = productStats.get(key) || { qty: 0, rev: 0, margin: 0, name: item.name };
                 curr.qty += item.quantity;
                 curr.rev += item.quantity * item.price;
                 curr.margin += item.quantity * (item.price - item.purchasePrice);
-                productStats.set(item.productUuid || item.name, curr);
+                productStats.set(key, curr);
             });
         });
 
@@ -152,7 +152,6 @@ class DashboardService {
             .sort((a, b) => b.revenueGenerated - a.revenueGenerated)
             .slice(0, 10);
 
-        // Alerts aggregation
         const alerts: DashboardAlert[] = [];
         if (outOfStock > 0) alerts.push({ id: 'alert-oos', type: 'critical', message: `${outOfStock} produits en rupture de stock`, description: 'Ventes manquées potentielles.' });
         if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} produits sous le seuil d'alerte`, description: 'Pensez à commander chez vos fournisseurs.' });
@@ -171,7 +170,7 @@ class DashboardService {
             },
             alerts,
             topProducts,
-            topCustomers: [], // Handled by UI live queries to avoid memory bloat
+            topCustomers: [], // UI-heavy logic delegated to client list
             debtAging,
             inventoryHealth: {
                 outOfStock,
@@ -181,14 +180,14 @@ class DashboardService {
             },
             kpis: {
                 stockRotation: roundFinancial(currRev / (totalInventoryValue || 1)),
-                recoveryRate: roundFinancial((calcRev(payments) / (currRev || 1)) * 100),
+                recoveryRate: roundFinancial((calcRev(recentPayments) / (currRev || 1)) * 100),
                 activeCustomers: activeCustomersCount,
                 activeProducts: activeProductsCount
             }
         };
     }
 
-    private calcPct(curr: number, prev: number) {
+    private calcTrend(curr: number, prev: number) {
         if (prev === 0) return curr > 0 ? 100 : 0;
         return ((curr - prev) / Math.abs(prev)) * 100;
     }

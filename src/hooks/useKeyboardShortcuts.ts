@@ -14,8 +14,8 @@ export interface ShortcutConfig {
 }
 
 /**
- * Registre Singleton hors du cycle de vie React pour une performance maximale.
- * OPTIMISATION : Utilisation d'itérateurs directs pour éviter les Array.from() massifs.
+ * Singleton registry outside of React lifecycle for maximum performance.
+ * OPTIMIZATION: Uses direct iterators to avoid massive Array.from() calls.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -47,7 +47,7 @@ function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // Use a direct for...of iterator for speed
+    // Use a direct for...of iterator for speed over registry values
     for (const shortcuts of _registry.values()) {
         const len = shortcuts.length;
         for (let i = 0; i < len; i++) {
@@ -75,7 +75,7 @@ function _globalHandler(event: KeyboardEvent) {
 }
 
 /**
- * Expose le registre pour le dialogue d'aide sans passer par l'état React.
+ * Expose registry for help dialog without React state overhead.
  */
 export const getShortcutRegistry = () => Object.fromEntries(_registry);
 

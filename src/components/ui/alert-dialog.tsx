@@ -29,7 +29,10 @@ const AlertDialogContent = React.forwardRef<
     React.ElementRef<typeof AlertDialogPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
-    // CRITICAL UI RECOVERY HOOK (AlertDialog Specific)
+    /**
+     * CRITICAL UI RECOVERY HOOK
+     * Restores pointer interaction on unmount.
+     */
     React.useEffect(() => {
         return () => {
             if (typeof document !== 'undefined') {
