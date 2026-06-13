@@ -20,7 +20,12 @@ import {
     Clock,
     Users,
     Calendar,
-    Filter
+    Filter,
+    FilterX,
+    CheckCircle2,
+    Truck,
+    UserCheck,
+    CloudUpload
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -37,6 +42,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from '@/lib/utils';
 
 /**
  * Page de gestion avancée du pain (Système Elite).
@@ -44,14 +50,19 @@ import {
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Filtres avancés
     const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
+    const [deliveryFilter, setDeliveryFilter] = useState<'all' | 'delivered' | 'pending'>('all');
+    const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'registered' | 'external'>('all');
+    const [transferFilter, setTransferFilter] = useState<'all' | 'transferred' | 'local'>('all');
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessingTransfers, setIsProcessingTransfers] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
 
-    // Déclencher la génération des commandes à l'extérieur du liveQuery
     useEffect(() => {
         breadService.ensureOrdersForDate(formattedDate);
     }, [formattedDate]);
@@ -66,27 +77,59 @@ export default function BreadPage() {
         if (!ordersResult.value) return [];
         let list = ordersResult.value;
 
-        // Filtre Statut
+        // 1. Filtre Statut Paiement
         if (statusFilter !== 'all') {
             const isPaid = statusFilter === 'paid';
             list = list.filter(o => o.isPaid === isPaid);
         }
 
-        // Filtre Recherche
+        // 2. Filtre Statut Livraison
+        if (deliveryFilter !== 'all') {
+            const isDelivered = deliveryFilter === 'delivered';
+            list = list.filter(o => o.isDelivered === isDelivered);
+        }
+
+        // 3. Filtre Type Client
+        if (clientTypeFilter !== 'all') {
+            if (clientTypeFilter === 'registered') {
+                list = list.filter(o => !!o.customerUuid);
+            } else {
+                list = list.filter(o => !o.customerUuid);
+            }
+        }
+
+        // 4. Filtre Statut Transfert
+        if (transferFilter !== 'all') {
+            const isTransferred = transferFilter === 'transferred';
+            list = list.filter(o => o.transferredToCustomerAccount === isTransferred);
+        }
+
+        // 5. Filtre Recherche (Nom, N°, Téléphone)
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
                 o.orderNumber.toLowerCase().includes(q) ||
                 (o.customer && (o.customer.firstName + ' ' + o.customer.lastName).toLowerCase().includes(q)) ||
+                (o.customer && o.customer.phone?.includes(q)) ||
                 (o.customName && o.customName.toLowerCase().includes(q))
             );
         }
         return list;
-    }, [ordersResult.value, searchQuery, statusFilter]);
+    }, [ordersResult.value, searchQuery, statusFilter, deliveryFilter, clientTypeFilter, transferFilter]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
     }, []);
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setStatusFilter('all');
+        setDeliveryFilter('all');
+        setClientTypeFilter('all');
+        setTransferFilter('all');
+    };
+
+    const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all' || clientTypeFilter !== 'all' || transferFilter !== 'all';
 
     const runAutomatedTask = async () => {
         setIsProcessingTransfers(true);
@@ -157,11 +200,11 @@ export default function BreadPage() {
                     </TabsList>
 
                     {activeTab === 'distribution' && (
-                        <div className="flex gap-3 flex-grow max-w-2xl">
+                        <div className="flex gap-3 flex-grow max-w-3xl">
                             <div className="relative flex-grow">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
                                 <Input 
-                                    placeholder="Rechercher par client ou N° commande..."
+                                    placeholder="Rechercher par client, téléphone ou N°..."
                                     className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
@@ -170,23 +213,54 @@ export default function BreadPage() {
                             
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="h-11 rounded-xl border-none bg-card shadow-sm gap-2 px-4">
+                                    <Button variant="outline" className={cn(
+                                        "h-11 rounded-xl border-none bg-card shadow-sm gap-2 px-4 transition-all",
+                                        isFiltered && "bg-primary/10 text-primary"
+                                    )}>
                                         <Filter className="h-4 w-4 opacity-40" />
-                                        <span className="text-xs font-bold uppercase tracking-tight">
-                                            {statusFilter === 'all' ? 'Tous' : statusFilter === 'paid' ? 'Payés' : 'Non Payés'}
-                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-tight">Filtres</span>
+                                        {isFiltered && <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse ml-1" />}
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
-                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground">Statut de Paiement</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
+                                <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl w-64 p-2">
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-1">Paiement</DropdownMenuLabel>
                                     <DropdownMenuRadioGroup value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
                                         <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous les flux</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold uppercase text-emerald-500">Payés uniquement</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold uppercase text-emerald-500">Payés</DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold uppercase text-orange-500">Non payés</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                    
+                                    <DropdownMenuSeparator className="my-1 opacity-10" />
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-1">Livraison</DropdownMenuLabel>
+                                    <DropdownMenuRadioGroup value={deliveryFilter} onValueChange={(v: any) => setDeliveryFilter(v)}>
+                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="delivered" className="text-xs font-bold uppercase text-emerald-500">Livrés</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="pending" className="text-xs font-bold uppercase text-amber-500">En attente</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+
+                                    <DropdownMenuSeparator className="my-1 opacity-10" />
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-1">Origine Client</DropdownMenuLabel>
+                                    <DropdownMenuRadioGroup value={clientTypeFilter} onValueChange={(v: any) => setClientTypeFilter(v)}>
+                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="registered" className="text-xs font-bold uppercase text-primary">Premium / Abonnés</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="external" className="text-xs font-bold uppercase">Passagers</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+
+                                    <DropdownMenuSeparator className="my-1 opacity-10" />
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-1">Grand Livre</DropdownMenuLabel>
+                                    <DropdownMenuRadioGroup value={transferFilter} onValueChange={(v: any) => setTransferFilter(v)}>
+                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="transferred" className="text-xs font-bold uppercase text-blue-500">Transférés</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="local" className="text-xs font-bold uppercase">Locale uniquement</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+
+                            {isFiltered && (
+                                <Button variant="ghost" size="icon" onClick={resetFilters} className="h-11 w-11 rounded-xl text-destructive hover:bg-destructive/10">
+                                    <FilterX className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
                     )}
                 </div>
