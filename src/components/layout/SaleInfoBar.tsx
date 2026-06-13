@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 
 /**
  * Barre d'information spécifique à la vente.
- * Restreinte à la page /sell via son layout dédié.
+ * Désormais STRICTEMENT restreinte à la page /sell via vérification du pathname.
  */
 export function SaleInfoBar() {
     const cart      = useActiveCart();
@@ -41,14 +41,11 @@ export function SaleInfoBar() {
 
     if (!isMounted) return null;
 
-    const hasItems  = !!(cart && cart.items.length > 0);
-    const hasCustomer = !!cart?.customerUuid;
+    // PROTECTION CRITIQUE : Ne jamais afficher hors de la zone de vente
     const isSellPage = pathname.startsWith('/sell');
+    if (!isSellPage || !cart) return null;
 
-    // Sécurité supplémentaire : bien que le layout gère l'affichage,
-    // on ne rend rien si on n'est pas sur la page de vente ou si le panier est vide sans client.
-    if (!cart || (!hasItems && !isSellPage && !hasCustomer)) return null;
-
+    const hasItems  = cart.items.length > 0;
     const { total, discountAmount } = calculateCartTotals(cart);
     const itemCount  = cart.items.reduce((s, i) => s + i.cartQuantity, 0);
     const customerDebt = customer?.outstandingBalance ?? 0;
