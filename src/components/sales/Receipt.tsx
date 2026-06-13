@@ -73,7 +73,7 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                 
                 <div className="flex justify-between text-[8pt] mt-2 opacity-70">
                     <span>VERSEMENT REÇU:</span>
-                    <span>-{fmt(safeNumber(sale.amountPaid))}</span>
+                    <span>{fmt(safeNumber(sale.amountPaid))}</span>
                 </div>
                 
                 <div className="flex justify-between font-bold border-t border-black pt-1 text-[10pt] bg-gray-50 px-1">
@@ -179,7 +179,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                         <div className="space-y-1 pt-3 border-t border-gray-200">
                             <div className="flex justify-between text-[8pt] opacity-70">
                                 <span>Versement reçu:</span>
-                                <span className="font-mono">-{fmt(safeNumber(sale.amountPaid))}</span>
+                                <span className="font-mono">{fmt(safeNumber(sale.amountPaid))}</span>
                             </div>
                             <div className="flex justify-between text-[11pt] font-black pt-1 bg-white px-2 py-1 rounded border border-gray-100">
                                 <span className="uppercase">Solde à Recouvrer:</span>
