@@ -9,11 +9,8 @@ import {
     TrendingUp, Receipt, Users, Archive, ShoppingCart, 
     LayoutDashboard, Package, TriangleAlert, Percent, Wallet,
     Wheat, BellRing, Activity, ArrowUpRight, Plus,
-    ArrowDownRight,
-    CircleCheckBig,
-    Clock,
-    UserPlus,
-    PlusCircle
+    ArrowDownRight, CircleCheckBig, Clock, UserPlus, PlusCircle,
+    BarChart3, Coins, PieChart, Info
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -24,15 +21,15 @@ import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { TopLists } from '@/components/dashboard/TopLists';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Tooltip } from 'recharts';
 
 /**
- * Tableau de Bord Elite iPOS Zen.
- * Centre de commandement centralisé pour le pilotage commercial et logistique.
+ * Command Center Elite - iPOS Zen.
+ * Vision stratégique complète de l'activité commerciale.
  */
 export default function DashboardPage() {
     const { dateRange, setDate, isMounted } = useDateRange(29);
     
-    // Récupération réactive des données analytiques
     const dataResult = useLiveQuery(
         async () => {
             if (!isMounted || !dateRange?.from || !dateRange?.to) return null;
@@ -43,7 +40,6 @@ export default function DashboardPage() {
     const data = dataResult.value;
     const isLoading = dataResult.isLoading || !isMounted;
 
-    // Configuration des cartes KPI avec calcul des tendances
     const statCards = useMemo(() => [
         { title: 'Recettes', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
         { title: 'Bénéfice Net', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
@@ -61,7 +57,7 @@ export default function DashboardPage() {
         <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
             <PageHeader
                 title="Command Center Elite"
-                description="Vision panoramique de la souveraineté commerciale"
+                description="Pilotage souverain de votre écosystème commercial"
                 icon={LayoutDashboard}
             >
                 <div className="flex gap-4 items-center">
@@ -69,17 +65,17 @@ export default function DashboardPage() {
                 </div>
             </PageHeader>
 
-            {/* Grille des KPIs Stratégiques */}
+            {/* KPI STRATÉGIQUES */}
             <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-4">
                 {statCards.map(card => (
                     <StatCard key={card.title} {...card} isLoading={isLoading} />
                 ))}
             </div>
 
-            {/* Layout Principal de Pilotage */}
+            {/* LAYOUT PRINCIPAL */}
             <div className="grid lg:grid-cols-12 gap-8">
                 
-                {/* Colonne Gauche - Analyse Graphique & Performance */}
+                {/* COLONNE GAUCHE - ANALYSE & PERFORMANCE */}
                 <div className="lg:col-span-8 space-y-8">
                     <DashboardCharts data={data?.salesByDay ?? []} isLoading={isLoading} />
                     
@@ -91,14 +87,14 @@ export default function DashboardPage() {
                     <ActivityFeed items={data?.recentActivity ?? []} isLoading={isLoading} />
                 </div>
 
-                {/* Colonne Droite - Vigilance & Actions Rapides */}
+                {/* COLONNE DROITE - VIGILANCE & ACTIONS */}
                 <div className="lg:col-span-4 space-y-8">
                     
-                    {/* Panneau d'Actions Instantanées */}
+                    {/* ACTIONS RAPIDES */}
                     <Card className="rounded-2xl border-white/5 bg-primary/5 shadow-xl overflow-hidden group">
                         <CardHeader className="bg-primary/10 border-b border-primary/20 p-4">
                             <CardTitle className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                                <PlusCircle className="h-4 w-4" /> Actions Prioritaires
+                                <PlusCircle className="h-4 w-4" /> Console d'Exécution
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 grid grid-cols-2 gap-3">
@@ -111,40 +107,92 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Widgets de Surveillance Spécifiques */}
+                    {/* WIDGET PAIN & ALERTES */}
                     <DashboardWidgets type="bread" data={data?.breadSummary} isLoading={isLoading} />
                     <DashboardWidgets type="alerts" data={data?.alerts} isLoading={isLoading} />
                     
-                    {/* Indicateur de Santé du Stock */}
+                    {/* SANTÉ DU STOCK */}
                     <Card className="rounded-2xl border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
                         <CardHeader className="bg-muted/20 border-b border-white/5 p-4">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest opacity-40">Statut du Catalogue</CardTitle>
+                            <CardTitle className="text-xs font-black uppercase tracking-widest opacity-40">État du Catalogue</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            <HealthMetric 
-                                label="Ruptures de stock" 
-                                value={data?.inventoryHealth.outOfStock ?? 0} 
-                                color="text-red-500" 
-                                total={data?.inventoryHealth.outOfStock ?? 0 + (data?.inventoryHealth.healthy ?? 0)} 
-                            />
-                            <HealthMetric 
-                                label="Articles sous seuil" 
-                                value={data?.inventoryHealth.lowStock ?? 0} 
-                                color="text-amber-500" 
-                                total={data?.inventoryHealth.healthy ?? 0} 
-                            />
-                            <HealthMetric 
-                                label="Articles opérationnels" 
-                                value={data?.inventoryHealth.healthy ?? 0} 
-                                color="text-emerald-500" 
-                                total={data?.inventoryHealth.healthy ?? 0} 
-                            />
+                            <HealthMetric label="Ruptures" value={data?.inventoryHealth.outOfStock ?? 0} color="text-red-500" total={data?.kpis.activeProducts ?? 1} />
+                            <HealthMetric label="Stock Faible" value={data?.inventoryHealth.lowStock ?? 0} color="text-amber-500" total={data?.kpis.activeProducts ?? 1} />
+                            <HealthMetric label="Opérationnels" value={data?.inventoryHealth.healthy ?? 0} color="text-emerald-500" total={data?.kpis.activeProducts ?? 1} />
                         </CardContent>
                         <div className="p-4 bg-muted/10 border-t border-white/5 text-center">
                             <p className="text-[10px] font-black uppercase text-muted-foreground/30">
-                                Valorisation Stock : {formatCurrency(data?.inventoryHealth.totalValue ?? 0)}
+                                Valeur Immobilisée : {formatCurrency(data?.inventoryHealth.totalValue ?? 0)}
                             </p>
                         </div>
+                    </Card>
+
+                    {/* MONITORING DETTES */}
+                    <Card className="rounded-2xl border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
+                        <CardHeader className="bg-muted/20 border-b border-white/5 p-4 flex flex-row items-center justify-between">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest opacity-40">Vieillissement Dettes</CardTitle>
+                            <PieChart className="h-4 w-4 opacity-20" />
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="h-[200px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RePieChart>
+                                        <Pie
+                                            data={data?.debtAging ?? []}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            <Cell fill="hsl(var(--chart-2))" />
+                                            <Cell fill="hsl(var(--chart-3))" />
+                                            <Cell fill="hsl(var(--chart-5))" />
+                                        </Pie>
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: 'none', fontSize: '10px' }}
+                                            formatter={(v: number) => formatCurrency(v)}
+                                        />
+                                    </RePieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-3 mt-4">
+                                {data?.debtAging.map((age, i) => (
+                                    <div key={i} className="flex justify-between items-center text-[10px] font-bold uppercase">
+                                        <span className="text-muted-foreground/40">{age.label}</span>
+                                        <span className="tabular-nums">{formatCurrency(age.value)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* INDICATEURS DE PERFORMANCE */}
+                    <Card className="rounded-2xl border-white/5 bg-secondary text-secondary-foreground shadow-2xl overflow-hidden relative">
+                        <BarChart3 className="absolute -right-4 -bottom-4 h-24 w-24 opacity-5 rotate-12" />
+                        <CardHeader className="p-4 border-b border-white/5">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-40">Ratios Elite</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 grid grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold opacity-40 uppercase">Rotation Stock</p>
+                                <p className="text-xl font-black">{data?.kpis.stockRotation.toFixed(2)}x</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold opacity-40 uppercase">Taux Recouvrement</p>
+                                <p className="text-xl font-black text-emerald-400">{data?.kpis.recoveryRate.toFixed(1)}%</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold opacity-40 uppercase">Clients Actifs</p>
+                                <p className="text-xl font-black">{data?.kpis.activeCustomers}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-bold opacity-40 uppercase">Articles en Vente</p>
+                                <p className="text-xl font-black">{data?.kpis.activeProducts}</p>
+                            </div>
+                        </CardContent>
                     </Card>
                 </div>
             </div>
@@ -156,7 +204,7 @@ function QuickActionLink({ href, label, icon: Icon }: { href: string, label: str
     return (
         <Link href={href} className="flex flex-col items-center justify-center p-4 rounded-2xl bg-card border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all group shadow-sm">
             <Icon className="h-6 w-6 text-primary/40 group-hover:text-primary transition-colors mb-2" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 group-hover:text-primary">{label}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 group-hover:text-primary text-center">{label}</span>
         </Link>
     );
 }

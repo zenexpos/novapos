@@ -9,6 +9,7 @@ export interface DashboardStats {
     totalInventoryValue: number;
     averageBasket: number;
     profitMargin: number;
+    // Trends
     totalRevenueChange?: number;
     netProfitChange?: number;
     totalExpensesChange?: number;
@@ -22,7 +23,7 @@ export interface RecentActivity {
     description: string;
     timestamp: Date;
     amount?: number;
-    status?: 'success' | 'warning' | 'info';
+    status?: 'success' | 'warning' | 'info' | 'error';
 }
 
 export interface BreadSummary {
@@ -59,19 +60,17 @@ export interface TopCustomer {
     lastPurchaseDate?: Date;
 }
 
-export interface LowStockProduct {
-    uuid: string;
-    name: string;
-    quantity: number;
-    minStockLevel: number;
-    unit?: string;
-}
-
 export interface SalesByDay {
     date: string;
     revenue: number;
     profit: number;
     expenses: number;
+}
+
+export interface DebtAging {
+    label: string;
+    value: number;
+    count: number;
 }
 
 export interface DashboardData {
@@ -82,10 +81,17 @@ export interface DashboardData {
     topProducts: TopProduct[];
     topCustomers: TopCustomer[];
     recentActivity: RecentActivity[];
+    debtAging: DebtAging[];
     inventoryHealth: {
         outOfStock: number;
         lowStock: number;
         healthy: number;
         totalValue: number;
+    };
+    kpis: {
+        stockRotation: number;
+        recoveryRate: number;
+        activeCustomers: number;
+        activeProducts: number;
     };
 }
