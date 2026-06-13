@@ -79,7 +79,7 @@ export function BreadClientList({ onListChange }: BreadClientListProps) {
                 <CardContent className="flex-grow min-h-0 p-6">
                     <ScrollArea className="h-full pr-4 -mr-4">
                         <div className="space-y-3">
-                            {isLoading && [...Array(6)].map((_, i) => <Skeleton className="h-20 w-full rounded-3xl bg-white/5 animate-pulse" />)}
+                            {isLoading && [...Array(6)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-3xl bg-white/5 animate-pulse" />)}
                             
                             {!isLoading && clients?.map(client => (
                                 <div 
