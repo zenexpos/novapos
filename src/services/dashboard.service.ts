@@ -1,228 +1,168 @@
 'use client';
 
-import type { DashboardData, TopCustomer, SalesByDay, RecentSale, RecentReturn, DashboardStats, TopProduct, LowStockProduct } from '@/lib/types';
-import { eachDayOfInterval, format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { db } from '@/lib/db';
-import { preciseMultiply, safeNumber, roundFinancial } from '@/lib/utils';
+import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, TopCustomer } from '@/lib/types';
+import { startOfDay, endOfDay, subDays, format, eachDayOfInterval } from 'date-fns';
+import { preciseMultiply, safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 
-/**
- * @fileOverview Service de pilotage analytique iPOS Zen.
- * OPTIMISÉ : Utilise des compteurs natifs et limite les scans de table pour éviter les gels UI.
- */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
-        try {
-            const startDate = startOfDay(from);
-            const endDate = endOfDay(to);
+        const start = startOfDay(from);
+        const end = endOfDay(to);
 
-            const duration = endDate.getTime() - startDate.getTime();
-            const prevEndDate = new Date(startDate.getTime() - 1);
-            const prevStartDate = new Date(prevEndDate.getTime() - duration);
+        // Previous period for variations
+        const duration = end.getTime() - start.getTime();
+        const prevEnd = new Date(start.getTime() - 1);
+        const prevStart = new Date(prevEnd.getTime() - duration);
 
-            // OPTIMISATION : On ne récupère que les données nécessaires à la période
-            const [allSales, allExpenses, allReturns, allCustomers, allProducts] =
-                await Promise.all([
-                    db.sales.where('createdAt').between(prevStartDate, endDate, true, true).filter(s => !s.isCancelled).toArray(),
-                    db.expenses.where('expenseDate').between(prevStartDate, endDate, true, true).toArray(),
-                    db.product_returns.where('createdAt').between(prevStartDate, endDate, true, true).toArray(),
-                    db.customers.toArray(),
-                    db.products.toArray(),
-                ]);
+        const [
+            sales, prevSales,
+            expenses, prevExpenses,
+            payments,
+            returns,
+            breadOrders,
+            customers,
+            products,
+            intakes
+        ] = await Promise.all([
+            db.sales.where('createdAt').between(start, end, true, true).filter(s => !s.isCancelled).toArray(),
+            db.sales.where('createdAt').between(prevStart, prevEnd, true, true).filter(s => !s.isCancelled).toArray(),
+            db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
+            db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).toArray(),
+            db.payments.where('paymentDate').between(start, end, true, true).toArray(),
+            db.product_returns.where('createdAt').between(start, end, true, true).toArray(),
+            db.bread_orders.where('date').equals(format(new Date(), 'yyyy-MM-dd')).toArray(),
+            db.customers.toArray(),
+            db.products.toArray(),
+            db.stock_intakes.orderBy('createdAt').reverse().limit(10).toArray()
+        ]);
 
-            const productPurchaseMap = new Map<string, number>(allProducts.map(p => [p.uuid, safeNumber(p.purchasePrice)]));
-            const customerMap = new Map<string, string>(allCustomers.map(c => [c.uuid, `${c.firstName} ${c.lastName}`]));
+        const calcRev = (sList: any[]) => sList.reduce((sum, s) => sum + safeNumber(s.total), 0);
+        const calcCount = (sList: any[]) => sList.length;
+        
+        const currRev = calcRev(sales);
+        const prevRev = calcRev(prevSales);
+        const currExp = expenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
+        const prevExp = prevExpenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
+        
+        const currCount = calcCount(sales);
+        const prevCount = calcCount(prevSales);
 
-            let currRevCents = 0; let currCogsCents = 0; let currExpCents = 0; let currRetValCents = 0; let currRetCogsCents = 0; let currCount = 0;
-            let prevRevCents = 0; let prevCogsCents = 0; let prevExpCents = 0; let prevRetValCents = 0; let prevRetCogsCents = 0; let prevCount = 0;
+        const calcChange = (curr: number, prev: number) => {
+            if (prev === 0) return curr > 0 ? 100 : 0;
+            return ((curr - prev) / Math.abs(prev)) * 100;
+        };
 
-            const productStatsMap = new Map<string, { quantity: number; revenueCents: number }>();
-            const customerSpendingMapCents = new Map<string, number>();
-            const dailyMapCents = new Map<string, { totalCents: number; profitCents: number; count: number }>();
+        const stats: DashboardStats = {
+            totalRevenue: roundFinancial(currRev),
+            totalExpenses: roundFinancial(currExp),
+            netProfit: roundFinancial(currRev - currExp),
+            saleCount: currCount,
+            totalOutstandingDebt: customers.reduce((sum, c) => sum + safeNumber(c.outstandingBalance), 0),
+            totalInventoryValue: products.reduce((sum, p) => sum + (safeNumber(p.quantity) * safeNumber(p.purchasePrice)), 0),
+            averageBasket: currCount > 0 ? currRev / currCount : 0,
+            profitMargin: currRev > 0 ? ((currRev - currExp) / currRev) * 100 : 0,
+            totalRevenueChange: calcChange(currRev, prevRev),
+            totalExpensesChange: calcChange(currExp, prevExp),
+            netProfitChange: calcChange(currRev - currExp, prevRev - prevExp),
+            saleCountChange: calcChange(currCount, prevCount)
+        };
 
-            eachDayOfInterval({ start: startDate, end: endDate }).forEach(day => {
-                dailyMapCents.set(format(day, 'yyyy-MM-dd'), { totalCents: 0, profitCents: 0, count: 0 });
-            });
-
-            allSales.forEach(sale => {
-                const saleDate = new Date(sale.createdAt!);
-                const isCurrent = saleDate >= startDate;
-                let saleCOGSCents = 0;
-
-                sale.items.forEach(item => {
-                    const qty = safeNumber(item.quantity);
-                    const cost = safeNumber(item.purchasePrice) || productPurchaseMap.get(item.productUuid || '') || 0;
-                    const lineCOGS = Math.round(preciseMultiply(cost, qty) * 100);
-                    saleCOGSCents += lineCOGS;
-
-                    if (isCurrent && item.productUuid) {
-                        const ps = productStatsMap.get(item.productUuid) || { quantity: 0, revenueCents: 0 };
-                        ps.quantity += qty;
-                        ps.revenueCents += Math.round(preciseMultiply(safeNumber(item.price), qty) * 100);
-                        productStatsMap.set(item.productUuid, ps);
-                    }
-                });
-
-                const totalSaleCents = Math.round(safeNumber(sale.total) * 100);
-
-                if (isCurrent) {
-                    currRevCents += totalSaleCents;
-                    currCogsCents += saleCOGSCents;
-                    currCount++;
-                    const dayKey = format(saleDate, 'yyyy-MM-dd');
-                    const d = dailyMapCents.get(dayKey);
-                    if (d) {
-                        d.totalCents += totalSaleCents;
-                        d.profitCents += (totalSaleCents - saleCOGSCents);
-                        d.count += 1;
-                    }
-                    if (sale.customerUuid) {
-                        customerSpendingMapCents.set(sale.customerUuid, (customerSpendingMapCents.get(sale.customerUuid) || 0) + totalSaleCents);
-                    }
-                } else {
-                    prevRevCents += totalSaleCents;
-                    prevCogsCents += saleCOGSCents;
-                    prevCount++;
-                }
-            });
-
-            allReturns.forEach(ret => {
-                const retDate = new Date(ret.createdAt!);
-                const isCurrent = retDate >= startDate;
-                let retCOGSCents = 0;
-
-                ret.items.forEach(item => {
-                    if (item.wasRestocked) {
-                        const cost = safeNumber(item.purchasePrice) || productPurchaseMap.get(item.productUuid || '') || 0;
-                        retCOGSCents += Math.round(preciseMultiply(cost, item.quantity) * 100);
-                    }
-                });
-
-                const totalRetCents = Math.round(safeNumber(ret.totalReturnValue) * 100);
-
-                if (isCurrent) {
-                    currRetValCents += totalRetCents;
-                    currRetCogsCents += retCOGSCents;
-                    const dayKey = format(retDate, 'yyyy-MM-dd');
-                    const d = dailyMapCents.get(dayKey);
-                    if (d) {
-                        d.totalCents -= totalRetCents;
-                        d.profitCents -= (totalRetCents - retCOGSCents);
-                    }
-                    if (ret.customerUuid) {
-                        customerSpendingMapCents.set(ret.customerUuid, (customerSpendingMapCents.get(ret.customerUuid) || 0) - totalRetCents);
-                    }
-                } else {
-                    prevRetValCents += totalRetCents;
-                    prevRetCogsCents += retCOGSCents;
-                }
-            });
-
-            allExpenses.forEach(exp => {
-                const valCents = Math.round(safeNumber(exp.amount) * 100);
-                if (new Date(exp.expenseDate) >= startDate) currExpCents += valCents;
-                else prevExpCents += valCents;
-            });
-
-            const netRevenue = (currRevCents - currRetValCents) / 100;
-            const prevNetRevenue = (prevRevCents - prevRetValCents) / 100;
-            
-            const netProfit = (currRevCents - currRetValCents - (currCogsCents - currRetCogsCents) - currExpCents) / 100;
-            const prevNetProfit = (prevRevCents - prevRetValCents - (prevCogsCents - prevRetCogsCents) - prevExpCents) / 100;
-
-            const calcChange = (curr: number, prev: number) => {
-                if (Math.abs(prev) < 0.1) return curr > 0.1 ? 100 : 0;
-                return ((curr - prev) / Math.abs(prev)) * 100;
-            };
-
-            const stats: DashboardStats = {
-                totalRevenue: netRevenue,
-                totalExpenses: currExpCents / 100,
-                netProfit: netProfit,
-                saleCount: currCount,
-                totalOutstandingDebt: allCustomers.reduce((sum, c) => sum + safeNumber(c.outstandingBalance), 0),
-                totalInventoryValue: allProducts.reduce((sum, p) => sum + preciseMultiply(safeNumber(p.quantity), safeNumber(p.purchasePrice)), 0),
-                averageBasket: currCount > 0 ? netRevenue / currCount : 0,
-                profitMargin: netRevenue > 0.1 ? (netProfit / netRevenue) * 100 : 0,
-                totalRevenueChange: calcChange(netRevenue, prevNetRevenue),
-                netProfitChange: calcChange(netProfit, prevNetProfit),
-                totalExpensesChange: calcChange(currExpCents / 100, prevExpCents / 100),
-                saleCountChange: calcChange(currCount, prevCount),
-            };
-
-            // OPTIMISATION : Utilise count() natif au lieu de toArray().length pour les intakes
-            const totalIntakes = await db.stock_intakes.count();
-
+        // Charts
+        const days = eachDayOfInterval({ start, end });
+        const salesByDay: SalesByDay[] = days.map(day => {
+            const dayStr = format(day, 'yyyy-MM-dd');
+            const daySales = sales.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dayStr);
+            const dayExpenses = expenses.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dayStr);
+            const rev = daySales.reduce((sum, s) => sum + safeNumber(s.total), 0);
+            const exp = dayExpenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
             return {
-                stats,
-                salesByDay: Array.from(dailyMapCents.entries()).map(([date, v]) => ({ date, total: v.totalCents / 100, profit: v.profitCents / 100, count: v.count })),
-                recentSales: allSales
-                    .filter(s => new Date(s.createdAt!) >= startDate)
-                    .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-                    .slice(0, 5)
-                    .map(s => ({
-                        uuid: s.uuid,
-                        invoiceNumber: s.invoiceNumber,
-                        total: safeNumber(s.total),
-                        createdAt: s.createdAt,
-                        paymentStatus: s.paymentStatus,
-                        customerName: s.customerUuid ? (customerMap.get(s.customerUuid) || 'INALT') : 'Client de passage',
-                    } as RecentSale)),
-                recentReturns: allReturns
-                    .filter(r => new Date(r.createdAt!) >= startDate)
-                    .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-                    .slice(0, 5)
-                    .map(r => ({
-                        uuid: r.uuid,
-                        originalInvoiceNumber: r.originalInvoiceNumber,
-                        totalReturnValue: safeNumber(r.totalReturnValue),
-                        createdAt: r.createdAt,
-                        customerName: r.customerUuid ? (customerMap.get(r.customerUuid) || 'INALT') : 'Client de passage',
-                    } as RecentReturn)),
-
-                topProducts: Array.from(productStatsMap.entries())
-                    .sort((a, b) => b[1].revenueCents - a[1].revenueCents)
-                    .slice(0, 5)
-                    .map(([uuid, pStats]) => {
-                        const p = allProducts.find(prod => prod.uuid === uuid);
-                        const marginTotal = pStats.quantity > 0
-                            ? (pStats.revenueCents / 100) - (pStats.quantity * (productPurchaseMap.get(uuid) ?? 0))
-                            : 0;
-                        return {
-                            productUuid: uuid,
-                            name: p?.name || 'Produit Archivé',
-                            quantitySold: pStats.quantity,
-                            revenueGenerated: pStats.revenueCents / 100,
-                            marginTotal,
-                        } as TopProduct;
-                    }),
-                topCustomers: Array.from(customerSpendingMapCents.entries())
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5)
-                    .map(([uuid, spentCents]) => ({
-                        customerUuid: uuid,
-                        name: customerMap.get(uuid) || 'Client de passage',
-                        totalSpent: spentCents / 100,
-                        saleCount: allSales.filter(s =>
-                            s.customerUuid === uuid &&
-                            new Date(s.createdAt!).getTime() >= startDate.getTime()
-                        ).length,
-                    } as TopCustomer)),
-                lowStockProducts: allProducts
-                    .filter(p => { const qty = safeNumber(p.quantity); const min = safeNumber(p.minStockLevel); return qty <= 0 || (min > 0 && qty <= min); })
-                    .sort((a, b) => safeNumber(a.quantity) - safeNumber(b.quantity))
-                    .slice(0, 5)
-                    .map(p => ({
-                        uuid: p.uuid,
-                        name: p.name,
-                        quantity: p.quantity,
-                        minStockLevel: p.minStockLevel,
-                        unit: p.unit
-                    } as LowStockProduct)),
+                date: format(day, 'dd/MM'),
+                revenue: roundFinancial(rev),
+                profit: roundFinancial(rev - exp),
+                expenses: roundFinancial(exp)
             };
-        } catch (error) {
-            console.error('Audit Analytics Error:', error);
-            throw error;
-        }
+        });
+
+        // Bread
+        const breadSummary: BreadSummary = {
+            totalOrders: breadOrders.length,
+            totalQuantity: breadOrders.reduce((sum, o) => sum + o.quantity, 0),
+            deliveredCount: breadOrders.filter(o => o.isDelivered).length,
+            paidCount: breadOrders.filter(o => o.isPaid).length,
+            unpaidCount: breadOrders.filter(o => !o.isPaid).length,
+            remainingAmount: breadOrders.filter(o => !o.isPaid).reduce((sum, o) => sum + o.totalAmount, 0)
+        };
+
+        // Alerts
+        const alerts: DashboardAlert[] = [];
+        products.forEach(p => {
+            if (p.quantity <= 0) alerts.push({ id: `out-${p.uuid}`, type: 'critical', message: `Rupture: ${p.name}`, description: 'Le stock est épuisé.' });
+            else if (p.quantity <= p.minStockLevel) alerts.push({ id: `low-${p.uuid}`, type: 'warning', message: `Stock faible: ${p.name}`, description: `Reste ${p.quantity} ${p.unit}.` });
+        });
+        customers.forEach(c => {
+            if (c.isOverLimit) alerts.push({ id: `debt-${c.uuid}`, type: 'critical', message: `Plafond dépassé: ${c.firstName} ${c.lastName}`, description: `Dette: ${formatCurrency(c.outstandingBalance)}` });
+        });
+
+        // Top Products (by Revenue)
+        const productStats = new Map<string, { qty: number, rev: number, cost: number }>();
+        sales.forEach(s => s.items.forEach(i => {
+            if (!i.productUuid) return;
+            const curr = productStats.get(i.productUuid) || { qty: 0, rev: 0, cost: 0 };
+            curr.qty += i.quantity;
+            curr.rev += (i.price * i.quantity);
+            curr.cost += (i.purchasePrice * i.quantity);
+            productStats.set(i.productUuid, curr);
+        }));
+
+        const topProducts: TopProduct[] = Array.from(productStats.entries())
+            .map(([uuid, stat]) => {
+                const p = products.find(prod => prod.uuid === uuid);
+                return {
+                    productUuid: uuid,
+                    name: p?.name || 'Inconnu',
+                    quantitySold: stat.qty,
+                    revenueGenerated: stat.rev,
+                    marginTotal: stat.rev - stat.cost,
+                    marginPercent: stat.rev > 0 ? ((stat.rev - stat.cost) / stat.rev) * 100 : 0
+                };
+            })
+            .sort((a, b) => b.revenueGenerated - a.revenueGenerated)
+            .slice(0, 10);
+
+        // Recent Activity
+        const recentActivity: RecentActivity[] = [
+            ...sales.slice(-10).map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Client Premium' : 'Client de passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
+            ...payments.slice(-5).map(p => ({ id: p.uuid, type: 'payment' as const, title: 'Encaissement Dette', description: 'Versement reçu', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'info' as const })),
+            ...returns.slice(-5).map(r => ({ id: r.uuid, type: 'return' as const, title: `Retour #${r.originalInvoiceNumber}`, description: 'Marchandise réintégrée', timestamp: safeToDate(r.createdAt!), amount: r.totalReturnValue, status: 'warning' as const })),
+            ...intakes.slice(-5).map(i => ({ id: i.uuid, type: 'intake' as const, title: 'Réception Fournisseur', description: i.invoiceNumber || 'Sans réf', timestamp: safeToDate(i.createdAt!), amount: i.totalValue, status: 'info' as const }))
+        ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 20);
+
+        return {
+            stats,
+            salesByDay,
+            breadSummary,
+            alerts: alerts.sort((a, b) => (a.type === 'critical' ? -1 : 1)).slice(0, 10),
+            topProducts,
+            topCustomers: customers
+                .filter(c => c.totalSpent > 0)
+                .sort((a, b) => b.totalSpent - a.totalSpent)
+                .slice(0, 10)
+                .map(c => ({
+                    customerUuid: c.uuid,
+                    name: `${c.firstName} ${c.lastName}`,
+                    totalSpent: c.totalSpent,
+                    outstandingBalance: c.outstandingBalance,
+                    lastPurchaseDate: c.lastActivityDate
+                })),
+            recentActivity,
+            inventoryHealth: {
+                outOfStock: products.filter(p => p.quantity <= 0).length,
+                lowStock: products.filter(p => p.quantity > 0 && p.quantity <= p.minStockLevel).length,
+                healthy: products.filter(p => p.quantity > p.minStockLevel).length,
+                totalValue: products.reduce((sum, p) => sum + (safeNumber(p.quantity) * safeNumber(p.purchasePrice)), 0)
+            }
+        };
     }
 }
 

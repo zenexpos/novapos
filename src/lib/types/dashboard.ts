@@ -15,21 +15,31 @@ export interface DashboardStats {
     saleCountChange?: number;
 }
 
-export interface RecentSale {
-    uuid: string;
-    invoiceNumber: string;
-    total: number;
-    createdAt: Date;
-    paymentStatus: SaleStatus;
-    customerName: string;
+export interface RecentActivity {
+    id: string;
+    type: 'sale' | 'return' | 'payment' | 'product' | 'customer' | 'expense' | 'intake';
+    title: string;
+    description: string;
+    timestamp: Date;
+    amount?: number;
+    status?: 'success' | 'warning' | 'info';
 }
 
-export interface RecentReturn {
-    uuid: string;
-    originalInvoiceNumber: string;
-    totalReturnValue: number;
-    createdAt: Date;
-    customerName: string;
+export interface BreadSummary {
+    totalOrders: number;
+    totalQuantity: number;
+    deliveredCount: number;
+    paidCount: number;
+    unpaidCount: number;
+    remainingAmount: number;
+}
+
+export interface DashboardAlert {
+    id: string;
+    type: 'critical' | 'warning' | 'info';
+    message: string;
+    description?: string;
+    icon?: string;
 }
 
 export interface TopProduct {
@@ -38,13 +48,15 @@ export interface TopProduct {
     quantitySold: number;
     revenueGenerated: number;
     marginTotal: number;
+    marginPercent: number;
 }
 
 export interface TopCustomer {
     customerUuid: string;
     name: string;
     totalSpent: number;
-    saleCount: number;
+    outstandingBalance: number;
+    lastPurchaseDate?: Date;
 }
 
 export interface LowStockProduct {
@@ -57,17 +69,23 @@ export interface LowStockProduct {
 
 export interface SalesByDay {
     date: string;
-    total: number;
+    revenue: number;
     profit: number;
-    count: number;
+    expenses: number;
 }
 
 export interface DashboardData {
     stats: DashboardStats;
     salesByDay: SalesByDay[];
-    recentSales: RecentSale[];
-    recentReturns: RecentReturn[];
+    breadSummary: BreadSummary;
+    alerts: DashboardAlert[];
     topProducts: TopProduct[];
     topCustomers: TopCustomer[];
-    lowStockProducts: LowStockProduct[];
+    recentActivity: RecentActivity[];
+    inventoryHealth: {
+        outOfStock: number;
+        lowStock: number;
+        healthy: number;
+        totalValue: number;
+    };
 }
