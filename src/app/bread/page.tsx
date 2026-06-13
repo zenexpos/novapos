@@ -19,7 +19,8 @@ import {
     Search,
     Clock,
     Users,
-    Calendar
+    Calendar,
+    Filter
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -27,6 +28,15 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * Page de gestion avancée du pain (Système Elite).
@@ -34,6 +44,7 @@ import { toast } from 'sonner';
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessingTransfers, setIsProcessingTransfers] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
@@ -55,6 +66,13 @@ export default function BreadPage() {
         if (!ordersResult.value) return [];
         let list = ordersResult.value;
 
+        // Filtre Statut
+        if (statusFilter !== 'all') {
+            const isPaid = statusFilter === 'paid';
+            list = list.filter(o => o.isPaid === isPaid);
+        }
+
+        // Filtre Recherche
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
@@ -64,7 +82,7 @@ export default function BreadPage() {
             );
         }
         return list;
-    }, [ordersResult.value, searchQuery]);
+    }, [ordersResult.value, searchQuery, statusFilter]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
@@ -139,14 +157,36 @@ export default function BreadPage() {
                     </TabsList>
 
                     {activeTab === 'distribution' && (
-                        <div className="relative flex-grow max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input 
-                                placeholder="Rechercher par client ou N° commande..."
-                                className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                            />
+                        <div className="flex gap-3 flex-grow max-w-2xl">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                                <Input 
+                                    placeholder="Rechercher par client ou N° commande..."
+                                    className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="h-11 rounded-xl border-none bg-card shadow-sm gap-2 px-4">
+                                        <Filter className="h-4 w-4 opacity-40" />
+                                        <span className="text-xs font-bold uppercase tracking-tight">
+                                            {statusFilter === 'all' ? 'Tous' : statusFilter === 'paid' ? 'Payés' : 'Non Payés'}
+                                        </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground">Statut de Paiement</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous les flux</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold uppercase text-emerald-500">Payés uniquement</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold uppercase text-orange-500">Non payés</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
                 </div>

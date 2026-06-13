@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import type { BreadOrder } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, Wallet, Landmark, AlertCircle, ShoppingBag } from 'lucide-react';
+import { Package, Truck, Wallet, Landmark, AlertCircle, ShoppingBag, CheckCircle2, XCircle } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -36,7 +36,7 @@ export function BreadStats({ date }: BreadStatsProps) {
     const stats = useMemo(() => {
         if (!ordersResult.value) return { 
             count: 0, totalPieces: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
-            unreceivedPieces: 0, transferred: 0, debts: 0 
+            unreceivedPieces: 0, transferred: 0, debts: 0, paidCount: 0, unpaidCount: 0
         };
         const orders = ordersResult.value;
 
@@ -44,11 +44,13 @@ export function BreadStats({ date }: BreadStatsProps) {
             count: orders.length,
             totalPieces: orders.reduce((s, o) => s + (o.quantity || 0), 0),
             totalVal: orders.reduce((s, o) => s + o.totalAmount, 0),
-            paidVal: orders.reduce((s, o) => s + o.amountPaid, 0),
-            unpaidVal: orders.reduce((s, o) => s + o.remainingAmount, 0),
-            unreceivedPieces: orders.filter(o => o.pickupStatus !== 'received').reduce((s, o) => s + (o.quantity || 0), 0),
+            paidVal: orders.reduce((s, o) => s + (o.isPaid ? o.totalAmount : o.amountPaid), 0),
+            unpaidVal: orders.reduce((s, o) => s + (o.isPaid ? 0 : o.remainingAmount), 0),
+            unreceivedPieces: orders.filter(o => !o.isDelivered).reduce((s, o) => s + (o.quantity || 0), 0),
             transferred: orders.filter(o => o.transferredToCustomerAccount).length,
-            debts: orders.filter(o => o.transferredToCustomerAccount).reduce((s, o) => s + o.remainingAmount, 0)
+            debts: orders.filter(o => o.transferredToCustomerAccount).reduce((s, o) => s + o.remainingAmount, 0),
+            paidCount: orders.filter(o => o.isPaid).length,
+            unpaidCount: orders.filter(o => !o.isPaid).length
         };
     }, [ordersResult.value]);
 
@@ -59,31 +61,27 @@ export function BreadStats({ date }: BreadStatsProps) {
     }
 
     return (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7 animate-in fade-in duration-500">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-500">
             <StatCard 
                 title="Volume Total" 
                 value={`${stats.totalPieces} PCS`} 
                 icon={ShoppingBag} 
                 colorClass="bg-primary/10 text-primary" 
-                subtitle="Nombre d'arghifa"
+                subtitle={`${stats.count} flux identifiés`}
             />
             <StatCard 
-                title="Valeur Ventes" 
-                value={formatCurrency(stats.totalVal)} 
-                icon={Landmark} 
+                title="Commandes Payées" 
+                value={String(stats.paidCount)} 
+                icon={CheckCircle2} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
+                subtitle={formatCurrency(stats.paidVal)}
             />
             <StatCard 
-                title="Total Encaissé" 
-                value={formatCurrency(stats.paidVal)} 
-                icon={Wallet} 
-                colorClass="bg-emerald-500/10 text-emerald-500" 
-            />
-            <StatCard 
-                title="Restant Dû" 
-                value={formatCurrency(stats.unpaidVal)} 
-                icon={AlertCircle} 
-                colorClass="bg-destructive/10 text-destructive" 
+                title="Non Payées" 
+                value={String(stats.unpaidCount)} 
+                icon={XCircle} 
+                colorClass="bg-orange-500/10 text-orange-500" 
+                subtitle={formatCurrency(stats.unpaidVal)}
             />
             <StatCard 
                 title="À Livrer" 
@@ -93,18 +91,11 @@ export function BreadStats({ date }: BreadStatsProps) {
                 subtitle="Reliquat en arghifa"
             />
             <StatCard 
-                title="N° Commandes" 
-                value={String(stats.count)} 
-                icon={Package} 
-                colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle="Flux identifiés"
-            />
-            <StatCard 
-                title="Transféré" 
-                value={String(stats.transferred)} 
+                title="Valeur Totale" 
+                value={formatCurrency(stats.totalVal)} 
                 icon={Landmark} 
-                colorClass="bg-purple-500/10 text-purple-500" 
-                subtitle="Inscrit en compte"
+                colorClass="bg-blue-500/10 text-blue-500" 
+                subtitle="Chiffre attendu"
             />
         </div>
     );

@@ -13,7 +13,8 @@ import {
     Trash2, 
     User, 
     Hash, 
-    CloudUpload
+    CloudUpload,
+    Banknote
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';
@@ -32,6 +33,11 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
         const newState = !order.isDelivered;
         await breadService.updateBreadOrderDeliveryStatus(order.uuid, newState);
         toast.success(newState ? 'Article livré' : 'Livraison annulée');
+    };
+
+    const handleTogglePayment = async (order: BreadOrderWithCustomer, checked: boolean) => {
+        await breadService.updatePaymentStatus(order.uuid, checked);
+        toast.success(checked ? 'Paiement confirmé' : 'Paiement annulé');
     };
 
     const handleDelete = async () => {
@@ -56,7 +62,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Client</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Quantité</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Total</TableHead>
-                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Paiement</TableHead>
+                        <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Payé</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Livraison</TableHead>
                         <TableHead className="p-4 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Compte</TableHead>
                         <TableHead className="w-[100px]"></TableHead>
@@ -92,12 +98,19 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                 {formatCurrency(order.totalAmount)}
                             </TableCell>
                             <TableCell className="p-4 text-center">
-                                <Badge className={cn(
-                                    "text-[8px] font-black uppercase px-2 py-0.5 border-none",
-                                    order.saleUuid ? "bg-emerald-500 text-white" : "bg-destructive text-white"
-                                )}>
-                                    {order.saleUuid ? 'Vendu' : 'En attente'}
-                                </Badge>
+                                <div className="flex flex-col items-center gap-2">
+                                    <Badge className={cn(
+                                        "text-[8px] font-black uppercase px-2 py-0.5 border-none",
+                                        order.isPaid ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"
+                                    )}>
+                                        {order.isPaid ? 'Payé' : 'Non payé'}
+                                    </Badge>
+                                    <Switch 
+                                        checked={order.isPaid} 
+                                        onCheckedChange={(checked) => handleTogglePayment(order, checked)}
+                                        className="data-[state=checked]:bg-emerald-500"
+                                    />
+                                </div>
                             </TableCell>
                             <TableCell className="p-4 text-center">
                                 <div className="flex flex-col items-center gap-2">

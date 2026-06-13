@@ -107,6 +107,18 @@ class BreadService {
         this.triggerSync();
     }
 
+    async updatePaymentStatus(uuid: string, isPaid: boolean): Promise<void> {
+        const order = await db.bread_orders.where('uuid').equals(uuid).first();
+        if (!order) return;
+
+        await db.bread_orders.update(order.id!, {
+            isPaid,
+            paymentStatus: isPaid ? 'paid' : 'unpaid',
+            updatedAt: new Date()
+        });
+        this.triggerSync();
+    }
+
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
