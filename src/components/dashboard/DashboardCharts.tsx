@@ -31,8 +31,8 @@ export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
                         <TrendingUp className="h-6 w-6" />
                     </div>
                     <div>
-                        <CardTitle className="text-xl font-black tracking-tighter uppercase">Performance Commerciale</CardTitle>
-                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">Évolution consolidée CA vs Bénéfices</p>
+                        <CardTitle className="text-xl font-black tracking-tighter uppercase">Dynamique Commerciale</CardTitle>
+                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">Comparatif CA vs Profit sur la période</p>
                     </div>
                 </div>
             </CardHeader>

@@ -26,34 +26,34 @@ export function DashboardWidgets({ type, data, isLoading }: DashboardWidgetsProp
                 <CardHeader className="bg-emerald-500/10 border-b border-emerald-500/20 p-4">
                     <CardTitle className="text-[10px] font-black uppercase text-emerald-600 flex items-center justify-between tracking-widest">
                         <div className="flex items-center gap-2">
-                            <Wheat className="h-4 w-4" /> Distribution Pain (Auj.)
+                            <Wheat className="h-4 w-4" /> Logistique Pain (Aujourd'hui)
                         </div>
                         <Link href="/bread" className="hover:underline flex items-center gap-1">
-                            Détails <ArrowRight className="h-2.5 w-2.5" />
+                            Gérer <ArrowRight className="h-2.5 w-2.5" />
                         </Link>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-1">
-                            <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Volume Total</p>
+                            <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Total Pains</p>
                             <p className="text-xl font-black tabular-nums">{data?.totalQuantity ?? 0}<span className="text-[10px] ml-1 opacity-20">PCS</span></p>
                         </div>
                         <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-1">
-                            <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Commandes</p>
+                            <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Flux Actifs</p>
                             <p className="text-xl font-black tabular-nums">{data?.totalOrders ?? 0}</p>
                         </div>
                     </div>
                     <div className="space-y-3">
-                        <BreadMetric icon={CheckCircle2} label="Livrés" value={data?.deliveredCount ?? 0} color="text-emerald-500" total={data?.totalOrders ?? 1} />
+                        <BreadMetric icon={CheckCircle2} label="Distribués" value={data?.deliveredCount ?? 0} color="text-emerald-500" total={data?.totalOrders ?? 1} />
                         <BreadMetric icon={Clock} label="En attente" value={(data?.totalOrders ?? 0) - (data?.deliveredCount ?? 0)} color="text-amber-500" total={data?.totalOrders ?? 1} />
                         <div className="h-px bg-white/5 my-4" />
                         <div className="flex justify-between items-center bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
                             <div className="flex items-center gap-3">
                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                <span className="text-[10px] font-black uppercase text-muted-foreground">Payés ({data?.paidCount})</span>
+                                <span className="text-[10px] font-black uppercase text-muted-foreground">Paiements Validés ({data?.paidCount})</span>
                             </div>
-                            <span className="text-[10px] font-black text-emerald-600">{formatCurrency(data?.totalQuantity * 10 - data?.remainingAmount)}</span>
+                            <span className="text-[10px] font-black text-emerald-600">{formatCurrency((data?.totalQuantity * 10) - data?.remainingAmount)}</span>
                         </div>
                     </div>
                 </CardContent>
@@ -76,7 +76,7 @@ export function DashboardWidgets({ type, data, isLoading }: DashboardWidgetsProp
                     {!data || data.length === 0 ? (
                         <div className="py-12 text-center space-y-4 opacity-20">
                             <CheckCircle2 className="h-10 w-10 mx-auto" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">Aucune anomalie détectée</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest">Opérations en cours : RAS</p>
                         </div>
                     ) : (
                         data.map((alert: any) => (
@@ -112,7 +112,7 @@ function BreadMetric({ icon: Icon, label, value, color, total }: any) {
                 <span className={cn("text-[10px] font-black tabular-nums", color)}>{value}</span>
             </div>
             <div className="h-1 w-full bg-muted/10 rounded-full overflow-hidden">
-                <div className={cn("h-full transition-all duration-1000", color.replace('text', 'bg'))} style={{ width: `${pct}%` }} />
+                <div className={cn("h-full rounded-full transition-all duration-1000", color.replace('text', 'bg'))} style={{ width: `${pct}%` }} />
             </div>
         </div>
     );
