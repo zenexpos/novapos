@@ -99,6 +99,13 @@ class ProductService {
             products.sort((a, b) => {
                 let valA: any = a[field as keyof Product] || 0;
                 let valB: any = b[field as keyof Product] || 0;
+                
+                if (field === 'margin') {
+                    const marginA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
+                    const marginB = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
+                    return isAsc ? marginA - marginB : marginB - marginA;
+                }
+
                 if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 return isAsc ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
             });
@@ -180,30 +187,6 @@ class ProductService {
         return this.addProduct(newInput);
     }
 
-    async updateProductFromIntake(uuid: string, data: { purchasePrice: number, price?: number, barcodes?: string[] }): Promise<void> {
-        const existing = await db.products.where('uuid').equals(uuid).first();
-        if (!existing?.id) return;
-
-        const update: Partial<Product> = {
-            purchasePrice: data.purchasePrice,
-            updatedAt: new Date(),
-            syncStatus: 'pending'
-        };
-
-        if (data.price !== undefined) {
-            update.price = data.price;
-            update.priceUpdatedAt = new Date();
-        }
-
-        if (data.barcodes) {
-            const merged = Array.from(new Set([...(existing.barcodes || []), ...data.barcodes]));
-            update.barcodes = merged;
-        }
-
-        await db.products.update(existing.id, update);
-        triggerSync();
-    }
-
     async deleteProduct(uuid: string): Promise<void> {
         const existing = await db.products.where('uuid').equals(uuid).first();
         if (!existing?.id) return;
@@ -265,10 +248,10 @@ class ProductService {
                             minStockLevel: safeNumber(row.minStockLevel || row.Seuil || 10),
                             unit: (row.unit || row.Unité || row.Unite || 'Pièce') as any,
                             category: row.category || row.Catégorie || row.Categorie || 'Général',
-                            barcodes: row.barcodes ? row.barcodes.split(',').map((b: string) => b.trim()) : []
+                            barcodes: row.barcodes ? (typeof row.barcodes === 'string' ? row.barcodes.split(',').map((b: string) => b.trim()) : []) : []
                         };
 
-                    const existing = existingProducts.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+                        const existing = existingProducts.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
 
                         if (existing) {
                             analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid } as any);

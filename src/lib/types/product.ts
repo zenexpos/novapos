@@ -16,6 +16,7 @@ export interface Product extends BaseEntity {
     priceUpdatedAt?: Date;
     stockStatus: StockStatus;
     flash?: boolean;
+    lastSaleDate?: Date;
 }
 
 /**

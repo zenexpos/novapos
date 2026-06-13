@@ -20,7 +20,9 @@ import {
     FileUp, 
     RefreshCw,
     X,
-    FileDown
+    FileDown,
+    FilterX,
+    Archive
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductTable } from '@/components/products/product-table';
@@ -53,15 +55,15 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-type StockStatus = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'expired';
+type StockStatusFilter = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock' | 'expiring_soon' | 'expired';
 
 const sortOptions: { [key: string]: string } = {
-    'name_asc': 'Nom (A-Z)',
-    'price_desc': 'Prix (Max)',
-    'price_asc': 'Prix (Min)',
-    'quantity_desc': 'Stock (Max)',
-    'createdAt_desc': 'Plus récents',
-    'dateExpiration_asc': 'Expiration proche',
+    'name_asc': 'Désignation (A-Z)',
+    'price_desc': 'Prix Vente (Max)',
+    'price_asc': 'Prix Vente (Min)',
+    'quantity_desc': 'Stock (Décroissant)',
+    'margin_desc': 'Marge (Plus rentables)',
+    'updatedAt_desc': 'Dernières mises à jour',
 };
 
 function ProductsContent() {
@@ -73,8 +75,8 @@ function ProductsContent() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
-    const [stockStatus, setStockStatus] = useState<StockStatus>('all');
-    const [sortBy, setSortBy] = useState('createdAt_desc');
+    const [stockStatus, setStockStatus] = useState<StockStatusFilter>('all');
+    const [sortBy, setSortBy] = useState('updatedAt_desc');
 
     const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -91,7 +93,7 @@ function ProductsContent() {
         () => productService.filterProducts({ 
             query: debounced.debouncedValue, 
             supplierUuid: selectedSupplier,
-            stockStatus, 
+            stockStatus: stockStatus as any, 
             sortBy 
         }),
         [debounced.debouncedValue, selectedSupplier, stockStatus, sortBy]
@@ -99,7 +101,6 @@ function ProductsContent() {
     const products = productsResult.value ?? [];
 
     const [suppliers, setSuppliers] = useState<Supplier[] | undefined>(undefined);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     
     const isLoading = productsResult.isLoading || suppliers === undefined;
     
@@ -109,7 +110,7 @@ function ProductsContent() {
     const [isImporting, setIsImporting] = useState(false);
 
     useEffect(() => {
-        const statusFromQuery = searchParams.get('stockStatus') as StockStatus;
+        const statusFromQuery = searchParams.get('stockStatus') as StockStatusFilter;
         if (statusFromQuery) setStockStatus(statusFromQuery);
         const queryFromUrl = searchParams.get('query');
         if (queryFromUrl) setSearchQuery(queryFromUrl);
@@ -146,10 +147,11 @@ function ProductsContent() {
         try {
             await productService.duplicateProduct(product.uuid);
             toast.success(`Produit "${product.name}" dupliqué.`);
+            productsResult.refresh();
         } catch (error: any) {
             toast.error("Échec de la duplication.");
         }
-    }, []);
+    }, [productsResult]);
 
     const handleViewHistory = useCallback((product: Product) => {
         setSelectedProduct(product);
@@ -225,140 +227,149 @@ function ProductsContent() {
             : products;
 
         const csv = Papa.unparse(dataToExport.map(p => ({
-            Nom: p.name,
+            Désignation: p.name,
+            Code_Barres: p.barcodes?.[0] || '',
             Prix_Vente: p.price,
-            Prix_Achat: p.purchasePrice,
+            PMP: p.purchasePrice,
             Stock: p.quantity,
-            Unité: p.unit,
+            Seuil_Alerte: p.minStockLevel,
+            Unité: p.unit || 'PCS',
+            Catégorie: p.category || 'Général',
+            Dernière_Vente: p.lastSaleDate ? new Date(p.lastSaleDate).toLocaleDateString() : 'N/A'
         })));
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `produits-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `catalogue-elite-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-        toast.success("Exportation terminée.");
+        toast.success("Manifeste exporté.");
     }, [products, selectedProducts]);
 
     const resetFilters = () => {
         setSearchQuery('');
         setSelectedSupplier('all');
         setStockStatus('all');
-        setSortBy('createdAt_desc');
+        setSortBy('updatedAt_desc');
     };
 
     useKeyboardShortcuts([
-        {
-            key: 'F3',
-            action: () => searchInputRef.current?.focus(),
-            description: 'Rechercher un produit',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'n',
-            action: () => { setSelectedProduct(null); setIsProductDialogOpen(true); },
-            description: 'Nouveau produit',
-            ignoreInputFocus: false
-        }
+        { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher un produit', ignoreInputFocus: true },
+        { key: 'n', action: () => { setSelectedProduct(null); setIsProductDialogOpen(true); }, description: 'Nouveau produit', ignoreInputFocus: false }
     ], 'Catalogue');
 
-    const isFiltered = searchQuery !== '' || selectedSupplier !== 'all' || stockStatus !== 'all' || sortBy !== 'createdAt_desc';
+    const isFiltered = searchQuery !== '' || selectedSupplier !== 'all' || stockStatus !== 'all' || sortBy !== 'updatedAt_desc';
     
     return (
-        <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
+        <div className="p-6 sm:p-4 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-32">
             <PageHeader
-                title="Liste des Produits"
-                description="Gérez vos articles et votre stock facilement"
+                title="Management du Catalogue Elite"
+                description="Contrôle absolu des stocks, marges et flux marchandises"
+                icon={Package}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
-                    <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5">
-                        <FileUp className="mr-2 h-4 w-4 text-primary" /> Exporter
+                    <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
+                        <FileUp className="mr-2 h-4 w-4" /> Exporter Manifeste
                     </Button>
-                    <Button asChild variant="outline" disabled={isAnalyzing} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5">
+                    <Button asChild variant="outline" disabled={isAnalyzing} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
                         <label htmlFor="csv-product-importer" className="cursor-pointer flex items-center">
-                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4 text-primary" />}
-                            Importer
+                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                            Importer Flux
                             <input type="file" id="csv-product-importer" accept=".csv" className="sr-only" onChange={handleFileSelected} />
                         </label>
                     </Button>
-                    <Button onClick={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide shadow-xl shadow-sm transition-all active:scale-95">
-                        <Plus className="mr-2 h-4 w-4" /> Nouveau [N]
+                    <Button onClick={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }} className="flex-1 sm:flex-none h-11 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 gap-3">
+                        <Plus className="mr-2 h-4 w-4" /> Nouvel Article [N]
                     </Button>
                 </div>
             </PageHeader>
 
             <InventoryStats isLoading={isLoading} />
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-card/20 p-2 rounded-lg border border-white/5 backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-card/20 p-2.5 rounded-lg border border-white/5 backdrop-blur-sm shadow-inner">
                 <div className="relative group flex-grow max-w-xl px-4">
-                    <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors duration-500" />
+                    <Search className={cn(
+                        "absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-500",
+                        searchQuery ? "text-primary" : "text-muted-foreground/30"
+                    )} />
                     <Input 
                         ref={searchInputRef}
-                        placeholder="Rechercher un produit [F3]..."
-                        className="pl-14 h-9 rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 font-bold text-lg"
+                        placeholder="Scanner ou chercher une référence [F3]..."
+                        className="pl-14 h-11 rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 font-black text-lg tracking-tight"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
+                    {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive">
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
                 
-                <div className="flex wrap items-center gap-3 px-4">
+                <div className="flex flex-wrap items-center gap-3 px-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-12 rounded-xl border-white/5 bg-black/20 hover:bg-white/5 font-bold px-6">
-                                <SortAsc className="mr-2 h-4 w-4 opacity-50" />
-                                {sortOptions[sortBy] || 'Trier par'}
+                            <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest px-6 gap-3">
+                                <SortAsc className="h-4 w-4 opacity-50" />
+                                {sortOptions[sortBy] || 'Trier le catalogue'}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="rounded-2xl border-white/5 shadow-sm min-w-[200px]">
-                            <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Trier par</DropdownMenuLabel>
+                        <DropdownMenuContent className="rounded-2xl border-white/5 shadow-2xl min-w-[240px] bg-card/95 backdrop-blur-md">
+                            <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 px-4 py-3">Organiser par</DropdownMenuLabel>
                             <DropdownMenuSeparator className="opacity-10" />
                             <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
                                 {Object.entries(sortOptions).map(([key, value]) => (
-                                    <DropdownMenuRadioItem key={key} value={key} className="text-xs font-bold">{value}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem key={key} value={key} className="text-xs font-bold py-3 px-4 focus:bg-primary/10">{value}</DropdownMenuRadioItem>
                                 ))}
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     <div className="flex items-center gap-1 p-1 bg-black/20 rounded-2xl border border-white/5 shadow-inner">
-                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-10 w-10" onClick={() => setViewMode('grid')}><LayoutGrid className="h-5 w-5"/></Button>
-                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-10 w-10" onClick={() => setViewMode('list')}><List className="h-5 w-5"/></Button>
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9 transition-all" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9 transition-all" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                     </div>
 
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40" onClick={onDialogSuccess} disabled={isRefreshing}>
-                        <RefreshCw className={cn("h-5 w-5 text-primary", isRefreshing && "animate-spin")} />
+                    <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-white/5 bg-card/40 hover:bg-primary/5 transition-all group" onClick={onDialogSuccess}>
+                        <RefreshCw className="h-4 w-4 text-primary group-hover:rotate-180 transition-transform duration-700" />
                     </Button>
+                    
+                    {isFiltered && (
+                        <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl text-destructive hover:bg-destructive/10" onClick={resetFilters}>
+                            <FilterX className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             </div>
 
             {selectedProducts.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-sm rounded-full px-8 py-4 flex items-center gap-4">
+                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-6">
                         <div className="flex items-center gap-4 pr-8 border-r border-white/10">
                             <Checkbox
                                 id="select-all-products"
                                 checked={!isLoading && products && products.length > 0 && selectedProducts.size === products.length}
                                 onCheckedChange={handleToggleSelectAll}
-                                className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
+                                className="h-6 w-6 border-primary data-[state=checked]:bg-primary rounded-lg"
                             />
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Articles choisis</span>
-                                <span className="text-xs font-semibold text-primary">{selectedProducts.size} produit(s)</span>
+                                <span className="text-[9px] font-black uppercase text-muted-foreground/40 tracking-widest">Articles Choisis</span>
+                                <span className="text-sm font-black text-primary tabular-nums">{selectedProducts.size} produit(s)</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <Button variant="ghost" onClick={() => setIsPrintDialogOpen(true)} className="rounded-full h-12 px-6 font-semibold text-[10px] uppercase tracking-wide hover:bg-primary/10 hover:text-primary">
-                                <Printer className="mr-2 h-4 w-4" /> Étiquettes
-                            </Button>
-                            <Button variant="ghost" onClick={handleExportCsv} className="rounded-full h-12 px-6 font-semibold text-[10px] uppercase tracking-wide hover:bg-primary/10 hover:text-primary">
-                                <FileUp className="mr-2 h-4 w-4" /> Exporter
-                            </Button>
-                            <Button variant="ghost" onClick={() => setIsBulkDeleteDialogOpen(true)} className="rounded-full h-12 px-6 font-semibold text-[10px] uppercase tracking-wide text-destructive hover:bg-destructive/10">
-                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedProducts(new Set())} className="rounded-full h-12 w-12 hover:bg-white/5 transition-all">
-                                <X className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center gap-6">
+                            <button onClick={() => setIsPrintDialogOpen(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                <Printer className="h-4 w-4" /> Étiquettes
+                            </button>
+                            <button onClick={handleExportCsv} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                <FileUp className="h-4 w-4" /> Exporter
+                            </button>
+                            <button onClick={() => setIsBulkDeleteDialogOpen(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive hover:opacity-80 transition-colors">
+                                <Trash2 className="h-4 w-4" /> Supprimer
+                            </button>
+                            <button onClick={() => setSelectedProducts(new Set())} className="p-2 rounded-full hover:bg-white/5 transition-all ml-4">
+                                <X className="h-4 w-4 opacity-40" />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -368,10 +379,10 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Package} title="Aucun produit" description={isFiltered ? "Ajustez vos filtres pour trouver ce que vous cherchez." : "Commencez à ajouter des articles."} />
+                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
                ) : (
                     viewMode === 'grid' ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                             {products.map(p => (
                                 <ProductCard 
                                     key={p.uuid} 
@@ -387,7 +398,17 @@ function ProductsContent() {
                             ))}
                         </div>
                     ) : (
-                        <ProductTable products={products} onEdit={handleEditProduct} onDuplicate={handleDuplicateProduct} onHistory={handleViewHistory} onDelete={(p) => { setSelectedProduct(p); setIsDeleteDialogOpen(true); }} selectedProducts={selectedProducts} onToggleProductSelection={handleToggleSelection} onToggleSelectAll={handleToggleSelectAll} suppliers={suppliers || []} />
+                        <ProductTable 
+                            products={products} 
+                            onEdit={handleEditProduct} 
+                            onDuplicate={handleDuplicateProduct} 
+                            onHistory={handleViewHistory} 
+                            onDelete={(p) => { setSelectedProduct(p); setIsDeleteDialogOpen(true); }} 
+                            selectedProducts={selectedProducts} 
+                            onToggleProductSelection={handleToggleSelection} 
+                            onToggleSelectAll={handleToggleSelectAll} 
+                            suppliers={suppliers || []} 
+                        />
                     )
                )}
             </div>
@@ -404,9 +425,9 @@ function ProductsContent() {
 
 function ProductGridSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {[...Array(10)].map((_, i) => (
-                <div key={i} className="h-[220px] rounded-lg bg-card/40 border-white/5 animate-pulse" />
+                <div key={i} className="h-[250px] rounded-2xl bg-card/40 border border-white/5 animate-pulse" />
             ))}
         </div>
     );
@@ -414,7 +435,7 @@ function ProductGridSkeleton() {
 
 export default function ProductsPage() {
     return (
-        <Suspense fallback={<div className="p-4 text-center text-[10px] font-semibold uppercase opacity-20 animate-pulse">Chargement du catalogue...</div>}>
+        <Suspense fallback={<div className="p-20 text-center opacity-20"><Loader2 className="h-10 w-10 animate-spin mx-auto" /></div>}>
             <ProductsContent />
         </Suspense>
     );

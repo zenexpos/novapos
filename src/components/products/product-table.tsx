@@ -14,7 +14,8 @@ import {
 import {
     MoreHorizontal, Edit, Trash2, CalendarClock, Package,
     Copy, History, Building, ChevronUp, ChevronDown, ChevronsUpDown,
-    TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle,
+    TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
+    ExternalLink
 } from 'lucide-react';
 import {
     cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate,
@@ -25,6 +26,7 @@ import { fr } from 'date-fns/locale';
 import {
     Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '../ui/tooltip';
+import Link from 'next/link';
 
 interface ProductTableProps {
     products: Product[];
@@ -38,7 +40,7 @@ interface ProductTableProps {
     suppliers: Supplier[];
 }
 
-type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt';
+type SortKey  = 'name' | 'quantity' | 'price' | 'purchasePrice' | 'margin' | 'updatedAt' | 'stockStatus';
 type SortDir  = 'asc' | 'desc';
 
 const stockCfg = {
@@ -78,38 +80,42 @@ export function ProductTable({
 
     const sorted = useMemo(() => {
         return [...products].sort((a, b) => {
-            let va: number | string = 0;
-            let vb: number | string = 0;
-            if (sortKey === 'name')          { va = a.name;          vb = b.name; }
-            if (sortKey === 'quantity')      { va = a.quantity;      vb = b.quantity; }
-            if (sortKey === 'price')         { va = a.price;         vb = b.price; }
-            if (sortKey === 'purchasePrice') { va = a.purchasePrice; vb = b.purchasePrice; }
-            if (sortKey === 'margin')        {
+            let va: any = 0;
+            let vb: any = 0;
+            
+            if (sortKey === 'name') { va = a.name; vb = b.name; }
+            else if (sortKey === 'quantity') { va = a.quantity; vb = b.quantity; }
+            else if (sortKey === 'price') { va = a.price; vb = b.price; }
+            else if (sortKey === 'purchasePrice') { va = a.purchasePrice; vb = b.purchasePrice; }
+            else if (sortKey === 'margin') {
                 va = calculateMarginRate(a.price, a.purchasePrice);
                 vb = calculateMarginRate(b.price, b.purchasePrice);
             }
-            if (sortKey === 'updatedAt') {
+            else if (sortKey === 'updatedAt') {
                 va = safeToDate(a.updatedAt).getTime();
                 vb = safeToDate(b.updatedAt).getTime();
             }
+            else if (sortKey === 'stockStatus') {
+                va = a.stockStatus; vb = b.stockStatus;
+            }
+
             if (typeof va === 'string')
-                return sortDir === 'asc' ? va.localeCompare(vb as string) : (vb as string).localeCompare(va);
+                return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
             return sortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
         });
     }, [products, sortKey, sortDir]);
 
     const allSelected = products.length > 0 && selectedProducts.size === products.length;
 
-    const thCls = 'px-3 py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 whitespace-nowrap';
+    const thCls = 'px-3 py-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 whitespace-nowrap';
     const thBtn = 'flex items-center gap-1 cursor-pointer select-none hover:text-foreground transition-colors';
 
     return (
-        <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-sm overflow-hidden">
+        <div className="rounded-2xl border border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
             <Table>
-                <TableHeader>
-                    <TableRow className="border-b border-[var(--glass-border)] hover:bg-transparent">
-                        {/* Checkbox */}
-                        <TableHead className="w-12 px-4">
+                <TableHeader className="bg-muted/30">
+                    <TableRow className="border-b border-white/5 hover:bg-transparent">
+                        <TableHead className="w-12 px-6">
                             <Checkbox
                                 checked={allSelected}
                                 onCheckedChange={onToggleSelectAll}
@@ -117,49 +123,45 @@ export function ProductTable({
                             />
                         </TableHead>
 
-                        {/* Produit */}
                         <TableHead className={thCls}>
                             <button className={thBtn} onClick={() => toggleSort('name')}>
-                                Produit <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
+                                Désignation <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
                             </button>
                         </TableHead>
 
-                        {/* État */}
-                        <TableHead className={thCls}>État</TableHead>
+                        <TableHead className={thCls}>
+                            <button className={thBtn} onClick={() => toggleSort('stockStatus')}>
+                                État <SortIcon col="stockStatus" sortKey={sortKey} sortDir={sortDir} />
+                            </button>
+                        </TableHead>
 
-                        {/* Fournisseur */}
                         <TableHead className={cn(thCls, 'hidden lg:table-cell')}>Fournisseur</TableHead>
 
-                        {/* Stock */}
                         <TableHead className={thCls}>
                             <button className={thBtn} onClick={() => toggleSort('quantity')}>
                                 Stock <SortIcon col="quantity" sortKey={sortKey} sortDir={sortDir} />
                             </button>
                         </TableHead>
 
-                        {/* PMP */}
                         <TableHead className={cn(thCls, 'text-right hidden md:table-cell')}>
                             <button className={cn(thBtn, 'ml-auto')} onClick={() => toggleSort('purchasePrice')}>
                                 PMP <SortIcon col="purchasePrice" sortKey={sortKey} sortDir={sortDir} />
                             </button>
                         </TableHead>
 
-                        {/* Prix vente */}
                         <TableHead className={cn(thCls, 'text-right')}>
                             <button className={cn(thBtn, 'ml-auto')} onClick={() => toggleSort('price')}>
-                                Prix <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
+                                Prix Vente <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
                             </button>
                         </TableHead>
 
-                        {/* Marge */}
                         <TableHead className={cn(thCls, 'text-right hidden sm:table-cell')}>
                             <button className={cn(thBtn, 'ml-auto')} onClick={() => toggleSort('margin')}>
                                 Marge <SortIcon col="margin" sortKey={sortKey} sortDir={sortDir} />
                             </button>
                         </TableHead>
 
-                        {/* Actions */}
-                        <TableHead className="w-10 px-2" />
+                        <TableHead className="w-10 px-6" />
                     </TableRow>
                 </TableHeader>
 
@@ -187,14 +189,11 @@ export function ProductTable({
                                 key={product.uuid}
                                 onClick={() => onToggleProductSelection(product.uuid)}
                                 className={cn(
-                                    'group border-b border-[var(--glass-border)] cursor-pointer transition-all duration-150',
-                                    isSelected
-                                        ? 'bg-primary/8 border-l-2 border-l-primary'
-                                        : 'hover:bg-primary/4',
+                                    'group border-b border-white/5 cursor-pointer transition-all duration-150',
+                                    isSelected ? 'bg-primary/10' : 'hover:bg-white/5',
                                 )}
                             >
-                                {/* Checkbox */}
-                                <TableCell className="px-4" onClick={e => e.stopPropagation()}>
+                                <TableCell className="px-6" onClick={e => e.stopPropagation()}>
                                     <Checkbox
                                         checked={isSelected}
                                         onCheckedChange={() => onToggleProductSelection(product.uuid)}
@@ -202,40 +201,29 @@ export function ProductTable({
                                     />
                                 </TableCell>
 
-                                {/* Produit */}
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-4">
                                     <div className="flex flex-col">
-                                        <span className="font-black text-sm leading-tight group-hover:text-primary transition-colors truncate max-w-[220px]">
+                                        <span className="font-black text-sm leading-tight group-hover:text-primary transition-colors truncate max-w-[250px]">
                                             {product.name}
                                         </span>
-                                        <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {product.barcodes?.[0] && (
+                                                <span className="flex items-center gap-1 text-[8px] font-mono text-muted-foreground/40 bg-black/20 px-1.5 py-0.5 rounded border border-white/5">
+                                                    <Barcode className="h-2 w-2" /> {product.barcodes[0]}
+                                                </span>
+                                            )}
                                             {product.unit && (
                                                 <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-wider">
                                                     {product.unit}
                                                 </span>
                                             )}
-                                            {expiryDays !== null && expiryDays <= 30 && (
-                                                <span className={cn(
-                                                    'flex items-center gap-0.5 text-[9px] font-bold',
-                                                    expiryDays < 0 ? 'text-red-500' : 'text-amber-500',
-                                                )}>
-                                                    <CalendarClock className="h-2.5 w-2.5" />
-                                                    {expiryDays < 0 ? 'Expiré' : `${expiryDays}j`}
-                                                </span>
-                                            )}
                                         </div>
-                                        {updatedAt && (
-                                            <span className="text-[8px] text-muted-foreground/25 mt-0.5">
-                                                {updatedAt}
-                                            </span>
-                                        )}
                                     </div>
                                 </TableCell>
 
-                                {/* État */}
-                                <TableCell className="px-3 py-3">
+                                <TableCell className="px-3 py-4">
                                     <span className={cn(
-                                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide border',
+                                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border shadow-sm',
                                         stock.cls,
                                     )}>
                                         <stock.Icon className="h-2.5 w-2.5" />
@@ -243,96 +231,79 @@ export function ProductTable({
                                     </span>
                                 </TableCell>
 
-                                {/* Fournisseur */}
-                                <TableCell className="px-3 py-3 hidden lg:table-cell">
+                                <TableCell className="px-3 py-4 hidden lg:table-cell">
                                     {supplierName ? (
-                                        <div className="flex items-center gap-1.5">
-                                            <Building className="h-3 w-3 text-muted-foreground/40" />
-                                            <span className="text-[11px] font-semibold text-muted-foreground/70 truncate max-w-[120px]">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 rounded-lg bg-muted text-muted-foreground/40">
+                                                <Building className="h-3 w-3" />
+                                            </div>
+                                            <span className="text-[11px] font-semibold text-muted-foreground/70 truncate max-w-[150px]">
                                                 {supplierName}
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] text-muted-foreground/25 italic">—</span>
+                                        <span className="text-[10px] text-muted-foreground/20 italic tracking-widest uppercase font-black">Libre</span>
                                     )}
                                 </TableCell>
 
-                                {/* Stock */}
-                                <TableCell className="px-3 py-3">
-                                    <div className="flex items-center gap-2">
+                                <TableCell className="px-3 py-4">
+                                    <div className="flex items-center gap-3">
                                         <div className={cn(
-                                            'flex items-center justify-center w-7 h-7 rounded-lg',
-                                            product.stockStatus === 'out_of_stock'
-                                                ? 'bg-red-500/10 text-red-500'
-                                                : product.stockStatus === 'low_stock'
-                                                    ? 'bg-amber-500/10 text-amber-500'
-                                                    : 'bg-emerald-500/10 text-emerald-500',
+                                            "h-9 w-12 rounded-xl flex items-center justify-center font-mono font-black text-sm shadow-inner transition-all",
+                                            product.stockStatus === 'out_of_stock' ? "bg-red-500/10 text-red-500" : "bg-black/20 text-foreground"
                                         )}>
-                                            <Package className="h-3.5 w-3.5" />
+                                            {product.quantity}
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-black tabular-nums leading-none">
-                                                {product.quantity}
-                                            </p>
-                                            <p className="text-[8px] font-semibold text-muted-foreground/30 uppercase">
-                                                {product.unit ?? 'u'}
-                                            </p>
-                                        </div>
+                                        <span className="text-[8px] font-black uppercase text-muted-foreground/20 tracking-tighter">{product.unit ?? 'PCS'}</span>
                                     </div>
                                 </TableCell>
 
-                                {/* PMP */}
-                                <TableCell className="px-3 py-3 text-right hidden md:table-cell">
-                                    <span className="font-mono text-[11px] font-bold text-muted-foreground/50 tabular-nums">
+                                <TableCell className="px-3 py-4 text-right hidden md:table-cell">
+                                    <span className="font-mono text-xs font-bold text-muted-foreground/50 tabular-nums">
                                         {formatCurrency(product.purchasePrice)}
                                     </span>
                                 </TableCell>
 
-                                {/* Prix vente */}
-                                <TableCell className="px-3 py-3 text-right">
-                                    <span className="font-mono text-sm font-black text-primary tabular-nums">
+                                <TableCell className="px-3 py-4 text-right">
+                                    <span className="font-mono text-base font-black text-primary tabular-nums tracking-tighter">
                                         {formatCurrency(product.price)}
                                     </span>
                                 </TableCell>
 
-                                {/* Marge */}
-                                <TableCell className="px-3 py-3 text-right hidden sm:table-cell">
-                                    <span className={cn(
-                                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black border',
+                                <TableCell className="px-3 py-4 text-right hidden sm:table-cell">
+                                    <div className={cn(
+                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-black text-[11px] shadow-sm',
                                         isGoodMargin
                                             ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                             : 'bg-amber-500/10 text-amber-500 border-amber-500/20',
                                     )}>
-                                        {isGoodMargin
-                                            ? <TrendingUp className="h-2.5 w-2.5" />
-                                            : <TrendingDown className="h-2.5 w-2.5" />}
+                                        {isGoodMargin ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                         {formatPercent(marginRate)}
-                                    </span>
+                                    </div>
                                 </TableCell>
 
-                                {/* Actions */}
-                                <TableCell className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                                <TableCell className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon"
-                                                className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all">
-                                                <MoreHorizontal className="h-3.5 w-3.5" />
+                                                className="h-10 w-10 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all">
+                                                <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-44">
-                                            <DropdownMenuItem onClick={() => onEdit(product)}>
-                                                <Edit    className="mr-2 h-3.5 w-3.5" /> Modifier
+                                        <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-sm bg-card min-w-[200px] p-2">
+                                            <DropdownMenuItem onClick={() => onEdit(product)} className="rounded-xl p-3">
+                                                <Edit className="mr-3 h-4 w-4" /> Modifier Fiche
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onDuplicate(product)}>
-                                                <Copy    className="mr-2 h-3.5 w-3.5" /> Dupliquer
+                                            <DropdownMenuItem onClick={() => onDuplicate(product)} className="rounded-xl p-3">
+                                                <Copy className="mr-3 h-4 w-4" /> Dupliquer Article
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onHistory(product)}>
-                                                <History className="mr-2 h-3.5 w-3.5" /> Historique
+                                            <DropdownMenuItem onClick={() => onHistory(product)} className="rounded-xl p-3">
+                                                <History className="mr-3 h-4 w-4" /> Historique Flux
                                             </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
+                                            <DropdownMenuSeparator className="opacity-10" />
                                             <DropdownMenuItem onClick={() => onDelete(product)}
-                                                className="text-destructive focus:text-destructive">
-                                                <Trash2  className="mr-2 h-3.5 w-3.5" /> Supprimer
+                                                className="text-destructive focus:text-destructive rounded-xl p-3">
+                                                <Trash2 className="mr-3 h-4 w-4" /> Révoquer Item
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -340,35 +311,21 @@ export function ProductTable({
                             </TableRow>
                         );
                     })}
-
-                    {products.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={9} className="h-40 text-center">
-                                <div className="flex flex-col items-center gap-2 text-muted-foreground/40">
-                                    <Package className="h-8 w-8" />
-                                    <p className="text-sm font-semibold uppercase tracking-widest">
-                                        Aucun produit
-                                    </p>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    )}
                 </TableBody>
             </Table>
 
-            {/* Footer count */}
             {products.length > 0 && (
-                <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--glass-border)] bg-muted/5">
-                    <p className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest">
-                        {products.length} produit{products.length > 1 ? 's' : ''}
+                <div className="flex items-center justify-between px-8 py-3 border-t border-white/5 bg-black/20">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-[0.2em]">
+                        {products.length} articles référencés
                         {selectedProducts.size > 0 && (
-                            <span className="ml-2 text-primary">
-                                · {selectedProducts.size} sélectionné{selectedProducts.size > 1 ? 's' : ''}
+                            <span className="ml-4 text-primary opacity-100">
+                                · {selectedProducts.size} sélectionnés pour exécution
                             </span>
                         )}
                     </p>
-                    <p className="text-[9px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
-                        Tri: {sortKey} {sortDir === 'asc' ? '↑' : '↓'}
+                    <p className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-widest">
+                        Tri Elite : {sortKey} {sortDir === 'asc' ? '↑' : '↓'}
                     </p>
                 </div>
             )}
