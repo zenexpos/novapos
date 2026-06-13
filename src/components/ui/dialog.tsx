@@ -32,21 +32,20 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   /**
-   * CRITICAL UI RECOVERY HOOK (FORENSIC FIX)
-   * Ensures that if the component is unmounted prematurely (e.g. by a router push or state refresh)
-   * before Radix can clean up its styles, the body interaction is manually restored.
-   * This specifically fixes the "Keyboard works, Mouse doesn't" bug.
+   * FORENSIC FIX: UI POINTER RECOVERY
+   * Ensures that if the component is unmounted (route change, state crash)
+   * the body pointer-events and overflow are restored to 'auto'.
    */
   React.useEffect(() => {
     return () => {
       if (typeof document !== 'undefined') {
-        // Minor delay to let React finish the DOM unmount cycle
+        const body = document.body;
+        // Schedule recovery at the end of the current task to ensure Radix finished its cycle
         setTimeout(() => {
-          const body = document.body;
-          if (body) {
-            body.style.pointerEvents = 'auto';
-            body.style.overflow = 'auto';
-          }
+          body.style.pointerEvents = 'auto';
+          body.style.overflow = 'auto';
+          // Force remove Radix global attributes if stuck
+          body.removeAttribute('data-radix-scroll-lock');
         }, 0);
       }
     };

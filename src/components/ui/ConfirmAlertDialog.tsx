@@ -23,9 +23,10 @@ interface ConfirmAlertDialogProps {
 }
 
 /**
- * UI RESPONSE OPTIMIZATION (FORENSIC FIX).
- * The dialog is signaled to close BEFORE starting heavy background mutations.
- * This releases the Radix body scroll lock and prevents "Interaction Freeze" during heavy CPU tasks.
+ * FORENSIC PERFORMANCE FIX: "Close-First" Execution
+ * The UI is signaled to close BEFORE starting the heavy background mutation.
+ * This releases Radix's body scroll-lock and pointer-events block immediately.
+ * This prevents the mouse-freeze even if the confirmed action takes several seconds.
  */
 export function ConfirmAlertDialog({ 
     isOpen, 
@@ -41,10 +42,10 @@ export function ConfirmAlertDialog({
     const handleConfirm = async () => {
         setIsMutating(true);
         try {
-            // 1. Signal immediate closure to unlock pointer events and scrolling
+            // 1. Signal immediate closure to unlock UI thread and DOM
             onOpenChange(false);
             
-            // 2. Minimal delay to let Radix finish its internal DOM cleanup cycle
+            // 2. Minimal deferral to let Radix finish its cleanup cycle
             setTimeout(async () => {
                 try {
                     await onConfirm();
@@ -55,7 +56,7 @@ export function ConfirmAlertDialog({
         } catch (error: any) {
             toast.error(error.message || "Erreur de transition.");
         } finally {
-            setIsMutating(false);
+            // No need to set isMutating false since dialog is already closed/unmounted
         }
     };
 

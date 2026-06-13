@@ -30,8 +30,7 @@ const AlertDialogContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
     /**
-     * CRITICAL UI RECOVERY HOOK (FORENSIC FIX)
-     * Restores pointer interaction and scrolling on unmount.
+     * FORENSIC FIX: UI POINTER RECOVERY
      */
     React.useEffect(() => {
         return () => {
@@ -41,6 +40,7 @@ const AlertDialogContent = React.forwardRef<
                 if (body) {
                   body.style.pointerEvents = 'auto';
                   body.style.overflow = 'auto';
+                  body.removeAttribute('data-radix-scroll-lock');
                 }
               }, 0);
             }

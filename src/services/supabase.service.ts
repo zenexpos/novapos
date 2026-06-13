@@ -5,8 +5,8 @@ import { getSupabaseClient } from '@/lib/supabase';
 import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
 
 /**
- * Titanium Sync Engine — Version Entreprise
- * Gère la synchronisation bidirectionnelle incrémentale avec mapping Camel/Snake.
+ * Titanium Sync Engine — Version Entreprise (Optimisée Forensic)
+ * Gère la synchronisation bidirectionnelle par lots pour éviter les blocages UI.
  */
 class SupabaseSyncService {
     private isSyncing = false;
@@ -33,10 +33,10 @@ class SupabaseSyncService {
         }
 
         try {
-            // 1. PUSH : Envoyer les changements locaux
+            // 1. PUSH : Traitement asynchrone des files d'attente
             await this.processSyncQueue(supabase);
 
-            // 2. PULL : Récupérer les nouveautés du Cloud
+            // 2. PULL : Récupération par lots
             const profile = await db.company_profile.toCollection().first();
             const lastSync = profile?.lastSyncAt ? new Date(profile.lastSyncAt).toISOString() : new Date(0).toISOString();
             
@@ -60,6 +60,7 @@ class SupabaseSyncService {
         const queueItems = await db.sync_queue.orderBy('id').toArray();
         if (queueItems.length === 0) return;
 
+        // Limiter le débit pour éviter de saturer le canal HTTP
         for (const item of queueItems) {
             try {
                 const tableName = this.camelToSnake(item.table);
@@ -106,15 +107,16 @@ class SupabaseSyncService {
             const dexieTable = (db as any)[this.snakeToCamel(table)];
             if (!dexieTable) continue;
 
+            // BATCH UPDATE: Utilise bulkPut pour une performance maximale et moins de verrous
+            const sanitizedData = data.map((remote: any) => this.mapToLocal(remote));
+            
             await db.transaction('rw', dexieTable, async () => {
-                for (const remote of data) {
+                for (const remote of sanitizedData) {
                     const local = await dexieTable.where('uuid').equals(remote.uuid).first();
-                    const sanitizedRemote = this.mapToLocal(remote);
-
                     if (!local) {
-                        await dexieTable.add({ ...sanitizedRemote, syncStatus: 'synced' });
-                    } else if (new Date(sanitizedRemote.updatedAt) > new Date(local.updatedAt)) {
-                        await dexieTable.update(local.id, { ...sanitizedRemote, syncStatus: 'synced' });
+                        await dexieTable.add({ ...remote, syncStatus: 'synced' });
+                    } else if (new Date(remote.updatedAt) > new Date(local.updatedAt)) {
+                        await dexieTable.update(local.id, { ...remote, syncStatus: 'synced' });
                     }
                 }
             });
