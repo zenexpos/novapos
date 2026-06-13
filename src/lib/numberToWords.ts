@@ -1,6 +1,6 @@
 /**
- * @fileOverview Utilitaire de conversion de montants numériques en lettres (Français).
- * Gère les Dinars et les Centimes avec une précision comptable.
+ * @fileOverview Utility to convert numerical amounts to French words (Comptable).
+ * High precision for Dinars and Centimes.
  */
 
 const UNITS  = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
@@ -47,11 +47,13 @@ function convertGroup(n: number): string {
 }
 
 export function numberToFrenchWords(amount: number): string {
-    if (amount === 0) return 'Zéro Dinars Algériens';
-    if (amount < 0) return 'Moins ' + numberToFrenchWords(-amount);
+    const roundedAmount = Math.round(amount * 100) / 100;
+    
+    if (roundedAmount === 0) return 'Zéro Dinars Algériens';
+    if (roundedAmount < 0) return 'Moins ' + numberToFrenchWords(Math.abs(roundedAmount));
 
-    const integerPart = Math.floor(amount);
-    const decimalPart = Math.round((amount - integerPart) * 100);
+    const integerPart = Math.floor(roundedAmount);
+    const decimalPart = Math.round((roundedAmount - integerPart) * 100);
 
     let result = '';
 

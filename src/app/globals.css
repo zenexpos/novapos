@@ -24,7 +24,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* Force Gray scale to HEX to prevent oklab/oklch parsing errors in html2canvas */
   --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
   --color-gray-200: #e2e8f0;
@@ -37,7 +36,6 @@
   --color-gray-900: #0f172a;
   --color-gray-950: #020617;
 
-  /* Elite Chart Palette */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -47,19 +45,19 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;      /* #F8FAFC - Clean Slate */
-    --foreground: 222 47% 11%;      /* #0F172A - Deep Navy */
-    --card: 0 0% 100%;               /* Solid White */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;            /* Solid White */
+    --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 62 60% 44%;           /* #AFB42B - Elite Olive */
+    --primary: 62 60% 44%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;        /* #1E293B - Deep Navy Secondary */
+    --secondary: 217 33% 17%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 40% 96.1%;          /* Light Grey Muted */
-    --muted-foreground: 215 16% 47%; /* #64748B */
-    --accent: 46 65% 52%;            /* #D4AF37 - Royal Gold */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 46 65% 52%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -68,7 +66,6 @@
     --ring: 62 60% 44%;
     --radius: 0.75rem;
 
-    /* Standardized Chart Variables */
     --chart-1: 62 60% 44%;
     --chart-2: 160 60% 45%;
     --chart-3: 46 65% 52%;
@@ -123,11 +120,6 @@
   }
 }
 
-/* SOVEREIGN LAYOUT UTILITIES */
-.nav-solid { background-color: hsl(var(--secondary)); border-bottom: 1px solid rgba(255,255,255,0.05); }
-.info-bar-solid { background-color: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); box-shadow: var(--glass-shadow); }
-.dark .info-bar-solid { background-color: hsl(var(--secondary)); border-bottom: 1px solid rgba(255,255,255,0.03); }
-
 .glass {
   background-color: var(--glass-bg) !important;
   border: 1px solid var(--glass-border) !important;
@@ -142,85 +134,72 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   SOVEREIGN CENTRALIZED PRINT SYSTEM (CENTERED LAYOUT)
+   UNIFIED PRINTING SYSTEM (SAPHIR ENGINE)
    ══════════════════════════════════════════════════════════ */
 @media print {
-  /* 1. Hide the entire app UI during print */
+  /* 1. Hide everything except the print portal */
   body > *:not(#receipt-for-print) {
     display: none !important;
   }
 
-  /* 2. Master Centering Container */
+  /* 2. Global Print reset */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 3. The Master Centering Portal */
   #receipt-for-print {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    visibility: visible !important;
-    position: relative !important;
     width: 100% !important;
-    height: auto !important;
     min-height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
     background: white !important;
-    color: black !important;
-    z-index: 9999999 !important;
-  }
-
-  body { 
-    background: white !important; 
-    overflow: visible !important; 
-    height: auto !important;
-    width: 100% !important;
+    padding: 0 !important;
     margin: 0 !important;
+    visibility: visible !important;
   }
 
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
-
-  /* 3. A4 Centering & Sizing */
+  /* 4. A4 Logic */
   .a4-receipt {
     width: 210mm !important;
     max-width: 210mm !important;
-    padding: 15mm !important;
+    min-height: 297mm !important;
     margin: 0 auto !important;
-    background: white !important;
-    color: black !important;
-    border: none !important;
-    font-size: 8.5pt !important;
+    padding: 15mm !important;
     display: block !important;
     box-sizing: border-box !important;
+    background: white !important;
+    position: relative !important;
   }
 
-  .a4-receipt table { width: 100% !important; border-collapse: collapse !important; }
-  .a4-receipt th, .a4-receipt td { border: 1px solid #ddd !important; padding: 6px !important; }
-  .a4-receipt th { background-color: #f9f9f9 !important; font-weight: 900 !important; }
-
-  /* 4. Thermal Centering & Sizing */
+  /* 5. Thermal Logic */
   .thermal-receipt {
     width: 80mm !important;
     max-width: 80mm !important;
     margin: 0 auto !important;
-    padding: 4mm !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    background: white !important;
-    color: black !important;
+    padding: 5mm !important;
     display: block !important;
     box-sizing: border-box !important;
+    background: white !important;
+    font-family: 'Courier New', Courier, monospace !important;
   }
 
-  /* 5. Cleanup Browser Defaults */
-  @page { 
-    margin: 0; 
-    size: auto; 
-  }
+  .thermal-receipt table { width: 100% !important; }
+
+  /* 6. Clean Page Breaks */
+  .page-break { page-break-after: always !important; }
+  .no-break { page-break-inside: avoid !important; }
+
+  @page { margin: 0; size: auto; }
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }

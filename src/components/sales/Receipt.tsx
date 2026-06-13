@@ -15,6 +15,9 @@ interface ReceiptProps {
     oldBalance?: number;
 }
 
+/**
+ * Thermal Receipt (80mm) - High Density POS Standard
+ */
 const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr }) : format(new Date(), 'dd/MM/yyyy HH:mm');
@@ -22,105 +25,182 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
 
     return (
         <div className="thermal-receipt bg-white text-black font-mono text-[9pt] leading-tight p-2" style={{ width: '72mm' }}>
+            {/* Header */}
             <div className="text-center mb-4">
-                <p className="font-bold text-[11pt] uppercase">{profile?.companyName || 'iPOS ZEN'}</p>
-                <p className="text-[7pt]">{profile?.address}</p>
+                <p className="font-bold text-[12pt] uppercase tracking-tighter">{profile?.companyName || 'iPOS ZEN'}</p>
+                <p className="text-[7pt] mt-1">{profile?.address}</p>
                 <p className="text-[8pt] font-bold">Tél: {profile?.phone}</p>
             </div>
+
             <div className="border-y border-black border-dashed py-2 mb-4 text-center">
-                <p className="font-bold">BON DE LIVRAISON #{sale.invoiceNumber}</p>
+                <p className="font-bold text-[10pt]">BON DE LIVRAISON #{sale.invoiceNumber}</p>
             </div>
+
             <div className="text-[7.5pt] space-y-1 mb-4">
                 <div className="flex justify-between"><span>DATE:</span> <span className="font-bold">{date}</span></div>
                 <div className="flex justify-between"><span>CLIENT:</span> <span className="font-bold truncate max-w-[45mm]">{customerName?.toUpperCase() || 'PASSAGE'}</span></div>
             </div>
+
+            {/* Items Table */}
             <table className="w-full text-[8pt] mb-4 border-collapse">
-                <thead><tr className="border-b border-black"><th className="text-left py-1">DES.</th><th className="text-center w-8">QTÉ</th><th className="text-right w-16">TOT</th></tr></thead>
+                <thead>
+                    <tr className="border-b-2 border-black">
+                        <th className="text-left py-1">DES.</th>
+                        <th className="text-center w-8">QTÉ</th>
+                        <th className="text-right w-16">TOT</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {sale.items.map((item, i) => (
                         <tr key={i} className="border-b border-gray-100">
-                            <td className="py-1.5 pr-1 font-bold uppercase truncate max-w-[35mm]">{item.name}</td>
-                            <td className="text-center">{item.quantity}</td>
-                            <td className="text-right font-bold">{fmt(item.price * item.quantity)}</td>
+                            <td className="py-2 pr-1 font-bold uppercase truncate max-w-[35mm]">{item.name}</td>
+                            <td className="text-center py-2">{item.quantity}</td>
+                            <td className="text-right py-2 font-bold">{fmt(item.price * item.quantity)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-            <div className="border-t border-black pt-2 space-y-1 text-[8.5pt]">
-                <div className="flex justify-between"><span>NET À PAYER:</span> <span className="font-bold">{fmt(sale.total)}</span></div>
-                <div className="flex justify-between"><span>REÇU:</span> <span>{fmt(safeNumber(sale.amountPaid))}</span></div>
-                <div className="flex justify-between font-bold border-t border-black pt-1 text-[9.5pt]"><span>SOLDE DÛ:</span> <span>{fmt(newBalance)} DA</span></div>
+
+            {/* Totals */}
+            <div className="border-t-2 border-black pt-2 space-y-1 text-[8.5pt]">
+                <div className="flex justify-between"><span>TOTAL BRUT:</span> <span>{fmt(sale.subtotal)}</span></div>
+                {sale.discountAmount > 0 && <div className="flex justify-between text-red-600 font-bold"><span>REMISE:</span> <span>-{fmt(sale.discountAmount)}</span></div>}
+                
+                <div className="flex justify-between font-black text-[12pt] border-t border-black mt-1 pt-1">
+                    <span>NET A PAYER:</span>
+                    <span>{fmt(sale.total)}</span>
+                </div>
+                
+                <div className="flex justify-between text-[8pt] mt-2 opacity-70">
+                    <span>VERSEMENT REÇU:</span>
+                    <span>-{fmt(safeNumber(sale.amountPaid))}</span>
+                </div>
+                
+                <div className="flex justify-between font-bold border-t border-black pt-1 text-[10pt] bg-gray-50 px-1">
+                    <span>SOLDE DÛ CLIENT:</span>
+                    <span>{fmt(newBalance)} DA</span>
+                </div>
             </div>
-            <p className="text-center mt-6 text-[6.5pt] uppercase opacity-40">Merci de votre confiance</p>
+
+            <p className="text-center mt-8 text-[7pt] uppercase tracking-widest opacity-40">Merci de votre fidélité</p>
+            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen v2.9 Sovereign</p>
         </div>
     );
 };
 
+/**
+ * A4 Invoice Layout - Modern Business Standard
+ */
 const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd/MM/yyyy') : format(new Date(), 'dd/MM/yyyy');
+    const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd MMMM yyyy', { locale: fr }) : format(new Date(), 'dd/MM/yyyy');
     const newBalance = oldBalance + Math.max(0, sale.total - sale.amountPaid);
 
     return (
-        <div className="a4-receipt bg-white text-black font-sans text-[8.5pt] leading-tight" style={{ width: '190mm', padding: '10mm' }}>
-            <div className="flex justify-between border-b border-black pb-4 mb-6">
-                <div className="max-w-[60%]">
-                    <h1 className="text-base font-bold uppercase">{profile?.companyName || 'iPOS ZEN'}</h1>
-                    <p className="text-[7.5pt] opacity-70">{profile?.address}</p>
-                    <p className="text-[7.5pt] font-bold">Tél: {profile?.phone}</p>
-                    <div className="grid grid-cols-2 gap-x-4 mt-1 text-[7pt] font-mono opacity-60">
-                        {profile?.rcNumber && <span>RC: {profile.rcNumber}</span>}
-                        {profile?.nif && <span>NIF: {profile.nif}</span>}
+        <div className="a4-receipt bg-white text-black font-sans text-[9pt] leading-normal" style={{ width: '190mm', padding: '15mm' }}>
+            {/* Header Section */}
+            <div className="flex justify-between items-start border-b-4 border-black pb-8 mb-10">
+                <div className="space-y-1 max-w-[65%]">
+                    <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">{profile?.companyName || 'iPOS ZEN'}</h1>
+                    <p className="text-[8pt] opacity-70 leading-tight">{profile?.address}</p>
+                    <p className="text-[8pt] font-bold">Tél: {profile?.phone} | {profile?.email}</p>
+                    
+                    <div className="grid grid-cols-2 gap-x-6 mt-4 text-[7.5pt] font-mono border-t border-gray-100 pt-2">
+                        {profile?.rcNumber && <p><span className="opacity-40">RC:</span> {profile.rcNumber}</p>}
+                        {profile?.nif && <p><span className="opacity-40">NIF:</span> {profile.nif}</p>}
+                        {profile?.aiNumber && <p><span className="opacity-40">AI:</span> {profile.aiNumber}</p>}
+                        {profile?.nisNumber && <p><span className="opacity-40">NIS:</span> {profile.nisNumber}</p>}
                     </div>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-xs font-bold border border-black px-3 py-1 inline-block mb-1">BON DE LIVRAISON</h2>
-                    <p className="text-sm font-bold font-mono">N° {sale.invoiceNumber}</p>
-                    <p className="text-[7.5pt] text-gray-500 uppercase">Date: {date}</p>
+                    <h2 className="text-lg font-black bg-black text-white px-5 py-2 inline-block mb-3">BON DE LIVRAISON</h2>
+                    <p className="text-xl font-mono font-bold tracking-tighter">N° {sale.invoiceNumber}</p>
+                    <p className="text-[8pt] text-gray-500 font-bold uppercase tracking-widest mt-1">Date: {date}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-2 border border-black rounded-sm">
-                    <p className="text-[7pt] font-bold uppercase text-gray-400 mb-0.5">Destinataire</p>
-                    <p className="text-xs font-bold uppercase">{customerName || 'Client de passage'}</p>
+            {/* Customer Info */}
+            <div className="grid grid-cols-2 gap-8 mb-10">
+                <div className="p-4 border-2 border-black rounded-sm">
+                    <h3 className="text-[7pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire</h3>
+                    <p className="text-lg font-black uppercase">{customerName || 'Client de passage'}</p>
+                    {sale.customerUuid && <p className="text-[8pt] opacity-60 mt-1 italic">Compte Elite sécurisé</p>}
                 </div>
-                <div className="p-2 border border-dashed border-gray-300 rounded-sm text-right flex flex-col justify-center">
-                    <p className="text-[7pt] font-bold uppercase text-gray-400 mb-0.5">Statut Paiement</p>
-                    <p className="text-[8pt] font-bold uppercase">{sale.paymentStatus === 'paid' ? 'Soldé' : 'À Crédit'}</p>
+                <div className="p-4 border-2 border-dashed border-gray-200 flex flex-col justify-center text-center">
+                    <h3 className="text-[7pt] font-black uppercase text-gray-400 mb-1 tracking-widest">Mode de Règlement</h3>
+                    <p className="text-lg font-bold uppercase">{sale.paymentStatus === 'paid' ? 'Soldé (Espèces)' : 'Vente à Crédit'}</p>
                 </div>
             </div>
 
-            <table className="w-full border-collapse mb-6">
-                <thead><tr className="bg-gray-50 border-y border-black"><th className="p-1.5 text-left font-bold uppercase w-[50%] text-[7.5pt]">Désignation</th><th className="p-1.5 text-center font-bold w-12 text-[7.5pt]">Qté</th><th className="p-1.5 text-right font-bold w-20 text-[7.5pt]">P.U</th><th className="p-1.5 text-right font-bold w-28 text-[7.5pt]">Total</th></tr></thead>
-                <tbody className="divide-y divide-gray-100">
+            {/* Products Table */}
+            <table className="w-full border-collapse mb-10">
+                <thead>
+                    <tr className="bg-gray-100 border-y-2 border-black">
+                        <th className="p-2 text-left font-black uppercase text-[7.5pt] w-[50%]">Désignation des Articles</th>
+                        <th className="p-2 text-center font-black uppercase text-[7.5pt] w-16">Qté</th>
+                        <th className="p-2 text-right font-black uppercase text-[7.5pt] w-24">P.U HT</th>
+                        <th className="p-2 text-right font-black uppercase text-[7.5pt] w-32">Total TTC</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
                     {sale.items.map((item, idx) => (
-                        <tr key={idx}><td className="p-1.5 uppercase text-[8pt]">{item.name}</td><td className="p-1.5 text-center font-bold text-[8pt]">{item.quantity}</td><td className="p-1.5 text-right font-mono text-[8pt]">{fmt(item.price)}</td><td className="p-1.5 text-right font-bold font-mono text-[8pt]">{fmt(item.price * item.quantity)}</td></tr>
+                        <tr key={idx} className="hover:bg-gray-50">
+                            <td className="p-2.5 uppercase font-medium text-[8.5pt]">{item.name}</td>
+                            <td className="p-2.5 text-center font-bold text-[8.5pt]">{item.quantity}</td>
+                            <td className="p-2.5 text-right font-mono text-[8pt]">{fmt(item.price)}</td>
+                            <td className="p-2.5 text-right font-bold font-mono text-[8.5pt]">{fmt(item.price * item.quantity)}</td>
+                        </tr>
                     ))}
                 </tbody>
             </table>
 
-            <div className="flex justify-end mb-6">
-                <div className="w-56 space-y-1">
-                    <div className="flex justify-between border-t border-black pt-1.5 font-bold text-[9pt]"><span>NET À PAYER:</span> <span>{fmt(sale.total)}</span></div>
-                    <div className="flex justify-between text-[7.5pt] opacity-60"><span>Versé:</span> <span>-{fmt(safeNumber(sale.amountPaid))}</span></div>
-                    <div className="flex justify-between font-bold border-t border-dashed pt-1 text-[9pt]"><span>SOLDE DÛ:</span> <span>{fmt(newBalance)}</span></div>
+            {/* Summary Block */}
+            <div className="flex justify-end mb-10">
+                <div className="w-72 space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span className="opacity-60 uppercase font-bold text-[7.5pt]">Total Marchandise:</span>
+                        <span className="font-mono">{fmt(sale.subtotal)}</span>
+                    </div>
+                    {sale.discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-red-600 font-bold">
+                            <span className="uppercase text-[7.5pt]">Remise Exceptionnelle:</span>
+                            <span className="font-mono">-{fmt(sale.discountAmount)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between border-t-2 border-black pt-3">
+                        <span className="font-black uppercase text-[10pt]">Net à Payer (TTC):</span>
+                        <span className="text-xl font-black tracking-tighter font-mono">{fmt(sale.total)}</span>
+                    </div>
+                    
+                    <div className="space-y-1 pt-4 opacity-70 border-t border-gray-100">
+                        <div className="flex justify-between text-[8pt]">
+                            <span>Acompte reçu:</span>
+                            <span className="font-mono">-{fmt(safeNumber(sale.amountPaid))}</span>
+                        </div>
+                        <div className="flex justify-between text-[9pt] font-black bg-gray-50 p-2 border-l-4 border-black">
+                            <span className="uppercase">Solde restant dû:</span>
+                            <span className="font-mono">{fmt(newBalance)} DA</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="p-2 bg-gray-50 border border-gray-200 rounded-sm mb-12">
-                <p className="text-[7pt] font-bold uppercase text-gray-400 mb-0.5">Arrêtée la présente facture à la somme de :</p>
-                <p className="text-[8pt] font-bold italic">{numberToFrenchWords(sale.total)}</p>
+            {/* Legal Text */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-sm mb-16">
+                <p className="text-[7pt] font-black uppercase text-gray-400 mb-1 tracking-widest">Arrêtée la présente facture à la somme de :</p>
+                <p className="text-[9pt] font-bold italic text-black">{numberToFrenchWords(sale.total)}</p>
             </div>
 
-            <div className="flex justify-between text-center px-10">
-                <div className="w-28 pt-1 border-t border-dashed border-gray-300 text-[7pt] opacity-40">Cachet & Signature</div>
-                <div className="w-28 pt-1 border-t border-dashed border-gray-300 text-[7pt] opacity-40">Signature Client</div>
+            {/* Signatures */}
+            <div className="flex justify-between text-center px-12 mt-20">
+                <div className="w-40 pt-2 border-t-2 border-dashed border-gray-200 text-[8pt] font-bold uppercase opacity-30">Cachet & Signature</div>
+                <div className="w-40 pt-2 border-t-2 border-dashed border-gray-200 text-[8pt] font-bold uppercase opacity-30">Signature Client</div>
             </div>
 
-            <footer className="mt-16 pt-3 border-t border-gray-100 flex justify-between text-[6pt] text-gray-300 font-bold uppercase tracking-widest">
-                <span>iPOS ZEN v2.9 — SOVEREIGN LEDGER</span>
-                <span>Copie Client</span>
+            {/* Legal Footer */}
+            <footer className="mt-32 pt-4 border-t border-gray-100 flex justify-between items-center text-[7pt] text-gray-300 font-black uppercase tracking-[0.2em]">
+                <span>iPOS ZEN v2.9 — SOVEREIGN LEDGER & POS SYSTEM</span>
+                <span>Document Administratif — Copie Client</span>
             </footer>
         </div>
     );

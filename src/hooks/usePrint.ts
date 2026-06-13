@@ -4,8 +4,7 @@ import { useCallback, useState } from 'react';
 
 /**
  * usePrint — Sovereign Unified Printing Engine.
- * Optimized for standalone PWA mode. Centering and high-fidelity rendering.
- * Fixes blank page issues by copying content to a dedicated portal outside dialogs.
+ * Provides high-fidelity rendering by isolating the content in a root portal.
  */
 export function usePrint() {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -23,17 +22,17 @@ export function usePrint() {
 
     setIsPrinting(true);
 
-    // Clean and Inject
+    // 1. Reset and Clone
     target.innerHTML = '';
     const clone = source.cloneNode(true) as HTMLElement;
     
-    // STRIP ANIMATIONS & PREVIEW CONSTRAINTS
+    // 2. SCRUB UI ELEMENTS & ANIMATIONS
     const items = clone.querySelectorAll('*');
     items.forEach(el => {
         el.classList.remove(
             'animate-in', 'fade-in', 'zoom-in', 'duration-1000', 'duration-700', 'duration-500',
             'slide-in-from-bottom-4', 'slide-in-from-left-4', 'slide-in-from-right-4', 'slide-in-from-top-4',
-            'opacity-0', 'hidden', 'scale-90', 'scale-95', 'scale-100', 'scale-105'
+            'opacity-0', 'hidden', 'scale-90', 'scale-95', 'scale-100', 'scale-105', 'shadow-2xl', 'shadow-xl'
         );
         el.removeAttribute('aria-hidden');
         const style = (el as HTMLElement).style;
@@ -43,7 +42,7 @@ export function usePrint() {
         style.animation = 'none';
     });
 
-    // Reset base clone styling for print
+    // 3. APPLY PHYSICAL CONSTRAINTS
     clone.style.maxHeight = 'none';
     clone.style.height = 'auto';
     clone.style.overflow = 'visible';
@@ -54,6 +53,8 @@ export function usePrint() {
     clone.style.display = 'block';
     clone.style.opacity = '1';
     clone.style.visibility = 'visible';
+    clone.style.background = 'white';
+    clone.style.color = 'black';
     
     if (options.thermal) {
       clone.classList.add('thermal-receipt');
@@ -70,7 +71,7 @@ export function usePrint() {
       document.title = options.title;
     }
     
-    // delay for DOM synchronization
+    // 4. TRIGGER PRINT
     setTimeout(() => {
       window.print();
       document.title = originalTitle;
