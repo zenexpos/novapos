@@ -69,17 +69,17 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
 
         try {
             if (customer) {
-                // Pour la mise à jour, on utilise le type UpdateInput
                 const updatePayload: CustomerUpdateInput = { ...formState };
                 const updatedCustomer = await customerService.updateCustomer(customer.uuid, updatePayload);
                 toast.success(`Profil de ${formState.firstName} mis à jour.`);
+                onOpenChange(false);
                 onSuccess(updatedCustomer);
             } else {
                 const newCustomer = await customerService.addCustomer(formState);
                 toast.success(`Nouveau client ${formState.firstName} enregistré.`);
+                onOpenChange(false);
                 onSuccess(newCustomer);
             }
-            onOpenChange(false);
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue.");
             toast.error("Échec de l'enregistrement.");

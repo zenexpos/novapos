@@ -62,8 +62,8 @@ export function SupplierDialog({ isOpen, onOpenChange, supplier, onSuccess }: Su
                 await supplierService.updateSupplier(newSup.uuid, formState);
                 toast.success(`Fournisseur "${formState.name}" ajouté.`);
             }
-            onSuccess();
             onOpenChange(false);
+            onSuccess();
         } catch (error: any) {
             toast.error("Erreur lors de l'enregistrement.", { description: error.message });
         } finally {

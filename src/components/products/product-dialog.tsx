@@ -95,7 +95,6 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         setError(null);
         setIsLoading(true);
         try {
-            // FIX: Création d'un objet Input propre conforme au Type System Elite
             const finalData: ProductCreateInput = {
                 name: formState.name || '',
                 price: safeNumber(formState.price),
@@ -113,8 +112,8 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
             else await productService.addProduct(finalData);
             
             toast.success(`Fiche produit synchronisée.`);
-            onSuccess();
             onOpenChange(false);
+            onSuccess();
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue.");
         } finally {

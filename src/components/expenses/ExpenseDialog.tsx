@@ -85,8 +85,8 @@ export default function ExpenseDialog({ isOpen, onOpenChange, expense, onSuccess
                 await expenseService.addExpense(formState);
                 toast.success(`Dépense enregistrée avec succès.`);
             }
-            onSuccess();
             onOpenChange(false);
+            onSuccess();
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue.");
             toast.error("Opération échouée.");

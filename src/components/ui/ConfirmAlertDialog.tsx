@@ -36,8 +36,9 @@ export function ConfirmAlertDialog({
     const handleConfirm = async () => {
         setIsMutating(true);
         try {
-            await onConfirm();
+            // Close dialog FIRST to ensure pointer-events cleanup starts
             onOpenChange(false);
+            await onConfirm();
         } catch (error: any) {
             toast.error(error.message || "L'opération a échoué.", {
                 description: "Veuillez réessayer ou contacter le support technique."
