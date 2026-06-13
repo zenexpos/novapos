@@ -22,7 +22,7 @@ export const ProformaReceipt = React.forwardRef<HTMLDivElement, ProformaReceiptP
 
     if (isThermal) {
       return (
-        <div ref={ref} className="bg-white text-black font-mono text-[9pt] w-[80mm] p-4 thermal-receipt" style={{ lineHeight: '1.4' }}>
+        <div ref={ref} className="bg-white text-black font-mono text-[9pt] p-4 thermal-receipt" style={{ lineHeight: '1.4' }}>
           <header className="text-center mb-6">
             <p className="font-black uppercase text-base tracking-tighter">{profile?.companyName || 'iPOS ZEN ELITE'}</p>
             <p className="text-[7pt] mt-1 opacity-70">{profile?.address}</p>
@@ -71,7 +71,7 @@ export const ProformaReceipt = React.forwardRef<HTMLDivElement, ProformaReceiptP
     }
 
     return (
-      <div ref={ref} className="bg-white text-[#111827] font-sans a4-receipt" style={{ width: '210mm' }}>
+      <div ref={ref} className="bg-white text-[#111827] font-sans a4-receipt">
         <div className="print-frame relative overflow-hidden">
           {/* Watermark */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none z-0">

@@ -24,7 +24,7 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
     const newBalance = oldBalance + Math.max(0, sale.total - sale.amountPaid);
 
     return (
-        <div className="thermal-receipt bg-white text-black font-mono text-[9pt] leading-tight p-2" style={{ width: '72mm' }}>
+        <div className="thermal-receipt bg-white text-black font-mono text-[9pt] leading-tight p-2">
             {/* Header */}
             <div className="text-center mb-4">
                 <p className="font-bold text-[12pt] uppercase tracking-tighter">{profile?.companyName || 'iPOS ZEN'}</p>
@@ -97,7 +97,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
     const newBalance = oldBalance + Math.max(0, sale.total - sale.amountPaid);
 
     return (
-        <div className="a4-receipt bg-white text-black font-sans text-[9pt] leading-normal" style={{ width: '210mm' }}>
+        <div className="a4-receipt bg-white text-black font-sans text-[9pt] leading-normal">
           <div className="print-frame">
             {/* Header Section */}
             <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">

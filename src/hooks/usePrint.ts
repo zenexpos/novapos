@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 /**
  * usePrint — Sovereign Unified Printing Engine.
  * Provides high-fidelity rendering by isolating the content in a root portal.
+ * Corrected: Removed hardcoded 210mm width for A4 to allow @page margins to center content correctly.
  */
 export function usePrint() {
   const [isPrinting, setIsPrinting] = useState(false);
@@ -47,7 +48,6 @@ export function usePrint() {
     clone.style.height = 'auto';
     clone.style.overflow = 'visible';
     clone.style.transform = 'none';
-    clone.style.margin = '0 auto'; 
     clone.style.boxShadow = 'none';
     clone.style.border = 'none';
     clone.style.display = 'block';
@@ -59,9 +59,11 @@ export function usePrint() {
     if (options.thermal) {
       clone.classList.add('thermal-receipt');
       clone.style.width = '80mm';
+      clone.style.margin = '0 auto';
     } else {
       clone.classList.add('a4-receipt');
-      clone.style.width = '210mm';
+      clone.style.width = '100%'; // Allow @page margins to dictate symmetry
+      clone.style.margin = '0';
     }
 
     target.appendChild(clone);

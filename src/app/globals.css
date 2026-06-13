@@ -154,42 +154,39 @@
     print-color-adjust: exact !important;
   }
 
-  /* 3. The Master Centering Portal */
+  @page { 
+    margin: 10mm !important; 
+    size: auto; 
+  }
+
+  /* 3. The Master Portal - Flow container */
   #receipt-for-print {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
+    display: block !important;
     width: 100% !important;
-    min-height: 100% !important;
-    background: white !important;
-    padding: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
     visibility: visible !important;
   }
 
-  /* 4. A4 Logic - Professional Framing */
+  /* 4. A4 Logic - Uses full printable width within @page margin */
   .a4-receipt {
-    width: 210mm !important;
-    max-width: 210mm !important;
-    min-height: 297mm !important;
-    margin: 0 auto !important;
-    padding: 10mm !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     display: block !important;
     box-sizing: border-box !important;
     background: white !important;
-    position: relative !important;
   }
 
   /* Professional bordered container for A4 */
   .print-frame {
     border: 2px solid #000 !important;
     padding: 10mm !important;
-    border-radius: 4px !important;
-    height: calc(297mm - 20mm) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
+    min-height: calc(297mm - 40mm) !important; /* Subtracting page margins and frame padding */
   }
 
   .print-table {
@@ -208,7 +205,7 @@
     padding: 8px !important;
   }
 
-  /* 5. Thermal Logic */
+  /* 5. Thermal Logic - Fixed width for the strip */
   .thermal-receipt {
     width: 80mm !important;
     max-width: 80mm !important;
@@ -225,11 +222,6 @@
   /* 6. Clean Page Breaks */
   .page-break { page-break-after: always !important; }
   .no-break { page-break-inside: avoid !important; }
-
-  @page { 
-    margin: 10mm; 
-    size: auto; 
-  }
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
