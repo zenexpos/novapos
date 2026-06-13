@@ -53,7 +53,7 @@
     --popover-foreground: 222 47% 11%;
     --primary: 62 60% 44%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
+    --secondary: 222 47% 11%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
@@ -73,8 +73,9 @@
     --chart-5: 25 95% 53%;
 
     --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(15, 23, 42, 0.05);
+    --glass-border: rgba(15, 23, 42, 0.08);
     --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    --card-shadow-color: 222 47% 11%;
   }
 
   .dark {
@@ -104,9 +105,10 @@
     --chart-4: 215 25% 40%;
     --chart-5: 25 95% 60%;
 
-    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-bg: rgba(15, 23, 42, 0.75);
     --glass-border: rgba(255, 255, 255, 0.04);
-    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --card-shadow-color: 0 0% 0%;
   }
 }
 
@@ -120,29 +122,37 @@
   }
 }
 
-.glass {
-  background-color: var(--glass-bg) !important;
-  border: 1px solid var(--glass-border) !important;
-  box-shadow: var(--glass-shadow) !important;
-  backdrop-filter: blur(12px) !important;
-}
+@layer utilities {
+  .glass {
+    background-color: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
+    backdrop-filter: blur(12px) !important;
+  }
 
-.app-card {
-  background-color: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  box-shadow: var(--glass-shadow) !important;
+  .app-card {
+    background-color: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: var(--glass-shadow) !important;
+  }
+
+  .nav-solid {
+    @apply bg-secondary text-secondary-foreground border-b border-white/10;
+  }
+
+  .info-bar-solid {
+    @apply bg-card text-card-foreground border-b border-border shadow-sm;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
    UNIFIED PRINTING SYSTEM (SAPHIR ENGINE)
    ══════════════════════════════════════════════════════════ */
 @media print {
-  /* 1. Hide everything except the print portal */
   body > *:not(#receipt-for-print) {
     display: none !important;
   }
 
-  /* 2. Global Print reset */
   html, body {
     margin: 0 !important;
     padding: 0 !important;
@@ -159,9 +169,9 @@
     size: auto; 
   }
 
-  /* 3. The Master Portal - Flow container */
   #receipt-for-print {
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -169,7 +179,6 @@
     visibility: visible !important;
   }
 
-  /* 4. A4 Logic - Uses full printable width within @page margin */
   .a4-receipt {
     width: 100% !important;
     margin: 0 !important;
@@ -179,14 +188,13 @@
     background: white !important;
   }
 
-  /* Professional bordered container for A4 */
   .print-frame {
     border: 2px solid #000 !important;
     padding: 10mm !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    min-height: calc(297mm - 40mm) !important; /* Subtracting page margins and frame padding */
+    min-height: calc(297mm - 40mm) !important;
   }
 
   .print-table {
@@ -205,7 +213,6 @@
     padding: 8px !important;
   }
 
-  /* 5. Thermal Logic - Fixed width for the strip */
   .thermal-receipt {
     width: 80mm !important;
     max-width: 80mm !important;
@@ -219,7 +226,6 @@
 
   .thermal-receipt table { width: 100% !important; }
 
-  /* 6. Clean Page Breaks */
   .page-break { page-break-after: always !important; }
   .no-break { page-break-inside: avoid !important; }
 }
