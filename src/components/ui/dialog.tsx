@@ -32,16 +32,22 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   /**
-   * EMERGENCY RECOVERY HOOK
-   * Ensures that if the component is unmounted (e.g. by route change or parent refresh)
+   * CRITICAL UI RECOVERY HOOK
+   * Ensures that if the component is unmounted prematurely (e.g. by a parent refresh)
    * before Radix can clean up its styles, the UI interaction is manually restored.
+   * This fixes the "Keyboard works, Mouse doesn't" bug.
    */
   React.useEffect(() => {
     return () => {
       if (typeof document !== 'undefined') {
-        // Force restore interaction and scrolling
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = 'auto';
+        // Delay ensures React finished the unmount cycle
+        setTimeout(() => {
+          const body = document.body;
+          if (body) {
+            body.style.pointerEvents = 'auto';
+            body.style.overflow = 'auto';
+          }
+        }, 0);
       }
     };
   }, []);

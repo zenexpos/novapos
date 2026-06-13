@@ -29,12 +29,17 @@ const AlertDialogContent = React.forwardRef<
     React.ElementRef<typeof AlertDialogPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
-    // CRITICAL SAFETY: Cleanup mouse block on unmount
+    // CRITICAL UI RECOVERY HOOK (AlertDialog Specific)
     React.useEffect(() => {
         return () => {
             if (typeof document !== 'undefined') {
-                document.body.style.pointerEvents = 'auto';
-                document.body.style.overflow = 'auto';
+              setTimeout(() => {
+                const body = document.body;
+                if (body) {
+                  body.style.pointerEvents = 'auto';
+                  body.style.overflow = 'auto';
+                }
+              }, 0);
             }
         };
     }, []);

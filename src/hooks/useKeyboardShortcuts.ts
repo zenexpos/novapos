@@ -15,8 +15,7 @@ export interface ShortcutConfig {
 
 /**
  * Registre Singleton hors du cycle de vie React pour une performance maximale.
- * OPTIMISATION FORENSIC : Utilise une itération directe sur les listes pour éviter Array.from() 
- * et les ralentissements sur keydown.
+ * OPTIMISATION : Utilisation d'itérateurs directs pour éviter les Array.from() massifs.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -48,9 +47,10 @@ function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // OPTIMISATION : Itération directe sur les valeurs de la Map (évite les allocations mémoire inutiles)
+    // Use a direct for...of iterator for speed
     for (const shortcuts of _registry.values()) {
-        for (let i = 0; i < shortcuts.length; i++) {
+        const len = shortcuts.length;
+        for (let i = 0; i < len; i++) {
             const config = shortcuts[i];
             if (!config.key) continue;
 
@@ -63,7 +63,7 @@ function _globalHandler(event: KeyboardEvent) {
                 const focused = isInputFocused();
                 const isUniversal = pressedKey === 'Escape' || (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
-                // Bloquer les raccourcis locaux si un input est focus, sauf pour Escape/Enter
+                // Blocker local context shortcuts if input is focused, unless Universal
                 if (!isUniversal && focused && !config.ignoreInputFocus) continue;
 
                 if (config.preventDefault !== false) event.preventDefault();
@@ -84,7 +84,7 @@ export function useKeyboardShortcuts(
     id: string,
     active: boolean = true
 ): void {
-    // Utilisation d'une ref pour stabiliser les actions sans re-render
+    // Keep a stable reference to shortcuts to avoid map thrashing
     const shortcutsRef = useRef(shortcuts);
     shortcutsRef.current = shortcuts;
 
