@@ -21,6 +21,7 @@ import {
     cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate,
 } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
+import { Badge } from '../ui/badge';
 import { differenceInDays, format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
