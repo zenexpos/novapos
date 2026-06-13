@@ -6,14 +6,14 @@ import { breadService } from '@/services/bread.service';
 
 /**
  * Composant responsable de la gestion des opérations de synchronisation.
- * Optimisé pour éviter les boucles de rendu et les spams réseau.
+ * OPTIMISÉ : Correction de la boucle infinie de rendu.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
     const companyProfile = useAppStore(state => state.companyProfile);
-    const syncStatus = useAppStore(state => state.syncStatus);
     const initialSyncTriggered = useRef(false);
 
+    // FIX : On ne récupère le profil qu'une seule fois au montage pour éviter la boucle infinie
     useEffect(() => {
         fetchCompanyProfile();
     }, [fetchCompanyProfile]);

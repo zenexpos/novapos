@@ -15,7 +15,7 @@ export interface ShortcutConfig {
 
 /**
  * Registre Singleton hors du cycle de vie React pour une performance maximale.
- * Évite les re-rendus globaux lors de l'enregistrement de nouveaux raccourcis.
+ * OPTIMISÉ : Utilise des itérations directes pour éviter le lag lors de la frappe.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -47,8 +47,8 @@ function _globalHandler(event: KeyboardEvent) {
     const pressedKey = event.key;
     if (!pressedKey) return;
 
-    // Parcours du registre singleton
-    for (const shortcuts of Array.from(_registry.values())) {
+    // OPTIMISATION : Itération directe sur les valeurs de la Map (évite Array.from)
+    for (const shortcuts of _registry.values()) {
         for (const config of shortcuts) {
             if (!config.key) continue;
 
@@ -101,5 +101,5 @@ export function useKeyboardShortcuts(
         return () => {
             _registry.delete(id);
         };
-    }, [id, active, shortcuts]); // Dépendance sur shortcuts pour mettre à jour le registre si nécessaire
+    }, [id, active, shortcuts]); 
 }

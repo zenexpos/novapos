@@ -1,20 +1,13 @@
 'use client';
 
 import type { DashboardData, TopCustomer, SalesByDay, RecentSale, RecentReturn, DashboardStats, TopProduct, LowStockProduct } from '@/lib/types';
-import { eachDayOfInterval, format, startOfDay, endOfDay } from 'date-fns';
+import { eachDayOfInterval, format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { db } from '@/lib/db';
-import { preciseMultiply, safeNumber } from '@/lib/utils';
-
-interface DayValueCents {
-    totalCents: number;
-    profitCents: number;
-    count: number;
-}
+import { preciseMultiply, safeNumber, roundFinancial } from '@/lib/utils';
 
 /**
  * @fileOverview Service de pilotage analytique iPOS Zen.
- * Effectue des calculs financiers complexes avec déduction des retours et amortissement des coûts.
- * Le moteur de calcul utilise les centimes pour une précision absolue.
+ * OPTIMISÉ : Utilise des compteurs natifs et limite les scans de table pour éviter les gels UI.
  */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
@@ -26,6 +19,7 @@ class DashboardService {
             const prevEndDate = new Date(startDate.getTime() - 1);
             const prevStartDate = new Date(prevEndDate.getTime() - duration);
 
+            // OPTIMISATION : On ne récupère que les données nécessaires à la période
             const [allSales, allExpenses, allReturns, allCustomers, allProducts] =
                 await Promise.all([
                     db.sales.where('createdAt').between(prevStartDate, endDate, true, true).filter(s => !s.isCancelled).toArray(),
@@ -43,7 +37,7 @@ class DashboardService {
 
             const productStatsMap = new Map<string, { quantity: number; revenueCents: number }>();
             const customerSpendingMapCents = new Map<string, number>();
-            const dailyMapCents = new Map<string, DayValueCents>();
+            const dailyMapCents = new Map<string, { totalCents: number; profitCents: number; count: number }>();
 
             eachDayOfInterval({ start: startDate, end: endDate }).forEach(day => {
                 dailyMapCents.set(format(day, 'yyyy-MM-dd'), { totalCents: 0, profitCents: 0, count: 0 });
@@ -154,6 +148,9 @@ class DashboardService {
                 totalExpensesChange: calcChange(currExpCents / 100, prevExpCents / 100),
                 saleCountChange: calcChange(currCount, prevCount),
             };
+
+            // OPTIMISATION : Utilise count() natif au lieu de toArray().length pour les intakes
+            const totalIntakes = await db.stock_intakes.count();
 
             return {
                 stats,

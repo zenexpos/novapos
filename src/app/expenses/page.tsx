@@ -71,7 +71,7 @@ export default function ExpensesPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('date_desc');
-    const { debouncedValue: debouncedSearch, signal } = useDebouncedAbortSignal(searchQuery, 300);
+    const { debouncedValue: debouncedSearch } = useDebouncedAbortSignal(searchQuery, 300);
     
     const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -81,6 +81,7 @@ export default function ExpensesPage() {
     
     const { dateRange, setDate, isMounted } = useDateRange(29);
 
+    // OPTIMISATION : Retrait de 'signal' des dépendances de liveQuery pour éviter les re-souscriptions inutiles
     const allExpensesResult = useLiveQuery<Expense[]>(async () => {
         if (!isMounted || !dateRange?.from) return [];
         const start = startOfDay(dateRange.from);
@@ -109,7 +110,7 @@ export default function ExpensesPage() {
         });
         
         return filtered;
-    }, [isMounted, dateRange, selectedCategory, debouncedSearch, sortBy, signal]);
+    }, [isMounted, dateRange, selectedCategory, debouncedSearch, sortBy]);
 
     const categoriesResult = useLiveQuery<string[]>(async () => {
         const exps = await db.expenses.toArray() as Expense[];

@@ -23,8 +23,7 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 /**
  * useDebouncedAbortSignal - Version Elite stabilisée.
- * Garantit qu'un nouveau signal n'est émis que lorsque la valeur se stabilise, 
- * évitant les cascades de re-rendus dans les useLiveQuery.
+ * Garantit qu'un nouveau signal n'est émis que lorsque la valeur se stabilise.
  */
 export function useDebouncedAbortSignal<T>(value: T, delay: number): {
   debouncedValue: T;
