@@ -13,9 +13,8 @@ import { inventoryService }      from '@/services/inventory.service';
 import { supplierService }       from '@/services/supplier.service';
 import { productService }        from '@/services/product.service';
 import { supabaseSyncService }   from '@/services/supabase.service';
-import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
+import { safeNumber, roundFinancial } from '@/lib/utils';
 
-// Timer persistant pour le debounce du sync
 let _syncTimer: NodeJS.Timeout | null = null;
 
 interface AppState {
@@ -31,8 +30,6 @@ interface AppState {
     customersViewMode: ViewMode;
     expensesViewMode:  ViewMode;
     salesViewMode:     ViewMode;
-
-    globalSearchOpen: boolean;
 
     actions: AppActions;
 }
@@ -71,7 +68,6 @@ interface AppActions {
     setCustomersViewMode: (mode: ViewMode) => void;
     setExpensesViewMode:  (mode: ViewMode) => void;
     setSalesViewMode:     (mode: ViewMode) => void;
-    setGlobalSearchOpen:  (open: boolean) => void;
 }
 
 const initialState: Omit<AppState, 'actions'> = {
@@ -86,7 +82,6 @@ const initialState: Omit<AppState, 'actions'> = {
     customersViewMode:       'grid',
     expensesViewMode:        'list',
     salesViewMode:           'grid',
-    globalSearchOpen:        false,
 };
 
 export const useAppStore = create<AppState>()(
@@ -96,7 +91,6 @@ export const useAppStore = create<AppState>()(
 
             actions: {
                 fetchCompanyProfile: async () => {
-                    set({ isCompanyProfileLoading: true });
                     try {
                         const profile = await companyProfileService.getProfile();
                         set({ companyProfile: profile, isCompanyProfileLoading: false });
@@ -107,24 +101,22 @@ export const useAppStore = create<AppState>()(
 
                 updateCompanyProfile: async (profileData) => {
                     try {
+                        const existing = get().companyProfile;
                         await companyProfileService.upsertProfile({ ...profileData, syncStatus: 'pending' });
                         const updated = await companyProfileService.getProfile();
                         set({ companyProfile: updated });
                         get().actions.triggerSmartSync();
                     } catch (err: any) {
-                        toast.error('Échec de mise à jour du profil', { description: err.message });
+                        toast.error('Erreur profil', { description: err.message });
                     }
                 },
 
                 setNetworkStatus: (status) => set({ networkStatus: status }),
 
                 performCloudSync: async (mode) => {
-                    const currentSync = get().syncStatus;
-                    if (currentSync === 'syncing') return;
-
                     const profile = get().companyProfile;
                     if (!profile?.supabaseUrl || !profile?.supabaseKey) {
-                        toast.error('Cloud Saphir non configuré');
+                        toast.error('Cloud non configuré');
                         return;
                     }
 
@@ -132,25 +124,22 @@ export const useAppStore = create<AppState>()(
                     try {
                         if (mode === 'pull') {
                             await supabaseSyncService.pull(profile.supabaseUrl, profile.supabaseKey);
-                            toast.success('Données récupérées avec succès');
+                            toast.success('Données récupérées');
                         } else {
                             await supabaseSyncService.push(profile.supabaseUrl, profile.supabaseKey);
-                            toast.success('Données sauvegardées avec succès');
+                            toast.success('Données sauvegardées');
                         }
                         set({ syncStatus: 'success', lastSyncDate: new Date() });
                         setTimeout(() => set({ syncStatus: 'idle' }), 3000);
                     } catch (err: any) {
                         set({ syncStatus: 'error' });
-                        toast.error('Échec de synchronisation', { description: err.message });
-                        setTimeout(() => set({ syncStatus: 'idle' }), 5000);
+                        toast.error('Échec sync', { description: err.message });
                     }
                 },
 
                 performBackgroundSync: async () => {
                     const profile = get().companyProfile;
-                    if (!profile?.supabaseUrl || !profile?.supabaseKey) return;
-                    if (get().syncStatus === 'syncing') return;
-                    if (get().networkStatus === 'offline') return;
+                    if (!profile?.supabaseUrl || !profile?.supabaseKey || get().syncStatus === 'syncing') return;
 
                     set({ syncStatus: 'syncing' });
                     try {
@@ -163,16 +152,11 @@ export const useAppStore = create<AppState>()(
                 },
 
                 triggerSmartSync: () => {
-                    const profile = get().companyProfile;
-                    if (!profile?.supabaseUrl || !profile?.supabaseKey) return;
-                    
-                    // DEBOUNCE EFFECTIF : On annule le précédent timer
                     if (_syncTimer) clearTimeout(_syncTimer);
-                    
                     _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
                         _syncTimer = null;
-                    }, 8000); // 8 secondes de délai après la dernière action
+                    }, 8000);
                 },
 
                 processReturn: async (returnData) => {
@@ -181,7 +165,7 @@ export const useAppStore = create<AppState>()(
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        toast.error('Erreur lors du retour', { description: err.message });
+                        toast.error('Erreur retour', { description: err.message });
                         return false;
                     }
                 },
@@ -189,118 +173,51 @@ export const useAppStore = create<AppState>()(
                 processStockIntake: async (intakeData) => {
                     try {
                         const intakeUuid = uuidv4();
-                        const shippingCostCents = Math.round(safeNumber(intakeData.shippingCost) * 100);
-                        let itemsTotalValueCents = 0;
+                        const shippingCents = Math.round(safeNumber(intakeData.shippingCost) * 100);
+                        let itemsTotalCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        await db.transaction('rw', [
-                            db.products,
-                            db.suppliers,
-                            db.stock_intakes,
-                            db.inventory_logs,
-                            db.sync_queue
-                        ], async () => {
-                            const supplier = await supplierService.findOrCreateSupplier(
-                                intakeData.supplierName,
-                                intakeData.supplierUuid,
-                            );
+                        await db.transaction('rw', [db.products, db.suppliers, db.stock_intakes, db.inventory_logs, db.sync_queue], async () => {
+                            const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
                             for (const item of intakeData.items) {
                                 const qty = safeNumber(item.quantity);
-                                const purchasePriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
-                                itemsTotalValueCents += (purchasePriceCents * qty);
-
-                                const shippingPerItemCents = Math.round(shippingCostCents / intakeData.items.length);
-                                const landingCost = roundFinancial((purchasePriceCents + (shippingPerItemCents / (qty || 1))) / 100);
+                                const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
+                                itemsTotalCents += (pPriceCents * qty);
+                                const shipPerItem = Math.round(shippingCents / intakeData.items.length);
+                                const landing = roundFinancial((pPriceCents + (shipPerItem / (qty || 1))) / 100);
 
                                 let productUuid = item.productUuid;
-
                                 if (item.productUuid) {
-                                    await productService.updateProductFromIntake(item.productUuid, {
-                                        purchasePrice: safeNumber(item.purchasePrice),
-                                        price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined,
-                                        barcodes: item.barcodes?.length ? item.barcodes : undefined,
-                                    });
+                                    await productService.updateProductFromIntake(item.productUuid, { purchasePrice: safeNumber(item.purchasePrice), price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined });
                                 } else if (item.isNew) {
                                     productUuid = uuidv4();
-                                    await db.products.add({
-                                        uuid:          productUuid,
-                                        name:          item.name,
-                                        price:         safeNumber(item.price),
-                                        purchasePrice: safeNumber(item.purchasePrice),
-                                        quantity:      0,
-                                        minStockLevel: 0,
-                                        barcodes:      item.barcodes || [],
-                                        unit:          (item.unit as any) || 'Pièce',
-                                        supplierUuid:  supplier.uuid,
-                                        stockStatus:   'out_of_stock',
-                                        createdAt:     new Date(),
-                                        updatedAt:     new Date(),
-                                        syncStatus:    'pending',
-                                        version:       1
-                                    });
+                                    await db.products.add({ uuid: productUuid, name: item.name, price: safeNumber(item.price), purchasePrice: safeNumber(item.purchasePrice), quantity: 0, minStockLevel: 0, barcodes: item.barcodes || [], unit: (item.unit as any) || 'Pièce', supplierUuid: supplier.uuid, stockStatus: 'out_of_stock', createdAt: new Date(), updatedAt: new Date(), syncStatus: 'pending', version: 1 });
                                 }
-
-                                if (productUuid && qty > 0) {
-                                    await inventoryService.adjustStock(
-                                        productUuid, qty, 'stock_intake', intakeUuid,
-                                    );
-                                }
-
-                                if (productUuid) {
-                                    finalItems.push({
-                                        productUuid,
-                                        productName:      item.name,
-                                        quantityReceived: qty,
-                                        quantityDamaged:  item.quantityDamaged,
-                                        purchasePrice:    safeNumber(item.purchasePrice),
-                                        landingCost,
-                                    });
-                                }
+                                if (productUuid && qty > 0) await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
+                                if (productUuid) finalItems.push({ productUuid, productName: item.name, quantityReceived: qty, quantityDamaged: item.quantityDamaged, purchasePrice: safeNumber(item.purchasePrice), landingCost: landing });
                             }
 
-                            const finalTotalValue = (itemsTotalValueCents + shippingCostCents) / 100;
-
-                            const newIntake = {
-                                uuid:          intakeUuid,
-                                supplierUuid:  supplier.uuid,
-                                invoiceNumber: intakeData.invoiceNumber,
-                                invoiceDate:   intakeData.invoiceDate,
-                                shippingCost:  intakeData.shippingCost,
-                                items:         finalItems,
-                                totalValue:    finalTotalValue,
-                                createdAt:     new Date(),
-                                updatedAt:     new Date(),
-                                syncStatus:    'pending' as const,
-                                version:       1
-                            };
-
+                            const total = (itemsTotalCents + shippingCents) / 100;
+                            const newIntake = { uuid: intakeUuid, supplierUuid: supplier.uuid, invoiceNumber: intakeData.invoiceNumber, invoiceDate: intakeData.invoiceDate, shippingCost: intakeData.shippingCost, items: finalItems, totalValue: total, createdAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const, version: 1 };
                             await db.stock_intakes.add(newIntake);
-                            await supplierService.updateSupplierBalance(supplier.uuid, finalTotalValue);
-                            
-                            await db.sync_queue.add({
-                                table: 'stock_intakes',
-                                operation: 'CREATE',
-                                payload: newIntake,
-                                timestamp: Date.now()
-                            });
+                            await supplierService.updateSupplierBalance(supplier.uuid, total);
+                            await db.sync_queue.add({ table: 'stock_intakes', operation: 'CREATE', payload: newIntake, timestamp: Date.now() });
                         });
-
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        toast.error('Erreur de réception de stock', { description: err.message });
+                        toast.error('Erreur stock', { description: err.message });
                         return false;
                     }
                 },
 
-                setProductViewMode:   mode => set({ productViewMode:   mode }),
-                setStockViewMode:     mode => set({ stockViewMode:     mode }),
-                setReturnsViewMode:   mode => set({ returnsViewMode:   mode }),
-                setCustomersViewMode: mode => set({ customersViewMode: mode }),
-                setExpensesViewMode:  mode => set({ expensesViewMode:  mode }),
-                setSalesViewMode:     mode => set({ salesViewMode:     mode }),
-                setGlobalSearchOpen:  open => set({ globalSearchOpen:  open }),
+                setProductViewMode:   m => set({ productViewMode:   m }),
+                setStockViewMode:     m => set({ stockViewMode:     m }),
+                setReturnsViewMode:   m => set({ returnsViewMode:   m }),
+                setCustomersViewMode: m => set({ customersViewMode: m }),
+                setExpensesViewMode:  m => set({ expensesViewMode:  m }),
+                setSalesViewMode:     m => set({ salesViewMode:     m }),
             },
         }),
         {

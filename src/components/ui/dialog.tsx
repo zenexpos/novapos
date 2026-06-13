@@ -31,10 +31,13 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Safety cleanup to prevent UI freeze if unmounted abruptly
+  // CRITICAL SAFETY: Ensure mouse is NEVER stuck after dialog unmount
   React.useEffect(() => {
     return () => {
-      document.body.style.pointerEvents = 'auto';
+      if (typeof document !== 'undefined') {
+        document.body.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'auto';
+      }
     };
   }, []);
 

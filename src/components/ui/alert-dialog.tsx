@@ -29,10 +29,13 @@ const AlertDialogContent = React.forwardRef<
     React.ElementRef<typeof AlertDialogPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
-    // Safety cleanup to prevent UI freeze if unmounted abruptly
+    // CRITICAL SAFETY: Cleanup mouse block on unmount
     React.useEffect(() => {
         return () => {
-            document.body.style.pointerEvents = 'auto';
+            if (typeof document !== 'undefined') {
+                document.body.style.pointerEvents = 'auto';
+                document.body.style.overflow = 'auto';
+            }
         };
     }, []);
 

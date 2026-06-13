@@ -5,20 +5,24 @@ import { useEffect, useRef } from 'react';
 import { breadService } from '@/services/bread.service';
 
 /**
- * Composant responsable de la gestion des opérations de synchronisation.
- * OPTIMISÉ : Correction de la boucle infinie de rendu.
+ * Gestionnaire de synchronisation stabilisé.
+ * Empêche les boucles de rendu infinies lors de l'initialisation.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
     const companyProfile = useAppStore(state => state.companyProfile);
     const initialSyncTriggered = useRef(false);
+    const profileFetched = useRef(false);
 
-    // FIX : On ne récupère le profil qu'une seule fois au montage pour éviter la boucle infinie
+    // Initial fetch - execute only once
     useEffect(() => {
-        fetchCompanyProfile();
+        if (!profileFetched.current) {
+            profileFetched.current = true;
+            fetchCompanyProfile();
+        }
     }, [fetchCompanyProfile]);
 
-    // Synchronisation initiale stable
+    // Background sync - stabilized
     useEffect(() => {
         const url = companyProfile?.supabaseUrl;
         const key = companyProfile?.supabaseKey;
@@ -28,29 +32,17 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
 
         initialSyncTriggered.current = true;
         
-        // Délai de démarrage pour laisser le CPU respirer
         const timeoutId = setTimeout(async () => {
             try {
                 await breadService.processEndOfDayTransfers();
                 await performBackgroundSync();
             } catch (e) {
-                console.warn("[AppSyncManager] Initial sync warning", e);
+                console.warn("[AppSyncManager] Sync warning", e);
             }
         }, 5000);
 
         return () => clearTimeout(timeoutId);
     }, [companyProfile?.supabaseUrl, companyProfile?.supabaseKey, performBackgroundSync]);
-
-    // Écouteur de retour en ligne
-    useEffect(() => {
-        const handleOnline = () => {
-            if (companyProfile?.supabaseUrl && companyProfile?.supabaseKey) {
-                performBackgroundSync();
-            }
-        };
-        window.addEventListener('online', handleOnline);
-        return () => window.removeEventListener('online', handleOnline);
-    }, [performBackgroundSync, companyProfile?.supabaseUrl, companyProfile?.supabaseKey]);
 
     return <>{children}</>;
 }
