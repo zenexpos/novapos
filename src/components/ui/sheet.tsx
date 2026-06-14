@@ -58,8 +58,9 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(({ side = "right", className, children, ...props }, ref) => {
     /**
-   * FORENSIC FIX: UI POINTER RECOVERY
-   */
+     * FORENSIC FIX: UI POINTER RECOVERY
+     * Garantit que pointer-events: none est retiré du body au démontage.
+     */
     React.useEffect(() => {
         return () => {
           if (typeof document !== 'undefined') {
