@@ -132,7 +132,7 @@ class ProductService {
             newProduct.id = id;
             
             if (initialQty !== 0) {
-                // L'ajustement génère le log d'audit correct ("INITIAL_STOCK") et définit la valeur finale
+                // L'ajustement génère le log d'audit correct ("manual_adjustment") et définit la valeur finale
                 await inventoryService.adjustStock(newProduct.uuid, initialQty, 'manual_adjustment', 'INITIAL_STOCK');
                 
                 // On met à jour l'objet local retourné pour l'UI
