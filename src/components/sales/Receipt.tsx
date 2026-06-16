@@ -108,8 +108,8 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
             <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">
                 <div className="space-y-1 max-w-[65%]">
                     <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">{profile?.companyName || 'iPOS ZEN'}</h1>
-                    <p className="text-[8.5pt] opacity-80 leading-tight">{profile?.address}</p>
-                    <p className="text-[9pt] font-bold">Tél: {profile?.phone} | {profile?.email}</p>
+                    <p className="text-[9.5pt] opacity-70 leading-relaxed">{profile?.address}</p>
+                    <p className="text-[9.5pt] font-bold">Tél: {profile?.phone} | {profile?.email}</p>
                     
                     <div className="grid grid-cols-2 gap-x-6 mt-4 text-[8pt] font-mono border-t border-gray-200 pt-2">
                         {profile?.rcNumber && <p><span className="opacity-50">RC:</span> {profile.rcNumber}</p>}
