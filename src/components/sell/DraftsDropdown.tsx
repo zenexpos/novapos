@@ -36,8 +36,9 @@ import { calculateCartTotals, formatCurrency, cn } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 export function DraftsDropdown() {
-    const storeCarts = useCartStore(state => state.carts);
-    const storeActiveCartId = useCartStore(state => state.activeCartId);
+    // SELECTOR OPTIMIZATION: Subscribe only to necessary store slices
+    const carts = useCartStore(state => state.carts);
+    const activeCartId = useCartStore(state => state.activeCartId);
     const { createCart, selectCart, deleteCart, renameCart } = useCartActions();
 
     const [isMounted, setIsMounted] = useState(false);
@@ -51,9 +52,6 @@ export function DraftsDropdown() {
     useEffect(() => {
         setIsMounted(true);
     }, []);
-
-    const carts = isMounted ? storeCarts : [];
-    const activeCartId = isMounted ? storeActiveCartId : null;
 
     const shortcutConfigs = useMemo(
         () =>
@@ -94,8 +92,8 @@ export function DraftsDropdown() {
         return (
             <Button
                 variant="outline"
-                size="lg"
-                className="h-9 text-sm opacity-50 cursor-not-allowed"
+                size="sm"
+                className="h-9 opacity-50 cursor-not-allowed"
             >
                 <FileStack className="h-4 w-4 mr-1.5" />
                 Ventes
@@ -107,9 +105,9 @@ export function DraftsDropdown() {
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 gap-1.5">
-                        <FileStack className="h-4 w-4" />
-                        <span className="hidden sm:inline">Ventes</span>
+                    <Button variant="outline" size="sm" className="h-9 gap-1.5 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all">
+                        <FileStack className="h-4 w-4 text-primary" />
+                        <span className="hidden sm:inline font-bold uppercase text-[10px] tracking-tight">Ventes</span>
                         {carts.length > 1 && (
                             <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4">
                                 {carts.length}
@@ -118,20 +116,20 @@ export function DraftsDropdown() {
                     </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="start" className="w-64">
-                    <DropdownMenuLabel className="flex items-center justify-between">
-                        <span>Paniers actifs</span>
+                <DropdownMenuContent align="start" className="w-64 rounded-2xl border-none shadow-2xl bg-card/95 backdrop-blur-md">
+                    <DropdownMenuLabel className="flex items-center justify-between p-4">
+                        <span className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">Paniers actifs</span>
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-primary font-bold hover:bg-primary/10"
+                            className="h-7 text-[10px] text-primary font-black uppercase hover:bg-primary/10"
                             onClick={() => createCart()}
                         >
-                            <Plus className="h-3 w-3 mr-1" />
+                            <Plus className="h-3.5 w-3.5 mr-1" />
                             Nouveau
                         </Button>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="opacity-10" />
 
                     {carts.map(cart => {
                         const totals  = calculateCartTotals(cart);
@@ -140,33 +138,33 @@ export function DraftsDropdown() {
                             <DropdownMenuItem
                                 key={cart.id}
                                 className={cn(
-                                    'flex items-center justify-between cursor-pointer p-2 rounded-md',
-                                    isActive && 'bg-primary/10 text-primary font-semibold',
+                                    'flex items-center justify-between cursor-pointer p-3 m-1 rounded-xl transition-all',
+                                    isActive ? 'bg-primary/10 text-primary font-black' : 'hover:bg-muted/50',
                                 )}
                                 onSelect={() => selectCart(cart.id)}
                             >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                     {isActive ? (
                                         <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
                                     ) : (
-                                        <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                        <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-30" />
                                     )}
-                                    <span className="truncate text-sm">{cart.name}</span>
+                                    <span className="truncate text-xs font-bold uppercase tracking-tight">{cart.name}</span>
                                     {cart.items.length > 0 && (
-                                        <span className="text-xs text-muted-foreground shrink-0">
-                                            ({cart.items.length} art.)
+                                        <span className="text-[10px] text-muted-foreground/40 shrink-0 font-bold">
+                                            ({cart.items.length})
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <div className="flex items-center gap-2 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                                     {totals.total > 0 && (
-                                        <span className="text-xs font-mono text-primary">
+                                        <span className="text-[10px] font-black text-primary tabular-nums">
                                             {formatCurrency(totals.total)}
                                         </span>
                                     )}
                                     <button
-                                        className="p-1 rounded hover:bg-muted"
+                                        className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                                         onClick={e => {
                                             e.stopPropagation();
                                             setCartToRename({ id: cart.id, name: cart.name });
@@ -174,39 +172,39 @@ export function DraftsDropdown() {
                                             setRenameDialogOpen(true);
                                         }}
                                     >
-                                        <Edit className="h-3 w-3 text-muted-foreground" />
+                                        <Edit className="h-3 w-3 text-muted-foreground/40" />
                                     </button>
                                     <button
-                                        className="p-1 rounded hover:bg-destructive/10"
+                                        className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
                                         onClick={e => {
                                             e.stopPropagation();
                                             deleteCart(cart.id);
                                         }}
                                     >
-                                        <Trash2 className="h-3 w-3 text-destructive" />
+                                        <Trash2 className="h-3 w-3 text-destructive/40" />
                                     </button>
                                 </div>
                             </DropdownMenuItem>
                         );
                     })}
 
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="opacity-10" />
                     <DropdownMenuItem
                         onSelect={handleSuspendAndNew}
-                        className="text-primary font-medium gap-2"
+                        className="text-primary font-black uppercase text-[10px] p-4 m-1 rounded-xl gap-3 tracking-widest hover:bg-primary/5"
                     >
                         <PauseCircle className="h-4 w-4" />
-                        Suspendre et créer nouveau
+                        Mettre en attente & Nouveau
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
             <AlertDialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Renommer le panier</AlertDialogTitle>
+                        <AlertDialogTitle>Personnaliser la vente</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Entrez un nouveau nom pour ce panier.
+                            Attribuez un nom à ce panier pour faciliter le suivi.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <Input
@@ -215,12 +213,13 @@ export function DraftsDropdown() {
                         onKeyDown={e => {
                             if (e.key === 'Enter') handleRename();
                         }}
+                        className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold"
                         autoFocus
                     />
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleRename}>
-                            Renommer
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel className="rounded-xl font-bold">Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRename} className="rounded-xl font-black uppercase text-xs">
+                            Confirmer
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

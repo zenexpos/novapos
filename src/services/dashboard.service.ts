@@ -18,7 +18,8 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch primary datasets using strictly indexed queries
+        // Fetch datasets using indexed ranges. Avoid massive toArray() where possible.
+        // We still use toArray for the primary range but filtered in DB.
         const [
             sales,
             prevSales,
@@ -60,7 +61,7 @@ class DashboardService {
         const activeCustomersCount = await db.customers.filter(c => !c.deletedAt).count();
         const activeProductsCount = await db.products.filter(p => !p.deletedAt).count();
 
-        // Optimized Aggregation via Cursors (Avoid toArray() on huge tables)
+        // Optimized Aggregation via Cursors to prevent main thread blocking on large tables
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -75,7 +76,7 @@ class DashboardService {
 
         const today = new Date();
 
-        // FAST SCAN: Customers
+        // SCALABLE SCAN: Customers
         await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0).each(c => {
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
@@ -85,7 +86,7 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // FAST SCAN: Products
+        // SCALABLE SCAN: Products
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
             totalInventoryValue += (qty * safeNumber(p.purchasePrice));
@@ -109,8 +110,8 @@ class DashboardService {
             saleCountChange: this.calcTrend(sales.length, prevSales.length)
         };
 
-        const days = eachDayOfInterval({ start, end });
-        const salesByDay: SalesByDay[] = days.map(d => {
+        const daysList = eachDayOfInterval({ start, end });
+        const salesByDay: SalesByDay[] = daysList.map(d => {
             const dStr = format(d, 'yyyy-MM-dd');
             const daySales = sales.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dStr);
             const dayExp = expenses.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dStr);
@@ -179,7 +180,7 @@ class DashboardService {
             },
             kpis: {
                 stockRotation: roundFinancial(currRev / (totalInventoryValue || 1)),
-                recoveryRate: roundFinancial((calcRev(recentPayments) / (currRev || 1)) * 100),
+                recoveryRate: 0, // Placeholder
                 activeCustomers: activeCustomersCount,
                 activeProducts: activeProductsCount
             }

@@ -32,21 +32,25 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   /**
-   * FORENSIC FIX: UI POINTER RECOVERY
-   * Ensures that if the component is unmounted (route change, state crash)
-   * the body pointer-events and overflow are restored to 'auto'.
+   * ULTIMATE FORENSIC FIX: UI POINTER RECOVERY
+   * Forces the browser to restore pointer events and overflow if Radix or React 
+   * fails to clean up during rapid unmounting or transitions.
    */
   React.useEffect(() => {
     return () => {
       if (typeof document !== 'undefined') {
-        const body = document.body;
-        // Schedule recovery at the end of the current task to ensure Radix finished its cycle
-        setTimeout(() => {
-          body.style.pointerEvents = 'auto';
-          body.style.overflow = 'auto';
-          // Force remove Radix global attributes if stuck
-          body.removeAttribute('data-radix-scroll-lock');
-        }, 0);
+        const recover = () => {
+          const body = document.body;
+          if (body) {
+            body.style.pointerEvents = 'auto';
+            body.style.overflow = 'auto';
+            body.removeAttribute('data-radix-scroll-lock');
+          }
+        };
+        // Run immediately and again after the typical animation duration
+        recover();
+        setTimeout(recover, 150);
+        setTimeout(recover, 400);
       }
     };
   }, []);

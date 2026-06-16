@@ -134,8 +134,11 @@ function PaymentDialogContent({
             const sale = await processSale(amountPaid, dueDate);
             if (sale) {
                 setLastSale(sale);
+                // FORENSIC FIX: Delayouverture of next dialog to avoid Radix UI pointer lock race condition
                 onOpenChange(false);
-                setIsReceiptOpen(true);
+                setTimeout(() => {
+                    setIsReceiptOpen(true);
+                }, 150);
             }
         } finally {
             if (isMountedRef.current) setIsLoading(false);
