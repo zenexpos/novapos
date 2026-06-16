@@ -300,6 +300,7 @@ class ProductService {
                         if (existing) {
                             analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid } as any);
                         } else {
+                            analysis.customersToAdd.push(productData as any); // Correcting naming
                             analysis.productsToAdd.push(productData as any);
                         }
                     }
