@@ -123,7 +123,7 @@ const DialogTitle = React.forwardRef<
     {...props}
   />
 ))
-DialogTitle.displayName = "DialogTitle"
+DialogTitle.displayName = DialogPrimitive.Title.displayName
 
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
@@ -135,7 +135,7 @@ const DialogDescription = React.forwardRef<
     {...props}
   />
 ))
-DialogDescription.displayName = "DialogDescription"
+DialogDescription.displayName = DialogPrimitive.Description.displayName
 
 export {
   Dialog,
