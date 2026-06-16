@@ -1,4 +1,3 @@
-
 'use client';
 
 import { safeNumber } from '@/lib/utils';
@@ -26,32 +25,33 @@ class OcrParserService {
         const products = await productService.getProducts();
 
         for (const line of lines) {
-            // Nettoyage de la ligne
-            const cleanLine = line.trim().replace(/[,]/g, '.');
+            // Nettoyage de la ligne (virgules en points, etc.)
+            const cleanLine = this.cleanOcrText(line).trim().replace(/[,]/g, '.');
             
             // Tentative d'extraction : Nom + Quantité + Prix
-            // Format type: "NOM PRODUIT 10 150.00" ou "10 NOM PRODUIT 1500"
+            // On cherche des groupes de chiffres séparés par des espaces ou symboles
             const numbers = cleanLine.match(/(\d+(?:\.\d+)?)/g);
             
             if (numbers && numbers.length >= 1) {
-                // On cherche le nom (tout ce qui n'est pas un chiffre pur)
-                const namePart = cleanLine.replace(/[\d.]/g, '').trim();
+                // On cherche le nom (tout ce qui n'est pas un chiffre pur ou symbole prix)
+                const namePart = cleanLine.replace(/[\d.,]/g, '').replace(/[€$£]/g, '').trim();
                 
                 if (namePart.length > 2) {
+                    // Stratégie simple : le premier nombre est souvent la quantité, le second le prix
                     const qty = safeNumber(numbers[0]);
                     const price = numbers.length > 1 ? safeNumber(numbers[1]) : 0;
                     
-                    // Recherche d'un match dans la base
+                    // Recherche d'un match dans la base locale (Recherche floue)
                     const match = this.findBestMatch(namePart, products);
                     
                     extractedItems.push({
                         name: match ? match.name : namePart,
                         productUuid: match ? match.uuid : undefined,
-                        quantity: qty,
+                        quantity: qty > 0 ? qty : 1,
                         purchasePrice: price > 0 ? price : (match ? match.purchasePrice : 0),
                         price: match ? match.price : 0,
                         isNew: !match,
-                        confidence: match ? 0.9 : 0.4
+                        confidence: match ? 0.95 : 0.45
                     });
                 }
             }
@@ -84,10 +84,12 @@ class OcrParserService {
      */
     cleanOcrText(text: string): string {
         return text
-            .replace(/[O]/g, '0') // O -> 0
-            .replace(/[I|l]/g, '1') // I, l -> 1
-            .replace(/[S]/g, '5') // S -> 5
-            .replace(/[Z]/g, '2') // Z -> 2
+            .replace(/\bO\b/g, '0') // O isolé -> 0
+            .replace(/[l|I]/g, '1') // l ou I -> 1 (dangereux si dans un nom, mais utile pour les prix)
+            .replace(/[S]/g, '5')   // S -> 5
+            .replace(/[Z]/g, '2')   // Z -> 2
+            .replace(/[B]/g, '8')   // B -> 8
+            .replace(/[?]/g, '7')   // ? -> 7
             .trim();
     }
 }

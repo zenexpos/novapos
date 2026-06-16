@@ -1,12 +1,11 @@
-
 'use client';
-import React from 'react';
 
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScanLine, Loader2, X, Image as ImageIcon } from 'lucide-react';
+import { ScanLine, Loader2, X, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ocrParserService } from '@/services/ocr-parser.service';
+import { Progress } from '@/components/ui/progress';
 
 interface OcrResult {
     rawText: string;
@@ -19,7 +18,7 @@ interface OcrInvoiceScannerProps {
 }
 
 /**
- * Scanner de facture amélioré avec prétraitement d'image local.
+ * Scanner de facture amélioré avec prétraitement d'image local via Canvas.
  */
 export function OcrInvoiceScanner({ onResult, disabled }: OcrInvoiceScannerProps) {
     const [isProcessing, setIsProcessing] = useState(false);
@@ -40,21 +39,11 @@ export function OcrInvoiceScanner({ onResult, disabled }: OcrInvoiceScannerProps
                     const ctx = canvas.getContext('2d')!;
                     canvas.width = img.width;
                     canvas.height = img.height;
+                    
+                    // Appliquer un filtre de contraste et de gris
+                    ctx.filter = 'contrast(1.5) grayscale(1)';
                     ctx.drawImage(img, 0, 0);
                     
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imageData.data;
-                    const contrast = 50; 
-                    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-                    
-                    for (let i = 0; i < data.length; i += 4) {
-                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                        const color = factor * (avg - 128) + 128;
-                        data[i] = color;
-                        data[i + 1] = color;
-                        data[i + 2] = color;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
                 };
                 img.src = e.target?.result as string;
@@ -70,30 +59,33 @@ export function OcrInvoiceScanner({ onResult, disabled }: OcrInvoiceScannerProps
         }
 
         setIsProcessing(true);
-        setProgress(10);
+        setProgress(5);
         
         try {
+            // 1. Amélioration locale
             const enhancedDataUrl = await enhanceImage(file);
             setPreview(enhancedDataUrl);
-            setProgress(30);
+            setProgress(20);
 
+            // 2. Reconnaissance OCR
             const Tesseract = await import('tesseract.js');
             const { data } = await Tesseract.recognize(enhancedDataUrl, 'fra+ara', {
                 logger: m => {
                     if (m.status === 'recognizing text') {
-                        setProgress(30 + (m.progress * 70));
+                        setProgress(20 + (m.progress * 80));
                     }
                 }
             });
 
-            const rawText = ocrParserService.cleanOcrText(data.text);
-            const lines = rawText.split('\n').filter(l => l.trim().length > 3);
+            // 3. Nettoyage et structuration
+            const cleanedText = ocrParserService.cleanOcrText(data.text);
+            const lines = cleanedText.split('\n').filter(l => l.trim().length > 3);
 
-            onResult({ rawText, lines });
-            toast.success(`Lecture terminée : ${lines.length} lignes identifiées.`);
+            onResult({ rawText: cleanedText, lines });
+            toast.success(`Lecture Elite terminée : ${lines.length} lignes structurables.`);
         } catch (err) {
             console.error('OCR Error:', err);
-            toast.error("Erreur lors de l'analyse. Vérifiez la netteté de l'image.");
+            toast.error("Échec de l'analyse OCR. Assurez-vous que l'image est nette.");
         } finally {
             setIsProcessing(false);
             setProgress(0);
@@ -117,50 +109,51 @@ export function OcrInvoiceScanner({ onResult, disabled }: OcrInvoiceScannerProps
                 disabled={isProcessing || disabled}
             />
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
                 <Button
                     type="button"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isProcessing || disabled}
-                    className="h-11 rounded-xl px-6 gap-3 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all flex-grow sm:flex-grow-0"
+                    className="h-14 rounded-2xl px-6 gap-3 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all w-full relative overflow-hidden group"
                 >
                     {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     ) : (
-                        <ScanLine className="h-4 w-4 text-primary" />
+                        <ScanLine className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                     )}
-                    <span className="text-xs font-black uppercase tracking-widest">
-                        {isProcessing ? `Analyse ${Math.round(progress)}%` : 'Scanner Facture / BL'}
-                    </span>
+                    <div className="flex flex-col items-start text-left">
+                        <span className="text-xs font-black uppercase tracking-widest">
+                            {isProcessing ? `Traitement Elite ${Math.round(progress)}%` : 'Scanner Facture / BL'}
+                        </span>
+                        {!isProcessing && <span className="text-[9px] font-bold text-muted-foreground/60 uppercase">Extraction intelligente bilingue</span>}
+                    </div>
+                    {isProcessing && (
+                        <div className="absolute bottom-0 left-0 h-1 bg-primary/20 transition-all duration-300" style={{ width: `${progress}%` }} />
+                    )}
                 </Button>
 
-                {preview && !isProcessing && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setPreview(null)}
-                        className="h-11 w-11 rounded-xl text-destructive hover:bg-destructive/10"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
+                {preview && (
+                    <div className="relative mt-2 rounded-2xl border border-white/5 overflow-hidden bg-black/20 shadow-inner group h-32">
+                        <img src={preview} alt="Scan preview" className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        
+                        {!isProcessing && (
+                            <button 
+                                onClick={() => setPreview(null)}
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-destructive text-white shadow-lg hover:scale-110 transition-transform"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        )}
+                        
+                        <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                            <ImageIcon className="h-3 w-3 text-white/40" />
+                            <span className="text-[8px] font-black text-white/60 uppercase tracking-widest">Aperçu du traitement</span>
+                        </div>
+                    </div>
                 )}
             </div>
-
-            {preview && (
-                <div className="relative mt-2 rounded-2xl border border-white/5 overflow-hidden bg-black/20 shadow-inner group">
-                    <img src={preview} alt="Scan preview" className="w-full h-32 object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                    {isProcessing && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-                            <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }

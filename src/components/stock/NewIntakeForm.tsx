@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -92,11 +91,11 @@ export function NewIntakeForm() {
     };
 
     const handleOcrResult = useCallback(async (result: { rawText: string, lines: string[] }) => {
-        // Extraction de l'entête
+        // Extraction intelligente des entêtes via Regex
         const invMatch = result.rawText.match(/(?:N°|Facture|Ref|Invoice|Nº)[:\s]*([A-Z0-9-]+)/i);
         if (invMatch && invMatch[1]) setInvoiceNumber(invMatch[1]);
 
-        // Extraction des produits structurés via le nouveau service
+        // Parsing des produits structurés
         const parsedItems = await ocrParserService.parseInvoiceLines(result.lines);
         
         if (parsedItems.length > 0) {
@@ -107,8 +106,10 @@ export function NewIntakeForm() {
                 quantityDamaged: 0,
                 unit: 'Pièce'
             }));
+            
+            // On concatène les nouveaux éléments au début de la liste
             setItems(prev => [...newIntakeItems, ...prev]);
-            toast.success(`${parsedItems.length} articles importés du scan.`);
+            toast.success(`${parsedItems.length} articles extraits avec succès.`);
         }
     }, []);
 
@@ -127,7 +128,7 @@ export function NewIntakeForm() {
                 totalValue
             });
             if (success) {
-                toast.success("Réception validée.");
+                toast.success("Réception validée et stock mis à jour.");
                 router.push('/stock');
             }
         } catch (error: any) {
@@ -295,7 +296,7 @@ export function NewIntakeForm() {
                             className="w-full h-16 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 gap-3"
                         >
                             {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
-                            Valider
+                            Valider la Réception
                         </Button>
                     </CardContent>
                 </Card>
