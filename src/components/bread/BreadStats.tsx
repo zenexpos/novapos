@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import type { BreadOrder } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, Wallet, Landmark, AlertCircle, ShoppingBag, CheckCircle2, XCircle } from 'lucide-react';
+import { ShoppingBag, CheckCircle2, XCircle, Truck, Landmark } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -55,8 +55,8 @@ export function BreadStats({ date }: BreadStatsProps) {
     }, [ordersResult.value]);
 
     if (ordersResult.isLoading) {
-        return <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
-            {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
+        return <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
         </div>;
     }
 
@@ -88,7 +88,7 @@ export function BreadStats({ date }: BreadStatsProps) {
                 value={`${stats.unreceivedPieces} PCS`} 
                 icon={Truck} 
                 colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle="Reliquat en arghifa"
+                subtitle="Pains restants"
             />
             <StatCard 
                 title="Valeur Totale" 

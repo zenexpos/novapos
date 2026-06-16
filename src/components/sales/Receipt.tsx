@@ -4,7 +4,7 @@ import React from 'react';
 import type { Sale, CompanyProfile } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { cn, formatCurrency, safeNumber } from '@/lib/utils';
+import { cn, safeNumber } from '@/lib/utils';
 import { numberToFrenchWords } from '@/lib/numberToWords';
 
 interface ReceiptProps {
@@ -80,13 +80,13 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                 </div>
                 
                 <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
-                    <span>SOLDE DÛ CLIENT:</span>
+                    <span>SOLDE À RECOUVRER:</span>
                     <span>{fmt(finalDebtBalance)} DA</span>
                 </div>
             </div>
 
             <p className="text-center mt-8 text-[7pt] uppercase tracking-widest opacity-40">Merci de votre confiance</p>
-            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen v2.9 Sovereign Ledger</p>
+            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen Sovereign Ledger</p>
         </div>
     );
 };
@@ -209,7 +209,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
 
             {/* Legal Footer */}
             <footer className="mt-auto pt-6 border-t border-gray-100 flex justify-between items-center text-[7.5pt] text-gray-400 font-black uppercase tracking-[0.2em]">
-                <span>iPOS ZEN v2.9 — SOVEREIGN LEDGER</span>
+                <span>iPOS ZEN Sovereign Ledger</span>
                 <span>Généré le {format(new Date(), 'dd/MM/yyyy HH:mm')} — Document Commercial</span>
             </footer>
           </div>

@@ -41,6 +41,7 @@ const AlertDialogContent = React.forwardRef<
                   body.style.pointerEvents = 'auto';
                   body.style.overflow = 'auto';
                   body.removeAttribute('data-radix-scroll-lock');
+                  // Trigger layout reflow to ensure mouse capture
                   body.style.display = 'none';
                   void body.offsetHeight;
                   body.style.display = '';

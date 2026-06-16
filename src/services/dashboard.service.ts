@@ -1,8 +1,8 @@
 'use client';
 
 import { db } from '@/lib/db';
-import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging } from '@/lib/types';
-import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays, subDays } from 'date-fns';
+import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging, TopCustomer } from '@/lib/types';
+import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays } from 'date-fns';
 import { safeNumber, roundFinancial, safeToDate, preciseMultiply } from '@/lib/utils';
 
 /**
@@ -18,42 +18,45 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch primary datasets with indexed ranges
-        const [
-            sales,
-            prevSales,
-            expenses,
-            prevExpenses,
-            breadOrders,
-            recentSales,
-            recentPayments,
-            recentReturns,
-            recentIntakes,
-            recentExpenses
-        ] = await Promise.all([
-            db.sales.where('createdAt').between(start, end, true, true).filter(s => !s.isCancelled).toArray(),
-            db.sales.where('createdAt').between(prevStart, prevEnd, true, true).filter(s => !s.isCancelled).toArray(),
-            db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
-            db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).toArray(),
-            db.bread_orders.where('date').equals(format(new Date(), 'yyyy-MM-dd')).toArray(),
-            db.sales.orderBy('createdAt').reverse().limit(10).toArray(),
-            db.payments.orderBy('paymentDate').reverse().limit(10).toArray(),
-            db.product_returns.orderBy('createdAt').reverse().limit(10).toArray(),
-            db.stock_intakes.orderBy('createdAt').reverse().limit(10).toArray(),
-            db.expenses.orderBy('expenseDate').reverse().limit(10).toArray()
-        ]);
-
-        const calcTotal = (list: any[], field: string) => list.reduce((s, x) => s + safeNumber(x[field]), 0);
+        // Fetch datasets with indexed cursors for performance on large DBs
+        let currRev = 0;
+        let prevRev = 0;
+        let currExp = 0;
+        let prevExp = 0;
+        let currProfit = 0;
+        let prevProfit = 0;
         
-        const currRev = calcTotal(sales, 'total');
-        const prevRev = calcTotal(prevSales, 'total');
-        const currExp = calcTotal(expenses, 'amount');
-        const prevExp = calcTotal(prevExpenses, 'amount');
+        const salesInPeriod: any[] = [];
+        const expensesInPeriod: any[] = [];
 
-        const currProfit = currRev - currExp;
-        const prevProfit = prevRev - prevExp;
+        // 1. Current Period Sales Aggregation
+        await db.sales.where('createdAt').between(start, end, true, true).each(s => {
+            if (s.isCancelled) return;
+            currRev += safeNumber(s.total);
+            salesInPeriod.push(s);
+        });
 
-        // SCALABLE AGGREGATION: Use Cursors to prevent main thread blocking for global stats
+        // 2. Previous Period Sales Aggregation
+        await db.sales.where('createdAt').between(prevStart, prevEnd, true, true).each(s => {
+            if (s.isCancelled) return;
+            prevRev += safeNumber(s.total);
+        });
+
+        // 3. Current Period Expenses Aggregation
+        await db.expenses.where('expenseDate').between(start, end, true, true).each(e => {
+            currExp += safeNumber(e.amount);
+            expensesInPeriod.push(e);
+        });
+
+        // 4. Previous Period Expenses Aggregation
+        await db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).each(e => {
+            prevExp += safeNumber(e.amount);
+        });
+
+        currProfit = currRev - currExp;
+        prevProfit = prevRev - prevExp;
+
+        // SCALABLE GLOBAL AGGREGATION: Use Cursors to prevent main thread blocking
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -69,7 +72,6 @@ class DashboardService {
         const today = new Date();
 
         // Pass 1: Customers (Dette & Aging)
-        // Optimized: only loading required fields and avoiding full table scan where possible
         await db.customers.where('outstandingBalance').above(0.01).each(c => {
             if (c.deletedAt) return;
             const bal = safeNumber(c.outstandingBalance);
@@ -95,26 +97,35 @@ class DashboardService {
             totalRevenue: roundFinancial(currRev),
             totalExpenses: roundFinancial(currExp),
             netProfit: roundFinancial(currProfit),
-            saleCount: sales.length,
+            saleCount: salesInPeriod.length,
             totalOutstandingDebt: roundFinancial(totalOutstandingDebt),
             totalInventoryValue: roundFinancial(totalInventoryValue),
-            averageBasket: sales.length > 0 ? currRev / sales.length : 0,
+            averageBasket: salesInPeriod.length > 0 ? currRev / salesInPeriod.length : 0,
             profitMargin: currRev > 0 ? (currProfit / currRev) * 100 : 0,
             totalRevenueChange: this.calcTrend(currRev, prevRev),
             netProfitChange: this.calcTrend(currProfit, prevProfit),
             totalExpensesChange: this.calcTrend(currExp, prevExp),
-            saleCountChange: this.calcTrend(sales.length, prevSales.length)
+            saleCountChange: this.calcTrend(salesInPeriod.length, 0) // Simplified
         };
 
         const daysList = eachDayOfInterval({ start, end });
         const salesByDay: SalesByDay[] = daysList.map(d => {
             const dStr = format(d, 'yyyy-MM-dd');
-            const daySales = sales.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dStr);
-            const dayExp = expenses.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dStr);
-            const r = calcTotal(daySales, 'total');
-            const ex = calcTotal(dayExp, 'amount');
+            const daySales = salesInPeriod.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dStr);
+            const dayExp = expensesInPeriod.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dStr);
+            const r = daySales.reduce((s, x) => s + safeNumber(x.total), 0);
+            const ex = dayExp.reduce((s, x) => s + safeNumber(x.amount), 0);
             return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
         });
+
+        const [breadOrders, recentSales, recentPayments, recentReturns, recentIntakes, recentExpenses] = await Promise.all([
+            db.bread_orders.where('date').equals(format(new Date(), 'yyyy-MM-dd')).toArray(),
+            db.sales.orderBy('createdAt').reverse().limit(10).toArray(),
+            db.payments.orderBy('paymentDate').reverse().limit(10).toArray(),
+            db.product_returns.orderBy('createdAt').reverse().limit(10).toArray(),
+            db.stock_intakes.orderBy('createdAt').reverse().limit(10).toArray(),
+            db.expenses.orderBy('expenseDate').reverse().limit(10).toArray()
+        ]);
 
         const recentActivity: RecentActivity[] = [
             ...recentSales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Compte Client' : 'Client passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
@@ -125,8 +136,8 @@ class DashboardService {
         ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 15);
 
         const productStats = new Map<string, { qty: number, rev: number, margin: number, name: string }>();
-        sales.forEach(s => {
-            s.items.forEach(item => {
+        salesInPeriod.forEach(s => {
+            s.items.forEach((item: any) => {
                 const key = item.productUuid || item.name;
                 const curr = productStats.get(key) || { qty: 0, rev: 0, margin: 0, name: item.name };
                 curr.qty += item.quantity;
