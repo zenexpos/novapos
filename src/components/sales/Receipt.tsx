@@ -56,9 +56,9 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                 <tbody>
                     {sale.items.map((item, i) => (
                         <tr key={i} className="border-b border-gray-100">
-                            <td className="py-2 pr-1 font-bold uppercase truncate max-w-[35mm]">${item.name}</td>
-                            <td className="text-center py-2">${item.quantity}</td>
-                            <td className="text-right py-2 font-bold">${fmt(item.price * item.quantity)}</td>
+                            <td className="py-2 pr-1 font-bold uppercase truncate max-w-[35mm]">{item.name}</td>
+                            <td className="text-center py-2">{item.quantity}</td>
+                            <td className="text-right py-2 font-bold">{fmt(item.price * item.quantity)}</td>
                         </tr>
                     ))}
                 </tbody>
