@@ -4,7 +4,8 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
-import { TrendingUp, Skeleton } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardChartsProps {
     data: any[];

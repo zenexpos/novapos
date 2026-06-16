@@ -1,4 +1,13 @@
-# iPOS Zen — Sovereign Ledger & Elite POS
+15:36:05.576 Failed to compile.
+15:36:05.577 Type error: Module '"lucide-react"' has no exported member 'Skeleton'.
+15:36:05.578    5 | import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+15:36:05.578    6 | import { formatCurrency } from '@/lib/utils';
+15:36:05.578 >  7 | import { TrendingUp, Skeleton } from 'lucide-react';
+15:36:05.578      |                      ^
+15:36:05.579    8 |
+15:36:05.579    9 | interface DashboardChartsProps {
+15:36:05.579   10 |     data: any[];
+15:36:05.675 Error: Command "npm run build" exited with 1# iPOS Zen — Sovereign Ledger & Elite POS
 
 **iPOS Zen** est un système de point de vente (POS) souverain et luxueux, conçu pour fonctionner entièrement dans le navigateur avec une philosophie **Hors-ligne d'abord (Offline-First)**. Le système offre une expérience utilisateur "Zen" ultra-rapide avec une confidentialité absolue des données.
 
