@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from "react"
-import * as DialogPrimitive = "@radix-ui/react-dialog"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -53,6 +53,7 @@ const DialogContent = React.forwardRef<
         };
         recover();
         // Multi-stage recovery for aggressive unmounts
+        setTimeout(recover, 50);
         setTimeout(recover, 150);
         setTimeout(recover, 500);
       }

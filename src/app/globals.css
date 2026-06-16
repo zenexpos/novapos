@@ -119,6 +119,7 @@
     color: hsl(var(--foreground));
     font-size: 13px;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 }
 
@@ -142,6 +143,14 @@
 
   .info-bar-solid {
     @apply bg-card text-card-foreground border-b border-border shadow-sm;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -229,6 +238,3 @@
   .page-break { page-break-after: always !important; }
   .no-break { page-break-inside: avoid !important; }
 }
-
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

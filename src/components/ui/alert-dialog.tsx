@@ -48,6 +48,7 @@ const AlertDialogContent = React.forwardRef<
                 }
               };
               recover();
+              setTimeout(recover, 50);
               setTimeout(recover, 150);
               setTimeout(recover, 500);
             }

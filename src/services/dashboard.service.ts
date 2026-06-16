@@ -105,7 +105,7 @@ class DashboardService {
             totalRevenueChange: this.calcTrend(currRev, prevRev),
             netProfitChange: this.calcTrend(currProfit, prevProfit),
             totalExpensesChange: this.calcTrend(currExp, prevExp),
-            saleCountChange: this.calcTrend(salesInPeriod.length, 0) // Simplified
+            saleCountChange: this.calcTrend(salesInPeriod.length, 0)
         };
 
         const daysList = eachDayOfInterval({ start, end });

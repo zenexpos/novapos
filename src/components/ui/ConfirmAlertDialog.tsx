@@ -52,7 +52,7 @@ export function ConfirmAlertDialog({
                 } catch (error: any) {
                     toast.error(error.message || "L'opération a échoué.");
                 }
-            }, 100);
+            }, 150);
         } catch (error: any) {
             toast.error(error.message || "Erreur de transition.");
         }

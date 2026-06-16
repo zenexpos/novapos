@@ -26,7 +26,7 @@ class OcrParserService {
 
         for (const line of lines) {
             // Nettoyage de la ligne (virgules en points, etc.)
-            const cleanLine = this.cleanOcrText(line).trim().replace(/[,]/g, '.');
+            const cleanLine = this.cleanOcrText(line).trim().replace(/,/g, '.');
             
             // Tentative d'extraction : Nom + Quantité + Prix
             // On cherche des groupes de chiffres séparés par des espaces ou symboles

@@ -124,7 +124,7 @@ class ProductService {
     async addProduct(input: ProductCreateInput): Promise<Product> {
         const initialQty = safeNumber(input.quantity);
         
-        // On initialise la quantité à 0 lors de l'insertion pour éviter que db.add + adjustStock ne s'additionnent (Root cause identified)
+        // On initialise la quantité à 0 lors de l'insertion pour éviter que db.add + adjustStock ne s'additionnent
         const newProduct = this.createProductEntity({ ...input, quantity: 0 });
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
@@ -300,7 +300,6 @@ class ProductService {
                         if (existing) {
                             analysis.productsToUpdate.push({ ...productData, uuid: existing.uuid } as any);
                         } else {
-                            analysis.customersToAdd.push(productData as any); // Correcting naming
                             analysis.productsToAdd.push(productData as any);
                         }
                     }
