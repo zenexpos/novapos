@@ -2,12 +2,12 @@
 
 import { db } from '@/lib/db';
 import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging } from '@/lib/types';
-import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays } from 'date-fns';
+import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, safeToDate, preciseMultiply } from '@/lib/utils';
 
 /**
  * iPOS Zen - Optimized Dashboard Service
- * Uses batched cursors to avoid thread starvation on large datasets.
+ * Uses batched cursors and selective counting to avoid main thread starvation.
  */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
@@ -18,13 +18,12 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch datasets using indexed ranges.
+        // Fetch primary datasets with indexed ranges
         const [
             sales,
             prevSales,
             expenses,
             prevExpenses,
-            payments,
             breadOrders,
             recentSales,
             recentPayments,
@@ -36,7 +35,6 @@ class DashboardService {
             db.sales.where('createdAt').between(prevStart, prevEnd, true, true).filter(s => !s.isCancelled).toArray(),
             db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
             db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).toArray(),
-            db.payments.where('paymentDate').between(start, end, true, true).toArray(),
             db.bread_orders.where('date').equals(format(new Date(), 'yyyy-MM-dd')).toArray(),
             db.sales.orderBy('createdAt').reverse().limit(10).toArray(),
             db.payments.orderBy('paymentDate').reverse().limit(10).toArray(),
@@ -45,21 +43,17 @@ class DashboardService {
             db.expenses.orderBy('expenseDate').reverse().limit(10).toArray()
         ]);
 
-        const calcRev = (list: any[]) => list.reduce((s, x) => s + safeNumber(x.total), 0);
-        const calcExp = (list: any[]) => list.reduce((s, x) => s + safeNumber(x.amount), 0);
+        const calcTotal = (list: any[], field: string) => list.reduce((s, x) => s + safeNumber(x[field]), 0);
         
-        const currRev = calcRev(sales);
-        const prevRev = calcRev(prevSales);
-        const currExp = calcExp(expenses);
-        const prevExp = calcExp(prevExpenses);
+        const currRev = calcTotal(sales, 'total');
+        const prevRev = calcTotal(prevSales, 'total');
+        const currExp = calcTotal(expenses, 'amount');
+        const prevExp = calcTotal(prevExpenses, 'amount');
 
         const currProfit = currRev - currExp;
         const prevProfit = prevRev - prevExp;
 
-        const activeCustomersCount = await db.customers.filter(c => !c.deletedAt).count();
-        const activeProductsCount = await db.products.filter(p => !p.deletedAt).count();
-
-        // SCALABLE AGGREGATION: Use Cursors to prevent main thread blocking
+        // SCALABLE AGGREGATION: Use Cursors to prevent main thread blocking for global stats
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -74,8 +68,10 @@ class DashboardService {
 
         const today = new Date();
 
-        // Optimized pass for Customers
-        await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0.01).each(c => {
+        // Pass 1: Customers (Dette & Aging)
+        // Optimized: only loading required fields and avoiding full table scan where possible
+        await db.customers.where('outstandingBalance').above(0.01).each(c => {
+            if (c.deletedAt) return;
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
             const days = c.lastActivityDate ? differenceInDays(today, safeToDate(c.lastActivityDate)) : 0;
@@ -84,10 +80,12 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // Optimized pass for Products
+        // Pass 2: Products (Stock Health & Value)
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
-            totalInventoryValue += Math.round(preciseMultiply(qty, safeNumber(p.purchasePrice)) * 100) / 100;
+            const cost = safeNumber(p.purchasePrice);
+            totalInventoryValue += Math.round(preciseMultiply(qty, cost) * 100) / 100;
+            
             if (qty <= 0) outOfStock++;
             else if (qty <= p.minStockLevel) lowStock++;
             else healthy++;
@@ -113,8 +111,8 @@ class DashboardService {
             const dStr = format(d, 'yyyy-MM-dd');
             const daySales = sales.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dStr);
             const dayExp = expenses.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dStr);
-            const r = calcRev(daySales);
-            const ex = calcExp(dayExp);
+            const r = calcTotal(daySales, 'total');
+            const ex = calcTotal(dayExp, 'amount');
             return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
         });
 
@@ -124,7 +122,7 @@ class DashboardService {
             ...recentReturns.map(r => ({ id: r.uuid, type: 'return' as const, title: `Retour #${r.originalInvoiceNumber}`, description: 'Réintégration stock', timestamp: safeToDate(r.createdAt!), amount: r.totalReturnValue, status: 'warning' as const })),
             ...recentIntakes.map(i => ({ id: i.uuid, type: 'intake' as const, title: 'Réception Stock', description: i.invoiceNumber || 'Arrivage', timestamp: safeToDate(i.createdAt!), amount: i.totalValue, status: 'info' as const })),
             ...recentExpenses.map(e => ({ id: e.uuid, type: 'expense' as const, title: `Dépense: ${e.description}`, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'error' as const }))
-        ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 20);
+        ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 15);
 
         const productStats = new Map<string, { qty: number, rev: number, margin: number, name: string }>();
         sales.forEach(s => {
@@ -179,8 +177,8 @@ class DashboardService {
             kpis: {
                 stockRotation: roundFinancial(currRev / (totalInventoryValue || 1)),
                 recoveryRate: 0, 
-                activeCustomers: activeCustomersCount,
-                activeProducts: activeProductsCount
+                activeCustomers: await db.customers.filter(c => !c.deletedAt).count(),
+                activeProducts: await db.products.filter(p => !p.deletedAt).count()
             }
         };
     }

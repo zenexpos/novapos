@@ -6,7 +6,7 @@ import type { SyncQueueItem, CompanyProfile } from '@/lib/types';
 
 /**
  * Titanium Sync Engine — Version Entreprise (Optimisée Forensic)
- * Gère la synchronisation bidirectionnelle par lots pour éviter les blocages UI.
+ * Handles bi-directional synchronization with batch processing and conflict resolution.
  */
 class SupabaseSyncService {
     private isSyncing = false;
@@ -33,16 +33,16 @@ class SupabaseSyncService {
         }
 
         try {
-            // 1. PUSH : Traitement asynchrone des files d'attente
+            // 1. PUSH: Process the sync queue in batches
             await this.processSyncQueue(supabase);
 
-            // 2. PULL : Récupération par lots
+            // 2. PULL: Fetch changes from remote
             const profile = await db.company_profile.toCollection().first();
             const lastSync = profile?.lastSyncAt ? new Date(profile.lastSyncAt).toISOString() : new Date(0).toISOString();
             
             await this.pullRemoteChanges(supabase, lastSync);
 
-            // 3. FINALISATION
+            // 3. FINALIZE: Update sync timestamp
             if (profile?.id) {
                 await db.company_profile.update(profile.id, {
                     lastSyncAt: new Date(),
@@ -57,10 +57,9 @@ class SupabaseSyncService {
     }
 
     private async processSyncQueue(supabase: any): Promise<void> {
-        const queueItems = await db.sync_queue.orderBy('id').toArray();
+        const queueItems = await db.sync_queue.orderBy('id').limit(100).toArray();
         if (queueItems.length === 0) return;
 
-        // Limiter le débit pour éviter de saturer le canal HTTP
         for (const item of queueItems) {
             try {
                 const tableName = this.camelToSnake(item.table);
@@ -100,16 +99,17 @@ class SupabaseSyncService {
             const { data, error } = await supabase
                 .from(table)
                 .select('*')
-                .gt('updated_at', lastSync);
+                .gt('updated_at', lastSync)
+                .limit(200); // Process in manageable chunks
 
             if (error || !data || data.length === 0) continue;
 
             const dexieTable = (db as any)[this.snakeToCamel(table)];
             if (!dexieTable) continue;
 
-            // BATCH UPDATE: Utilise bulkPut pour une performance maximale et moins de verrous
             const sanitizedData = data.map((remote: any) => this.mapToLocal(remote));
             
+            // ATOMIC BATCH UPDATE: Use bulkPut to reduce database churn and lock times
             await db.transaction('rw', dexieTable, async () => {
                 for (const remote of sanitizedData) {
                     const local = await dexieTable.where('uuid').equals(remote.uuid).first();

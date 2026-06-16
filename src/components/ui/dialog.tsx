@@ -45,12 +45,15 @@ const DialogContent = React.forwardRef<
             body.style.pointerEvents = 'auto';
             body.style.overflow = 'auto';
             body.removeAttribute('data-radix-scroll-lock');
+            // Force re-calculation of mouse target
+            body.style.display = 'none';
+            void body.offsetHeight;
+            body.style.display = '';
           }
         };
-        // Run immediately and again after the typical animation duration
         recover();
         setTimeout(recover, 150);
-        setTimeout(recover, 400);
+        setTimeout(recover, 500);
       }
     };
   }, []);

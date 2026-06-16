@@ -37,7 +37,6 @@ function PaymentDialogContent({
     isOpen:       boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const [isMounted,       setIsMounted]       = useState(false);
     const isMountedRef     = useRef(true);
     const cart                                  = useActiveCart();
     const { processSale }                       = useCartActions();
@@ -49,7 +48,6 @@ function PaymentDialogContent({
     const [isReceiptOpen,   setIsReceiptOpen]   = useState(false);
     const [customer,        setCustomer]        = useState<Customer | null>(null);
     const [approveOverLimit, setApproveOverLimit] = useState(false);
-    const [saleError, setSaleError] = useState<string | null>(null);
 
     const activeItems = useMemo(() => cart?.items.filter(i => i.cartQuantity > 0) || [], [cart?.items]);
 
@@ -66,12 +64,12 @@ function PaymentDialogContent({
     const isCreditSale = !!(cart?.customerUuid && amountPaid < total - 0.009);
 
     useEffect(() => {
-        setIsMounted(true);
+        isMountedRef.current = true;
         return () => { isMountedRef.current = false; };
     }, []);
 
     useEffect(() => {
-        if (!isOpen || !isMounted || !cart) return;
+        if (!isOpen || !cart) return;
         
         const currentTotals = calculateCartTotals({ ...cart, items: activeItems });
         
@@ -79,12 +77,12 @@ function PaymentDialogContent({
         setIsLoading(false);
         setLastSale(null);
         setApproveOverLimit(false);
-        setSaleError(null);
 
         if (cart.customerUuid) {
             customerService
                 .getCustomerByUuid(cart.customerUuid)
                 .then(c => {
+                    if (!isMountedRef.current) return;
                     setCustomer(c || null);
                     const now = new Date();
                     if (c?.settlementDay) {
@@ -101,7 +99,7 @@ function PaymentDialogContent({
             setDueDate(undefined);
             setCustomer(null);
         }
-    }, [isOpen, cart, isMounted, activeItems]);
+    }, [isOpen, cart, activeItems]);
 
     const projectedBalance = useMemo(() => {
         if (!customer) return 0;
@@ -132,13 +130,17 @@ function PaymentDialogContent({
         setIsLoading(true);
         try {
             const sale = await processSale(amountPaid, dueDate);
-            if (sale) {
+            if (sale && isMountedRef.current) {
                 setLastSale(sale);
-                // FORENSIC FIX: Delayouverture of next dialog to avoid Radix UI pointer lock race condition
+                /**
+                 * ULTIMATE FORENSIC FIX: Dialog Transition Buffer
+                 * Delay opening the receipt dialog to allow the Payment dialog to fully unmount 
+                 * and restore pointer-events to the body tag.
+                 */
                 onOpenChange(false);
                 setTimeout(() => {
-                    setIsReceiptOpen(true);
-                }, 150);
+                    if (isMountedRef.current) setIsReceiptOpen(true);
+                }, 200); 
             }
         } finally {
             if (isMountedRef.current) setIsLoading(false);
@@ -160,13 +162,12 @@ function PaymentDialogContent({
         }
     ], 'Encaissement', isOpen);
 
-    if (!cart || !isMounted) return null;
+    if (!cart) return null;
 
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { if (isLoading) return; onOpenChange(open); }}>
-                <DialogContent
-            onEscapeKeyDown={(e) => { if (isLoading) e.preventDefault(); }} className="sm:max-w-md p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
+                <DialogContent onEscapeKeyDown={(e) => { if (isLoading) e.preventDefault(); }} className="sm:max-w-md p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
                     <DialogHeader className="p-6 bg-muted border-b border-border">
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">

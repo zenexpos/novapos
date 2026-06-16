@@ -31,7 +31,6 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => {
     /**
      * ULTIMATE FORENSIC FIX: UI POINTER RECOVERY
-     * Forces the body to unlock if the component is unmounted while transitions are active.
      */
     React.useEffect(() => {
         return () => {
@@ -42,11 +41,14 @@ const AlertDialogContent = React.forwardRef<
                   body.style.pointerEvents = 'auto';
                   body.style.overflow = 'auto';
                   body.removeAttribute('data-radix-scroll-lock');
+                  body.style.display = 'none';
+                  void body.offsetHeight;
+                  body.style.display = '';
                 }
               };
               recover();
               setTimeout(recover, 150);
-              setTimeout(recover, 400);
+              setTimeout(recover, 500);
             }
         };
     }, []);
