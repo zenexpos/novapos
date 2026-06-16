@@ -1,13 +1,13 @@
 'use client';
 
 import { db } from '@/lib/db';
-import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, TopCustomer, DebtAging } from '@/lib/types';
-import { startOfDay, endOfDay, subDays, format, eachDayOfInterval, isAfter, differenceInDays } from 'date-fns';
-import { safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
+import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging } from '@/lib/types';
+import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays } from 'date-fns';
+import { safeNumber, roundFinancial, safeToDate, preciseMultiply } from '@/lib/utils';
 
 /**
- * iPOS Zen - Optimized Dashboard Service (FORENSIC FIX)
- * Uses cursors and batched reducers to avoid thread starvation on large datasets.
+ * iPOS Zen - Optimized Dashboard Service
+ * Uses batched cursors to avoid thread starvation on large datasets.
  */
 class DashboardService {
     async getDashboardData(from: Date, to: Date): Promise<DashboardData> {
@@ -18,8 +18,7 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch datasets using indexed ranges. Avoid massive toArray() where possible.
-        // We still use toArray for the primary range but filtered in DB.
+        // Fetch datasets using indexed ranges.
         const [
             sales,
             prevSales,
@@ -57,11 +56,10 @@ class DashboardService {
         const currProfit = currRev - currExp;
         const prevProfit = prevRev - prevExp;
 
-        // KPI Calculations using indexed fast-count
         const activeCustomersCount = await db.customers.filter(c => !c.deletedAt).count();
         const activeProductsCount = await db.products.filter(p => !p.deletedAt).count();
 
-        // Optimized Aggregation via Cursors to prevent main thread blocking on large tables
+        // SCALABLE AGGREGATION: Use Cursors to prevent main thread blocking
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -76,8 +74,8 @@ class DashboardService {
 
         const today = new Date();
 
-        // SCALABLE SCAN: Customers
-        await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0).each(c => {
+        // Optimized pass for Customers
+        await db.customers.filter(c => !c.deletedAt && c.outstandingBalance > 0.01).each(c => {
             const bal = safeNumber(c.outstandingBalance);
             totalOutstandingDebt += bal;
             const days = c.lastActivityDate ? differenceInDays(today, safeToDate(c.lastActivityDate)) : 0;
@@ -86,10 +84,10 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // SCALABLE SCAN: Products
+        // Optimized pass for Products
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
-            totalInventoryValue += (qty * safeNumber(p.purchasePrice));
+            totalInventoryValue += Math.round(preciseMultiply(qty, safeNumber(p.purchasePrice)) * 100) / 100;
             if (qty <= 0) outOfStock++;
             else if (qty <= p.minStockLevel) lowStock++;
             else healthy++;
@@ -153,8 +151,8 @@ class DashboardService {
             .slice(0, 10);
 
         const alerts: DashboardAlert[] = [];
-        if (outOfStock > 0) alerts.push({ id: 'alert-oos', type: 'critical', message: `${outOfStock} produits en rupture de stock`, description: 'Ventes manquées potentielles.' });
-        if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} produits sous le seuil d'alerte`, description: 'Réapprovisionnement suggéré.' });
+        if (outOfStock > 0) alerts.push({ id: 'alert-oos', type: 'critical', message: `${outOfStock} produits en rupture`, description: 'Ventes perdues potentielles.' });
+        if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} seuils d'alerte atteints`, description: 'Réapprovisionnement suggéré.' });
 
         return {
             stats,
@@ -180,7 +178,7 @@ class DashboardService {
             },
             kpis: {
                 stockRotation: roundFinancial(currRev / (totalInventoryValue || 1)),
-                recoveryRate: 0, // Placeholder
+                recoveryRate: 0, 
                 activeCustomers: activeCustomersCount,
                 activeProducts: activeProductsCount
             }

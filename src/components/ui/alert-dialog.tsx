@@ -31,6 +31,7 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => {
     /**
      * ULTIMATE FORENSIC FIX: UI POINTER RECOVERY
+     * Forces the body to unlock if the component is unmounted while transitions are active.
      */
     React.useEffect(() => {
         return () => {

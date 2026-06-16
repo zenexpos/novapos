@@ -59,19 +59,22 @@ const SheetContent = React.forwardRef<
 >(({ side = "right", className, children, ...props }, ref) => {
     /**
      * FORENSIC FIX: UI POINTER RECOVERY
-     * Garantit que pointer-events: none est retiré du body au démontage.
+     * Ensures pointer-events: none is removed from body on unmount.
      */
     React.useEffect(() => {
         return () => {
           if (typeof document !== 'undefined') {
-            setTimeout(() => {
+            const recover = () => {
               const body = document.body;
               if (body) {
                 body.style.pointerEvents = 'auto';
                 body.style.overflow = 'auto';
                 body.removeAttribute('data-radix-scroll-lock');
               }
-            }, 0);
+            };
+            recover();
+            setTimeout(recover, 150);
+            setTimeout(recover, 400);
           }
         };
     }, []);
@@ -132,7 +135,7 @@ const SheetTitle = React.forwardRef<
     {...props}
   />
 ))
-SheetTitle.displayName = SheetPrimitive.Title.displayName
+SheetTitle.displayName = "SheetTitle"
 
 const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
@@ -144,7 +147,7 @@ const SheetDescription = React.forwardRef<
     {...props}
   />
 ))
-SheetDescription.displayName = SheetPrimitive.Description.displayName
+SheetDescription.displayName = "SheetDescription"
 
 export {
   Sheet,
