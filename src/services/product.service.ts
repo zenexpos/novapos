@@ -19,6 +19,9 @@ const triggerSync = () => {
 
 class ProductService {
 
+    /**
+     * FACTORY : Centralise la création d'une entité Product valide.
+     */
     createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
         const now = new Date();
         const quantity = safeNumber(input.quantity);
@@ -114,23 +117,25 @@ class ProductService {
         return products;
     }
 
+    /**
+     * Ajoute un produit de manière atomique.
+     * Initialisation à 0 pour éviter la duplication de quantité via adjustStock.
+     */
     async addProduct(input: ProductCreateInput): Promise<Product> {
         const initialQty = safeNumber(input.quantity);
-        console.log(`[ProductService] addProduct: input quantity = ${initialQty}`);
-
-        // FIX CRITIQUE: On initialise la quantité à 0 pour éviter la duplication lors du adjustStock
+        
+        // On initialise la quantité à 0 pour éviter que db.add + adjustStock ne s'additionnent
         const newProduct = this.createProductEntity({ ...input, quantity: 0 });
-        console.log(`[ProductService] Entity prepared with quantity = 0`);
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
             const id = await db.products.add(newProduct);
             newProduct.id = id;
             
             if (initialQty !== 0) {
-                console.log(`[ProductService] Triggering initial stock adjustment of ${initialQty}`);
+                // L'ajustement génère le log d'audit correct ("INITIAL_STOCK")
                 await inventoryService.adjustStock(newProduct.uuid, initialQty, 'manual_adjustment', 'INITIAL_STOCK');
                 
-                // On met à jour l'objet local pour le retour UI cohérent
+                // On synchronise l'objet local
                 newProduct.quantity = initialQty;
                 newProduct.stockStatus = calculateStockStatus(initialQty, newProduct.minStockLevel);
             }
@@ -143,7 +148,6 @@ class ProductService {
             });
         });
 
-        console.log(`[ProductService] Final stored quantity: ${newProduct.quantity}`);
         triggerSync();
         return newProduct;
     }

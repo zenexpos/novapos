@@ -21,7 +21,10 @@ interface ReceiptProps {
 const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr }) : format(new Date(), 'dd/MM/yyyy HH:mm');
-    const newBalance = oldBalance + Math.max(0, sale.total - sale.amountPaid);
+    
+    // Calcul précis du solde total après cette vente
+    const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
+    const finalDebtBalance = oldBalance + currentDebtOfThisSale;
 
     return (
         <div className="thermal-receipt bg-white text-black font-mono text-[9pt] leading-tight p-2">
@@ -67,23 +70,23 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                 {sale.discountAmount > 0 && <div className="flex justify-between text-red-600 font-bold"><span>REMISE:</span> <span>-{fmt(sale.discountAmount)}</span></div>}
                 
                 <div className="flex justify-between font-black text-[12pt] border-t border-black mt-1 pt-1">
-                    <span>NET A PAYER:</span>
+                    <span>NET À PAYER:</span>
                     <span>{fmt(sale.total)}</span>
                 </div>
                 
-                <div className="flex justify-between text-[8pt] mt-2 opacity-70">
+                <div className="flex justify-between text-[8.5pt] mt-2 font-bold opacity-70">
                     <span>VERSEMENT REÇU:</span>
                     <span>{fmt(safeNumber(sale.amountPaid))}</span>
                 </div>
                 
-                <div className="flex justify-between font-bold border-t border-black pt-1 text-[10pt] bg-gray-50 px-1">
+                <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
                     <span>SOLDE DÛ CLIENT:</span>
-                    <span>{fmt(newBalance)} DA</span>
+                    <span>{fmt(finalDebtBalance)} DA</span>
                 </div>
             </div>
 
-            <p className="text-center mt-8 text-[7pt] uppercase tracking-widest opacity-40">Merci de votre fidélité</p>
-            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen v2.9 Sovereign</p>
+            <p className="text-center mt-8 text-[7pt] uppercase tracking-widest opacity-40">Merci de votre confiance</p>
+            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen v2.9 Sovereign Ledger</p>
         </div>
     );
 };
@@ -94,7 +97,9 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
 const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
     const fmt = (v: number) => v.toLocaleString('fr-DZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd MMMM yyyy', { locale: fr }) : format(new Date(), 'dd/MM/yyyy');
-    const newBalance = oldBalance + Math.max(0, sale.total - sale.amountPaid);
+    
+    const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
+    const finalDebtBalance = oldBalance + currentDebtOfThisSale;
 
     return (
         <div className="a4-receipt bg-white text-black font-sans text-[9pt] leading-normal">
@@ -129,7 +134,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                 </div>
                 <div className="print-box flex flex-col justify-center text-center bg-gray-50/50">
                     <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-1 tracking-widest">Mode de Règlement</h3>
-                    <p className="text-lg font-bold uppercase">{sale.paymentStatus === 'paid' ? 'Soldé (Espèces)' : 'Vente à Crédit'}</p>
+                    <p className="text-lg font-bold uppercase">{sale.paymentStatus === 'paid' ? 'Solde Cash (Espèces)' : 'Règlement différé / Crédit'}</p>
                 </div>
             </div>
 
@@ -141,7 +146,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                             <th className="text-left font-black uppercase text-[8pt] w-[50%]">Désignation des Articles</th>
                             <th className="text-center font-black uppercase text-[8pt] w-16">Qté</th>
                             <th className="text-right font-black uppercase text-[8pt] w-24">P.U (DA)</th>
-                            <th className="text-right font-black uppercase text-[8pt] w-32">Montant Total</th>
+                            <th className="text-right font-black uppercase text-[8pt] w-32">Montant Net</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -167,7 +172,7 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                         </div>
                         {sale.discountAmount > 0 && (
                             <div className="flex justify-between text-sm text-red-600 font-bold">
-                                <span className="uppercase text-[7.5pt]">Remise Spéciale:</span>
+                                <span className="uppercase text-[7.5pt]">Remise Accordée:</span>
                                 <span className="font-mono">-{fmt(sale.discountAmount)}</span>
                             </div>
                         )}
@@ -177,13 +182,13 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                         </div>
                         
                         <div className="space-y-1 pt-3 border-t border-gray-200">
-                            <div className="flex justify-between text-[8pt] opacity-70">
+                            <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
                                 <span>Versement reçu:</span>
                                 <span className="font-mono">{fmt(safeNumber(sale.amountPaid))}</span>
                             </div>
-                            <div className="flex justify-between text-[11pt] font-black pt-1 bg-white px-2 py-1 rounded border border-gray-100">
+                            <div className="flex justify-between text-[11pt] font-black pt-2 bg-white px-2 py-1 rounded border border-gray-200 mt-1">
                                 <span className="uppercase">Solde à Recouvrer:</span>
-                                <span className="font-mono text-red-600">{fmt(newBalance)} DA</span>
+                                <span className="font-mono text-red-600">{fmt(finalDebtBalance)} DA</span>
                             </div>
                         </div>
                     </div>

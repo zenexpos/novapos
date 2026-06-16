@@ -5,18 +5,19 @@ import { useEffect, useRef } from 'react';
 import { breadService } from '@/services/bread.service';
 
 /**
- * iPOS Zen - Core Sync Manager (FORENSIC FIX)
+ * iPOS Zen - Core Sync Manager (PRODUCTION AUDIT FIX)
  * Prevents sync-loops and multiple redundant fetches during initial hydration.
+ * Ensures data consistency for Bread and Cloud modules on startup.
  */
 export function AppSyncManager({ children }: { children: React.ReactNode }) {
     const { fetchCompanyProfile, performBackgroundSync } = useAppActions();
     const companyProfile = useAppStore(state => state.companyProfile);
     
-    // Critical protection against re-render storms
+    // Safety guards against re-render storms
     const initialSyncTriggered = useRef(false);
     const profileFetched = useRef(false);
 
-    // Initial fetch - execute strictly only once
+    // 1. Single-shot profile initialization
     useEffect(() => {
         if (!profileFetched.current) {
             profileFetched.current = true;
@@ -24,27 +25,34 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         }
     }, [fetchCompanyProfile]);
 
-    // Background sync - uses a stable ref for tracking to avoid dependency loops
+    // 2. Sequential Background Tasks (Sync + Bread Logic)
     useEffect(() => {
         const url = companyProfile?.supabaseUrl;
         const key = companyProfile?.supabaseKey;
         
+        // Block if no cloud config or if already triggered
         if (!url || !key || initialSyncTriggered.current) return;
         
-        // Ensure browser is online
+        // Ensure browser is online before triggering cloud logic
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
         initialSyncTriggered.current = true;
         
         const timeoutId = setTimeout(async () => {
             try {
-                // Sequential background tasks
+                // Task A: Process automated bread transfers (Logistique)
                 await breadService.processEndOfDayTransfers();
+                
+                // Task B: Bi-directional Titanium Sync
                 await performBackgroundSync();
+                
+                console.log("[AppSyncManager] Production boot sequence successful.");
             } catch (e) {
-                console.warn("[AppSyncManager] Background sync warning", e);
+                console.warn("[AppSyncManager] Non-critical boot sequence warning:", e);
+                // Allow retry on next mount if necessary
+                initialSyncTriggered.current = false;
             }
-        }, 5000); // 5s delay to let the UI breathe after mount
+        }, 8000); // 8s grace period to allow main UI hydration first
 
         return () => clearTimeout(timeoutId);
     }, [companyProfile?.supabaseUrl, companyProfile?.supabaseKey, performBackgroundSync]);

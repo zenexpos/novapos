@@ -52,6 +52,7 @@ const DialogContent = React.forwardRef<
           }
         };
         recover();
+        // Multi-stage recovery for aggressive unmounts
         setTimeout(recover, 150);
         setTimeout(recover, 500);
       }
