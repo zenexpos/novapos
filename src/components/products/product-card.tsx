@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Product } from '@/lib/types';
+import type { Product, StockStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
@@ -26,10 +26,11 @@ interface ProductCardProps {
     isSelectionActive: boolean;
 }
 
-const stockCfg = {
+const stockCfg: Record<StockStatus, { label: string; bg: string; text: string; border: string; dot: string; Icon: React.ElementType }> = {
     in_stock:    { label: 'En stock',   bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
     low_stock:   { label: 'Stock bas',  bg: 'bg-amber-500/10',   text: 'text-amber-500',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
     out_of_stock: { label: 'Rupture',    bg: 'bg-red-500/10',     text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
+    overstock:   { label: 'Excédent',   bg: 'bg-blue-500/10',    text: 'text-blue-500',    border: 'border-blue-500/20',    dot: 'bg-blue-500',    Icon: Package       },
 };
 
 const ProductCardComponent = ({
@@ -83,6 +84,7 @@ const ProductCardComponent = ({
                 product.stockStatus === 'in_stock'  && 'bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent',
                 product.stockStatus === 'low_stock' && 'bg-gradient-to-r from-transparent via-amber-500/60 to-transparent',
                 product.stockStatus === 'out_of_stock' && 'bg-gradient-to-r from-transparent via-red-500/60 to-transparent',
+                product.stockStatus === 'overstock' && 'bg-gradient-to-r from-transparent via-blue-500/60 to-transparent',
             )} />
 
             <div className="flex items-start justify-between p-4 pb-2">
@@ -187,6 +189,7 @@ const ProductCardComponent = ({
                             product.stockStatus === 'in_stock'  && 'bg-emerald-500',
                             product.stockStatus === 'low_stock' && 'bg-amber-500',
                             product.stockStatus === 'out_of_stock' && 'bg-red-500',
+                            product.stockStatus === 'overstock' && 'bg-blue-500',
                         )}
                         style={{ width: `${Math.max(3, stockPercent)}%` }}
                     />

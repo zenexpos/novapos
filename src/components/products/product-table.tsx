@@ -21,7 +21,7 @@ import {
     cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate, safeNumber,
 } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Input } from '../ui/input';
