@@ -7,7 +7,6 @@ import { calculateStockStatus, safeNumber, roundFinancial, safeToDate } from '@/
 import { inventoryService } from './inventory.service';
 import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
-import { startOfDay, startOfMonth } from 'date-fns';
 
 const triggerSync = () => {
     if (typeof window !== 'undefined') {
@@ -20,9 +19,6 @@ const triggerSync = () => {
 
 class ProductService {
 
-    /**
-     * FACTORY : Centralise la création d'une entité Produit.
-     */
     createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
         const now = new Date();
         const quantity = safeNumber(input.quantity);
@@ -119,13 +115,18 @@ class ProductService {
     }
 
     async addProduct(input: ProductCreateInput): Promise<Product> {
-        const newProduct = this.createProductEntity(input);
+        const initialQty = safeNumber(input.quantity);
+        // FIX: Start with 0 quantity and let adjustStock handle the logic + logging
+        const newProduct = this.createProductEntity({ ...input, quantity: 0 });
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
             await db.products.add(newProduct);
             
-            if (newProduct.quantity !== 0) {
-                await inventoryService.adjustStock(newProduct.uuid, newProduct.quantity, 'manual_adjustment', 'INITIAL_STOCK');
+            if (initialQty !== 0) {
+                await inventoryService.adjustStock(newProduct.uuid, initialQty, 'manual_adjustment', 'INITIAL_STOCK');
+                // Reflect change in the object for consistent UI return
+                newProduct.quantity = initialQty;
+                newProduct.stockStatus = calculateStockStatus(initialQty, newProduct.minStockLevel);
             }
 
             await db.sync_queue.add({
@@ -167,6 +168,20 @@ class ProductService {
         });
 
         triggerSync();
+    }
+
+    async updateProductFromIntake(uuid: string, data: { purchasePrice: number, price?: number }): Promise<void> {
+        const existing = await db.products.where('uuid').equals(uuid).first();
+        if (!existing?.id) return;
+
+        const update: Partial<Product> = {
+            purchasePrice: data.purchasePrice,
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        };
+        if (data.price !== undefined) update.price = data.price;
+
+        await db.products.update(existing.id, update);
     }
 
     async duplicateProduct(uuid: string): Promise<Product> {
