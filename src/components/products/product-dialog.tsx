@@ -92,6 +92,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
     };
 
     const proceedWithSubmit = async () => {
+        if (isLoading) return;
         setError(null);
         setIsLoading(true);
         try {
@@ -108,6 +109,8 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                 supplierUuid: formState.supplierUuid
             };
 
+            console.log(`[ProductDialog] Submitting quantity: ${finalData.quantity}`);
+
             if (product) await productService.updateProduct(product.uuid, finalData);
             else await productService.addProduct(finalData);
             
@@ -123,6 +126,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
+        if (isLoading) return;
         const p = safeNumber(formState.price);
         const cost = safeNumber(formState.purchasePrice);
         if (p < cost && p > 0) setShowPriceConfirm(true);
@@ -278,7 +282,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-9 rounded-2xl font-semibold text-xs uppercase tracking-wide px-8" disabled={isLoading}>Annuler</Button>
                         <Button type="submit" disabled={isLoading} className="flex-1 h-9 rounded-2xl font-semibold text-xs uppercase tracking-wide shadow-xl shadow-sm transition-all active:scale-95 gap-3">
                              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                            {product ? 'Sauvegarder [Ctrl+Enter]' : 'Confirmer [Ctrl+Enter]'}
+                            {product ? 'Sauvegarder' : 'Confirmer'}
                         </Button>
                     </DialogFooter>
                 </form>

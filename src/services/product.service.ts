@@ -116,15 +116,21 @@ class ProductService {
 
     async addProduct(input: ProductCreateInput): Promise<Product> {
         const initialQty = safeNumber(input.quantity);
-        // FIX: Start with 0 quantity and let adjustStock handle the logic + logging
+        console.log(`[ProductService] addProduct: input quantity = ${initialQty}`);
+
+        // FIX CRITIQUE: On initialise la quantité à 0 pour éviter la duplication lors du adjustStock
         const newProduct = this.createProductEntity({ ...input, quantity: 0 });
+        console.log(`[ProductService] Entity prepared with quantity = 0`);
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
-            await db.products.add(newProduct);
+            const id = await db.products.add(newProduct);
+            newProduct.id = id;
             
             if (initialQty !== 0) {
+                console.log(`[ProductService] Triggering initial stock adjustment of ${initialQty}`);
                 await inventoryService.adjustStock(newProduct.uuid, initialQty, 'manual_adjustment', 'INITIAL_STOCK');
-                // Reflect change in the object for consistent UI return
+                
+                // On met à jour l'objet local pour le retour UI cohérent
                 newProduct.quantity = initialQty;
                 newProduct.stockStatus = calculateStockStatus(initialQty, newProduct.minStockLevel);
             }
@@ -137,6 +143,7 @@ class ProductService {
             });
         });
 
+        console.log(`[ProductService] Final stored quantity: ${newProduct.quantity}`);
         triggerSync();
         return newProduct;
     }
@@ -181,7 +188,15 @@ class ProductService {
         };
         if (data.price !== undefined) update.price = data.price;
 
-        await db.products.update(existing.id, update);
+        await db.transaction('rw', [db.products, db.sync_queue], async () => {
+            await db.products.update(existing.id!, update);
+            await db.sync_queue.add({
+                table: 'products',
+                operation: 'UPDATE',
+                payload: { ...existing, ...update },
+                timestamp: Date.now()
+            });
+        });
     }
 
     async duplicateProduct(uuid: string): Promise<Product> {
