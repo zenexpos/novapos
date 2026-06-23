@@ -11,8 +11,7 @@ export const FINANCIAL_EPSILON = 0.001;
  * Standard Financial Rounding (2 decimals).
  */
 export function roundFinancial(value: number): number {
-    const multiplier = Math.pow(10, FINANCIAL_PRECISION);
-    return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
+    return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 /**
@@ -54,9 +53,9 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     let discountAmount = 0;
     if (cart.discount) {
         if (cart.discount.type === 'percentage') {
-            discountAmount = (subtotal * safeNumber(cart.discount.value)) / 100;
+            discountAmount = roundFinancial((subtotal * safeNumber(cart.discount.value)) / 100);
         } else {
-            discountAmount = safeNumber(cart.discount.value);
+            discountAmount = roundFinancial(safeNumber(cart.discount.value));
         }
     }
 
@@ -84,4 +83,19 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
     return totalTTC - ht;
+}
+
+/**
+ * Zakat Helpers
+ */
+export function calculateNisab(goldPrice: number): number {
+    return preciseMultiply(85, goldPrice);
+}
+
+export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean, amount: number } {
+    const threshold = calculateNisab(goldPrice);
+    if (netAssets >= threshold) {
+        return { due: true, amount: roundFinancial(netAssets * 0.025) };
+    }
+    return { due: false, amount: 0 };
 }

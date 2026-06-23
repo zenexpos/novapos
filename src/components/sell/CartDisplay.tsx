@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,12 @@ interface CartItemRowProps {
     isSelected: boolean;
     onUpdate: (uuid: string, quantity: number) => void;
     onPriceUpdate: (uuid: string, price: number) => void;
+    onTotalUpdate: (uuid: string, total: number) => void;
     onRemove: (uuid: string) => void;
     onSelect: () => void;
 }
 
-const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
+const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const priceInputRef = useRef<HTMLInputElement>(null);
     const qtyInputRef = useRef<HTMLInputElement>(null);
     const totalInputRef = useRef<HTMLInputElement>(null);
@@ -44,9 +45,8 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
 
     const handleTotalChange = (val: string) => {
         const newTotal = parseFloat(val);
-        if (isNaN(newTotal) || item.price <= 0) return;
-        const calculatedQty = roundQty(newTotal / item.price);
-        onUpdate(item.uuid, calculatedQty);
+        if (isNaN(newTotal)) return;
+        onTotalUpdate(item.uuid, newTotal);
     };
 
     const isCustom = item.uuid.startsWith('custom-');
@@ -183,13 +183,12 @@ export function CartDisplay() {
     const [isMounted, setIsMounted] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const cart = useActiveCart();
-    const { updateItemQuantity, updateItemPrice, removeItemFromCart } = useCartActions();
+    const { updateItemQuantity, updateItemPrice, updateItemTotal, removeItemFromCart } = useCartActions();
     
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    // CENTRALIZED SHORTCUTS FOR SELECTED ITEM (Performance Fix)
     const selectedItem = selectedIndex !== null ? cart?.items[selectedIndex] : null;
 
     useKeyboardShortcuts([
@@ -242,7 +241,7 @@ export function CartDisplay() {
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialه</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>
@@ -267,6 +266,7 @@ export function CartDisplay() {
                             isSelected={selectedIndex === index}
                             onUpdate={updateItemQuantity} 
                             onPriceUpdate={updateItemPrice}
+                            onTotalUpdate={updateItemTotal}
                             onRemove={removeItemFromCart} 
                             onSelect={() => setSelectedIndex(index)}
                         />

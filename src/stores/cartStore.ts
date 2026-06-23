@@ -11,12 +11,6 @@ import { customerService } from '@/services/customer.service';
 import { useAppStore } from './appStore';
 import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/utils';
 
-interface CartState {
-    carts:        Cart[];
-    activeCartId: string | null;
-    actions:      CartActions;
-}
-
 interface CartActions {
     getActiveCart:       () => Cart | null;
     createCart:          (name?: string) => string;
@@ -28,12 +22,19 @@ interface CartActions {
     removeItemFromCart:  (productUuid: string) => void;
     updateItemQuantity:  (productUuid: string, newQuantity: number) => void;
     updateItemPrice:     (productUuid: string, newPrice: number) => void;
+    updateItemTotal:     (productUuid: string, total: number) => void;
 
     setCustomer:  (customerUuid: string | null) => void;
     setDiscount:  (type: 'fixed' | 'percentage', value: number) => void;
 
     clearCart:    () => void;
     processSale:  (amountPaid: number, dueDate?: Date) => Promise<Sale | null>;
+}
+
+interface CartState {
+    carts:        Cart[];
+    activeCartId: string | null;
+    actions:      CartActions;
 }
 
 const defaultCart: Omit<Cart, 'id' | 'name'> = {
@@ -175,6 +176,25 @@ export const useCartStore = create<CartState>()(
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         const item = cart?.items.find(i => i.uuid === productUuid);
                         if (item) item.price = roundFinancial(safeNumber(newPrice));
+                    }));
+                },
+
+                updateItemTotal: (productUuid, total) => {
+                    set(produce((state: CartState) => {
+                        const cart = state.carts.find(c => c.id === state.activeCartId);
+                        const item = cart?.items.find(i => i.uuid === productUuid);
+                        if (!item || item.price <= 0) return;
+                        
+                        const calculatedQty = roundQty(safeNumber(total) / item.price);
+                        
+                        // Check stock limit for calculated qty
+                        const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
+                        if (isStocked && calculatedQty > item.quantity + FINANCIAL_EPSILON) {
+                            toast.error('Stock insuffisant pour ce montant');
+                            return;
+                        }
+                        
+                        item.cartQuantity = calculatedQty;
                     }));
                 },
 

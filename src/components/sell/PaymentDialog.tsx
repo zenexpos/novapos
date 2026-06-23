@@ -60,7 +60,7 @@ function PaymentDialogContent({
     const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
-    // Robust financial comparison
+    // Robust financial comparison using Epsilon
     const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
     const isCreditSale = !!(cart?.customerUuid && amountPaid < total - FINANCIAL_EPSILON);
 
