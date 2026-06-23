@@ -4,6 +4,7 @@
  */
 
 export const FINANCIAL_PRECISION = 2;
+export const QTY_PRECISION = 3; // For weights (0.000)
 export const FINANCIAL_EPSILON = 0.001;
 
 /**
@@ -11,6 +12,14 @@ export const FINANCIAL_EPSILON = 0.001;
  */
 export function roundFinancial(value: number): number {
     const multiplier = Math.pow(10, FINANCIAL_PRECISION);
+    return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
+}
+
+/**
+ * Quantity Rounding (3 decimals for weights).
+ */
+export function roundQty(value: number): number {
+    const multiplier = Math.pow(10, QTY_PRECISION);
     return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
 }
 
@@ -32,20 +41,14 @@ export function preciseMultiply(a: number, b: number): number {
 }
 
 /**
- * Addition with financial precision.
- */
-export function preciseAdd(a: number, b: number): number {
-    return roundFinancial(safeNumber(a) + safeNumber(b));
-}
-
-/**
  * Calculate cart totals with absolute precision.
  */
 export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
-        return acc + (price * qty);
+        // Important: Subtotal per line is rounded to 2 decimals to match physical cash
+        return acc + roundFinancial(price * qty);
     }, 0);
 
     let discountAmount = 0;
@@ -81,24 +84,4 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
     return totalTTC - ht;
-}
-
-/**
- * Calculates Nissab threshold (85g gold).
- */
-export function calculateNisab(goldPrice: number): number {
-    return roundFinancial(safeNumber(goldPrice) * 85);
-}
-
-/**
- * Calculates Zakat amount (2.5% of net assets).
- */
-export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
-    const nisab = calculateNisab(goldPrice);
-    const assets = safeNumber(netAssets);
-    const isEligible = nisab > 0 && assets >= nisab;
-    return {
-        due: isEligible,
-        amount: isEligible ? roundFinancial(assets * 0.025) : 0
-    };
 }

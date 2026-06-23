@@ -64,7 +64,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Watch for cart changes to refocus input (MISSING FEATURE: Smart Refocus)
+    // Watch for cart changes to refocus input
     const storeCartItemCount = useCartStore(
         (state) => {
             const activeCart = state.carts.find(c => c.id === state.activeCartId);
@@ -91,8 +91,11 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
 
     // Auto-refocus after adding to cart
     useEffect(() => {
-        setTimeout(refocusInput, 10);
-    }, [cartItemCount]);
+        if (isMounted) {
+            const timeout = setTimeout(refocusInput, 10);
+            return () => clearTimeout(timeout);
+        }
+    }, [cartItemCount, isMounted]);
 
     useEffect(() => {
         if (!debouncedSearchQuery.trim()) {
@@ -114,12 +117,10 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     setSearchResults(results);
 
                     // Auto-select on exact barcode match
-                    if (results.length > 0) {
-                        const q = debouncedSearchQuery.trim();
-                        const exactMatch = results.find(p => p.barcodes?.includes(q));
-                        if (exactMatch) {
-                            handleSelect(exactMatch);
-                        }
+                    const q = debouncedSearchQuery.trim();
+                    const exactMatch = results.find(p => p.barcodes?.some(b => b === q));
+                    if (exactMatch) {
+                        handleSelect(exactMatch);
                     }
                 }
             } catch (e: any) {
@@ -138,7 +139,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         addItemToCart(product);
         setSearchQuery('');
         setSearchResults([]);
-        // Refocus for next barcode
         setTimeout(refocusInput, 5);
     };
     

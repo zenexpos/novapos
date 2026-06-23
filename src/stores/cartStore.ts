@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { salesService } from '@/services/sales.service';
 import { customerService } from '@/services/customer.service';
 import { useAppStore } from './appStore';
-import { FINANCIAL_EPSILON, safeNumber, roundFinancial } from '@/lib/utils';
+import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/utils';
 
 interface CartState {
     carts:        Cart[];
@@ -120,8 +120,7 @@ export const useCartStore = create<CartState>()(
                         const isStocked = !product.uuid.startsWith('custom-') && product.uuid !== 'BREAD_PRODUCT';
 
                         const currentInCart = item ? item.cartQuantity : 0;
-                        // FIX: Use precise addition for floating point quantities
-                        const totalRequested = Number((currentInCart + finalQtyToAdd).toFixed(3));
+                        const totalRequested = roundQty(currentInCart + finalQtyToAdd);
 
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
@@ -165,8 +164,7 @@ export const useCartStore = create<CartState>()(
                         if (!item) return;
 
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
-                        // FIX: Use consistent 3-decimal precision for weights/quantities
-                        const finalQty = Number(safeNumber(newQuantity).toFixed(3));
+                        const finalQty = roundQty(safeNumber(newQuantity));
 
                         if (isStocked && finalQty > item.quantity + FINANCIAL_EPSILON) {
                             toast.error('Limite de stock atteinte');
@@ -182,7 +180,7 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         const item = cart?.items.find(i => i.uuid === productUuid);
-                        if (item) item.price = Number(Math.max(0, safeNumber(newPrice)).toFixed(2));
+                        if (item) item.price = roundFinancial(safeNumber(newPrice));
                     }));
                 },
 

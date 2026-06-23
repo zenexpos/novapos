@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, roundQty } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -43,30 +43,29 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         onPriceUpdate(item.uuid, Math.max(0, num));
     };
 
-    // MISSING FEATURE: Calculate quantity from total amount
     const handleTotalChange = (val: string) => {
         const newTotal = parseFloat(val);
         if (isNaN(newTotal) || item.price <= 0) return;
-        const calculatedQty = newTotal / item.price;
-        onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
+        const calculatedQty = roundQty(newTotal / item.price);
+        onUpdate(item.uuid, calculatedQty);
     };
 
     useKeyboardShortcuts([
         {
             key: '+',
-            action: () => onUpdate(item.uuid, Number((item.cartQuantity + 1).toFixed(3))),
+            action: () => onUpdate(item.uuid, roundQty(item.cartQuantity + 1)),
             description: 'Quantité +1',
             ignoreInputFocus: false
         },
         {
             key: '=',
-            action: () => onUpdate(item.uuid, Number((item.cartQuantity + 1).toFixed(3))),
+            action: () => onUpdate(item.uuid, roundQty(item.cartQuantity + 1)),
             description: 'Quantité +1',
             ignoreInputFocus: false
         },
         {
             key: '-',
-            action: () => onUpdate(item.uuid, Math.max(0, Number((item.cartQuantity - 1).toFixed(3)))),
+            action: () => onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))),
             description: 'Quantité -1',
             ignoreInputFocus: false
         },
@@ -163,7 +162,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                 <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
                     <button 
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, Number((item.cartQuantity - 1).toFixed(3)))); }}
+                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
                         className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
                         −
@@ -181,7 +180,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                     />
                     <button 
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Number((item.cartQuantity + 1).toFixed(3))); }}
+                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
                         className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
                     >
                         +
@@ -269,7 +268,7 @@ export function CartDisplay() {
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialة</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>
