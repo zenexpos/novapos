@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, ShoppingCart, Tag, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
+import { Trash2, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
@@ -26,12 +26,6 @@ interface CartItemRowProps {
     onSelect: () => void;
 }
 
-/**
- * Optimized Cart Item Row
- * - Uses memoization to prevent sibling re-renders
- * - Shortcuts are isolated to the ACTIVE row only
- * - Adds Total-to-Quantity calculation logic
- */
 const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const priceInputRef = useRef<HTMLInputElement>(null);
     const qtyInputRef = useRef<HTMLInputElement>(null);
@@ -52,12 +46,10 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
     const handleTotalChange = (val: string) => {
         const newTotal = parseFloat(val);
         if (isNaN(newTotal) || item.price <= 0) return;
-        // Logic: Quantity = Desired Total / Current Unit Price
         const calculatedQty = newTotal / item.price;
         onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
     };
 
-    // CRITICAL PERFORMANCE: Shortcuts are only 'active' if this row is selected
     useKeyboardShortcuts([
         {
             key: '+',
@@ -127,7 +119,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                     )}>
                         {item.name}
                     </p>
-                    {isCustom && <Tag className="h-3 w-3 text-amber-500/50" />}
+                    {isCustom && <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Manuel</div>}
                 </div>
                 
                 <div className="flex items-center gap-2 mt-1">
@@ -244,7 +236,6 @@ export function CartDisplay() {
         setIsMounted(true);
     }, []);
 
-    // Global cart navigation shortcuts
     useKeyboardShortcuts([
         {
             key: 'ArrowDown',
@@ -274,10 +265,10 @@ export function CartDisplay() {
         return (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-10 space-y-6 animate-in fade-in duration-1000">
                 <div className="p-8 rounded-3xl bg-muted/20 border border-border shadow-inner">
-                    <ShoppingCart className="h-24 w-24 text-muted-foreground/10" />
+                    <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialة</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>

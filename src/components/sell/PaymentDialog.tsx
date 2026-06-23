@@ -60,9 +60,8 @@ function PaymentDialogContent({
     const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
-    // FIX: Use 0.009 as precision limit to avoid floating point debt errors
-    const isFullPay    = amountPaid >= total - 0.009;
-    const isCreditSale = !!(cart?.customerUuid && amountPaid < total - 0.009);
+    const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
+    const isCreditSale = !!(cart?.customerUuid && amountPaid < total - FINANCIAL_EPSILON);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -104,7 +103,6 @@ function PaymentDialogContent({
 
     const projectedBalance = useMemo(() => {
         if (!customer) return 0;
-        // Balance = Current Debt + (New Sale Total - Paid Now)
         return roundFinancial((customer.outstandingBalance || 0) + Math.max(0, total - amountPaid));
     }, [customer, total, amountPaid]);
 

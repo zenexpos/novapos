@@ -109,7 +109,7 @@ export const useCartStore = create<CartState>()(
                     const activeId = get().activeCartId;
                     if (!activeId) return;
 
-                    const finalQtyToAdd = roundFinancial(safeNumber(quantity));
+                    const finalQtyToAdd = safeNumber(quantity);
                     if (finalQtyToAdd <= 0) return;
 
                     set(produce((state: CartState) => {
