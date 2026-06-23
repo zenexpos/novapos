@@ -50,7 +50,7 @@ class DashboardService {
         const currProfit = currRev - currCogs - currExp;
         const prevProfit = prevRev - prevCogs - prevExp;
 
-        // 3. Inventory & Debt Intelligence (Single Pass)
+        // 3. Inventory & Debt Intelligence
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -97,7 +97,7 @@ class DashboardService {
             saleCountChange: this.calcTrend(activeSales.length, prevSales.length)
         };
 
-        // 4. Daily Data Aggregation (Optimized O(N))
+        // 4. Daily Data Aggregation
         const dailyRevMap = new Map<string, number>();
         const dailyProfitMap = new Map<string, number>();
         const dailyExpMap = new Map<string, number>();
@@ -168,9 +168,6 @@ class DashboardService {
             };
         });
 
-        // 6. Final Pack
-        const totalReceived = payments.reduce((sum, p) => sum + safeNumber(p.amount), 0);
-        const totalCredit = activeSales.reduce((sum, s) => sum + (s.total - s.amountPaid), 0);
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const breadOrders = await db.bread_orders.where('date').equals(todayStr).toArray();
 
@@ -193,21 +190,29 @@ class DashboardService {
             inventoryHealth: { outOfStock, lowStock, healthy, totalValue: roundFinancial(totalInventoryValue) },
             kpis: {
                 stockRotation: currRev > 0 ? roundFinancial(currRev / (totalInventoryValue || 1)) : 0,
-                recoveryRate: totalCredit > 0 ? (totalReceived / totalCredit) * 100 : 100,
+                recoveryRate: (payments.reduce((sum, p) => sum + p.amount, 0) / (currRev || 1)) * 100,
                 activeCustomers: await db.customers.filter(c => !c.deletedAt).count(),
                 activeProducts: await db.products.filter(p => !p.deletedAt).count()
             }
         };
     }
 
+    /**
+     * FIX: Collects ALL events first, then sorts by timestamp before slicing.
+     * Prevents missing newer events of one type due to arbitrary individual slices.
+     */
     private aggregateActivity(sales: any[], payments: any[], expenses: any[], returns: any[], intakes: any[]): RecentActivity[] {
-        return [
-            ...sales.slice(-5).map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Client Premium' : 'Passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
-            ...payments.slice(-5).map(p => ({ id: p.uuid, type: 'payment' as const, title: `Paiement Reçu`, description: 'Règlement dette', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'success' as const })),
-            ...expenses.slice(-5).map(e => ({ id: e.uuid, type: 'expense' as const, title: e.description, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'info' as const })),
-            ...returns.slice(-5).map(r => ({ id: r.uuid, type: 'return' as const, title: `Retour #${r.originalInvoiceNumber}`, description: 'Flux inverse', timestamp: safeToDate(r.createdAt!), amount: r.totalReturnValue, status: 'warning' as const })),
-            ...intakes.slice(-5).map(i => ({ id: i.uuid, type: 'intake' as const, title: `Achat #${i.invoiceNumber}`, description: 'Réception stock', timestamp: safeToDate(i.createdAt!), amount: i.totalValue, status: 'info' as const }))
-        ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 15);
+        const allEvents: RecentActivity[] = [
+            ...sales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Client Premium' : 'Passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
+            ...payments.map(p => ({ id: p.uuid, type: 'payment' as const, title: `Paiement Reçu`, description: 'Règlement dette', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'success' as const })),
+            ...expenses.map(e => ({ id: e.uuid, type: 'expense' as const, title: e.description, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'info' as const })),
+            ...returns.map(r => ({ id: r.uuid, type: 'return' as const, title: `Retour #${r.originalInvoiceNumber}`, description: 'Flux inverse', timestamp: safeToDate(r.createdAt!), amount: r.totalReturnValue, status: 'warning' as const })),
+            ...intakes.map(i => ({ id: i.uuid, type: 'intake' as const, title: `Achat #${i.invoiceNumber}`, description: 'Réception stock', timestamp: safeToDate(i.createdAt!), amount: i.totalValue, status: 'info' as const }))
+        ];
+
+        return allEvents
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .slice(0, 15);
     }
 
     private calcTrend(curr: number, prev: number) {
