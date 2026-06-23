@@ -64,38 +64,34 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Watch for cart changes to refocus input
-    const storeCartItemCount = useCartStore(
-        (state) => {
-            const activeCart = state.carts.find(c => c.id === state.activeCartId);
-            return activeCart?.items.length ?? 0;
-        }
+    // Watch for cart changes to refocus input (Smart Refocus Fix)
+    const activeCartId = useCartStore(state => state.activeCartId);
+    const cartItems = useCartStore(
+        (state) => state.carts.find(c => c.id === state.activeCartId)?.items.length ?? 0
     );
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    const cartItemCount = isMounted ? storeCartItemCount : 0;
-
-    const refocusInput = () => {
+    const refocusInput = useCallback(() => {
         if (inputRef.current) {
             inputRef.current.focus();
             inputRef.current.select();
         }
-    };
+    }, []);
 
     useImperativeHandle(ref, () => ({
         focusInput: refocusInput
     }));
 
-    // Auto-refocus after adding to cart
+    // Auto-refocus after adding to cart or switching carts
     useEffect(() => {
         if (isMounted) {
-            const timeout = setTimeout(refocusInput, 10);
+            const timeout = setTimeout(refocusInput, 50);
             return () => clearTimeout(timeout);
         }
-    }, [cartItemCount, isMounted]);
+    }, [cartItems, activeCartId, isMounted, refocusInput]);
 
     useEffect(() => {
         if (!debouncedSearchQuery.trim()) {
@@ -139,7 +135,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         addItemToCart(product);
         setSearchQuery('');
         setSearchResults([]);
-        setTimeout(refocusInput, 5);
+        refocusInput();
     };
     
     const isActiveSearch = searchQuery.trim().length > 0;

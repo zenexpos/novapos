@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Wallet, FileText, Loader2, Sparkles } from 'lucide-react';
+import { Wallet, FileText, Loader2 } from 'lucide-react';
 import { DraftsDropdown } from './DraftsDropdown';
 import { CustomerCombobox } from './CustomerCombobox';
 import { useActiveCart } from '@/stores/cartStore';
@@ -77,7 +77,11 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
                         onClick={handleCreateProforma}
                         disabled={!hasItems || isProformaLoading}
                     >
-                        {isProformaLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <FileText className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />}
+                        {isProformaLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        ) : (
+                            <FileText className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+                        )}
                         <span className="text-[10px] font-black uppercase tracking-widest">Facture Proforma</span>
                     </Button>
 

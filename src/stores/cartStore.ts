@@ -82,7 +82,11 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         if (state.carts.length <= 1) {
                             const cart = state.carts[0];
-                            if (cart) Object.assign(cart, { ...defaultCart, items: [], customerUuid: null, discount: { type: 'fixed', value: 0 } });
+                            if (cart) {
+                                cart.items = [];
+                                cart.customerUuid = null;
+                                cart.discount = { type: 'fixed', value: 0 };
+                            }
                             return;
                         }
                         state.carts = state.carts.filter(c => c.id !== cartId);
@@ -109,8 +113,8 @@ export const useCartStore = create<CartState>()(
                     const activeId = get().activeCartId;
                     if (!activeId) return;
 
-                    const finalQtyToAdd = safeNumber(quantity);
-                    if (finalQtyToAdd <= 0) return;
+                    const qtyToAdd = roundQty(safeNumber(quantity));
+                    if (qtyToAdd <= 0) return;
 
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === activeId);
@@ -120,7 +124,7 @@ export const useCartStore = create<CartState>()(
                         const isStocked = !product.uuid.startsWith('custom-') && product.uuid !== 'BREAD_PRODUCT';
 
                         const currentInCart = item ? item.cartQuantity : 0;
-                        const totalRequested = roundQty(currentInCart + finalQtyToAdd);
+                        const totalRequested = roundQty(currentInCart + qtyToAdd);
 
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
@@ -131,23 +135,13 @@ export const useCartStore = create<CartState>()(
 
                         if (item) {
                             item.cartQuantity = totalRequested;
-                            item.flash = true;
                         } else {
                             cart.items.unshift({
                                 ...product,
-                                cartQuantity: finalQtyToAdd,
-                                flash: true,
+                                cartQuantity: qtyToAdd,
                             } as CartItem);
                         }
                     }));
-
-                    setTimeout(() => {
-                        set(produce((state: CartState) => {
-                            const cart = state.carts.find(c => c.id === get().activeCartId);
-                            const item = cart?.items.find(i => i.uuid === product.uuid);
-                            if (item) item.flash = false;
-                        }));
-                    }, 500);
                 },
 
                 removeItemFromCart: (productUuid) => {
@@ -168,7 +162,7 @@ export const useCartStore = create<CartState>()(
 
                         if (isStocked && finalQty > item.quantity + FINANCIAL_EPSILON) {
                             toast.error('Limite de stock atteinte');
-                            item.cartQuantity = item.quantity;
+                            item.cartQuantity = roundQty(item.quantity);
                             return;
                         }
 
@@ -221,7 +215,7 @@ export const useCartStore = create<CartState>()(
                             items:         activeItems,
                             discountType:  activeCart.discount.type,
                             discountValue: activeCart.discount.value,
-                            amountPaid:    safeNumber(amountPaid),
+                            amountPaid:    roundFinancial(safeNumber(amountPaid)),
                             customerUuid:  activeCart.customerUuid,
                             dueDate,
                         });

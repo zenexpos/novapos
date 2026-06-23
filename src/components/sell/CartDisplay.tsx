@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Trash2, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
-import { formatCurrency, roundQty } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import {
@@ -50,51 +49,6 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         onUpdate(item.uuid, calculatedQty);
     };
 
-    useKeyboardShortcuts([
-        {
-            key: '+',
-            action: () => onUpdate(item.uuid, roundQty(item.cartQuantity + 1)),
-            description: 'Quantité +1',
-            ignoreInputFocus: false
-        },
-        {
-            key: '=',
-            action: () => onUpdate(item.uuid, roundQty(item.cartQuantity + 1)),
-            description: 'Quantité +1',
-            ignoreInputFocus: false
-        },
-        {
-            key: '-',
-            action: () => onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))),
-            description: 'Quantité -1',
-            ignoreInputFocus: false
-        },
-        {
-            key: '*',
-            action: () => priceInputRef.current?.focus(),
-            description: 'Modifier le prix',
-            ignoreInputFocus: false
-        },
-        {
-            key: 'q',
-            action: () => qtyInputRef.current?.focus(),
-            description: 'Focus Quantité',
-            ignoreInputFocus: false
-        },
-        {
-            key: 't',
-            action: () => totalInputRef.current?.focus(),
-            description: 'Modifier par Total HT',
-            ignoreInputFocus: false
-        },
-        {
-            key: 'Delete',
-            action: () => onRemove(item.uuid),
-            description: 'Supprimer l\'article',
-            ignoreInputFocus: true
-        }
-    ], `Article-${item.uuid}`, isSelected);
-
     const isCustom = item.uuid.startsWith('custom-');
     const isZero = item.cartQuantity <= 0;
     const isSellingAtLoss = item.price < item.purchasePrice && item.purchasePrice > 0;
@@ -107,8 +61,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
             className={cn(
                 "grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center p-4 rounded-2xl border transition-all duration-300 group outline-none",
                 isSelected ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20 shadow-sm" : "bg-muted/20 border-border hover:bg-muted/30",
-                isZero && "opacity-50 grayscale",
-                item.flash && 'animate-flash ring-2 ring-primary/30'
+                isZero && "opacity-50 grayscale"
             )}
         >
             <div className="flex-grow min-w-0">
@@ -236,6 +189,9 @@ export function CartDisplay() {
         setIsMounted(true);
     }, []);
 
+    // CENTRALIZED SHORTCUTS FOR SELECTED ITEM (Performance Fix)
+    const selectedItem = selectedIndex !== null ? cart?.items[selectedIndex] : null;
+
     useKeyboardShortcuts([
         {
             key: 'ArrowDown',
@@ -255,6 +211,24 @@ export function CartDisplay() {
                 }
             },
             description: 'Ligne précédente',
+            ignoreInputFocus: true
+        },
+        {
+            key: '+',
+            action: () => selectedItem && updateItemQuantity(selectedItem.uuid, roundQty(selectedItem.cartQuantity + 1)),
+            description: 'Quantité +1',
+            ignoreInputFocus: false
+        },
+        {
+            key: '-',
+            action: () => selectedItem && updateItemQuantity(selectedItem.uuid, Math.max(0, roundQty(selectedItem.cartQuantity - 1))),
+            description: 'Quantité -1',
+            ignoreInputFocus: false
+        },
+        {
+            key: 'Delete',
+            action: () => selectedItem && removeItemFromCart(selectedItem.uuid),
+            description: 'Supprimer l\'article',
             ignoreInputFocus: true
         }
     ], 'ListePanier', isMounted && !!cart?.items.length);
