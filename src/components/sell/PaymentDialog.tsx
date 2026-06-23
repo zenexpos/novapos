@@ -57,9 +57,10 @@ function PaymentDialogContent({
     );
 
     const total = totals.total;
-    const amountPaid   = safeNumber(amountPaidStr);
+    const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
+    // FIX: Use 0.009 as precision limit to avoid floating point debt errors
     const isFullPay    = amountPaid >= total - 0.009;
     const isCreditSale = !!(cart?.customerUuid && amountPaid < total - 0.009);
 
@@ -103,12 +104,13 @@ function PaymentDialogContent({
 
     const projectedBalance = useMemo(() => {
         if (!customer) return 0;
-        return (customer.outstandingBalance || 0) + Math.max(0, total - amountPaid);
+        // Balance = Current Debt + (New Sale Total - Paid Now)
+        return roundFinancial((customer.outstandingBalance || 0) + Math.max(0, total - amountPaid));
     }, [customer, total, amountPaid]);
 
     const isOverLimit = useMemo(() => {
         if (!customer?.creditLimit) return false;
-        return projectedBalance > customer.creditLimit + FINANCIAL_EPSILON;
+        return projectedBalance > (customer.creditLimit + FINANCIAL_EPSILON);
     }, [customer, projectedBalance]);
 
     const canFinalize =
@@ -132,11 +134,6 @@ function PaymentDialogContent({
             const sale = await processSale(amountPaid, dueDate);
             if (sale && isMountedRef.current) {
                 setLastSale(sale);
-                /**
-                 * ULTIMATE FORENSIC FIX: Dialog Transition Buffer
-                 * Delay opening the receipt dialog to allow the Payment dialog to fully unmount 
-                 * and restore pointer-events to the body tag.
-                 */
                 onOpenChange(false);
                 setTimeout(() => {
                     if (isMountedRef.current) setIsReceiptOpen(true);

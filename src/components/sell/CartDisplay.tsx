@@ -30,6 +30,7 @@ interface CartItemRowProps {
  * Optimized Cart Item Row
  * - Uses memoization to prevent sibling re-renders
  * - Shortcuts are isolated to the ACTIVE row only
+ * - Adds Total-to-Quantity calculation logic
  */
 const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const priceInputRef = useRef<HTMLInputElement>(null);
@@ -49,8 +50,9 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
     };
 
     const handleTotalChange = (val: string) => {
-        const newTotal = parseInt(val, 10);
+        const newTotal = parseFloat(val);
         if (isNaN(newTotal) || item.price <= 0) return;
+        // Logic: Quantity = Desired Total / Current Unit Price
         const calculatedQty = newTotal / item.price;
         onUpdate(item.uuid, Number(calculatedQty.toFixed(3)));
     };
@@ -201,7 +203,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
                         ref={totalInputRef}
                         type="number"
                         min="0"
-                        step="1"
+                        step="0.01"
                         value={isZero ? '0' : Math.round(lineTotal)}
                         onChange={(e) => handleTotalChange(e.target.value)}
                         onFocus={e => e.target.select()}
@@ -275,7 +277,7 @@ export function CartDisplay() {
                     <ShoppingCart className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialة</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>

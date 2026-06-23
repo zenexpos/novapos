@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { salesService } from '@/services/sales.service';
 import { customerService } from '@/services/customer.service';
 import { useAppStore } from './appStore';
-import { FINANCIAL_EPSILON, safeNumber } from '@/lib/utils';
+import { FINANCIAL_EPSILON, safeNumber, roundFinancial } from '@/lib/utils';
 
 interface CartState {
     carts:        Cart[];
@@ -33,8 +33,6 @@ interface CartActions {
     setDiscount:  (type: 'fixed' | 'percentage', value: number) => void;
 
     clearCart:    () => void;
-    resetCart:    () => void;
-
     processSale:  (amountPaid: number, dueDate?: Date) => Promise<Sale | null>;
 }
 
@@ -84,7 +82,7 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         if (state.carts.length <= 1) {
                             const cart = state.carts[0];
-                            if (cart) Object.assign(cart, { ...defaultCart, name: 'Vente 1' });
+                            if (cart) Object.assign(cart, { ...defaultCart, items: [], customerUuid: null, discount: { type: 'fixed', value: 0 } });
                             return;
                         }
                         state.carts = state.carts.filter(c => c.id !== cartId);
@@ -111,7 +109,7 @@ export const useCartStore = create<CartState>()(
                     const activeId = get().activeCartId;
                     if (!activeId) return;
 
-                    const finalQtyToAdd = Number(safeNumber(quantity).toFixed(3));
+                    const finalQtyToAdd = roundFinancial(safeNumber(quantity));
                     if (finalQtyToAdd <= 0) return;
 
                     set(produce((state: CartState) => {
@@ -122,7 +120,7 @@ export const useCartStore = create<CartState>()(
                         const isStocked = !product.uuid.startsWith('custom-') && product.uuid !== 'BREAD_PRODUCT';
 
                         const currentInCart = item ? item.cartQuantity : 0;
-                        const totalRequested = currentInCart + finalQtyToAdd;
+                        const totalRequested = roundFinancial(currentInCart + finalQtyToAdd);
 
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
@@ -132,7 +130,7 @@ export const useCartStore = create<CartState>()(
                         }
 
                         if (item) {
-                            item.cartQuantity = Number(totalRequested.toFixed(3));
+                            item.cartQuantity = totalRequested;
                             item.flash = true;
                         } else {
                             cart.items.unshift({
@@ -143,7 +141,6 @@ export const useCartStore = create<CartState>()(
                         }
                     }));
 
-                    // Flash feedback
                     setTimeout(() => {
                         set(produce((state: CartState) => {
                             const cart = state.carts.find(c => c.id === get().activeCartId);
@@ -204,16 +201,10 @@ export const useCartStore = create<CartState>()(
                 clearCart: () => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
-                        if (cart) cart.items = [];
-                    }));
-                },
-
-                resetCart: () => {
-                    set(produce((state: CartState) => {
-                        const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
-                            const { id, name } = cart;
-                            Object.assign(cart, { ...defaultCart, id, name });
+                            cart.items = [];
+                            cart.customerUuid = null;
+                            cart.discount = { type: 'fixed', value: 0 };
                         }
                     }));
                 },
@@ -235,7 +226,7 @@ export const useCartStore = create<CartState>()(
                             dueDate,
                         });
 
-                        get().actions.resetCart();
+                        get().actions.clearCart();
 
                         if (activeCart.customerUuid) {
                             await customerService.recalculateCustomerStatus(activeCart.customerUuid);
