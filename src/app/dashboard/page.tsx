@@ -7,10 +7,9 @@ import { useDateRange } from '@/hooks/useDateRange';
 import { dashboardService } from '@/services/dashboard.service';
 import {
     TrendingUp, Receipt, Users, Archive, ShoppingCart, 
-    LayoutDashboard, Package, TriangleAlert, Percent, Wallet,
-    Wheat, BellRing, Activity, ArrowUpRight, Plus,
-    ArrowDownRight, CircleCheckBig, Clock, UserPlus, PlusCircle,
-    BarChart3, Coins, PieChart, Info
+    LayoutDashboard, Percent, Wallet,
+    Wheat, Plus, PlusCircle,
+    BarChart3, PieChart
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -22,6 +21,7 @@ import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { TopLists } from '@/components/dashboard/TopLists';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Tooltip } from 'recharts';
+import { useAppStore } from '@/stores/appStore';
 
 /**
  * Command Center Elite - iPOS Zen.
@@ -29,6 +29,7 @@ import { ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Tooltip } from 
  */
 export default function DashboardPage() {
     const { dateRange, setDate, isMounted } = useDateRange(29);
+    const companyProfile = useAppStore(state => state.companyProfile);
     
     const dataResult = useLiveQuery(
         async () => {
@@ -99,16 +100,21 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent className="p-4 grid grid-cols-2 gap-3">
                             <QuickActionLink href="/sell" label="Vendre" icon={ShoppingCart} />
-                            <QuickActionLink href="/customers" label="+ Client" icon={UserPlus} />
+                            <QuickActionLink href="/customers" label="+ Client" icon={Users} />
                             <QuickActionLink href="/bread" label="Pain" icon={Wheat} />
                             <QuickActionLink href="/products" label="+ Produit" icon={Plus} />
-                            <QuickActionLink href="/stock/intake" label="Achat" icon={Archive} />
+                            <QuickActionLink href="/stock" label="Achat" icon={Archive} />
                             <QuickActionLink href="/expenses" label="Dépense" icon={Wallet} />
                         </CardContent>
                     </Card>
 
                     {/* WIDGET PAIN & ALERTES */}
-                    <DashboardWidgets type="bread" data={data?.breadSummary} isLoading={isLoading} />
+                    <DashboardWidgets 
+                        type="bread" 
+                        data={data?.breadSummary} 
+                        isLoading={isLoading} 
+                        breadPrice={companyProfile?.breadPrice || 10}
+                    />
                     <DashboardWidgets type="alerts" data={data?.alerts} isLoading={isLoading} />
                     
                     {/* SANTÉ DU STOCK */}

@@ -3,9 +3,8 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { 
-    Wheat, BellRing, CheckCircle2, XCircle, Clock, 
-    AlertTriangle, OctagonAlert, Info, ArrowRight,
-    Loader2
+    Wheat, BellRing, CheckCircle2, Clock, 
+    AlertTriangle, OctagonAlert, ArrowRight
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,9 +14,10 @@ interface DashboardWidgetsProps {
     type: 'bread' | 'alerts';
     data: any;
     isLoading: boolean;
+    breadPrice?: number;
 }
 
-export function DashboardWidgets({ type, data, isLoading }: DashboardWidgetsProps) {
+export function DashboardWidgets({ type, data, isLoading, breadPrice = 10 }: DashboardWidgetsProps) {
     if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl bg-card/40" />;
 
     if (type === 'bread') {
@@ -53,7 +53,9 @@ export function DashboardWidgets({ type, data, isLoading }: DashboardWidgetsProp
                                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                                 <span className="text-[10px] font-black uppercase text-muted-foreground">Paiements Validés ({data?.paidCount})</span>
                             </div>
-                            <span className="text-[10px] font-black text-emerald-600">{formatCurrency((data?.totalQuantity * 10) - data?.remainingAmount)}</span>
+                            <span className="text-[10px] font-black text-emerald-600">
+                                {formatCurrency((data?.totalQuantity * breadPrice) - data?.remainingAmount)}
+                            </span>
                         </div>
                     </div>
                 </CardContent>
