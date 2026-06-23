@@ -18,45 +18,48 @@ class DashboardService {
         const prevEnd = new Date(start.getTime() - 1);
         const prevStart = new Date(prevEnd.getTime() - duration);
 
-        // Fetch datasets with indexed cursors for performance on large DBs
+        // Fetch datasets with indexed cursors for performance
         let currRev = 0;
         let prevRev = 0;
         let currExp = 0;
         let prevExp = 0;
-        let currProfit = 0;
-        let prevProfit = 0;
         
         const salesInPeriod: any[] = [];
         const expensesInPeriod: any[] = [];
+        const paymentsInPeriod: any[] = [];
 
-        // 1. Current Period Sales Aggregation
+        // 1. Current Period Sales
         await db.sales.where('createdAt').between(start, end, true, true).each(s => {
             if (s.isCancelled) return;
             currRev += safeNumber(s.total);
             salesInPeriod.push(s);
         });
 
-        // 2. Previous Period Sales Aggregation
+        // 2. Previous Period Sales (for trends)
         await db.sales.where('createdAt').between(prevStart, prevEnd, true, true).each(s => {
             if (s.isCancelled) return;
             prevRev += safeNumber(s.total);
         });
 
-        // 3. Current Period Expenses Aggregation
+        // 3. Expenses
         await db.expenses.where('expenseDate').between(start, end, true, true).each(e => {
             currExp += safeNumber(e.amount);
             expensesInPeriod.push(e);
         });
 
-        // 4. Previous Period Expenses Aggregation
         await db.expenses.where('expenseDate').between(prevStart, prevEnd, true, true).each(e => {
             prevExp += safeNumber(e.amount);
         });
 
-        currProfit = currRev - currExp;
-        prevProfit = prevRev - prevExp;
+        // 4. Payments (for Recovery Rate)
+        await db.payments.where('paymentDate').between(start, end, true, true).each(p => {
+            paymentsInPeriod.push(p);
+        });
 
-        // SCALABLE GLOBAL AGGREGATION: Use Cursors to prevent main thread blocking
+        const currProfit = currRev - currExp;
+        const prevProfit = prevRev - prevExp;
+
+        // SCALABLE GLOBAL AGGREGATION
         let totalOutstandingDebt = 0;
         let totalInventoryValue = 0;
         let outOfStock = 0;
@@ -71,7 +74,7 @@ class DashboardService {
 
         const today = new Date();
 
-        // Pass 1: Customers (Dette & Aging)
+        // Pass 1: Customers
         await db.customers.where('outstandingBalance').above(0.01).each(c => {
             if (c.deletedAt) return;
             const bal = safeNumber(c.outstandingBalance);
@@ -82,7 +85,7 @@ class DashboardService {
             else { debtAging[2].value += bal; debtAging[2].count++; }
         });
 
-        // Pass 2: Products (Stock Health & Value)
+        // Pass 2: Products
         await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
             const cost = safeNumber(p.purchasePrice);
@@ -108,14 +111,31 @@ class DashboardService {
             saleCountChange: this.calcTrend(salesInPeriod.length, 0)
         };
 
+        // Optimized SalesByDay using Map (O(N) instead of O(N*D))
+        const dailyMap = new Map<string, { r: number, ex: number }>();
+        salesInPeriod.forEach(s => {
+            const key = format(safeToDate(s.createdAt!), 'yyyy-MM-dd');
+            const entry = dailyMap.get(key) || { r: 0, ex: 0 };
+            entry.r += safeNumber(s.total);
+            dailyMap.set(key, entry);
+        });
+        expensesInPeriod.forEach(e => {
+            const key = format(safeToDate(e.expenseDate), 'yyyy-MM-dd');
+            const entry = dailyMap.get(key) || { r: 0, ex: 0 };
+            entry.ex += safeNumber(e.amount);
+            dailyMap.set(key, entry);
+        });
+
         const daysList = eachDayOfInterval({ start, end });
         const salesByDay: SalesByDay[] = daysList.map(d => {
-            const dStr = format(d, 'yyyy-MM-dd');
-            const daySales = salesInPeriod.filter(s => format(safeToDate(s.createdAt!), 'yyyy-MM-dd') === dStr);
-            const dayExp = expensesInPeriod.filter(e => format(safeToDate(e.expenseDate), 'yyyy-MM-dd') === dStr);
-            const r = daySales.reduce((s, x) => s + safeNumber(x.total), 0);
-            const ex = dayExp.reduce((s, x) => s + safeNumber(x.amount), 0);
-            return { date: format(d, 'dd/MM'), revenue: r, profit: r - ex, expenses: ex };
+            const key = format(d, 'yyyy-MM-dd');
+            const val = dailyMap.get(key) || { r: 0, ex: 0 };
+            return { 
+                date: format(d, 'dd/MM'), 
+                revenue: val.r, 
+                profit: val.r - val.ex, 
+                expenses: val.ex 
+            };
         });
 
         const [breadOrders, recentSales, recentPayments, recentReturns, recentIntakes, recentExpenses] = await Promise.all([
@@ -135,6 +155,7 @@ class DashboardService {
             ...recentExpenses.map(e => ({ id: e.uuid, type: 'expense' as const, title: `Dépense: ${e.description}`, description: e.category, timestamp: safeToDate(e.expenseDate), amount: e.amount, status: 'error' as const }))
         ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 15);
 
+        // Top Products Logic
         const productStats = new Map<string, { qty: number, rev: number, margin: number, name: string }>();
         salesInPeriod.forEach(s => {
             s.items.forEach((item: any) => {
@@ -159,6 +180,39 @@ class DashboardService {
             .sort((a, b) => b.revenueGenerated - a.revenueGenerated)
             .slice(0, 10);
 
+        // Top Customers Logic (PERIOD BASED)
+        const customerStatsMap = new Map<string, { spent: number, name: string, balance: number }>();
+        salesInPeriod.forEach(s => {
+            if (s.customerUuid) {
+                const entry = customerStatsMap.get(s.customerUuid) || { spent: 0, name: 'Chargement...', balance: 0 };
+                entry.spent += s.total;
+                customerStatsMap.set(s.customerUuid, entry);
+            }
+        });
+
+        // Resolve names for top customers
+        const topCustomersRaw = Array.from(customerStatsMap.entries())
+            .sort((a, b) => b[1].spent - a[1].spent)
+            .slice(0, 10);
+            
+        const topCustomers: TopCustomer[] = [];
+        for (const [uuid, stats] of topCustomersRaw) {
+            const c = await db.customers.where('uuid').equals(uuid).first();
+            if (c) {
+                topCustomers.push({
+                    customerUuid: uuid,
+                    name: `${c.firstName} ${c.lastName}`,
+                    totalSpent: stats.spent,
+                    outstandingBalance: c.outstandingBalance
+                });
+            }
+        }
+
+        // Recovery Rate Calculation
+        const totalPayments = paymentsInPeriod.reduce((sum, p) => sum + safeNumber(p.amount), 0);
+        const totalCreditCreated = salesInPeriod.reduce((sum, s) => sum + (s.total - s.amountPaid), 0);
+        const recoveryRate = totalCreditCreated > 0 ? (totalPayments / totalCreditCreated) * 100 : 100;
+
         const alerts: DashboardAlert[] = [];
         if (outOfStock > 0) alerts.push({ id: 'alert-oos', type: 'critical', message: `${outOfStock} produits en rupture`, description: 'Ventes perdues potentielles.' });
         if (lowStock > 0) alerts.push({ id: 'alert-low', type: 'warning', message: `${lowStock} seuils d'alerte atteints`, description: 'Réapprovisionnement suggéré.' });
@@ -177,7 +231,7 @@ class DashboardService {
             },
             alerts,
             topProducts,
-            topCustomers: [], 
+            topCustomers,
             debtAging,
             inventoryHealth: {
                 outOfStock,
@@ -187,7 +241,7 @@ class DashboardService {
             },
             kpis: {
                 stockRotation: roundFinancial(currRev / (totalInventoryValue || 1)),
-                recoveryRate: 0, 
+                recoveryRate: roundFinancial(recoveryRate),
                 activeCustomers: await db.customers.filter(c => !c.deletedAt).count(),
                 activeProducts: await db.products.filter(p => !p.deletedAt).count()
             }
