@@ -7,10 +7,9 @@ import { useDateRange } from '@/hooks/useDateRange';
 import { dashboardService } from '@/services/dashboard.service';
 import {
     TrendingUp, Receipt, Users, Archive, ShoppingCart, 
-    LayoutDashboard, Percent, Wallet,
-    Wheat, PlusCircle, PieChart
+    LayoutDashboard, Percent, Wallet, Wheat, PlusCircle
 } from 'lucide-react';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -18,7 +17,6 @@ import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { TopLists } from '@/components/dashboard/TopLists';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useAppStore } from '@/stores/appStore';
 import Link from 'next/link';
 
@@ -103,38 +101,6 @@ export default function DashboardPage() {
                         breadPrice={companyProfile?.breadPrice || 10}
                     />
                     <DashboardWidgets type="alerts" data={data?.alerts} isLoading={isLoading} />
-                    
-                    <Card className="rounded-2xl border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
-                        <CardHeader className="bg-muted/20 border-b border-white/5 p-4 flex flex-row items-center justify-between">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest opacity-40">Vieillissement Dettes</CardTitle>
-                            <PieChart className="h-4 w-4 opacity-20" />
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="h-[200px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <RePieChart>
-                                        <Pie
-                                            data={data?.debtAging ?? []}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            <Cell fill="hsl(var(--chart-2))" />
-                                            <Cell fill="hsl(var(--chart-3))" />
-                                            <Cell fill="hsl(var(--chart-5))" />
-                                        </Pie>
-                                        <Tooltip 
-                                            contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: 'none', fontSize: '10px' }}
-                                            formatter={(v: number) => formatCurrency(v)}
-                                        />
-                                    </RePieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </div>

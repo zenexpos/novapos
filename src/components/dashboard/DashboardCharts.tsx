@@ -24,7 +24,7 @@ export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
         );
     }
 
-    const hasData = data && data.length > 0 && data.some(d => d.revenue > 0 || d.profit > 0);
+    const hasData = data && data.length > 0 && data.some(d => d.revenue > 0 || d.profit > 0 || d.expenses > 0);
 
     return (
         <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
@@ -51,6 +51,10 @@ export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
                                 <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
                                     <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.1}/>
+                                    <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground) / 0.1)" />
@@ -105,6 +109,16 @@ export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
                                 strokeDasharray="5 5"
                                 fillOpacity={1} 
                                 fill="url(#colorProfit)" 
+                                isAnimationActive={false}
+                            />
+                             <Area 
+                                type="monotone" 
+                                dataKey="expenses" 
+                                name="Charges"
+                                stroke="hsl(var(--destructive))" 
+                                strokeWidth={1}
+                                fillOpacity={1} 
+                                fill="url(#colorExpenses)" 
                                 isAnimationActive={false}
                             />
                         </AreaChart>

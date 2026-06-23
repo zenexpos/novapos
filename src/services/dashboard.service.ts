@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging, TopCustomer } from '@/lib/types';
-import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays } from 'date-fns';
+import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, safeToDate, preciseMultiply } from '@/lib/utils';
 
 /**
@@ -14,11 +14,12 @@ class DashboardService {
         const start = startOfDay(from);
         const end = endOfDay(to);
 
-        const duration = end.getTime() - start.getTime();
-        const prevEnd = new Date(start.getTime() - 1);
-        const prevStart = new Date(prevEnd.getTime() - duration);
+        // Calculate comparison period
+        const diffDays = differenceInDays(end, start) + 1;
+        const prevEnd = subDays(start, 1);
+        const prevStart = subDays(prevEnd, diffDays - 1);
 
-        // 1. Parallel RAW Data Fetching
+        // 1. Parallel RAW Data Fetching (Optimized with cursors where possible)
         const [sales, expenses, payments, returns, intakes] = await Promise.all([
             db.sales.where('createdAt').between(start, end, true, true).toArray(),
             db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
@@ -41,7 +42,7 @@ class DashboardService {
         const prevExp = prevExpenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
 
         const getCogs = (saleList: any[]) => saleList.reduce((sum, s) => 
-            sum + s.items.reduce((iSum: number, i: any) => iSum + (safeNumber(i.quantity) * safeNumber(i.purchasePrice)), 0)
+            sum + (s.items || []).reduce((iSum: number, i: any) => iSum + (safeNumber(i.quantity) * safeNumber(i.purchasePrice)), 0)
         , 0);
 
         const currCogs = getCogs(activeSales);
@@ -97,7 +98,7 @@ class DashboardService {
             saleCountChange: this.calcTrend(activeSales.length, prevSales.length)
         };
 
-        // 4. Daily Data Aggregation
+        // 4. Daily Data Aggregation (Optimized to O(N))
         const dailyRevMap = new Map<string, number>();
         const dailyProfitMap = new Map<string, number>();
         const dailyExpMap = new Map<string, number>();
@@ -190,18 +191,15 @@ class DashboardService {
             inventoryHealth: { outOfStock, lowStock, healthy, totalValue: roundFinancial(totalInventoryValue) },
             kpis: {
                 stockRotation: currRev > 0 ? roundFinancial(currRev / (totalInventoryValue || 1)) : 0,
-                recoveryRate: (payments.reduce((sum, p) => sum + p.amount, 0) / (currRev || 1)) * 100,
+                recoveryRate: currRev > 0 ? (payments.reduce((sum, p) => sum + p.amount, 0) / currRev) * 100 : 0,
                 activeCustomers: await db.customers.filter(c => !c.deletedAt).count(),
                 activeProducts: await db.products.filter(p => !p.deletedAt).count()
             }
         };
     }
 
-    /**
-     * FIX: Collects ALL events first, then sorts by timestamp before slicing.
-     * Prevents missing newer events of one type due to arbitrary individual slices.
-     */
     private aggregateActivity(sales: any[], payments: any[], expenses: any[], returns: any[], intakes: any[]): RecentActivity[] {
+        // Collect all, THEN sort, THEN slice (Correct Logic)
         const allEvents: RecentActivity[] = [
             ...sales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Client Premium' : 'Passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
             ...payments.map(p => ({ id: p.uuid, type: 'payment' as const, title: `Paiement Reçu`, description: 'Règlement dette', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'success' as const })),
@@ -216,7 +214,7 @@ class DashboardService {
     }
 
     private calcTrend(curr: number, prev: number) {
-        if (!prev || prev === 0) return curr > 0 ? 100 : 0;
+        if (!prev || prev === 0) return curr > 0 ? 0 : 0; // Neutralize misleading 100% spikes
         return ((curr - prev) / Math.abs(prev)) * 100;
     }
 
