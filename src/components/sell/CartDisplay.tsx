@@ -43,6 +43,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onR
         onPriceUpdate(item.uuid, Math.max(0, num));
     };
 
+    // MISSING FEATURE: Calculate quantity from total amount
     const handleTotalChange = (val: string) => {
         const newTotal = parseFloat(val);
         if (isNaN(newTotal) || item.price <= 0) return;
@@ -268,7 +269,7 @@ export function CartDisplay() {
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialة</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>

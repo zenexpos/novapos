@@ -64,6 +64,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // Watch for cart changes to refocus input (MISSING FEATURE: Smart Refocus)
     const storeCartItemCount = useCartStore(
         (state) => {
             const activeCart = state.carts.find(c => c.id === state.activeCartId);
@@ -88,6 +89,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         focusInput: refocusInput
     }));
 
+    // Auto-refocus after adding to cart
     useEffect(() => {
         setTimeout(refocusInput, 10);
     }, [cartItemCount]);
@@ -111,7 +113,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     const results = data.slice(0, 15);
                     setSearchResults(results);
 
-                    // Fonctionnalité d'ajout automatique lors d'une correspondance précise du code-barres
+                    // Auto-select on exact barcode match
                     if (results.length > 0) {
                         const q = debouncedSearchQuery.trim();
                         const exactMatch = results.find(p => p.barcodes?.includes(q));
@@ -136,6 +138,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         addItemToCart(product);
         setSearchQuery('');
         setSearchResults([]);
+        // Refocus for next barcode
         setTimeout(refocusInput, 5);
     };
     

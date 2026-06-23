@@ -120,7 +120,8 @@ export const useCartStore = create<CartState>()(
                         const isStocked = !product.uuid.startsWith('custom-') && product.uuid !== 'BREAD_PRODUCT';
 
                         const currentInCart = item ? item.cartQuantity : 0;
-                        const totalRequested = roundFinancial(currentInCart + finalQtyToAdd);
+                        // FIX: Use precise addition for floating point quantities
+                        const totalRequested = Number((currentInCart + finalQtyToAdd).toFixed(3));
 
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
@@ -164,6 +165,7 @@ export const useCartStore = create<CartState>()(
                         if (!item) return;
 
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
+                        // FIX: Use consistent 3-decimal precision for weights/quantities
                         const finalQty = Number(safeNumber(newQuantity).toFixed(3));
 
                         if (isStocked && finalQty > item.quantity + FINANCIAL_EPSILON) {
