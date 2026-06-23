@@ -127,6 +127,7 @@ export const useCartStore = create<CartState>()(
                         const currentInCart = item ? item.cartQuantity : 0;
                         const totalRequested = roundQty(currentInCart + qtyToAdd);
 
+                        // التحقق من حدود المخزون مع هامش دقة مالي
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
                                 description: `Disponible: ${product.quantity}, Panier: ${totalRequested}.`
@@ -179,6 +180,9 @@ export const useCartStore = create<CartState>()(
                     }));
                 },
 
+                /**
+                 * ميزة ناقصة: حساب الكمية بناءً على المبلغ الإجمالي (Total-to-Quantity)
+                 */
                 updateItemTotal: (productUuid, total) => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
@@ -187,7 +191,6 @@ export const useCartStore = create<CartState>()(
                         
                         const calculatedQty = roundQty(safeNumber(total) / item.price);
                         
-                        // Check stock limit for calculated qty
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
                         if (isStocked && calculatedQty > item.quantity + FINANCIAL_EPSILON) {
                             toast.error('Stock insuffisant pour ce montant');

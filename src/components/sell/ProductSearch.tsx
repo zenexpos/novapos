@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef, useCallback } from 'react';
 import type { Product } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ShoppingBag, Loader2, Sparkles, AlertCircle } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import { productService } from '@/services/product.service';
 import { useCartActions, useCartStore } from '@/stores/cartStore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CustomItemDialog } from './CustomItemDialog';
-import { cn } from '@/lib/utils';
 
 const SearchResultItem = React.memo(({ product, onSelect }: { product: Product, onSelect: (p: Product) => void }) => {
     return (
@@ -64,9 +63,8 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const [isMounted, setIsMounted] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Watch for cart changes to refocus input (Smart Refocus Fix)
     const activeCartId = useCartStore(state => state.activeCartId);
-    const cartItems = useCartStore(
+    const cartItemsCount = useCartStore(
         (state) => state.carts.find(c => c.id === state.activeCartId)?.items.length ?? 0
     );
 
@@ -85,13 +83,13 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
         focusInput: refocusInput
     }));
 
-    // Auto-refocus after adding to cart or switching carts
+    // إعادة تركيز ذكي بعد إضافة منتج أو تغيير السلة
     useEffect(() => {
         if (isMounted) {
             const timeout = setTimeout(refocusInput, 50);
             return () => clearTimeout(timeout);
         }
-    }, [cartItems, activeCartId, isMounted, refocusInput]);
+    }, [cartItemsCount, activeCartId, isMounted, refocusInput]);
 
     useEffect(() => {
         if (!debouncedSearchQuery.trim()) {
@@ -112,7 +110,6 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     const results = data.slice(0, 15);
                     setSearchResults(results);
 
-                    // Auto-select on exact barcode match
                     const q = debouncedSearchQuery.trim();
                     const exactMatch = results.find(p => p.barcodes?.some(b => b === q));
                     if (exactMatch) {
@@ -220,7 +217,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                         ) : !isSearching && (
                             <div className="py-24 text-center space-y-4 opacity-20 flex flex-col items-center">
                                 <ShoppingBag className="h-16 w-16 mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertorié.</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertوريé.</p>
                             </div>
                         )}
                     </div>

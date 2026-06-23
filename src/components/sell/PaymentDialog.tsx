@@ -1,10 +1,6 @@
 'use client';
-import React from 'react';
 
-import {
-    useState, useEffect, useMemo,
-    memo, useCallback, useRef,
-} from 'react';
+import React, { useState, useEffect, useMemo, memo, useCallback, useRef } from 'react';
 import {
     Dialog, DialogContent, DialogHeader,
     DialogTitle, DialogDescription,
@@ -38,8 +34,8 @@ function PaymentDialogContent({
     onOpenChange: (open: boolean) => void;
 }) {
     const isMountedRef     = useRef(true);
-    const cart                                  = useActiveCart();
-    const { processSale }                       = useCartActions();
+    const cart             = useActiveCart();
+    const { processSale }  = useCartActions();
 
     const [amountPaidStr,   setAmountPaidStr]   = useState('0');
     const [dueDate,         setDueDate]         = useState<Date | undefined>();
@@ -60,7 +56,7 @@ function PaymentDialogContent({
     const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
-    // Robust financial comparison using Epsilon
+    // استخدام هامش دقة مالي بدلاً من المقارنة المباشرة
     const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
     const isCreditSale = !!(cart?.customerUuid && amountPaid < total - FINANCIAL_EPSILON);
 
