@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Product, Supplier } from '@/lib/types';
 import {
     Table, TableBody, TableCell, TableHead,
@@ -72,7 +72,7 @@ export function ProductTable({
     const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
         const rawVal = safeNumber(value);
         
-        // التحقق من صحة البيانات (القيم السالبة ممنوعة)
+        // Audit Safeguard: Prevent negative values
         if (rawVal < 0) {
             toast.error("Valeur invalide (négative)");
             setEditingCell(null);

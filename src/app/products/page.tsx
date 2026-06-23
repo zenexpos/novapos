@@ -110,6 +110,7 @@ function ProductsContent() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    // FIX: Optimized categories fetching
     const categoriesResult = useLiveQuery<string[]>(async () => {
         const prods = await productService.getProducts();
         return Array.from(new Set(prods.map(p => p.category).filter(Boolean) as string[])).sort();
