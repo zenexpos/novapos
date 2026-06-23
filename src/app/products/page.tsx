@@ -13,7 +13,6 @@ import {
     LayoutGrid, 
     List, 
     Trash2, 
-    SortAsc, 
     Package, 
     Loader2, 
     FileUp, 
@@ -217,7 +216,7 @@ function ProductsContent() {
         setIsImporting(true);
         try {
             await productService.executeImport(confirmedData);
-            toast.success("Importation réussية.");
+            toast.success("Importation réussie.");
             setIsImportPreviewOpen(false);
             onDialogSuccess();
         } catch (error: any) {
@@ -271,7 +270,7 @@ function ProductsContent() {
         <div className="p-6 sm:p-4 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-32">
             <PageHeader
                 title="Management du Catalogue Elite"
-                description="Contرôle absolu des stocks, marges et flux marchandises"
+                description="Contrôle absolu des stocks, marges et flux marchandises"
                 icon={Package}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
@@ -307,7 +306,7 @@ function ProductsContent() {
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                     {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive">
+                        <button onClick={() => setSearchQuery('')} className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
                             <X className="h-4 w-4" />
                         </button>
                     )}
@@ -340,7 +339,7 @@ function ProductsContent() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 hover:bg-white/5 font-black text-[10px] uppercase tracking-widest px-6 gap-3">
-                                <SortAsc className="h-4 w-4 opacity-50" />
+                                <RefreshCw className="h-4 w-4 opacity-50" />
                                 {sortOptions[sortBy] || 'Trier'}
                             </Button>
                         </DropdownMenuTrigger>
@@ -426,7 +425,7 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commenceز par ajouter votre premier article Elite."} />
+                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">

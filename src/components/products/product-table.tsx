@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    MoreHorizontal, Edit, Trash2, Package,
+    MoreHorizontal, Edit, Trash2,
     Copy, History, ChevronUp, ChevronDown, ChevronsUpDown,
     TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
     Tag
@@ -46,7 +46,7 @@ const stockCfg = {
     in_stock:    { Icon: CheckCircle2,  cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', label: 'En stock'   },
     low_stock:   { Icon: AlertTriangle, cls: 'text-amber-500  bg-amber-500/10  border-amber-500/20',  label: 'Stock bas'  },
     out_of_stock:{ Icon: XCircle,       cls: 'text-red-500    bg-red-500/10    border-red-500/20',    label: 'Rupture'    },
-    overstock:   { Icon: Package,       cls: 'text-blue-500   bg-blue-500/10   border-blue-500/20',   label: 'Excédent'   },
+    overstock:   { Icon: CheckCircle2,  cls: 'text-blue-500   bg-blue-500/10   border-blue-500/20',   label: 'Excédent'   },
 } as const;
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
@@ -59,14 +59,10 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
 export function ProductTable({
     products, onEdit, onDuplicate, onHistory, onDelete, onSelect,
     selectedProducts, onToggleProductSelection, onToggleSelectAll,
-    suppliers,
 }: ProductTableProps) {
-    const [isMounted, setIsMounted] = useState(false);
     const [sortKey, setSortKey]     = useState<SortKey>('updatedAt');
     const [sortDir, setSortDir]     = useState<SortDir>('desc');
     const [editingCell, setEditingCell] = useState<{ uuid: string, field: string } | null>(null);
-
-    useEffect(() => { setIsMounted(true); }, []);
 
     const toggleSort = (key: SortKey) => {
         if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -74,15 +70,16 @@ export function ProductTable({
     };
 
     const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
-        try {
-            const rawVal = safeNumber(value);
-            // Validation de sécurité : pas de prix ou stock négatif via modification rapide
-            if (rawVal < 0) {
-                toast.error("Valeur invalide (négative)");
-                setEditingCell(null);
-                return;
-            }
+        const rawVal = safeNumber(value);
+        
+        // التحقق من صحة البيانات (القيم السالبة ممنوعة)
+        if (rawVal < 0) {
+            toast.error("Valeur invalide (négative)");
+            setEditingCell(null);
+            return;
+        }
 
+        try {
             const finalValue = field === 'price' || field === 'purchasePrice' 
                 ? roundFinancial(rawVal) 
                 : roundQty(rawVal);
