@@ -11,6 +11,10 @@ import { customerService } from '@/services/customer.service';
 import { useAppStore } from './appStore';
 import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/utils';
 
+/**
+ * iPOS Zen - Cart Store (Enterprise Grade)
+ * Implements high-precision financial math and stock logic.
+ */
 interface CartActions {
     getActiveCart:       () => Cart | null;
     createCart:          (name?: string) => string;
@@ -45,21 +49,11 @@ const defaultCart: Omit<Cart, 'id' | 'name'> = {
 
 const INITIAL_CART_ID = 'initial-cart-id';
 
-const createInitialCart = (): Cart => ({
-    id:   INITIAL_CART_ID,
-    name: 'Vente 1',
-    ...defaultCart,
-});
-
-const initialState: Omit<CartState, 'actions'> = {
-    carts:        [createInitialCart()],
-    activeCartId: INITIAL_CART_ID,
-};
-
 export const useCartStore = create<CartState>()(
     persist(
         (set, get) => ({
-            ...initialState,
+            carts: [{ id: INITIAL_CART_ID, name: 'Vente 1', ...defaultCart }],
+            activeCartId: INITIAL_CART_ID,
             actions: {
                 getActiveCart: () => {
                     const { carts, activeCartId } = get();
@@ -127,10 +121,9 @@ export const useCartStore = create<CartState>()(
                         const currentInCart = item ? item.cartQuantity : 0;
                         const totalRequested = roundQty(currentInCart + qtyToAdd);
 
-                        // التحقق من حدود المخزون مع هامش دقة مالي
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
-                                description: `Disponible: ${product.quantity}, Panier: ${totalRequested}.`
+                                description: `Disponible: ${product.quantity}, Demandé: ${totalRequested}.`
                             });
                             return;
                         }
@@ -180,9 +173,6 @@ export const useCartStore = create<CartState>()(
                     }));
                 },
 
-                /**
-                 * ميزة ناقصة: حساب الكمية بناءً على المبلغ الإجمالي (Total-to-Quantity)
-                 */
                 updateItemTotal: (productUuid, total) => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
@@ -190,8 +180,8 @@ export const useCartStore = create<CartState>()(
                         if (!item || item.price <= 0) return;
                         
                         const calculatedQty = roundQty(safeNumber(total) / item.price);
-                        
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
+                        
                         if (isStocked && calculatedQty > item.quantity + FINANCIAL_EPSILON) {
                             toast.error('Stock insuffisant pour ce montant');
                             return;

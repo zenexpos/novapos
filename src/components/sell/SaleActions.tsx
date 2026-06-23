@@ -82,11 +82,11 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
                         ) : (
                             <FileText className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
                         )}
-                        <span className="text-[10px] font-black uppercase tracking-widest">Facture Proforma</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Devis Proforma</span>
                     </Button>
 
                     <Button
-                        className="flex-1 h-10 px-8 font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95 transition-all gap-3"
+                        className="flex-1 h-10 px-8 font-black text-[10px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all gap-3"
                         onClick={onOpenPayment}
                         disabled={!hasItems}
                     >
