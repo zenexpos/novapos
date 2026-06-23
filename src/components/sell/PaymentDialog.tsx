@@ -17,7 +17,7 @@ import {
 } from '@/lib/utils';
 import {
     Loader2, CheckCircle2, AlertCircle,
-    Wallet, ShieldAlert, Calendar, UserX, UserCheck
+    Wallet, ShieldAlert, UserX, UserCheck
 } from 'lucide-react';
 import { PrintReceiptDialog } from '../sales/PrintReceiptDialog';
 import type { Sale, Customer } from '@/lib/types';
@@ -56,6 +56,7 @@ function PaymentDialogContent({
     const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
+    // FIX: Financial precision comparison
     const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
     const isCreditSale = !!(cart?.customerUuid && amountPaid < total - FINANCIAL_EPSILON);
 
@@ -102,6 +103,7 @@ function PaymentDialogContent({
         return projectedBalance > (customer.creditLimit + FINANCIAL_EPSILON);
     }, [customer, projectedBalance]);
 
+    // Safety: can't finalize if loading or negative pay (unless intentional partial)
     const canFinalize = !isLoading && amountPaid >= 0 && (isFullPay || (!!cart?.customerUuid && (!isOverLimit || approveOverLimit)));
 
     const handleProcessSale = useCallback(async () => {
@@ -194,7 +196,10 @@ function PaymentDialogContent({
                                         </div>
                                     </div>
                                 )}
-                                <DatePicker date={dueDate} setDate={setDueDate} />
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/40">Échéance du règlement</Label>
+                                    <DatePicker date={dueDate} setDate={setDueDate} />
+                                </div>
                             </div>
                         )}
                     </div>

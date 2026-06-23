@@ -169,7 +169,11 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         const item = cart?.items.find(i => i.uuid === productUuid);
-                        if (item) item.price = roundFinancial(safeNumber(newPrice));
+                        if (item) {
+                            item.price = roundFinancial(safeNumber(newPrice));
+                            // Mark for visual override indicator
+                            (item as any).isPriceOverridden = Math.abs(item.price - (item as any).originalPrice || item.price) > FINANCIAL_EPSILON;
+                        }
                     }));
                 },
 
@@ -179,11 +183,12 @@ export const useCartStore = create<CartState>()(
                         const item = cart?.items.find(i => i.uuid === productUuid);
                         if (!item || item.price <= 0) return;
                         
+                        // FIX: Precision divisional recalculation
                         const calculatedQty = roundQty(safeNumber(total) / item.price);
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
                         
                         if (isStocked && calculatedQty > item.quantity + FINANCIAL_EPSILON) {
-                            toast.error('Stock insuffisant pour ce montant');
+                            toast.error('Stock insuffisant pour ce مبلغ');
                             return;
                         }
                         

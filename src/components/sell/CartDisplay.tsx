@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, X, Coins, AlertTriangle, Calculator } from 'lucide-react';
+import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3 } from 'lucide-react';
 import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -53,6 +53,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
     const isZero = item.cartQuantity <= 0;
     const isSellingAtLoss = item.price < item.purchasePrice && item.purchasePrice > 0;
     const lineTotal = item.price * item.cartQuantity;
+    const isPriceOverridden = (item as any).isPriceOverridden;
 
     return (
         <div 
@@ -73,6 +74,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                         {item.name}
                     </p>
                     {isCustom && <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Manuel</div>}
+                    {isPriceOverridden && <Edit3 className="h-3 w-3 text-blue-500" title="Prix modifié" />}
                 </div>
                 
                 <div className="flex items-center gap-2 mt-1">
@@ -86,7 +88,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                             onFocus={e => e.target.select()}
                             className={cn(
                                 "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg",
-                                isSellingAtLoss && "text-destructive border-destructive/30"
+                                isSellingAtLoss ? "text-destructive border-destructive/30" : isPriceOverridden ? "text-blue-600 border-blue-200" : ""
                             )}
                         />
                     </div>
@@ -241,7 +243,7 @@ export function CartDisplay() {
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commerciale</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialه</p>
                     <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
                 </div>
             </div>
