@@ -99,10 +99,15 @@ class ProductService {
             const isAsc = order === 'asc';
 
             products.sort((a: any, b: any) => {
-                let valA: any = a[field] ?? 0;
-                let vbA: any = b[field] ?? 0;
+                let valA: any = 0;
+                let vbA: any = 0;
                 
-                if (field === 'margin') {
+                if (field === 'name') { valA = a.name; vbA = b.name; }
+                else if (field === 'quantity') { valA = a.quantity; vbA = b.quantity; }
+                else if (field === 'price') { valA = a.price; vbA = b.price; }
+                else if (field === 'purchasePrice') { valA = a.purchasePrice; vbA = b.purchasePrice; }
+                else if (field === 'updatedAt') { valA = safeToDate(a.updatedAt).getTime(); vbA = safeToDate(b.updatedAt).getTime(); }
+                else if (field === 'margin') {
                     valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
                     vbA = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }

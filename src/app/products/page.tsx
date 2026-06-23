@@ -12,7 +12,6 @@ import {
     Search, 
     LayoutGrid, 
     List, 
-    Printer, 
     Trash2, 
     SortAsc, 
     Package, 
@@ -218,7 +217,7 @@ function ProductsContent() {
         setIsImporting(true);
         try {
             await productService.executeImport(confirmedData);
-            toast.success("Importation réussie.");
+            toast.success("Importation réussية.");
             setIsImportPreviewOpen(false);
             onDialogSuccess();
         } catch (error: any) {
@@ -407,7 +406,7 @@ function ProductsContent() {
                             </DropdownMenu>
 
                             <button onClick={() => setIsPrintDialogOpen(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
-                                <Printer className="h-4 w-4" /> Étiquettes
+                                <Archive className="h-4 w-4" /> Étiquettes
                             </button>
                             <button onClick={handleExportCsv} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
                                 <FileUp className="h-4 w-4" /> Exporter
@@ -427,7 +426,7 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
+                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commenceز par ajouter votre premier article Elite."} />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">

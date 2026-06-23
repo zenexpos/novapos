@@ -75,9 +75,17 @@ export function ProductTable({
 
     const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
         try {
+            const rawVal = safeNumber(value);
+            // Validation de sécurité : pas de prix ou stock négatif via modification rapide
+            if (rawVal < 0) {
+                toast.error("Valeur invalide (négative)");
+                setEditingCell(null);
+                return;
+            }
+
             const finalValue = field === 'price' || field === 'purchasePrice' 
-                ? roundFinancial(safeNumber(value)) 
-                : roundQty(safeNumber(value));
+                ? roundFinancial(rawVal) 
+                : roundQty(rawVal);
 
             await productService.updateProduct(uuid, { [field]: finalValue });
             setEditingCell(null);
