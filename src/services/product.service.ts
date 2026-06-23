@@ -119,12 +119,9 @@ class ProductService {
 
     /**
      * Ajoute un produit de manière atomique.
-     * ULTIMATE FIX: Initialisation à 0 avant ajustement pour éviter le doublon.
      */
     async addProduct(input: ProductCreateInput): Promise<Product> {
         const initialQty = safeNumber(input.quantity);
-        
-        // On initialise la quantité à 0 lors de l'insertion pour éviter que db.add + adjustStock ne s'additionnent
         const newProduct = this.createProductEntity({ ...input, quantity: 0 });
 
         await db.transaction('rw', [db.products, db.sync_queue, db.inventory_logs], async () => {
@@ -132,10 +129,7 @@ class ProductService {
             newProduct.id = id;
             
             if (initialQty !== 0) {
-                // L'ajustement génère le log d'audit correct ("manual_adjustment") et définit la valeur finale
                 await inventoryService.adjustStock(newProduct.uuid, initialQty, 'manual_adjustment', 'INITIAL_STOCK');
-                
-                // On met à jour l'objet local retourné pour l'UI
                 newProduct.quantity = initialQty;
                 newProduct.stockStatus = calculateStockStatus(initialQty, newProduct.minStockLevel);
             }
@@ -201,6 +195,8 @@ class ProductService {
                 timestamp: Date.now()
             });
         });
+        
+        triggerSync();
     }
 
     async duplicateProduct(uuid: string): Promise<Product> {

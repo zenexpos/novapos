@@ -12,21 +12,19 @@ import {
     DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    MoreHorizontal, Edit, Trash2, CalendarClock, Package,
-    Copy, History, Building, ChevronUp, ChevronDown, ChevronsUpDown,
+    MoreHorizontal, Edit, Trash2, Package,
+    Copy, History, ChevronUp, ChevronDown, ChevronsUpDown,
     TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
-    Tag, Coins, Box, Calculator
+    Tag
 } from 'lucide-react';
 import {
-    cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate, safeNumber,
+    cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate, safeNumber, roundFinancial, roundQty
 } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Input } from '../ui/input';
 import { productService } from '@/services/product.service';
 import { toast } from 'sonner';
+import { Input } from '../ui/input';
 
 interface ProductTableProps {
     products: Product[];
@@ -77,7 +75,11 @@ export function ProductTable({
 
     const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
         try {
-            await productService.updateProduct(uuid, { [field]: safeNumber(value) });
+            const finalValue = field === 'price' || field === 'purchasePrice' 
+                ? roundFinancial(safeNumber(value)) 
+                : roundQty(safeNumber(value));
+
+            await productService.updateProduct(uuid, { [field]: finalValue });
             setEditingCell(null);
             toast.success("Mise à jour effectuée");
         } catch (e) {

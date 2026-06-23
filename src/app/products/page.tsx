@@ -20,12 +20,10 @@ import {
     FileUp, 
     RefreshCw,
     X,
-    FileDown,
     FilterX,
     Archive,
     Filter,
-    ChevronRight,
-    ArrowRight
+    Tag
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductTable } from '@/components/products/product-table';
@@ -46,6 +44,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -53,7 +52,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { productService } from '@/services/product.service';
 import { supplierService } from '@/services/supplier.service';
 import { useAppStore } from '@/stores/appStore';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import Papa from 'papaparse';
@@ -113,6 +112,12 @@ function ProductsContent() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    const categoriesResult = useLiveQuery<string[]>(async () => {
+        const prods = await productService.getProducts();
+        return Array.from(new Set(prods.map(p => p.category).filter(Boolean) as string[])).sort();
+    }, []);
+    const categories = categoriesResult.value ?? [];
+
     useEffect(() => {
         const statusFromQuery = searchParams.get('stockStatus') as StockStatusFilter;
         if (statusFromQuery) setStockStatus(statusFromQuery);
@@ -138,7 +143,8 @@ function ProductsContent() {
     const onDialogSuccess = useCallback(() => {
         fetchMeta();
         productsResult.refresh();
-    }, [fetchMeta, productsResult]);
+        categoriesResult.refresh();
+    }, [fetchMeta, productsResult, categoriesResult]);
 
     const handleEditProduct = useCallback((product: Product) => {
         setSelectedProduct(product);
@@ -154,11 +160,11 @@ function ProductsContent() {
         try {
             await productService.duplicateProduct(product.uuid);
             toast.success(`Produit "${product.name}" dupliqué.`);
-            productsResult.refresh();
+            onDialogSuccess();
         } catch (error: any) {
             toast.error("Échec de la duplication.");
         }
-    }, [productsResult]);
+    }, [onDialogSuccess]);
 
     const handleViewHistory = useCallback((product: Product) => {
         setSelectedProduct(product);
@@ -184,9 +190,9 @@ function ProductsContent() {
         if (selectedProducts.size === 0) return;
         try {
             await productService.bulkUpdate(Array.from(selectedProducts), { category });
-            toast.success(`${selectedProducts.size} produits mis à jour.`);
+            toast.success(`${selectedProducts.size} produits déplacés vers ${category}.`);
             setSelectedProducts(new Set());
-            productsResult.refresh();
+            onDialogSuccess();
         } catch (e) {
             toast.error("Échec de la mise à jour groupée.");
         }
@@ -266,7 +272,7 @@ function ProductsContent() {
         <div className="p-6 sm:p-4 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-32">
             <PageHeader
                 title="Management du Catalogue Elite"
-                description="Contrôle absolu des stocks, marges et flux marchandises"
+                description="Contرôle absolu des stocks, marges et flux marchandises"
                 icon={Package}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
@@ -275,7 +281,7 @@ function ProductsContent() {
                     </Button>
                     <Button asChild variant="outline" disabled={isAnalyzing} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
                         <label htmlFor="csv-product-importer" className="cursor-pointer flex items-center">
-                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Archive className="mr-2 h-4 w-4" />}
                             Importer Flux
                             <input type="file" id="csv-product-importer" accept=".csv" className="sr-only" onChange={handleFileSelected} />
                         </label>
@@ -383,6 +389,23 @@ function ProductsContent() {
                             </div>
                         </div>
                         <div className="flex items-center gap-6">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                        <Tag className="h-4 w-4" /> Catégorie
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl max-h-60 overflow-y-auto">
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold text-muted-foreground">Appliquer à la sélection</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="opacity-10" />
+                                    {categories.map(cat => (
+                                        <DropdownMenuItem key={cat} onClick={() => handleBulkCategoryChange(cat)} className="text-xs font-bold uppercase p-3">
+                                            {cat}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
                             <button onClick={() => setIsPrintDialogOpen(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
                                 <Printer className="h-4 w-4" /> Étiquettes
                             </button>
