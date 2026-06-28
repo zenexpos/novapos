@@ -64,22 +64,22 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
-    const formattedDate = useMemo(() => formatDateToYYYYMMDD(currentDate), [currentDate]);
+    const formattedDate = useMemo(() => isMounted ? formatDateToYYYYMMDD(currentDate) : '', [currentDate, isMounted]);
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
     useEffect(() => {
-        if (isMounted) {
+        if (isMounted && formattedDate) {
             breadService.ensureOrdersForDate(formattedDate);
             setSelectedOrders(new Set());
         }
     }, [formattedDate, isMounted]);
 
     const { value: orders, isLoading } = useLiveQuery<BreadOrderWithCustomer[]>(
-        () => breadService.getOrdersForDate(formattedDate),
-        [formattedDate]
+        () => isMounted ? breadService.getOrdersForDate(formattedDate) : Promise.resolve([]),
+        [formattedDate, isMounted]
     );
 
     const filteredOrders = useMemo(() => {
@@ -155,7 +155,7 @@ export default function BreadPage() {
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
         { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false }
-    ], 'LogistiquePain');
+    ], 'LogistiquePain', isMounted);
 
     const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all';
 
@@ -336,7 +336,7 @@ export default function BreadPage() {
             )}
 
             <BreadOrderForm 
-                isOpen={isFormOpen} 
+                isOpen={isMounted && isFormOpen} 
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
                 onSuccess={onFormSuccess}
@@ -348,7 +348,7 @@ export default function BreadPage() {
                 title="Lancer l'Auto-Facturation ?"
                 description={
                     <div className="space-y-4">
-                        <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
+                        <p>Cette operation va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
                             <CheckCircle2 className="h-5 w-5 shrink-0" />
                             <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>

@@ -8,6 +8,7 @@ import { startOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
+import { sanitizeString } from '@/lib/security/sanitization';
 
 const triggerSync = () => {
     if (typeof window !== 'undefined') {
@@ -16,11 +17,6 @@ const triggerSync = () => {
             state.actions.triggerSmartSync();
         }
     }
-};
-
-const sanitizeInput = (val: string): string => {
-    if (!val) return '';
-    return val.replace(/[<>]/g, '').trim();
 };
 
 const ALLOWED_SORT_FIELDS: Record<string, keyof Customer> = {
@@ -109,12 +105,12 @@ class CustomerService {
 
     async addCustomer(customerData: CustomerFormData): Promise<Customer> {
         if (!customerData.firstName || !customerData.lastName) {
-            throw new Error('Prénom et nom requis.');
+            throw new Error('Prenom et nom requis.');
         }
 
         const now = new Date();
-        const firstName = sanitizeInput(customerData.firstName);
-        const lastName = sanitizeInput(customerData.lastName);
+        const firstName = sanitizeString(customerData.firstName);
+        const lastName = sanitizeString(customerData.lastName);
         const searchName = `${firstName} ${lastName}`.toLowerCase();
         const initialBal = roundFinancial(safeNumber(customerData.initialBalance));
 
@@ -123,8 +119,8 @@ class CustomerService {
             firstName,
             lastName,
             searchName,
-            phone: sanitizeInput(customerData.phone) || undefined,
-            address: sanitizeInput(customerData.address) || undefined,
+            phone: sanitizeString(customerData.phone) || undefined,
+            address: sanitizeString(customerData.address) || undefined,
             settlementDay: customerData.settlementDay,
             creditLimit: roundFinancial(safeNumber(customerData.creditLimit)),
             initialBalance: initialBal,
@@ -165,10 +161,10 @@ class CustomerService {
             version: (existing.version || 1) + 1
         };
 
-        if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeInput(updateData.firstName);
-        if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeInput(updateData.lastName);
-        if (updateData.address !== undefined) finalUpdate.address = sanitizeInput(updateData.address);
-        if (updateData.phone !== undefined) finalUpdate.phone = sanitizeInput(updateData.phone);
+        if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeString(updateData.firstName);
+        if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeString(updateData.lastName);
+        if (updateData.address !== undefined) finalUpdate.address = sanitizeString(updateData.address);
+        if (updateData.phone !== undefined) finalUpdate.phone = sanitizeString(updateData.phone);
 
         if (finalUpdate.firstName || finalUpdate.lastName) {
             const f = finalUpdate.firstName ?? existing.firstName;
@@ -196,7 +192,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
+            throw new Error(`Revocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
@@ -330,7 +326,7 @@ class CustomerService {
             db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
         ]);
 
-        if (!customer) throw new Error("Client non trouvé");
+        if (!customer) throw new Error("Client non trouve");
 
         return {
             customer,
@@ -357,7 +353,7 @@ class CustomerService {
                         const lastName = row.lastName || row.Nom;
 
                         if (!firstName || !lastName) {
-                            analysis.errorRows.push({ ...row, error: "Identité incomplète" });
+                            analysis.errorRows.push({ ...row, error: "Identite incomplete" });
                             continue;
                         }
 

@@ -213,7 +213,7 @@ export function CartDisplay() {
                     setSelectedIndex(prev => prev === null || prev <= 0 ? cart.items.length - 1 : prev - 1);
                 }
             },
-            description: 'Ligne précédente',
+            description: 'Ligne precedente',
             ignoreInputFocus: true
         }
     ], 'ListePanier', isMounted && !!cart?.items.length);
@@ -228,7 +228,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-2">
                     <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scanneز un article pour commencer</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scannez un article pour commencer</p>
                 </div>
             </div>
         )
@@ -238,8 +238,8 @@ export function CartDisplay() {
         <ScrollArea className="flex-grow">
             <div className="p-6">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center text-[9px] font-black uppercase text-muted-foreground/40 px-6 mb-6 tracking-widest">
-                    <div className="text-left">Désignation Produit</div>
-                    <div className="text-center">Quantité</div>
+                    <div className="text-left">Designation Produit</div>
+                    <div className="text-center">Quantite</div>
                     <div className="text-right">Total HT</div>
                     <div></div>
                 </div>

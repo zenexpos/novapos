@@ -151,7 +151,6 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // Correction logic: Pass cartQuantity to fulfill salesService requirements
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
@@ -273,7 +272,6 @@ class BreadService {
         }
 
         if (ordersToCreate.length > 0) {
-            // Transaction for consistency and speed
             await db.transaction('rw', [db.bread_orders, db.company_profile], async () => {
                 for(let o of ordersToCreate) {
                     o.orderNumber = await this.generateOrderNumber();

@@ -47,10 +47,10 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         const timeoutId = setTimeout(async () => {
             try {
                 // Task A: Process automated bread transfers (Logistique)
-                await breadService.processEndOfDayTransfers();
+                await breadService.processEndOfDayTransfers().catch(e => console.warn("Bread cleanup skipped:", e));
                 
                 // Task B: Bi-directional Titanium Sync
-                await performBackgroundSync();
+                await performBackgroundSync().catch(e => console.warn("Background sync warning:", e));
                 
                 console.log("[AppSyncManager] Production boot sequence successful.");
             } catch (e) {
