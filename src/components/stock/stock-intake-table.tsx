@@ -1,10 +1,11 @@
 'use client';
 
+import React from 'react';
 import type { StockIntake, Supplier } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, FileText, Trash2, Hash, Calendar, Building, ShoppingBag } from 'lucide-react';
+import { MoreHorizontal, FileText, Trash2, Hash, Clock, Building, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { formatCurrency, safeToDate } from '@/lib/utils';
@@ -59,7 +60,7 @@ export function StockIntakeTable({ intakes, supplierMap, onViewDetails, onCancel
                                     </div>
                                 </TableCell>
                                 <TableCell className="p-6 text-right">
-                                    <span className="text-base font-semibold text-primary tracking-tighter">{formatCurrency(intake.totalValue)}</span>
+                                    <span className="text-base font-semibold text-primary tracking-tighter font-mono">{formatCurrency(intake.totalValue)}</span>
                                 </TableCell>
                                 <TableCell className="p-6 text-right">
                                     <DropdownMenu>

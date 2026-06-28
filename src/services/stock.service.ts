@@ -6,6 +6,9 @@ import { inventoryService } from './inventory.service';
 import { supplierService } from './supplier.service';
 import { useAppStore } from '@/stores/appStore';
 
+/**
+ * iPOS Zen - Stock Management Service.
+ */
 class StockService {
     
     async getStockIntakes(filters: { query?: string; from?: Date; to?: Date }): Promise<StockIntake[]> {
@@ -46,6 +49,11 @@ class StockService {
         const id = await db.stock_intakes.add(newIntake);
         newIntake.id = id;
 
+        // Audited Balance Update
+        if (intakeData.supplierUuid) {
+            await supplierService.recalculateSupplierBalance(intakeData.supplierUuid);
+        }
+
         // Trigger Cloud Sync
         if (typeof window !== 'undefined') {
             useAppStore.getState().actions.triggerSmartSync();
@@ -55,7 +63,7 @@ class StockService {
     }
 
     async processStockIntakeCancellation(intakeUuid: string): Promise<void> {
-        await db.transaction('rw', [db.stock_intakes, db.products, db.suppliers, db.inventory_logs], async () => {
+        await db.transaction('rw', [db.stock_intakes, db.products, db.suppliers, db.inventory_logs, db.supplier_payments, db.sync_queue], async () => {
             const intake = await db.stock_intakes.where('uuid').equals(intakeUuid).first();
             if (!intake || !intake.id) {
                 throw new Error("Réception de stock non trouvée.");
@@ -68,11 +76,14 @@ class StockService {
                 }
             }
 
-            if (intake.supplierUuid && intake.totalValue > 0) {
-                await supplierService.updateSupplierBalance(intake.supplierUuid, -intake.totalValue);
-            }
-
+            const supplierUuid = intake.supplierUuid;
+            
             await db.stock_intakes.delete(intake.id);
+
+            // Audited Balance Recalculation after deletion
+            if (supplierUuid) {
+                await supplierService.recalculateSupplierBalance(supplierUuid);
+            }
         });
 
         // Trigger Cloud Sync

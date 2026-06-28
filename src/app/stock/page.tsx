@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import type { StockIntake, Supplier, InventoryLog } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +35,10 @@ import { startOfDay, endOfDay } from 'date-fns';
 
 type StockTab = 'intakes' | 'logs' | 'suppliers';
 
+/**
+ * iPOS Stock & Logistics Hub.
+ * Advanced inventory management with audited movements.
+ */
 export default function StockPage() {
     const router = useRouter();
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +63,6 @@ export default function StockPage() {
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
 
     const suppliersResult = useLiveQuery<Supplier[]>(async () => {
-        // Repair: Collection does not have orderBy. Fetch and then sort.
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
@@ -90,12 +92,19 @@ export default function StockPage() {
     }, [isMounted, dateRange, searchQuery, suppliers]);
     const stockIntakes = stockIntakesResult.value ?? [];
 
+    // PERFORMANCE FIX: Pagination for inventory logs (Limit to 150 items)
     const inventoryLogsResult = useLiveQuery<InventoryLog[]>(async () => {
         if (!isMounted || !dateRange?.from) return [];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
-        const logs = await db.inventory_logs.where('createdAt').between(start, end, true, true).toArray();
+        const logs = await db.inventory_logs
+            .where('createdAt')
+            .between(start, end, true, true)
+            .reverse()
+            .limit(150)
+            .toArray();
+
         const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter((uuid): uuid is string => uuid !== null)));
         const products = productUuids.length > 0
             ? await db.products.where('uuid').anyOf(productUuids).toArray()
@@ -107,9 +116,9 @@ export default function StockPage() {
             productName: productMap.get(l.productUuid ?? '') || 'Produit inconnu'
         }));
 
-        if (!searchQuery.trim()) return result.sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+        if (!searchQuery.trim()) return result;
         const q = searchQuery.toLowerCase();
-        return result.filter(l => l.productName.toLowerCase().includes(q)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+        return result.filter(l => l.productName.toLowerCase().includes(q));
     }, [isMounted, dateRange, searchQuery]);
     const inventoryLogs = inventoryLogsResult.value ?? [];
 
@@ -256,7 +265,7 @@ export default function StockPage() {
                         </Button>
                     ) : (
                         <>
-                            <Button variant="outline" onClick={() => setIsAdjustmentOpen(true)} className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest border-primary/20 hover:bg-primary/5 transition-all gap-3 px-6">
+                            <Button variant="outline" onClick={() => setIsAdjustmentOpen(true)} className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest border-primary/20 bg-card hover:bg-primary/5 transition-all gap-3 px-6">
                                 <ArrowUpDown className="h-4 w-4 text-primary" /> Correction Stock
                             </Button>
                             <Button asChild className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 gap-3">
@@ -406,7 +415,7 @@ export default function StockPage() {
                                 {stockIntakes?.length === 0 ? (
                                     <EmptyState icon={Archive} title="Silence de Réception" description={searchQuery ? "Aucune facture correspondante." : "Aucune réception enregistrée pour cette période."} />
                                 ) : viewMode === 'list' ? (
-                                    <StockIntakeTable intakes={stockIntakes!} supplierMap={supplierMap as any} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
+                                    <StockIntakeTable intakes={stockIntakes!} supplierMap={supplierMap} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {stockIntakes!.map(s => (
@@ -423,7 +432,7 @@ export default function StockPage() {
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers?.length === 0 ? (
-                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commencez par ajouter votre premier fournisseur."} />
+                                <EmptyState icon={Building} title="Carnet d'Adresses Vide" description={searchQuery ? "Aucun partenaire identifié." : "Commenceز par ajouter votre premier fournisseur."} />
                             ) : (
                                 <SupplierTable 
                                     suppliers={filteredSuppliers!} 
