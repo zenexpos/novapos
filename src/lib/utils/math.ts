@@ -5,7 +5,7 @@
 
 export const FINANCIAL_PRECISION = 2;
 export const QTY_PRECISION = 3; // For weights (0.000)
-export const FINANCIAL_EPSILON = 0.001;
+export const FINANCIAL_EPSILON = 0.000001;
 
 /**
  * Standard Financial Rounding (2 decimals).
@@ -29,7 +29,7 @@ export function roundQty(value: number): number {
  */
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
-    if (!val) return 0;
+    if (val === null || val === undefined) return 0;
     const parsed = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
     return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
 }

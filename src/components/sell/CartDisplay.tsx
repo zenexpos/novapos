@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,10 +26,11 @@ interface CartItemRowProps {
     onSelect: () => void;
 }
 
-const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
-    const priceInputRef = useRef<HTMLInputElement>(null);
+/**
+ * FIXED: Memoized Row component to prevent UI lag on rapid typing
+ */
+const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
-    const totalInputRef = useRef<HTMLInputElement>(null);
 
     const handleQtyChange = (val: string) => {
         const num = parseFloat(val);
@@ -81,7 +82,6 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                     <div className="relative group/price">
                         <Coins className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/price:text-primary transition-colors" />
                         <Input 
-                            ref={priceInputRef}
                             type="number" min="0" step="1"
                             value={item.price}
                             onChange={(e) => handlePriceChange(e.target.value)}
@@ -103,8 +103,8 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-destructive text-white border-none rounded-xl p-3 shadow-2xl">
-                                    <p className="text-[10px] font-black uppercase tracking-widest">
-                                        Attention : Vente à perte !<br/>Coût de revient : {formatCurrency(item.purchasePrice)}
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-center">
+                                        Attention : Vente à perte !<br/>Coût : {formatCurrency(item.purchasePrice)}
                                     </p>
                                 </TooltipContent>
                             </Tooltip>
@@ -147,7 +147,6 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                 <div className="relative group/total">
                     <Calculator className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/total:text-primary transition-colors" />
                     <Input
-                        ref={totalInputRef}
                         type="number"
                         min="0"
                         step="0.01"
@@ -160,7 +159,7 @@ const CartItemRow = React.memo(({ item, isSelected, onUpdate, onPriceUpdate, onT
                         )}
                     />
                 </div>
-                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Total HT [T]</p>
+                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Ligne HT</p>
             </div>
 
             <Button 
@@ -213,24 +212,6 @@ export function CartDisplay() {
             },
             description: 'Ligne précédente',
             ignoreInputFocus: true
-        },
-        {
-            key: '+',
-            action: () => selectedItem && updateItemQuantity(selectedItem.uuid, roundQty(selectedItem.cartQuantity + 1)),
-            description: 'Quantité +1',
-            ignoreInputFocus: false
-        },
-        {
-            key: '-',
-            action: () => selectedItem && updateItemQuantity(selectedItem.uuid, Math.max(0, roundQty(selectedItem.cartQuantity - 1))),
-            description: 'Quantité -1',
-            ignoreInputFocus: false
-        },
-        {
-            key: 'Delete',
-            action: () => selectedItem && removeItemFromCart(selectedItem.uuid),
-            description: 'Supprimer l\'article',
-            ignoreInputFocus: true
         }
     ], 'ListePanier', isMounted && !!cart?.items.length);
 
@@ -243,8 +224,8 @@ export function CartDisplay() {
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Saisie Commercialه</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">En attente de flux catalogue...</p>
+                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scannez un article pour commencer</p>
                 </div>
             </div>
         )
@@ -255,8 +236,8 @@ export function CartDisplay() {
             <div className="p-6">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center text-[9px] font-black uppercase text-muted-foreground/40 px-6 mb-6 tracking-widest">
                     <div className="text-left">Désignation Produit</div>
-                    <div className="text-center">Quantité Flux</div>
-                    <div className="text-right">Total HT (Modifiable)</div>
+                    <div className="text-center">Quantité</div>
+                    <div className="text-right">Total HT</div>
                     <div></div>
                 </div>
 

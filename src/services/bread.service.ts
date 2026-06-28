@@ -1,4 +1,3 @@
-
 'use client';
 
 import { parseISO, format } from 'date-fns';
@@ -8,7 +7,7 @@ import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
-import { roundFinancial, roundQty } from '@/lib/utils';
+import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 
 class BreadService {
 
@@ -146,23 +145,21 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
-        // Note: salesService.createSale handles its own transactions internally.
-        // We iterate and process each order.
         const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
         
         for (const order of orders) {
             if (order.saleUuid || order.deletedAt) continue;
 
             try {
-                // Prepare item to match salesService expectations (CartItem structure)
+                // FIXED: Mapping correctly to SalesService expectations
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        cartQuantity: order.quantity, // Correct field for total calculation
-                        quantity: order.quantity,
+                        cartQuantity: safeNumber(order.quantity), 
+                        quantity: safeNumber(order.quantity),
                         barcodes: [],
                         minStockLevel: 0,
                         stockStatus: 'in_stock'
@@ -173,16 +170,17 @@ class BreadService {
                     customerUuid: order.customerUuid || undefined,
                 });
 
-                await db.bread_orders.update(order.id!, {
-                    saleUuid: sale.uuid,
-                    transferredToCustomerAccount: true,
-                    transferredAt: new Date(),
-                    updatedAt: new Date(),
-                    syncStatus: 'pending'
-                });
+                if (sale) {
+                    await db.bread_orders.update(order.id!, {
+                        saleUuid: sale.uuid,
+                        transferredToCustomerAccount: true,
+                        transferredAt: new Date(),
+                        updatedAt: new Date(),
+                        syncStatus: 'pending'
+                    });
+                }
             } catch (err) {
                 console.error(`[BreadService] Failed to bill order ${order.orderNumber}:`, err);
-                // Continue to next order even if one fails
             }
         }
 

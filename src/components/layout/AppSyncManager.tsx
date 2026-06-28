@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppStore, useAppActions } from '@/stores/appStore';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { breadService } from '@/services/bread.service';
 
 /**
@@ -16,22 +16,28 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
     // Safety guards against re-render storms
     const initialSyncTriggered = useRef(false);
     const profileFetched = useRef(false);
+    const [isMounted, setIsMounted] = useState(false);
 
-    // 1. Single-shot profile initialization
+    // 1. Initial Hydration Guard
     useEffect(() => {
-        if (!profileFetched.current) {
+        setIsMounted(true);
+    }, []);
+
+    // 2. Single-shot profile initialization
+    useEffect(() => {
+        if (isMounted && !profileFetched.current) {
             profileFetched.current = true;
             fetchCompanyProfile();
         }
-    }, [fetchCompanyProfile]);
+    }, [isMounted, fetchCompanyProfile]);
 
-    // 2. Sequential Background Tasks (Sync + Bread Logic)
+    // 3. Sequential Background Tasks (Sync + Bread Logic)
     useEffect(() => {
         const url = companyProfile?.supabaseUrl;
         const key = companyProfile?.supabaseKey;
         
         // Block if no cloud config or if already triggered
-        if (!url || !key || initialSyncTriggered.current) return;
+        if (!isMounted || !url || !key || initialSyncTriggered.current) return;
         
         // Ensure browser is online before triggering cloud logic
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
@@ -52,10 +58,12 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
                 // Allow retry on next mount if necessary
                 initialSyncTriggered.current = false;
             }
-        }, 8000); // 8s grace period to allow main UI hydration first
+        }, 5000); // 5s grace period
 
         return () => clearTimeout(timeoutId);
-    }, [companyProfile?.supabaseUrl, companyProfile?.supabaseKey, performBackgroundSync]);
+    }, [isMounted, companyProfile?.supabaseUrl, companyProfile?.supabaseKey, performBackgroundSync]);
+
+    if (!isMounted) return null;
 
     return <>{children}</>;
 }
