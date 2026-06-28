@@ -14,14 +14,15 @@ import {
     RefreshCw, 
     FilterX, 
     Clock, 
-    Banknote, 
     TrendingUp,
     Sparkles,
     X,
     Trash2,
     Calendar,
     HandCoins,
-    Receipt as ReceiptIcon
+    Receipt as ReceiptIcon,
+    FileDown,
+    CheckCircle2
 } from 'lucide-react';
 import { SalesHistoryCard } from '@/components/sales/SalesHistoryCard';
 import { SalesHistoryTable } from '@/components/sales/SalesHistoryTable';
@@ -33,9 +34,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
-import { cn, formatCurrency, safeToDate, safeNumber } from '@/lib/utils';
+import { cn, formatCurrency, safeToDate, safeNumber, formatDate } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -45,6 +45,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import { Badge } from '@/components/ui/badge';
+import { exportService } from '@/services/shared/export.service';
 
 type SalesStatus = 'all' | 'paid' | 'partial' | 'unpaid';
 
@@ -85,8 +86,10 @@ export default function SalesHistoryPage() {
             to: dateRange?.to
         };
 
+        // 1. Fetch Sales (Optimized)
         const sales = await salesService.filterSales(filters);
 
+        // 2. Fetch Payments (Optimized lookup)
         let paymentsQuery = db.payments.toCollection();
         if (dateRange?.from) {
             paymentsQuery = db.payments.where('paymentDate').between(startOfDay(dateRange.from), endOfDay(dateRange.to || new Date()), true, true);
@@ -96,7 +99,11 @@ export default function SalesHistoryPage() {
         let filteredPayments = rawPayments;
         if (debounced.debouncedValue) {
             const q = debounced.debouncedValue.toLowerCase().trim();
-            const matchingCustomers = await db.customers.filter(c => c.searchName.includes(q)).toArray();
+            // Search customers by searchName directly
+            const matchingCustomers = await db.customers
+                .where('searchName')
+                .startsWith(q)
+                .toArray();
             const matchingCustomerUuids = new Set(matchingCustomers.map(c => c.uuid));
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
         }
@@ -110,7 +117,10 @@ export default function SalesHistoryPage() {
             ...filteredPayments.map(p => ({ type: 'payment' as const, data: p, date: safeToDate(p.paymentDate) }))
         ];
 
-        return combined.sort((a, b) => b.date.getTime() - a.date.getTime());
+        // Limit results to avoid browser lag, sort by date
+        return combined
+            .sort((a, b) => b.date.getTime() - a.date.getTime())
+            .slice(0, 500);
     }, [isMounted, debounced.debouncedValue, filterStatus, dateRange]);
 
     const historyData = historyDataResult.value;
@@ -174,6 +184,24 @@ export default function SalesHistoryPage() {
         setSelectedItems(new Set());
     };
 
+    const handleExportCsv = () => {
+        if (!historyData || historyData.length === 0) return;
+        const toExport = selectedItems.size > 0 
+            ? historyData.filter(item => selectedItems.has(item.data.uuid))
+            : historyData;
+
+        const data = toExport.map(item => ({
+            'Date': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
+            'Type': item.type === 'sale' ? 'Vente' : 'Paiement',
+            'Référence': item.type === 'sale' ? item.data.invoiceNumber : 'Paiement Dette',
+            'Client': item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Passage',
+            'Total': item.type === 'sale' ? item.data.total : item.data.amount,
+            'Statut': item.type === 'sale' ? item.data.paymentStatus : 'Confirmé'
+        }));
+
+        exportService.exportToCsv(`historique-flux-${new Date().toISOString().split('T')[0]}`, data);
+    };
+
     const resetFilters = () => { setSearchQuery(''); setFilterStatus('all'); setDate(undefined); };
 
     useKeyboardShortcuts([{ key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher', ignoreInputFocus: true }], 'Historique');
@@ -184,6 +212,9 @@ export default function SalesHistoryPage() {
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
             <PageHeader title="Flux Financiers Elite" description="Registre unifié des ventes et encaissements">
                 <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                    <Button variant="outline" onClick={handleExportCsv} className="rounded-xl h-12 font-bold gap-2 border-primary/20 bg-card hover:bg-primary/5 transition-all">
+                        <FileDown className="h-4 w-4 text-primary" /> Exporter
+                    </Button>
                     <div className="flex items-center bg-card/40 backdrop-blur-md rounded-2xl border border-white/5 p-1 shadow-inner">
                         <DateRangePicker date={dateRange} setDate={setDate} />
                         {!dateRange?.from && (
@@ -305,7 +336,11 @@ export default function SalesHistoryPage() {
                                     ))}
                                 </div>
                             )
-                        ) : <EmptyState icon={ReceiptIcon} title="Archives Vides" description={isFiltered ? "Ajustez vos filtres de recherche." : "Validez votre première transaction Elite."}><Button variant="outline" onClick={resetFilters} className="rounded-xl">Effacer les filtres</Button></EmptyState>}
+                        ) : <EmptyState icon={ReceiptIcon} title="Archives Vides" description={isFiltered ? "Ajustez vos filtres de recherche." : "Validez votre première transaction Elite."}>
+                                <Button variant="outline" onClick={resetFilters} className="rounded-xl h-10 px-6 font-bold gap-2">
+                                    <FilterX className="h-4 w-4" /> Réinitialiser
+                                </Button>
+                            </EmptyState>}
                     </div>
                 </div>
             </div>
@@ -314,6 +349,7 @@ export default function SalesHistoryPage() {
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
                     <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-4">
                         <div className="flex items-center gap-4 pr-8 border-r border-white/10"><div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">{selectedItems.size}</div><span className="text-[10px] font-black uppercase text-muted-foreground">Sélections</span></div>
+                        <Button variant="ghost" onClick={handleExportCsv} className="rounded-full h-12 px-6 font-black text-[10px] uppercase hover:bg-primary/10 transition-all"><FileDown className="mr-2 h-4 w-4" /> Exporter (.csv)</Button>
                         <Button variant="ghost" onClick={() => setIsBulkCancelConfirmOpen(true)} className="rounded-full h-12 px-6 font-black text-[10px] uppercase text-destructive hover:bg-destructive/10 transition-all"><Trash2 className="mr-2 h-4 w-4" /> Annuler Flux</Button>
                         <Button variant="ghost" size="icon" onClick={() => setSelectedItems(new Set())} className="rounded-full h-12 w-12 hover:bg-white/5"><X className="h-4 w-4" /></Button>
                     </div>
@@ -323,27 +359,7 @@ export default function SalesHistoryPage() {
             <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={selectedSale} />
             <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => historyDataResult.refresh()} />
             <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'Client de passage'} />
-            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action définitive : réintégration du stock et ajustement των soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
+            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action definitiva : réintégration du stock et ajustement τῶν soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
         </div>
     );
-}
-
-function CheckCircle2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22c5.523 0 9-4.477 9-10S17.523 2 12 2 3 6.477 3 12s3.477 10 9 10z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  )
 }
