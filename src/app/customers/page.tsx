@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 
 import { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -20,11 +19,12 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Card } from '@/components/ui/card';
 import { customerService } from '@/services/customer.service';
+import { exportService } from '@/services/shared/export.service';
 import { ImportPreviewDialog } from '@/components/customers/import-preview-dialog';
-import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { formatDate } from '@/lib/utils';
 
 type FilterStatus = 'all' | 'has_debt' | 'overdue' | 'over_limit' | 'is_bread_client';
 
@@ -110,13 +110,20 @@ function CustomersContent() {
     const handleExportCsv = () => {
         if (!customers?.length) return;
         const data = selectedCustomers.size > 0 ? customers.filter(c => selectedCustomers.has(c.uuid)) : customers;
-        const csv = Papa.unparse(data.map(c => ({ Prénom: c.firstName, Nom: c.lastName, Téléphone: c.phone || '', Total: c.totalSpent, Solde: c.outstandingBalance })));
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `clients-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        toast.success("Registre exporté avec succès.");
+        
+        const exportData = data.map(c => ({
+            'Prénom': c.firstName,
+            'Nom': c.lastName,
+            'Téléphone': c.phone || '',
+            'Adresse': c.address || '',
+            'Solde Initial (DA)': c.initialBalance,
+            'Total Flux (DA)': c.totalSpent,
+            'Solde Net Dû (DA)': c.outstandingBalance,
+            'Membre Pain': c.isBreadClient ? 'Oui' : 'Non',
+            'Enregistré le': formatDate(c.createdAt)
+        }));
+
+        exportService.exportToCsv(`registre-clients-${new Date().toISOString().split('T')[0]}`, exportData);
     };
 
     const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {

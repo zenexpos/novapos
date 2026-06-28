@@ -80,17 +80,18 @@ class CustomerService {
             const isAsc = order === 'asc';
 
             customers.sort((a: any, b: any) => {
-                const valA = a[field] ?? 0;
-                const valB = b[field] ?? 0;
-                
-                // Correction Logic: Handle strings vs numbers in sorting
+                const valA = a[field];
+                const valB = b[field];
+
+                // FIX: Locale-aware sorting for strings (Arabic/French support)
                 if (typeof valA === 'string' && typeof valB === 'string') {
-                    return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    return isAsc ? valA.localeCompare(valB, 'fr') : valB.localeCompare(valA, 'fr');
                 }
                 
-                if (valA < valB) return isAsc ? -1 : 1;
-                if (valA > valB) return isAsc ? 1 : -1;
-                return 0;
+                // Fallback to safe numeric comparison
+                const numA = safeNumber(valA);
+                const numB = safeNumber(valB);
+                return isAsc ? numA - numB : numB - numA;
             });
         } else {
             customers.sort((a, b) => {
