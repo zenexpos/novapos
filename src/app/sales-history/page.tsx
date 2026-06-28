@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { 
     Search, 
-    History, 
     LayoutGrid, 
     List, 
     RefreshCw, 
@@ -17,7 +16,6 @@ import {
     Clock, 
     Banknote, 
     TrendingUp,
-    ChevronRight,
     Sparkles,
     X,
     Trash2,
@@ -50,7 +48,6 @@ import { Badge } from '@/components/ui/badge';
 
 type SalesStatus = 'all' | 'paid' | 'partial' | 'unpaid';
 
-// Registry item type
 export type HistoryItem = 
     | { type: 'sale'; data: Sale; date: Date }
     | { type: 'payment'; data: Payment; date: Date };
@@ -78,7 +75,6 @@ export default function SalesHistoryPage() {
     const [isPrintOpen, setIsPrintOpen] = useState(false);
     const [isBulkCancelConfirmOpen, setIsBulkCancelConfirmOpen] = useState(false);
 
-    // Optimized live query - only depends on debounced values and ranges
     const historyDataResult = useLiveQuery<HistoryItem[] | undefined>(async () => {
         if (!isMounted) return undefined;
 
@@ -89,21 +85,18 @@ export default function SalesHistoryPage() {
             to: dateRange?.to
         };
 
-        // 1. Fetch sales
         const sales = await salesService.filterSales(filters);
 
-        // 2. Fetch payments
         let paymentsQuery = db.payments.toCollection();
         if (dateRange?.from) {
             paymentsQuery = db.payments.where('paymentDate').between(startOfDay(dateRange.from), endOfDay(dateRange.to || new Date()), true, true);
         }
         const rawPayments = await paymentsQuery.toArray();
 
-        // 3. Filter payments
         let filteredPayments = rawPayments;
         if (debounced.debouncedValue) {
             const q = debounced.debouncedValue.toLowerCase().trim();
-            const matchingCustomers = await db.customers.filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(q)).toArray();
+            const matchingCustomers = await db.customers.filter(c => c.searchName.includes(q)).toArray();
             const matchingCustomerUuids = new Set(matchingCustomers.map(c => c.uuid));
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
         }
@@ -121,148 +114,84 @@ export default function SalesHistoryPage() {
     }, [isMounted, debounced.debouncedValue, filterStatus, dateRange]);
 
     const historyData = historyDataResult.value;
-
     const customersResult = useLiveQuery<Customer[]>(() => db.customers.toArray());
     const customers = customersResult.value ?? [];
     const customerMap = useMemo(() => new Map(customers.map(c => [c.uuid, c])), [customers]);
-
     const isLoading = historyDataResult.isLoading || !isMounted;
-
-    // Pagination logic
-    const PAGE_SIZE = 50;
-    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-    const sentinelRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setVisibleCount(PAGE_SIZE); 
-    }, [historyData]);
-
-    useEffect(() => {
-        if (!sentinelRef.current) return;
-        const observer = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting && historyData && visibleCount < historyData.length) {
-                    setVisibleCount(prev => Math.min(prev + PAGE_SIZE, historyData.length));
-                }
-            },
-            { threshold: 0.1 }
-        );
-        observer.observe(sentinelRef.current);
-        return () => observer.disconnect();
-    }, [historyData, visibleCount]);
-
-    const visibleHistory = useMemo(
-        () => historyData?.slice(0, visibleCount) ?? [],
-        [historyData, visibleCount]
-    );
 
     const stats = useMemo(() => {
         if (!historyData) return { totalRevenue: 0, totalReceived: 0, totalDebt: 0, count: 0 };
-        
-        let revenueCents = 0;
-        let receivedCents = 0;
-        let saleCount = 0;
-
+        let rev = 0; let rec = 0; let count = 0;
         historyData.forEach(item => {
             if (item.type === 'sale') {
-                revenueCents += Math.round(safeNumber(item.data.total) * 100);
-                receivedCents += Math.round(safeNumber(item.data.amountPaid) * 100);
-                saleCount++;
+                rev += Math.round(safeNumber(item.data.total) * 100);
+                rec += Math.round(safeNumber(item.data.amountPaid) * 100);
+                count++;
             } else {
-                receivedCents += Math.round(safeNumber(item.data.amount) * 100);
+                rec += Math.round(safeNumber(item.data.amount) * 100);
             }
         });
-
-        return {
-            totalRevenue: revenueCents / 100,
-            totalReceived: receivedCents / 100,
-            totalDebt: Math.max(0, (revenueCents - receivedCents) / 100),
-            count: saleCount
-        };
+        return { totalRevenue: rev / 100, totalReceived: rec / 100, totalDebt: Math.max(0, (rev - rec) / 100), count };
     }, [historyData]);
 
     const chartData = useMemo(() => {
         if (!historyData || historyData.length === 0) return [];
-        
         const dataMap = new Map<string, { fullDate: string, totalCents: number, receivedCents: number }>();
-        
         historyData.forEach(item => {
             const sortKey = format(item.date, 'yyyy-MM-dd');
             const current = dataMap.get(sortKey) || { fullDate: sortKey, totalCents: 0, receivedCents: 0 };
-            
             if (item.type === 'sale') {
                 current.totalCents += Math.round(safeNumber(item.data.total) * 100);
                 current.receivedCents += Math.round(safeNumber(item.data.amountPaid) * 100);
             } else {
                 current.receivedCents += Math.round(safeNumber(item.data.amount) * 100);
             }
-            
             dataMap.set(sortKey, current);
         });
-
         return Array.from(dataMap.values())
             .sort((a, b) => a.fullDate.localeCompare(b.fullDate))
-            .map(d => ({
-                date: format(parseISO(d.fullDate), 'dd/MM'),
-                total: d.totalCents / 100,
-                received: d.receivedCents / 100
-            }));
+            .map(d => ({ date: format(parseISO(d.fullDate), 'dd/MM'), total: d.totalCents / 100, received: d.receivedCents / 100 }));
     }, [historyData]);
 
     const handleToggleSelection = (uuid: string) => {
         setSelectedItems(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(uuid)) newSet.delete(uuid);
-            else newSet.add(uuid);
-            return newSet;
+            const next = new Set(prev);
+            if (next.has(uuid)) next.delete(uuid); else next.add(uuid);
+            return next;
         });
-    };
-
-    const handleSelectAll = () => {
-        if (!historyData) return;
-        if (selectedItems.size === historyData.length) setSelectedItems(new Set());
-        else setSelectedItems(new Set(visibleHistory.map(item => item.data.uuid)));
     };
 
     const handleBulkCancel = async () => {
         const uuids = Array.from(selectedItems);
         let successCount = 0;
         for (const uuid of uuids) {
-            try { 
-                await salesService.processSaleCancellation(uuid); 
-                successCount++; 
-            } catch (e) {}
+            try { await salesService.processSaleCancellation(uuid); successCount++; } catch (e) {}
         }
-        if (successCount > 0) toast.success(`${successCount} opération(s) annulée(s).`);
+        if (successCount > 0) {
+            toast.success(`${successCount} opération(s) annulée(s).`);
+            historyDataResult.refresh();
+        }
         setSelectedItems(new Set());
     };
 
-    const resetFilters = () => {
-        setSearchQuery('');
-        setFilterStatus('all');
-        setDate(undefined);
-    };
+    const resetFilters = () => { setSearchQuery(''); setFilterStatus('all'); setDate(undefined); };
 
-    useKeyboardShortcuts([
-        { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher un flux', ignoreInputFocus: true }
-    ], 'Historique');
+    useKeyboardShortcuts([{ key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher', ignoreInputFocus: true }], 'Historique');
 
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || !!dateRange?.from;
     
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
-            <PageHeader title="Flux Financiers Elite" description="Registre unifié des ventes et encaissements de dettes">
+            <PageHeader title="Flux Financiers Elite" description="Registre unifié des ventes et encaissements">
                 <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                    <div className="flex items-center bg-card/40 backdrop-blur-md rounded-2xl border border-white/5 p-1 shadow-inner group">
+                    <div className="flex items-center bg-card/40 backdrop-blur-md rounded-2xl border border-white/5 p-1 shadow-inner">
                         <DateRangePicker date={dateRange} setDate={setDate} />
                         {!dateRange?.from && (
-                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase px-3 py-1 animate-pulse">
-                                Archive Complète
-                            </Badge>
+                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase px-3 py-1 animate-pulse">Archive Complète</Badge>
                         )}
                     </div>
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40 hover:bg-primary/10 transition-all" onClick={() => window.location.reload()}>
-                        <RefreshCw className="h-5 w-5 text-primary" />
+                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40 hover:bg-primary/10 transition-all" onClick={() => historyDataResult.refresh()}>
+                        <RefreshCw className={cn("h-5 w-5 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </PageHeader>
@@ -271,9 +200,7 @@ export default function SalesHistoryPage() {
                 <div className="lg:col-span-1 space-y-4">
                     <Card className="app-card rounded-lg glass overflow-hidden shadow-sm">
                         <CardHeader className="bg-primary/5 border-b border-white/5 p-6">
-                            <CardTitle className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest">
-                                <Sparkles className="h-3.5 w-3.5" /> Bilan de Période
-                            </CardTitle>
+                            <CardTitle className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest"><Sparkles className="h-3.5 w-3.5" /> Bilan de Période</CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
                             <div className="space-y-1">
@@ -297,29 +224,20 @@ export default function SalesHistoryPage() {
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <Input ref={searchInputRef} placeholder="Chercher un flux... [F3]" className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-lg" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                            {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors"><X className="h-4 w-4" /></button>}
                         </div>
-                        <div className="space-y-4 animate-page-enter">
+                        <div className="space-y-4">
                             <Badge variant="outline" className="text-[10px] font-black uppercase text-muted-foreground/40 ml-1">Statut des Ventes</Badge>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between rounded-xl h-12 bg-black/20 border-white/5 text-xs font-semibold uppercase">
-                                        <div className="flex items-center gap-3"><Banknote className="h-4 w-4 text-primary" />{filterStatus === 'all' ? 'Tous les flux' : filterStatus === 'paid' ? 'Soldés' : filterStatus === 'partial' ? 'Partiels' : 'À crédit'}</div>
-                                        <ChevronRight className="h-3 w-3 opacity-30" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-[240px] rounded-2xl border-white/10 bg-card/95 backdrop-blur-md shadow-2xl">
-                                    <DropdownMenuCheckboxItem className="p-3 font-bold" checked={filterStatus === 'all'} onCheckedChange={() => setFilterStatus('all')}>Tous les flux</DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem className="p-3 font-bold" checked={filterStatus === 'paid'} onCheckedChange={() => setFilterStatus('paid')}>Règlements complets</DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem className="p-3 font-bold" checked={filterStatus === 'partial'} onCheckedChange={() => setFilterStatus('partial')}>Paiements partiels</DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem className="p-3 font-bold" checked={filterStatus === 'unpaid'} onCheckedChange={() => setFilterStatus('unpaid')}>Dettes totales</DropdownMenuCheckboxItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="grid gap-2">
+                                {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
+                                    <button key={s} onClick={() => setFilterStatus(s)} className={cn("flex items-center justify-between p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary shadow-lg" : "bg-black/10 border-white/5 text-muted-foreground/60 hover:bg-black/20")}>
+                                        {s === 'all' ? 'Tous' : s === 'paid' ? 'Soldés' : s === 'partial' ? 'Partiels' : 'Crédits'}
+                                        {filterStatus === s && <CheckCircle2 className="h-3 w-3" />}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        {isFiltered && (
-                            <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase rounded-xl h-12 gap-2">
-                                <FilterX className="h-4 w-4" /> Réinitialiser
-                            </Button>
-                        )}
+                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase rounded-xl h-12 gap-2"><FilterX className="h-4 w-4" /> Réinitialiser</Button>}
                     </Card>
                 </div>
 
@@ -328,10 +246,7 @@ export default function SalesHistoryPage() {
                         <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-white/5 bg-muted/20">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-sm"><TrendingUp className="h-6 w-6" /></div>
-                                <div>
-                                    <CardTitle className="text-xl font-bold tracking-tighter uppercase">Flux de Liquidité</CardTitle>
-                                    <p className="text-[10px] font-semibold uppercase text-primary/50 tracking-widest">Variation des revenus et des remboursements de dettes</p>
-                                </div>
+                                <div><CardTitle className="text-xl font-bold tracking-tighter uppercase">Flux de Liquidité</CardTitle><p className="text-[10px] font-semibold uppercase text-primary/50 tracking-widest">Revenus et remboursements sur la période</p></div>
                             </div>
                             <div className="flex items-center gap-1.5 p-1.5 bg-black/20 rounded-lg border border-white/5 shadow-inner">
                                 <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
@@ -339,20 +254,12 @@ export default function SalesHistoryPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="h-72 p-4">
-                            {isLoading ? (
-                                <div className="h-full flex items-center justify-center opacity-20"><RefreshCw className="animate-spin h-10 w-10 text-primary" /></div>
-                            ) : chartData.length > 0 ? (
+                            {!isLoading && chartData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData}>
                                         <defs>
-                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/>
-                                                <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
-                                            </linearGradient>
-                                            <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
-                                            </linearGradient>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
+                                            <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/><stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/></linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.2)" />
                                         <XAxis dataKey="date" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={15} />
@@ -362,9 +269,7 @@ export default function SalesHistoryPage() {
                                         <Area type="monotone" dataKey="received" name="received" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} />
                                     </AreaChart>
                                 </ResponsiveContainer>
-                            ) : <div className="h-full flex flex-col items-center justify-center opacity-20 uppercase text-[10px] font-black italic gap-4">
-                                <Calendar className="h-12 w-12" /> Aucun flux détecté
-                            </div>}
+                            ) : <div className="h-full flex flex-col items-center justify-center opacity-20 uppercase text-[10px] font-black italic gap-4"><Calendar className="h-12 w-12" /> {isLoading ? 'Chargement...' : 'Aucun flux détecté'}</div>}
                         </CardContent>
                     </Card>
 
@@ -374,61 +279,33 @@ export default function SalesHistoryPage() {
                                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 animate-pulse border border-white/5" />)}
                             </div>
                         ) : historyData && historyData.length > 0 ? (
-                            <div className="space-y-4">
-                                {viewMode === 'list' ? (
-                                    <SalesHistoryTable 
-                                        historyItems={historyData} 
-                                        customerMap={customerMap} 
-                                        selectedItems={selectedItems} 
-                                        onToggleSelection={handleToggleSelection} 
-                                        onViewDetails={(s) => { setSelectedSale(s); setIsDetailsOpen(true); }} 
-                                        onPrint={(s) => { setSelectedSale(s); setIsPrintOpen(true); }} 
-                                        onCancel={(s) => { setSelectedSale(s); setIsCancelOpen(true); }} 
-                                    />
-                                ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {visibleHistory.map(item => (
-                                            item.type === 'sale' ? (
-                                                <SalesHistoryCard 
-                                                    key={item.data.uuid} 
-                                                    sale={item.data} 
-                                                    customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Client de passage'} 
-                                                    isSelected={selectedItems.has(item.data.uuid)} 
-                                                    onToggleSelection={() => handleToggleSelection(item.data.uuid)} 
-                                                    onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} 
-                                                    onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} 
-                                                />
-                                            ) : (
-                                                <Card key={item.data.uuid} className="app-card group bg-emerald-500/5 backdrop-blur-sm border-emerald-500/10 relative overflow-hidden rounded-lg p-6">
-                                                    <div className="absolute -right-4 -top-4 opacity-[0.05] text-emerald-500 group-hover:opacity-10 transition-opacity">
-                                                        <HandCoins className="h-32 w-32 rotate-12" />
-                                                    </div>
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-inner">
-                                                            <HandCoins className="h-6 w-6" />
-                                                        </div>
-                                                        <Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-3 py-1">Paiement Reçu</Badge>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] font-semibold text-muted-foreground/40 uppercase">Encaissement Dette</p>
-                                                        <p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p>
-                                                    </div>
-                                                    <div className="mt-4 flex flex-col gap-2">
-                                                        <p className="font-bold text-sm tracking-tight truncate">
-                                                            {customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}
-                                                        </p>
-                                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-semibold uppercase tracking-wide">
-                                                            <Clock className="h-3 w-3 opacity-50" />
-                                                            {format(item.date, 'd MMMM, HH:mm', { locale: fr })}
-                                                        </div>
-                                                    </div>
-                                                </Card>
-                                            )
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ) : <EmptyState icon={History} title="Archives Vides" description={isFiltered ? "Ajustez vos filtres de recherche." : "Validez votre première transaction Elite."} />}
+                            viewMode === 'list' ? (
+                                <SalesHistoryTable 
+                                    historyItems={historyData} 
+                                    customerMap={customerMap} 
+                                    selectedItems={selectedItems} 
+                                    onToggleSelection={handleToggleSelection} 
+                                    onViewDetails={(s) => { setSelectedSale(s); setIsDetailsOpen(true); }} 
+                                    onPrint={(s) => { setSelectedSale(s); setIsPrintOpen(true); }} 
+                                    onCancel={(s) => { setSelectedSale(s); setIsCancelOpen(true); }} 
+                                />
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {historyData.map(item => (
+                                        item.type === 'sale' ? (
+                                            <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Client de passage'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
+                                        ) : (
+                                            <Card key={item.data.uuid} className="app-card group bg-emerald-500/5 backdrop-blur-sm border-emerald-500/10 relative overflow-hidden rounded-lg p-6">
+                                                <div className="absolute -right-4 -top-4 opacity-[0.05] text-emerald-500 group-hover:opacity-10 transition-opacity"><HandCoins className="h-32 w-32 rotate-12" /></div>
+                                                <div className="flex justify-between items-start mb-6"><div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-inner"><HandCoins className="h-6 w-6" /></div><Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-3 py-1">Paiement Reçu</Badge></div>
+                                                <div className="space-y-1"><p className="text-[10px] font-semibold text-muted-foreground/40 uppercase">Encaissement Dette</p><p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p></div>
+                                                <div className="mt-4 flex flex-col gap-2"><p className="font-bold text-sm tracking-tight truncate">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p><div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-semibold uppercase tracking-wide"><Clock className="h-3 w-3 opacity-50" />{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</div></div>
+                                            </Card>
+                                        )
+                                    ))}
+                                </div>
+                            )
+                        ) : <EmptyState icon={ReceiptIcon} title="Archives Vides" description={isFiltered ? "Ajustez vos filtres de recherche." : "Validez votre première transaction Elite."}><Button variant="outline" onClick={resetFilters} className="rounded-xl">Effacer les filtres</Button></EmptyState>}
                     </div>
                 </div>
             </div>
@@ -444,10 +321,29 @@ export default function SalesHistoryPage() {
             )}
 
             <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={selectedSale} />
-            <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => setSelectedItems(new Set())} />
+            <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => historyDataResult.refresh()} />
             <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'Client de passage'} />
-            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action définitive : réintégration du stock et ajustement des soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
-            <div ref={sentinelRef} className="h-10 w-full" />
+            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action définitive : réintégration du stock et ajustement των soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
         </div>
     );
+}
+
+function CheckCircle2(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 22c5.523 0 9-4.477 9-10S17.523 2 12 2 3 6.477 3 12s3.477 10 9 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  )
 }

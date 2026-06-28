@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { Sale, Customer, Payment } from '@/lib/types';
+import type { Sale, Customer } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -40,13 +40,14 @@ export function SalesHistoryTable({
 
     const handleSelectAll = () => {
         if (selectedItems.size === historyItems.length) {
+            selectedItems.clear(); // Just for internal logic clarity, the loop handles it
             historyItems.forEach(item => {
-                const uuid = item.type === 'sale' ? item.data.uuid : item.data.uuid;
+                const uuid = item.data.uuid;
                 if(selectedItems.has(uuid)) onToggleSelection(uuid);
             });
         } else {
             historyItems.forEach(item => {
-                const uuid = item.type === 'sale' ? item.data.uuid : item.data.uuid;
+                const uuid = item.data.uuid;
                 if(!selectedItems.has(uuid)) onToggleSelection(uuid);
             });
         }
@@ -75,7 +76,7 @@ export function SalesHistoryTable({
                 <TableBody>
                     {historyItems.map((item) => {
                         const isSale = item.type === 'sale';
-                        const uuid = isSale ? item.data.uuid : item.data.uuid;
+                        const uuid = item.data.uuid;
                         const isSelected = selectedItems.has(uuid);
                         const customer = isSale 
                             ? (item.data.customerUuid ? customerMap.get(item.data.customerUuid) : undefined)
@@ -139,7 +140,7 @@ export function SalesHistoryTable({
                                         </Badge>
                                     ) : (
                                         <span className="text-[10px] font-medium text-emerald-600/60 italic truncate max-w-[150px] block">
-                                            {item.data.notes || 'Règlement de dette'}
+                                            {(item.data as any).notes || 'Règlement de dette'}
                                         </span>
                                     )}
                                 </TableCell>
@@ -148,7 +149,7 @@ export function SalesHistoryTable({
                                         "font-semibold text-base tracking-tighter font-mono",
                                         isSale ? "text-primary" : "text-emerald-500"
                                     )}>
-                                        {isSale ? formatCurrency(item.data.total) : formatCurrency(item.data.amount)}
+                                        {isSale ? formatCurrency(item.data.total) : formatCurrency((item.data as any).amount)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="p-6 text-right" onClick={(e) => e.stopPropagation()}>
@@ -161,7 +162,7 @@ export function SalesHistoryTable({
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-sm bg-card">
                                                 <DropdownMenuItem onClick={() => onViewDetails(item.data)} className="rounded-xl p-3">
-                                                    <FileText className="mr-2 h-4 w-4" /> Détails Elite
+                                                    <FileText className="mr-2 h-4 w-4" /> Details Elite
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => onPrint(item.data)} className="rounded-xl p-3">
                                                     <Printer className="mr-2 h-4 w-4" /> Imprimer Reçu
