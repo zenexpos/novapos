@@ -166,7 +166,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
+            throw new Error(`Révocation impossible : le solده de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
