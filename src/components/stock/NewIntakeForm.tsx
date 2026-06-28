@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, Calculator, Coins, Sparkles, BadgePercent, AlertTriangle, ScanLine } from 'lucide-react';
+import { Plus, Trash2, Save, ShoppingBag, Truck, Building, Hash, Loader2, PackagePlus, AlertCircle, ScanLine, Calculator, Coins, Sparkles, CheckCircle2 } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import type { Product, StockIntakeItem } from '@/lib/types';
-import { formatCurrency, cn, safeNumber, preciseMultiply } from '@/lib/utils';
+import { formatCurrency, cn, safeNumber, preciseMultiply, roundQty } from '@/lib/utils';
 import { useAppActions } from '@/stores/appStore';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,9 +19,14 @@ import { DatePicker } from '../ui/date-picker';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { ocrParserService } from '@/services/ocr-parser.service';
 
+/**
+ * @fileOverview محرك استقبال المخزون Elite.
+ * يدعم الذكاء الاصطناعي، الأوزان العشرية، والتدقيق المالي الفوري.
+ */
 export function NewIntakeForm() {
     const router = useRouter();
     const { processStockIntake } = useAppActions();
+    const productSearchRef = useRef<{ focusInput: () => void }>(null);
 
     const [supplierName, setSupplierName] = useState('');
     const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -30,15 +35,14 @@ export function NewIntakeForm() {
     const [items, setItems] = useState<StockIntakeItem[]>([]);
     const [isSubmitting, setIsSaving] = useState(false);
 
+    // حساب إجمالي قيمة البضاعة (بدون شحن)
     const itemsTotalValue = useMemo(() => {
-        const totalCents = items.reduce((sum, item) => {
-            const qty = safeNumber(item.quantity);
-            const cost = safeNumber(item.purchasePrice);
-            return sum + Math.round(preciseMultiply(qty, cost) * 100);
-        }, 0);
-        return totalCents / 100;
+        return items.reduce((sum, item) => {
+            return sum + Math.round(preciseMultiply(safeNumber(item.quantity), safeNumber(item.purchasePrice)) * 100);
+        }, 0) / 100;
     }, [items]);
 
+    // عامل الشحن (التوزيع التناسبي بناءً على القيمة)
     const shippingFactor = useMemo(() => {
         return itemsTotalValue > 0 ? shippingCost / itemsTotalValue : 0;
     }, [itemsTotalValue, shippingCost]);
@@ -48,7 +52,7 @@ export function NewIntakeForm() {
     const handleAddProduct = (product: Product) => {
         const existing = items.find(i => i.productUuid === product.uuid);
         if (existing) {
-            toast.info(`"${product.name}" est déjà dans le manifeste.`);
+            toast.info(`"${product.name}" موجود بالفعل في القائمة.`);
             return;
         }
 
@@ -91,11 +95,18 @@ export function NewIntakeForm() {
     };
 
     const handleOcrResult = useCallback(async (result: { rawText: string, lines: string[] }) => {
-        // Extraction intelligente des entêtes via Regex
+        // 1. استخراج المورد ذكياً
+        const detectedSupplier = ocrParserService.detectSupplier(result.rawText);
+        if (detectedSupplier) {
+            setSupplierName(detectedSupplier);
+            toast.success(`تم اكتشاف المورد: ${detectedSupplier}`);
+        }
+
+        // 2. استخراج رقم الفاتورة
         const invMatch = result.rawText.match(/(?:N°|Facture|Ref|Invoice|Nº)[:\s]*([A-Z0-9-]+)/i);
         if (invMatch && invMatch[1]) setInvoiceNumber(invMatch[1]);
 
-        // Parsing des produits structurés
+        // 3. تحليل الأصناف
         const parsedItems = await ocrParserService.parseInvoiceLines(result.lines);
         
         if (parsedItems.length > 0) {
@@ -106,41 +117,41 @@ export function NewIntakeForm() {
                 quantityDamaged: 0,
                 unit: 'Pièce'
             }));
-            
-            // On concatène les nouveaux éléments au début de la liste
             setItems(prev => [...newIntakeItems, ...prev]);
-            toast.success(`${parsedItems.length} articles extraits avec succès.`);
+            toast.success(`تم استخراج ${parsedItems.length} صنفاً بنجاح.`);
         }
     }, []);
 
     const handleSave = async () => {
-        if (!supplierName.trim()) { toast.error("Identifiez le fournisseur."); return; }
-        if (items.length === 0) { toast.error("Manifeste vide."); return; }
+        if (!supplierName.trim()) { toast.error("يرجى تحديد المورد."); return; }
+        if (items.length === 0) { toast.error("القائمة فارغة."); return; }
         
         setIsSaving(true);
         try {
             const success = await processStockIntake({
                 supplierName: supplierName.trim(),
-                invoiceNumber: invoiceNumber.trim() || `ELITE-${Date.now().toString().slice(-6)}`,
+                invoiceNumber: invoiceNumber.trim() || `INTAKE-${Date.now().toString().slice(-6)}`,
                 invoiceDate: invoiceDate || new Date(),
                 shippingCost,
                 items,
                 totalValue
             });
             if (success) {
-                toast.success("Réception validée et stock mis à jour.");
+                toast.success("تم تأكيد الاستقبال وتحديث المخزون.");
                 router.push('/stock');
             }
         } catch (error: any) {
-            toast.error("Erreur de validation.");
+            toast.error("فشل في معالجة العملية.");
         } finally {
             setIsSaving(false);
         }
     };
 
     useKeyboardShortcuts([
-        { key: 'Enter', ctrl: true, action: handleSave, description: 'Valider le manifeste', ignoreInputFocus: true }
-    ], 'Logistique', items.length > 0);
+        { key: 'Enter', ctrl: true, action: handleSave, description: 'تأكيد وحفظ الاستقبال', ignoreInputFocus: true },
+        { key: 'f3', action: () => (document.querySelector('[role="combobox"]') as HTMLElement)?.click(), description: 'البحث عن منتج', ignoreInputFocus: true },
+        { key: 'f9', action: () => (document.querySelector('input[type="file"]') as HTMLElement)?.click(), description: 'فتح الماسح الضوئي', ignoreInputFocus: true }
+    ], 'Logistique');
 
     return (
         <div className="grid lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -151,7 +162,7 @@ export function NewIntakeForm() {
                             <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm">
                                 <ShoppingBag className="h-5 w-5" />
                             </div>
-                            <CardTitle className="text-lg font-black tracking-tighter uppercase">Manifeste de Flux Entrants</CardTitle>
+                            <CardTitle className="text-lg font-black tracking-tighter uppercase">قائمة البضائع المستلمة</CardTitle>
                         </div>
                         <div className="max-w-md flex-grow">
                             <ProductIntakeCombobox 
@@ -165,12 +176,12 @@ export function NewIntakeForm() {
                             <Table>
                                 <TableHeader className="bg-black/20 border-none">
                                     <TableRow className="border-white/5">
-                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 p-4">Produit</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-center">Qté</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">Achat HT</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-primary/60 text-right">C. Revient</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-emerald-500/60 text-right">Marge</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">Total HT</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 p-4">المنتج</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-center">الكمية</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">سعر الشراء</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-primary/60 text-right">تكلفة الوصول</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-emerald-500/60 text-right">الهامش المتوقع</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">الإجمالي</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -180,7 +191,7 @@ export function NewIntakeForm() {
                                             <TableCell colSpan={7} className="h-80 text-center p-6 opacity-20">
                                                 <div className="flex flex-col items-center justify-center gap-6">
                                                     <PackagePlus className="h-16 w-16" />
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Scannez ou ajoutez des produits</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">امسح الفاتورة أو أضف منتجات يدوياً</p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -188,24 +199,30 @@ export function NewIntakeForm() {
                                         items.map((item) => {
                                             const qty = safeNumber(item.quantity);
                                             const cost = safeNumber(item.purchasePrice);
+                                            // حساب تكلفة الوصول شاملة حصة الشحن
                                             const landingCost = cost * (1 + shippingFactor);
                                             const rowTotal = preciseMultiply(qty, cost);
                                             const margin = item.price > 0 ? ((item.price - landingCost) / item.price) * 100 : 0;
+                                            const isAtLoss = landingCost > item.price && item.price > 0;
                                             
                                             return (
-                                                <TableRow key={item.id} className="border-white/5 group hover:bg-white/5 transition-all">
+                                                <TableRow key={item.id} className={cn("border-white/5 group hover:bg-white/5 transition-all", isAtLoss && "bg-destructive/5")}>
                                                     <TableCell className="p-4">
                                                         <div className="flex flex-col gap-1">
                                                             <span className="font-black text-sm">{item.name}</span>
-                                                            {item.isNew && <span className="text-[8px] font-black text-primary uppercase">Nouveau</span>}
+                                                            <div className="flex gap-2">
+                                                                {item.isNew && <span className="text-[8px] font-black text-primary uppercase bg-primary/10 px-1.5 rounded">جديد</span>}
+                                                                {isAtLoss && <span className="text-[8px] font-black text-destructive uppercase bg-destructive/10 px-1.5 rounded flex items-center gap-1"><AlertCircle className="h-2 w-2"/> هامش سالب</span>}
+                                                            </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="p-4">
                                                         <Input 
                                                             type="number" 
+                                                            step="0.001"
                                                             value={item.quantity} 
                                                             onChange={e => updateItem(item.id, 'quantity', e.target.value)}
-                                                            className="w-20 h-9 text-center bg-black/20 border-none mx-auto font-black"
+                                                            className="w-24 h-9 text-center bg-black/20 border-none mx-auto font-black"
                                                         />
                                                     </TableCell>
                                                     <TableCell className="p-4 text-right">
@@ -246,23 +263,23 @@ export function NewIntakeForm() {
             <div className="lg:col-span-3 space-y-6">
                 <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden sticky top-24 shadow-xl">
                     <CardHeader className="bg-primary/5 border-b border-white/5 p-4">
-                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Audit de Réception</CardTitle>
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">بيانات التوريد</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <OcrInvoiceScanner onResult={handleOcrResult} disabled={isSubmitting} />
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Fournisseur *</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">اسم المورد *</Label>
                                 <Input 
-                                    placeholder="Nom du fournisseur..." 
+                                    placeholder="اكتب اسم المورد..." 
                                     className="h-11 rounded-xl bg-black/20 border-none shadow-inner font-black"
                                     value={supplierName}
                                     onChange={e => setSupplierName(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Réf. Facture</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">رقم الفاتورة</Label>
                                 <Input 
                                     placeholder="N° FAC..." 
                                     className="h-10 rounded-lg bg-black/20 border-none font-mono"
@@ -271,22 +288,27 @@ export function NewIntakeForm() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Frais Logistique</Label>
-                                <Input 
-                                    type="number" 
-                                    value={shippingCost || ''} 
-                                    onChange={e => setShippingCost(safeNumber(e.target.value))}
-                                    className="h-10 rounded-lg bg-black/20 border-none text-right font-mono"
-                                />
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">مصاريف الشحن</Label>
+                                <div className="relative">
+                                    <Truck className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-20" />
+                                    <Input 
+                                        type="number" 
+                                        value={shippingCost || ''} 
+                                        onChange={e => setShippingCost(safeNumber(e.target.value))}
+                                        className="h-10 rounded-lg bg-black/20 border-none text-right font-mono pl-9"
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         <div className="pt-8 border-t border-white/5">
                             <div className="flex justify-between items-end pt-6 bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase text-primary">Total Net</span>
+                                    <span className="text-[10px] font-black uppercase text-primary">الإجمالي الصافي</span>
+                                    <span className="text-[8px] font-bold uppercase opacity-20 tracking-tighter">شامل الشحن</span>
                                 </div>
-                                <span className="text-3xl font-black text-primary tracking-tighter">{formatCurrency(totalValue)}</span>
+                                <span className="text-3xl font-black text-primary tracking-tighter tabular-nums">{formatCurrency(totalValue)}</span>
                             </div>
                         </div>
 
@@ -296,7 +318,7 @@ export function NewIntakeForm() {
                             className="w-full h-16 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 gap-3"
                         >
                             {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
-                            Valider la Réception
+                            تأكيد العملية
                         </Button>
                     </CardContent>
                 </Card>
