@@ -16,12 +16,12 @@ export function AppHeaderWrapper() {
 
     if (!mounted) {
         return (
-            <header className="h-14 border-b border-border bg-card flex items-center px-4">
-                <div className="w-8 h-8 rounded-xl bg-muted animate-pulse" />
-                <div className="ml-4 w-32 h-4 rounded bg-muted opacity-20 animate-pulse" />
+            <header className="h-14 border-b border-border bg-secondary flex items-center px-4">
+                <div className="w-8 h-8 rounded-xl bg-white/10 animate-pulse" />
+                <div className="ml-4 w-32 h-4 rounded bg-white/5 animate-pulse" />
                 <div className="ml-auto flex gap-2">
-                    <div className="w-20 h-8 rounded-lg bg-muted opacity-10 animate-pulse" />
-                    <div className="w-10 h-10 rounded-xl bg-muted opacity-10 animate-pulse" />
+                    <div className="w-20 h-8 rounded-lg bg-white/5 animate-pulse" />
+                    <div className="w-8 h-8 rounded-xl bg-white/5 animate-pulse" />
                 </div>
             </header>
         );

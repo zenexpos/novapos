@@ -11,10 +11,6 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import { Metadata, Viewport } from 'next';
 import { APP_CONFIG } from '@/lib/config/app-config';
 
-/**
- * RootLayout - Enterprise Server Component.
- * Using Metadata API to prevent hydration errors and optimize SEO.
- */
 export const metadata: Metadata = {
   title: 'iPOS Zen — Système POS Souverain',
   description: 'Gestion de point de vente locale, sécurisée et hors-ligne.',
@@ -37,7 +33,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-FR" suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20">
+      <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20" suppressHydrationWarning>
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>
@@ -55,7 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </KeyboardShortcutsProvider>
           </TooltipProvider>
         </ClientProviders>
-        {/* Hidden Portal for Print Engine */}
         <div id="receipt-for-print" className="hidden print:block bg-white min-h-screen w-full"></div>
       </body>
     </html>

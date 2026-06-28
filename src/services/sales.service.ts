@@ -1,4 +1,3 @@
-
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -66,7 +65,7 @@ class SalesService {
 
     const paymentStatus: Sale['paymentStatus'] =
       Math.abs(remainingCents) < 1 ? 'paid' :
-      amountPaidCents > 0 ? 'partial' : 'unpaid';
+      amountPaidCents > 1 ? 'partial' : 'unpaid';
 
     const saleItems: SaleItem[] = saleData.items.map(item => ({
       productUuid: (item.uuid && !item.uuid.startsWith('custom-')) ? item.uuid : null,
@@ -95,7 +94,7 @@ class SalesService {
       isCancelled: false
     };
 
-    // TRANSACTION ATOMIQUE : IndexedDB Commit
+    // TRANSACTION ATOMIQUE : IndexedDB Commit global
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,

@@ -11,6 +11,7 @@ export const FINANCIAL_EPSILON = 0.001;
  * Standard Financial Rounding (2 decimals).
  */
 export function roundFinancial(value: number): number {
+    if (isNaN(value) || !isFinite(value)) return 0;
     return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
@@ -18,6 +19,7 @@ export function roundFinancial(value: number): number {
  * Quantity Rounding (3 decimals for weights).
  */
 export function roundQty(value: number): number {
+    if (isNaN(value) || !isFinite(value)) return 0;
     const multiplier = Math.pow(10, QTY_PRECISION);
     return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
 }
@@ -26,10 +28,10 @@ export function roundQty(value: number): number {
  * Cleans and secures a number, avoids NaN.
  */
 export function safeNumber(val: any): number {
-    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
     if (!val) return 0;
     const parsed = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
-    return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
 }
 
 /**
@@ -46,7 +48,6 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
-        // Important: Subtotal per line is rounded to 2 decimals to match physical cash
         return acc + roundFinancial(price * qty);
     }, 0);
 
@@ -83,19 +84,4 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 export function calculateTVA(totalTTC: number, tvaRate: number): number {
     const ht = ttcToHt(totalTTC, tvaRate);
     return totalTTC - ht;
-}
-
-/**
- * Zakat Helpers
- */
-export function calculateNisab(goldPrice: number): number {
-    return preciseMultiply(85, goldPrice);
-}
-
-export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean, amount: number } {
-    const threshold = calculateNisab(goldPrice);
-    if (netAssets >= threshold) {
-        return { due: true, amount: roundFinancial(netAssets * 0.025) };
-    }
-    return { due: false, amount: 0 };
 }

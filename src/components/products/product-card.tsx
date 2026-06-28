@@ -194,11 +194,6 @@ const ProductCardComponent = ({
                         style={{ width: `${Math.max(3, stockPercent)}%` }}
                     />
                 </div>
-                {product.minStockLevel > 0 && (
-                    <p className="text-[8px] font-semibold text-muted-foreground/30 mt-1 uppercase tracking-wide">
-                        Seuil min: {product.minStockLevel} {product.unit ?? 'u'}
-                    </p>
-                )}
             </div>
 
             <div className="border-t border-[var(--glass-border)] bg-muted/5 px-4 py-3">
@@ -207,9 +202,6 @@ const ProductCardComponent = ({
                         <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-0.5">Prix vente</p>
                         <p className="text-xl font-black text-primary tracking-tighter tabular-nums leading-none">
                             {formatCurrency(product.price)}
-                        </p>
-                        <p className="text-[10px] font-mono text-muted-foreground/40 mt-0.5 tabular-nums">
-                            PMP: {formatCurrency(product.purchasePrice)}
                         </p>
                     </div>
 
@@ -225,24 +217,9 @@ const ProductCardComponent = ({
                         {formatPercent(marginRate)}
                     </div>
                 </div>
-
-                {lastUpdate && (
-                    <p className="text-[8px] font-semibold text-muted-foreground/25 mt-2 uppercase tracking-wide">
-                        Mis à jour {lastUpdate}
-                    </p>
-                )}
             </div>
         </div>
     );
 };
 
-export const ProductCard = React.memo(ProductCardComponent, (prev, next) => {
-    return (
-        prev.isSelected === next.isSelected &&
-        prev.isSelectionActive === next.isSelectionActive &&
-        prev.product.uuid === next.product.uuid &&
-        prev.product.quantity === next.product.quantity &&
-        prev.product.price === next.product.price &&
-        prev.product.updatedAt?.getTime() === next.product.updatedAt?.getTime()
-    );
-});
+export const ProductCard = React.memo(ProductCardComponent);
