@@ -72,9 +72,8 @@ export function ProductTable({
     const handleQuickEdit = useCallback(async (uuid: string, field: string, value: any) => {
         const rawVal = safeNumber(value);
         
-        // Audit Safeguard: Prevent negative values
         if (rawVal < 0) {
-            toast.error("Valeur invalide (négative)");
+            toast.error("Valeur invalide : les chiffres négatifs ne sont pas admis.");
             setEditingCell(null);
             return;
         }
@@ -86,9 +85,9 @@ export function ProductTable({
 
             await productService.updateProduct(uuid, { [field]: finalValue });
             setEditingCell(null);
-            toast.success("Mise à jour effectuée");
+            toast.success("Mise à jour effectuée.");
         } catch (e) {
-            toast.error("Erreur de mise à jour");
+            toast.error("Échec de la mise à jour rapide.");
         }
     }, []);
 
@@ -102,8 +101,8 @@ export function ProductTable({
             else if (sortKey === 'price') { va = a.price; vb = b.price; }
             else if (sortKey === 'purchasePrice') { va = a.purchasePrice; vb = b.purchasePrice; }
             else if (sortKey === 'margin') {
-                va = calculateMarginRate(a.price, a.purchasePrice);
-                vb = calculateMarginRate(b.price, b.purchasePrice);
+                va = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
+                vb = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
             }
             else if (sortKey === 'updatedAt') {
                 va = safeToDate(a.updatedAt).getTime();

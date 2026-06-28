@@ -219,7 +219,7 @@ function ProductsContent() {
             setIsImportPreviewOpen(false);
             onDialogSuccess();
         } catch (error: any) {
-            toast.error("Échec de l'إنتقائية.");
+            toast.error("Échec de l'importation.");
         } finally {
             setIsImporting(false);
         }
@@ -271,12 +271,12 @@ function ProductsContent() {
         <div className="p-6 sm:p-4 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-32">
             <PageHeader
                 title="Management du Catalogue Elite"
-                description="Contرôle absolu des stocks, marges et flux marchandises"
+                description="Contrôle absolu des stocks, marges et flux marchandises"
                 icon={Package}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
-                        <FileUp className="mr-2 h-4 w-4" /> Exporter Manifeste
+                        <FileUp className="mr-2 h-4 w-4" /> Exporter Manifestه
                     </Button>
                     <Button asChild variant="outline" disabled={isAnalyzing} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
                         <label htmlFor="csv-product-importer" className="cursor-pointer flex items-center">
@@ -426,7 +426,7 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commenceز par ajouter votre premier article Elite."} />
+                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">

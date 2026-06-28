@@ -108,6 +108,7 @@ class ProductService {
                 else if (field === 'purchasePrice') { valA = a.purchasePrice; vbA = b.purchasePrice; }
                 else if (field === 'updatedAt') { valA = safeToDate(a.updatedAt).getTime(); vbA = safeToDate(b.updatedAt).getTime(); }
                 else if (field === 'margin') {
+                    // Optimized calculation: subtract once
                     valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
                     vbA = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }
