@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface BreadOrderCardProps {
     order: BreadOrderWithCustomer;
     isSelected: boolean;
-    onToggleSelection: (orderId: string) => void;
+    onToggleSelection: (orderUuid: string) => void;
 }
 
 const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: BreadOrderCardProps) => {
@@ -65,6 +65,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
     }, [order.quantity]);
 
     const toggleDelivery = async () => {
+        if (isUpdatingStatus || isBilled) return;
         setIsUpdatingStatus(true);
         try {
             await breadService.bulkUpdateDeliveryStatus([order.uuid], !isDelivered);
@@ -77,6 +78,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
     };
 
     const togglePayment = async (checked: boolean) => {
+        if (isUpdatingStatus || isBilled) return;
         setIsUpdatingStatus(true);
         try {
             await breadService.updatePaymentStatus(order.uuid, checked);
@@ -122,13 +124,24 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         )}>
             <div className="absolute top-6 right-6 z-10 flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isBilled && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" onClick={handleDelete} aria-label="Supprimer l'ordre">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" 
+                        onClick={handleDelete} 
+                        aria-label="Supprimer l'ordre"
+                    >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
                 {!isBilled ? (
                     <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm">
-                        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelection(order.uuid)} className="h-6 w-6 border-primary data-[state=checked]:bg-primary" aria-label="Sélectionner l'ordre" />
+                        <Checkbox 
+                            checked={isSelected} 
+                            onCheckedChange={() => onToggleSelection(order.uuid)} 
+                            className="h-6 w-6 border-primary data-[state=checked]:bg-primary" 
+                            aria-label="Sélectionner l'ordre" 
+                        />
                     </div>
                 ) : (
                     <TooltipProvider>

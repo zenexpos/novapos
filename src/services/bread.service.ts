@@ -21,17 +21,19 @@ class BreadService {
     }
 
     private async generateOrderNumber(): Promise<string> {
-        const profile = await db.company_profile.toCollection().first();
-        const currentCounter = profile?.breadCounter || 1;
-        const number = `BRD-${String(currentCounter).padStart(6, '0')}`;
-        
-        if (profile?.id) {
-            await db.company_profile.update(profile.id, {
-                breadCounter: currentCounter + 1,
-                updatedAt: new Date()
-            });
-        }
-        return number;
+        return await db.transaction('rw', [db.company_profile], async () => {
+            const profile = await db.company_profile.toCollection().first();
+            const currentCounter = profile?.breadCounter || 1;
+            const number = `BRD-${String(currentCounter).padStart(6, '0')}`;
+            
+            if (profile?.id) {
+                await db.company_profile.update(profile.id, {
+                    breadCounter: currentCounter + 1,
+                    updatedAt: new Date()
+                });
+            }
+            return number;
+        });
     }
 
     async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
@@ -242,7 +244,7 @@ class BreadService {
                 const total = roundFinancial(quantity * unitPrice);
                 ordersToCreate.push({
                     uuid: uuidv4(),
-                    orderNumber: await this.generateOrderNumber(),
+                    orderNumber: `AUTO-${uuidv4().substring(0, 8)}`, // Will be finalized on generating order numbers if needed, or keeping it unique
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
@@ -266,6 +268,10 @@ class BreadService {
         }
 
         if (ordersToCreate.length > 0) {
+            // Re-generate official numbers for auto-created orders
+            for(let o of ordersToCreate) {
+                o.orderNumber = await this.generateOrderNumber();
+            }
             await db.bread_orders.bulkAdd(ordersToCreate);
             this.triggerSync();
         }

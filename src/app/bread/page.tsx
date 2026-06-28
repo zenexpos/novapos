@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, memo } from 'react';
 import { formatDateToYYYYMMDD, cn } from '@/lib/utils';
 import { addDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -62,7 +62,7 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
-    const formattedDate = formatDateToYYYYMMDD(currentDate);
+    const formattedDate = useMemo(() => formatDateToYYYYMMDD(currentDate), [currentDate]);
 
     useEffect(() => {
         breadService.ensureOrdersForDate(formattedDate);
@@ -275,7 +275,7 @@ export default function BreadPage() {
                                             key={o.uuid} 
                                             order={o} 
                                             isSelected={selectedOrders.has(o.uuid)} 
-                                            onToggleSelection={() => toggleOrderSelection(o.uuid)} 
+                                            onToggleSelection={toggleOrderSelection} 
                                         />
                                     ))}
                                 </div>
