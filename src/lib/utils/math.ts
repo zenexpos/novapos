@@ -75,12 +75,21 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
 }
 
 /**
+ * Robust TVA Calculation.
+ */
+export function calculateTVA(totalTTC: number, tvaRate: number): { ht: number, tva: number } {
+    const rate = safeNumber(tvaRate);
+    if (rate === 0) return { ht: roundFinancial(totalTTC), tva: 0 };
+    const ht = roundFinancial(totalTTC / (1 + rate / 100));
+    const tva = roundFinancial(totalTTC - ht);
+    return { ht, tva };
+}
+
+/**
  * Converts TTC amount to HT.
  */
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
-    const rate = safeNumber(tvaRate);
-    if (rate === 0) return totalTTC;
-    return roundFinancial(totalTTC / (1 + rate / 100));
+    return calculateTVA(totalTTC, tvaRate).ht;
 }
 
 /**

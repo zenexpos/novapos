@@ -6,31 +6,34 @@ import { safeNumber, roundFinancial, preciseMultiply } from '@/lib/utils';
 
 /**
  * iPOS Zen - Reporting & Intelligence Service.
- * Centralise tous les calculs analytiques pour le Dashboard et les audits.
+ * Centralizes all analytical calculations for the Dashboard and audits.
+ * PERFORMANCE AUDIT: Optimized using .each() iteration for large datasets.
  */
 class ReportsService {
     
     /**
      * Calcule la valeur totale du stock (Prix d'Achat vs Prix de Vente).
+     * Performance: O(N) with minimal memory footprint.
      */
     async getInventoryValuation() {
-        const products = await db.products.toArray();
         let totalCostCents = 0;
         let totalRetailCents = 0;
+        let itemCount = 0;
 
-        products.forEach(p => {
+        await db.products.filter(p => !p.deletedAt).each(p => {
             const qty = safeNumber(p.quantity);
             if (qty > 0) {
                 totalCostCents += Math.round(preciseMultiply(qty, safeNumber(p.purchasePrice)) * 100);
                 totalRetailCents += Math.round(preciseMultiply(qty, safeNumber(p.price)) * 100);
             }
+            itemCount++;
         });
 
         return {
             atCost: totalCostCents / 100,
             atRetail: totalRetailCents / 100,
             potentialProfit: (totalRetailCents - totalCostCents) / 100,
-            itemCount: products.length
+            itemCount
         };
     }
 
