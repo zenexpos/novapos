@@ -9,16 +9,12 @@ import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 import { roundFinancial } from '@/lib/utils';
 
-/**
- * BreadService Elite - Performance Optimized.
- * Handles logistics and automated financial transfers for bread distribution.
- */
 class BreadService {
 
     private triggerSync() {
         if (typeof window !== 'undefined') {
             const state = useAppStore.getState();
-            if (state && state.actions) {
+            if (state?.actions?.triggerSmartSync) {
                 state.actions.triggerSmartSync();
             }
         }
@@ -61,7 +57,6 @@ class BreadService {
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
         
-        // Safety: Do not ensure orders for past dates if none exist
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         if (date < todayStr) return;
 
@@ -82,7 +77,8 @@ class BreadService {
     async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
         const price = data.unitPrice || profile?.breadPrice || 10;
-        const total = roundFinancial(data.quantity * price);
+        const qty = Math.max(0, data.quantity);
+        const total = roundFinancial(qty * price);
 
         const newOrder: BreadOrder = {
             uuid: uuidv4(),
@@ -92,7 +88,7 @@ class BreadService {
             date: data.date,
             pickupDate: parseISO(data.date),
             pickupTime: data.pickupTime,
-            quantity: data.quantity,
+            quantity: qty,
             unitPrice: price,
             totalAmount: total,
             amountPaid: 0,
@@ -121,7 +117,8 @@ class BreadService {
         await db.bread_orders.update(order.id!, {
             isPaid,
             paymentStatus: isPaid ? 'paid' : 'unpaid',
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            syncStatus: 'pending'
         });
         this.triggerSync();
     }
@@ -131,7 +128,7 @@ class BreadService {
         await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
             const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
             for (const order of orders) {
-                if (order.saleUuid) continue; // Safety: Do not modify archived orders
+                if (order.saleUuid || order.deletedAt) continue;
                 await db.bread_orders.update(order.id!, {
                     isDelivered,
                     pickupStatus: isDelivered ? 'received' : 'unreceived',
@@ -156,7 +153,6 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // Create a standard sale for each bread order
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_PRODUCT',
@@ -177,7 +173,8 @@ class BreadService {
                     isPaid: true,
                     transferredToCustomerAccount: true,
                     transferredAt: new Date(),
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    syncStatus: 'pending'
                 });
             }
         });
@@ -186,16 +183,17 @@ class BreadService {
     }
 
     async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
-        if (isNaN(newQuantity)) return;
+        const qty = Math.max(0, newQuantity);
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.saleUuid) return;
 
-        const total = roundFinancial(newQuantity * order.unitPrice);
+        const total = roundFinancial(qty * order.unitPrice);
         await db.bread_orders.update(order.id!, {
-            quantity: newQuantity,
+            quantity: qty,
             totalAmount: total,
             remainingAmount: Math.max(0, total - order.amountPaid),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            syncStatus: 'pending'
         });
         this.triggerSync();
     }
@@ -205,7 +203,11 @@ class BreadService {
         if (!order || order.saleUuid) {
             throw new Error("Impossible de supprimer une commande déjà facturée.");
         }
-        await db.bread_orders.update(order.id!, { deletedAt: new Date(), updatedAt: new Date() });
+        await db.bread_orders.update(order.id!, { 
+            deletedAt: new Date(), 
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        });
         this.triggerSync();
     }
 

@@ -27,7 +27,7 @@ import {
     List,
     X,
     CheckCircle2,
-    AlertTriangle
+    CalendarSearch
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -46,11 +46,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
 
-/**
- * BreadPage Elite - Unified Logistics Management.
- * Performance audited and redundant logic eliminated.
- */
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
@@ -69,21 +66,19 @@ export default function BreadPage() {
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
 
-    // Initial load and safety date check
     useEffect(() => {
         breadService.ensureOrdersForDate(formattedDate);
         setSelectedOrders(new Set());
     }, [formattedDate]);
 
-    const ordersResult = useLiveQuery<BreadOrderWithCustomer[] | undefined>(
+    const { value: orders, isLoading } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => breadService.getOrdersForDate(formattedDate),
-        [formattedDate],
-        undefined
+        [formattedDate]
     );
 
     const filteredOrders = useMemo(() => {
-        if (!ordersResult.value) return [];
-        let list = ordersResult.value;
+        if (!orders) return [];
+        let list = orders;
 
         if (statusFilter !== 'all') {
             list = list.filter(o => o.isPaid === (statusFilter === 'paid'));
@@ -103,7 +98,7 @@ export default function BreadPage() {
             );
         }
         return list;
-    }, [ordersResult.value, searchQuery, statusFilter, deliveryFilter]);
+    }, [orders, searchQuery, statusFilter, deliveryFilter]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
@@ -125,7 +120,6 @@ export default function BreadPage() {
             await breadService.bulkUpdateDeliveryStatus(Array.from(selectedOrders), true);
             toast.success(`${selectedOrders.size} commandes marquées comme livrées.`);
             setSelectedOrders(new Set());
-            ordersResult.refresh();
         } catch (e) {
             toast.error("Échec de la mise à jour groupée.");
         } finally {
@@ -260,11 +254,17 @@ export default function BreadPage() {
                 <TabsContent value="distribution" className="space-y-6 outline-none">
                     <BreadStats date={formattedDate} />
                     
-                    {ordersResult.isLoading ? (
+                    {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-80 opacity-20">
                             <Loader2 className="h-12 w-12 animate-spin text-primary" />
                             <p className="mt-4 font-bold uppercase tracking-widest">Indexation des flux...</p>
                         </div>
+                    ) : filteredOrders.length === 0 ? (
+                        <EmptyState 
+                            icon={CalendarSearch} 
+                            title="Aucune distribution" 
+                            description={isFiltered ? "Aucun ordre ne correspond à vos filtres." : "Aucune commande enregistrée pour cette date."} 
+                        />
                     ) : (
                         <div className="animate-in fade-in duration-500">
                             {viewMode === 'list' ? (
@@ -279,7 +279,6 @@ export default function BreadPage() {
                                             order={o} 
                                             isSelected={selectedOrders.has(o.uuid)} 
                                             onToggleSelection={() => toggleOrderSelection(o.uuid)} 
-                                            onUpdate={() => ordersResult.refresh()} 
                                         />
                                     ))}
                                 </div>
@@ -289,7 +288,7 @@ export default function BreadPage() {
                 </TabsContent>
 
                 <TabsContent value="subscribers" className="outline-none">
-                    <BreadClientList onListChange={() => ordersResult.refresh()} />
+                    <BreadClientList onListChange={() => {}} />
                 </TabsContent>
             </Tabs>
 
@@ -303,7 +302,7 @@ export default function BreadPage() {
                         <Button 
                             onClick={handleBulkDeliver}
                             disabled={isProcessing}
-                            className="h-12 px-8 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl gap-3"
+                            className="h-12 px-8 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl gap-3"
                         >
                             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             Marquer comme Livrés
@@ -319,7 +318,7 @@ export default function BreadPage() {
                 isOpen={isFormOpen} 
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
-                onSuccess={() => ordersResult.refresh()}
+                onSuccess={() => {}}
             />
 
             <ConfirmAlertDialog
@@ -330,7 +329,7 @@ export default function BreadPage() {
                     <div className="space-y-4">
                         <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
-                            <AlertTriangle className="h-5 w-5 shrink-0" />
+                            <Clock className="h-5 w-5 shrink-0" />
                             <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
                         </div>
                     </div>

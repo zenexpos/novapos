@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import type { BreadOrderWithCustomer } from '@/lib/types';
 import {
     Table, TableBody, TableCell, TableHead,
@@ -14,17 +14,15 @@ import {
     User, 
     Hash, 
     CloudUpload,
-    Clock,
     CircleUser,
-    PackageCheck,
-    PackageX
+    Package
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';
 import { toast } from 'sonner';
-import { ConfirmAlertDialog } from '../ui/ConfirmAlertDialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Checkbox } from '../ui/checkbox';
+import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface BreadOrderTableProps {
     orders: BreadOrderWithCustomer[];
@@ -32,20 +30,28 @@ interface BreadOrderTableProps {
     onToggleSelection: (uuid: string) => void;
 }
 
-export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: BreadOrderTableProps) {
+function BreadOrderTableComponent({ orders, selectedOrders, onToggleSelection }: BreadOrderTableProps) {
     const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
     const handleTogglePickup = async (order: BreadOrderWithCustomer) => {
         if (order.saleUuid) return;
         const newState = !order.isDelivered;
-        await breadService.updateBreadOrderDeliveryStatus(order.uuid, newState);
-        toast.success(newState ? 'Article livré' : 'Livraison annulée');
+        try {
+            await breadService.bulkUpdateDeliveryStatus([order.uuid], newState);
+            toast.success(newState ? 'Article livré' : 'Livraison annulée');
+        } catch (e) {
+            toast.error("Erreur de mise à jour.");
+        }
     };
 
     const handleTogglePayment = async (order: BreadOrderWithCustomer, checked: boolean) => {
         if (order.saleUuid) return;
-        await breadService.updatePaymentStatus(order.uuid, checked);
-        toast.success(checked ? 'Paiement confirmé' : 'Paiement annulé');
+        try {
+            await breadService.updatePaymentStatus(order.uuid, checked);
+            toast.success(checked ? 'Paiement confirmé' : 'Paiement annulé');
+        } catch (e) {
+            toast.error("Erreur de paiement.");
+        }
     };
 
     const handleDelete = async () => {
@@ -54,7 +60,7 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
             await breadService.deleteBreadOrder(orderToDelete);
             toast.success("Ordre supprimé.");
         } catch (e: any) {
-            toast.error(e.message);
+            toast.error(e.message || "Erreur de suppression.");
         } finally {
             setOrderToDelete(null);
         }
@@ -71,14 +77,15 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                         <TableHead className="w-12 px-6">
                             <Checkbox 
                                 checked={isAllSelected}
-                                onCheckedChange={() => {
-                                    if (isAllSelected) {
-                                        orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
-                                    } else {
+                                onCheckedChange={(checked) => {
+                                    if (checked) {
                                         orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+                                    } else {
+                                        orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
                                     }
                                 }}
                                 className="border-primary data-[state=checked]:bg-primary"
+                                aria-label="Select all"
                             />
                         </TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Identifiant</TableHead>
@@ -106,6 +113,7 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(order.uuid)}
                                         className="border-primary data-[state=checked]:bg-primary"
+                                        aria-label={`Select order ${order.orderNumber}`}
                                     />
                                 </TableCell>
                                 <TableCell className="p-6">
@@ -123,7 +131,7 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                             {isExternal ? <CircleUser className="h-4 w-4" /> : <User className="h-4 w-4" />}
                                         </div>
                                         <div className="flex flex-col -space-y-0.5">
-                                            <span className="font-black text-sm tracking-tight uppercase">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
+                                            <span className="font-black text-sm tracking-tight uppercase truncate max-w-[200px]">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
                                             <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">{isExternal ? 'Client Occasionnel' : 'Premium Member'}</span>
                                         </div>
                                     </div>
@@ -137,26 +145,22 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                     {formatCurrency(order.totalAmount)}
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Switch 
-                                            checked={order.isPaid} 
-                                            onCheckedChange={(checked) => handleTogglePayment(order, checked)}
-                                            disabled={!!order.saleUuid}
-                                            className="data-[state=checked]:bg-emerald-500 scale-90"
-                                            aria-label="Toggle payment"
-                                        />
-                                    </div>
+                                    <Switch 
+                                        checked={order.isPaid} 
+                                        onCheckedChange={(checked) => handleTogglePayment(order, checked)}
+                                        disabled={!!order.saleUuid}
+                                        className="data-[state=checked]:bg-emerald-500 scale-90"
+                                        aria-label="Toggle payment"
+                                    />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Switch 
-                                            checked={order.isDelivered} 
-                                            onCheckedChange={() => handleTogglePickup(order)}
-                                            disabled={!!order.saleUuid}
-                                            className="data-[state=checked]:bg-emerald-500 scale-90"
-                                            aria-label="Toggle pickup"
-                                        />
-                                    </div>
+                                    <Switch 
+                                        checked={order.isDelivered} 
+                                        onCheckedChange={() => handleTogglePickup(order)}
+                                        disabled={!!order.saleUuid}
+                                        className="data-[state=checked]:bg-emerald-500 scale-90"
+                                        aria-label="Toggle pickup"
+                                    />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
                                     <TooltipProvider>
@@ -211,3 +215,5 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
         </>
     );
 }
+
+export const BreadOrderTable = memo(BreadOrderTableComponent);

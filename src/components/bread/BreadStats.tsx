@@ -1,19 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
-import type { BreadOrder } from '@/lib/types';
+import { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingBag, CheckCircle2, XCircle, Truck, Landmark } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BreadStatsProps {
     date: string;
 }
 
-const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
+const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
     <Card className="app-card bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
             <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
@@ -26,20 +25,20 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
             {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
-);
+));
+StatCard.displayName = 'StatCard';
 
 export function BreadStats({ date }: BreadStatsProps) {
-    const ordersResult = useLiveQuery<BreadOrder[]>(() => {
-        if (!date) return [];
-        return db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray();
-    }, [date]);
+    const { value: orders, isLoading } = useLiveQuery(
+        () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve([]),
+        [date]
+    );
 
     const stats = useMemo(() => {
-        if (!ordersResult.value) return { 
+        if (!orders) return { 
             count: 0, totalPieces: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
             unreceivedPieces: 0, paidCount: 0, unpaidCount: 0
         };
-        const orders = ordersResult.value;
 
         return {
             count: orders.length,
@@ -51,12 +50,14 @@ export function BreadStats({ date }: BreadStatsProps) {
             paidCount: orders.filter(o => o.isPaid).length,
             unpaidCount: orders.filter(o => !o.isPaid).length
         };
-    }, [ordersResult.value]);
+    }, [orders]);
 
-    if (ordersResult.isLoading) {
+    if (isLoading) {
         return (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
+                {[...Array(5)].map((_, i) => (
+                    <Card key={i} className="h-28 rounded-xl border border-white/5 animate-pulse bg-card/40" />
+                ))}
             </div>
         );
     }

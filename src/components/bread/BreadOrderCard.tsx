@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,23 +19,20 @@ import {
     Loader2, 
     Trash2, 
     User, 
-    Sparkles, 
-    Hash, 
-    Banknote,
-    Clock
+    Clock,
+    Banknote
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BreadOrderCardProps {
     order: BreadOrderWithCustomer;
     isSelected: boolean;
     onToggleSelection: (orderId: string) => void;
-    onUpdate: () => void;
 }
 
-export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate }: BreadOrderCardProps) {
+const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: BreadOrderCardProps) => {
     const [quantity, setQuantity] = useState(order.quantity);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const debouncedQuantity = useDebounce(quantity, 500);
@@ -51,11 +48,10 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         if (isNaN(newQuantity) || newQuantity < 0 || isBilled) return;
         try {
             await breadService.updateBreadOrderQuantity(order.uuid, newQuantity);
-            onUpdate();
         } catch (error) {
             toast.error("Erreur de mise à jour quantité.");
         }
-    }, [order.uuid, onUpdate, isBilled]);
+    }, [order.uuid, isBilled]);
 
     useEffect(() => {
         if (debouncedQuantity !== order.quantity && !isBilled) {
@@ -70,8 +66,8 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
     const toggleDelivery = async () => {
         setIsUpdatingStatus(true);
         try {
-            await breadService.updateBreadOrderDeliveryStatus(order.uuid, !isDelivered);
-            onUpdate();
+            await breadService.bulkUpdateDeliveryStatus([order.uuid], !isDelivered);
+            toast.success(isDelivered ? "Livraison annulée" : "Marqué comme livré");
         } catch (e) {
             toast.error("Échec livraison.");
         } finally {
@@ -83,7 +79,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         setIsUpdatingStatus(true);
         try {
             await breadService.updatePaymentStatus(order.uuid, checked);
-            onUpdate();
         } catch (e) {
             toast.error("Erreur paiement.");
         } finally {
@@ -100,7 +95,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         try {
             await breadService.convertBreadOrdersToSales([order.uuid], breadPrice);
             toast.success("Transaction archivée au compte.");
-            onUpdate();
         } catch (e) {
             toast.error("Échec de la conversion financière.");
         } finally {
@@ -113,7 +107,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         try {
             await breadService.deleteBreadOrder(order.uuid);
             toast.success("Ordre supprimé.");
-            onUpdate();
         } catch (e) {
             toast.error("Impossible de supprimer.");
         }
@@ -240,4 +233,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
             </CardContent>
         </Card>
     );
-}
+};
+
+export const BreadOrderCard = memo(BreadOrderCardComponent);
