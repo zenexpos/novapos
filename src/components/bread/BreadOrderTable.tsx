@@ -53,7 +53,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         }
     }, []);
 
-    const handleDelete = async () => {
+    const handleDelete = useCallback(async () => {
         if (!orderToDelete) return;
         try {
             await breadService.deleteBreadOrder(orderToDelete);
@@ -63,9 +63,17 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         } finally {
             setOrderToDelete(null);
         }
-    };
+    }, [orderToDelete]);
 
     const isAllSelected = orders.length > 0 && selectedOrders.size === orders.length;
+
+    const toggleSelectAll = useCallback((checked: boolean) => {
+        if (checked) {
+            orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+        } else {
+            orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+        }
+    }, [orders, selectedOrders, onToggleSelection]);
 
     return (
         <>
@@ -76,13 +84,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                         <TableHead className="w-12 px-6">
                             <Checkbox 
                                 checked={isAllSelected}
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
-                                    } else {
-                                        orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
-                                    }
-                                }}
+                                onCheckedChange={(checked) => toggleSelectAll(!!checked)}
                                 className="border-primary data-[state=checked]:bg-primary"
                                 aria-label="Tout sélectionner"
                             />
@@ -105,6 +107,8 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                     ) : orders.map((order) => {
                         const isExternal = !order.customerUuid;
                         const isSelected = selectedOrders.has(order.uuid);
+                        const displayName = order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage');
+                        
                         return (
                             <TableRow key={order.uuid} className={cn("group border-b border-white/5 transition-all", isSelected ? "bg-primary/5" : "hover:bg-primary/5")}>
                                 <TableCell className="px-6" onClick={(e) => e.stopPropagation()}>
@@ -112,7 +116,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(order.uuid)}
                                         className="border-primary data-[state=checked]:bg-primary"
-                                        aria-label={`Sélectionner l'ordre ${order.orderNumber}`}
+                                        aria-label={`Sélectionner l'ordre de ${displayName}`}
                                     />
                                 </TableCell>
                                 <TableCell className="p-6">
@@ -130,7 +134,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                             {isExternal ? <CircleUser className="h-4 w-4" /> : <User className="h-4 w-4" />}
                                         </div>
                                         <div className="flex flex-col -space-y-0.5">
-                                            <span className="font-black text-sm tracking-tight uppercase truncate max-w-[200px]">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
+                                            <span className="font-black text-sm tracking-tight uppercase truncate max-w-[200px]">{displayName}</span>
                                             <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">{isExternal ? 'Client Occasionnel' : 'Premium Member'}</span>
                                         </div>
                                     </div>
@@ -149,7 +153,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         onCheckedChange={(checked) => handleTogglePayment(order, checked)}
                                         disabled={!!order.saleUuid}
                                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                                        aria-label="Statut de paiement"
+                                        aria-label={`Statut paiement pour ${displayName}`}
                                     />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -158,7 +162,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         onCheckedChange={() => handleTogglePickup(order)}
                                         disabled={!!order.saleUuid}
                                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                                        aria-label="Statut de livraison"
+                                        aria-label={`Statut livraison pour ${displayName}`}
                                     />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -190,7 +194,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                             size="icon" 
                                             className="h-8 w-8 text-destructive/20 hover:text-destructive hover:bg-destructive/5"
                                             onClick={() => setOrderToDelete(order.uuid)}
-                                            title="Supprimer"
+                                            aria-label="Supprimer"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

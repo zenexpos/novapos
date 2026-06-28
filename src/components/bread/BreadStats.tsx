@@ -28,7 +28,7 @@ const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { tit
 ));
 StatCard.displayName = 'StatCard';
 
-export function BreadStats({ date }: BreadStatsProps) {
+export const BreadStats = memo(({ date }: BreadStatsProps) => {
     const { value: orders, isLoading } = useLiveQuery(
         () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve([]),
         [date]
@@ -101,4 +101,5 @@ export function BreadStats({ date }: BreadStatsProps) {
             />
         </div>
     );
-}
+});
+BreadStats.displayName = 'BreadStats';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, memo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { formatDateToYYYYMMDD, cn } from '@/lib/utils';
 import { addDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -45,6 +45,7 @@ import {
 import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -111,7 +112,7 @@ export default function BreadPage() {
         });
     }, []);
 
-    const handleBulkDeliver = async () => {
+    const handleBulkDeliver = useCallback(async () => {
         if (selectedOrders.size === 0) return;
         setIsProcessing(true);
         try {
@@ -123,9 +124,9 @@ export default function BreadPage() {
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [selectedOrders]);
 
-    const runAutomatedTask = async () => {
+    const runAutomatedTask = useCallback(async () => {
         setIsProcessing(true);
         try {
             const count = await breadService.processEndOfDayTransfers();
@@ -137,7 +138,11 @@ export default function BreadPage() {
             setIsProcessing(false);
             setIsAutoBillingConfirmOpen(false);
         }
-    };
+    }, []);
+
+    const onFormSuccess = useCallback(() => {
+        setIsFormOpen(false);
+    }, []);
 
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
@@ -253,8 +258,8 @@ export default function BreadPage() {
                     <BreadStats date={formattedDate} />
                     
                     {isLoading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 opacity-20">
-                           {[...Array(8)].map((_, i) => <div key={i} className="h-48 bg-card rounded-2xl animate-pulse border border-white/5" />)}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                           {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)}
                         </div>
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
@@ -315,7 +320,7 @@ export default function BreadPage() {
                 isOpen={isFormOpen} 
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
-                onSuccess={() => {}}
+                onSuccess={onFormSuccess}
             />
 
             <ConfirmAlertDialog

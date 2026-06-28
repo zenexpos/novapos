@@ -64,7 +64,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         setQuantity(order.quantity);
     }, [order.quantity]);
 
-    const toggleDelivery = async () => {
+    const toggleDelivery = useCallback(async () => {
         if (isUpdatingStatus || isBilled) return;
         setIsUpdatingStatus(true);
         try {
@@ -75,9 +75,9 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         } finally {
             setIsUpdatingStatus(false);
         }
-    };
+    }, [order.uuid, isDelivered, isUpdatingStatus, isBilled]);
 
-    const togglePayment = async (checked: boolean) => {
+    const togglePayment = useCallback(async (checked: boolean) => {
         if (isUpdatingStatus || isBilled) return;
         setIsUpdatingStatus(true);
         try {
@@ -87,9 +87,9 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         } finally {
             setIsUpdatingStatus(false);
         }
-    };
+    }, [order.uuid, isUpdatingStatus, isBilled]);
 
-    const handleQuickPay = async () => {
+    const handleQuickPay = useCallback(async () => {
         if (isExternal) {
             toast.error("Facturation impossible", { description: "Veuillez créer un profil client pour activer le compte Elite." });
             return;
@@ -103,9 +103,9 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         } finally {
             setIsUpdatingStatus(false);
         }
-    };
+    }, [order.uuid, isExternal, breadPrice]);
 
-    const handleDelete = async () => {
+    const handleDelete = useCallback(async () => {
         if (isBilled) return;
         try {
             await breadService.deleteBreadOrder(order.uuid);
@@ -113,7 +113,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         } catch (e) {
             toast.error("Impossible de supprimer.");
         }
-    };
+    }, [order.uuid, isBilled]);
 
     return (
         <Card className={cn(
@@ -140,7 +140,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             checked={isSelected} 
                             onCheckedChange={() => onToggleSelection(order.uuid)} 
                             className="h-6 w-6 border-primary data-[state=checked]:bg-primary" 
-                            aria-label="Sélectionner l'ordre" 
+                            aria-label={`Sélectionner l'ordre de ${displayName}`} 
                         />
                     </div>
                 ) : (
@@ -197,7 +197,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             disabled={isBilled}
                             min="0"
                             step="0.1"
-                            aria-label="Quantité de pain"
+                            aria-label={`Quantité de pain pour ${displayName}`}
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-wide text-muted-foreground opacity-20">PCS</span>
                     </div>
@@ -213,7 +213,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                         onCheckedChange={togglePayment} 
                         disabled={isUpdatingStatus || isBilled}
                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                        aria-label="Statut de paiement"
+                        aria-label={`Marquer le paiement comme ${isPaid ? 'non réglé' : 'réglé'}`}
                     />
                 </div>
 
