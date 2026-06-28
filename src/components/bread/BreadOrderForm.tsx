@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Plus, User, UserPlus, Package, Clock, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, User, UserPlus, Package, Clock, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -47,15 +47,47 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             return;
         }
         if (mode === 'external' && !customName.trim()) {
-            toast.error("Entrez un نام.");
+            toast.error("Entrez un nom.");
             return;
         }
 
         setIsLoading(true);
         try {
+            let targetCustomerUuid = mode === 'registered' ? selectedClientUuid : undefined;
+            let finalCustomName = mode === 'external' ? customName.trim() : undefined;
+
+            // Logique d'automatisation : Conversion d'un client externe en abonné permanent
+            if (mode === 'external' && isRecurring) {
+                const names = customName.trim().split(' ');
+                const firstName = names[0];
+                const lastName = names.slice(1).join(' ') || '(Abonné)';
+                
+                const newCustomer = await customerService.addCustomer({
+                    firstName,
+                    lastName,
+                    phone: '',
+                    address: '',
+                    initialBalance: 0,
+                    isBreadClient: true
+                });
+                
+                targetCustomerUuid = newCustomer.uuid;
+                finalCustomName = undefined; // On utilise l'UUID maintenant
+
+                await customerService.updateCustomer(newCustomer.uuid, {
+                    breadProfile: {
+                        recurrenceType: 'quotidien',
+                        defaultQuantity: quantity,
+                        startDate: currentDate,
+                        weeklySchedule: {}
+                    }
+                });
+                toast.info(`Nouveau profil créé pour ${firstName}.`);
+            }
+
             await breadService.addManualBreadOrder({
-                customerUuid: mode === 'registered' ? selectedClientUuid : undefined,
-                customName: mode === 'external' ? customName.trim() : undefined,
+                customerUuid: targetCustomerUuid,
+                customName: finalCustomName,
                 date: currentDate,
                 quantity,
                 unitPrice,
@@ -75,7 +107,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 });
             }
 
-            toast.success("Commande enregistrée.");
+            toast.success("Commande enregistrée dans le flux.");
             onSuccess?.();
             onOpenChange(false);
             resetForm();
@@ -112,7 +144,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 <div className="p-6 space-y-6">
                     <div className="flex p-1 bg-muted rounded-2xl">
                         <button 
-                            onClick={() => setMode('registered')}
+                            onClick={() => { setMode('registered'); setIsRecurring(false); }}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase transition-all",
                                 mode === 'registered' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
@@ -121,7 +153,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             <User className="h-3.5 w-3.5" /> Client iPOS
                         </button>
                         <button 
-                            onClick={() => setMode('external')}
+                            onClick={() => { setMode('external'); setIsRecurring(false); }}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase transition-all",
                                 mode === 'external' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
@@ -177,7 +209,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             </div>
                         </div>
 
-                        {mode === 'registered' && (
+                        <div className="space-y-3">
                             <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
                                 <Checkbox 
                                     id="recurring" 
@@ -185,12 +217,21 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     onCheckedChange={(checked) => setIsRecurring(!!checked)}
                                     className="h-5 w-5 rounded-md border-primary"
                                 />
-                                <Label htmlFor="recurring" className="cursor-pointer">
+                                <Label htmlFor="recurring" className="cursor-pointer flex-1">
                                     <div className="text-[10px] font-black text-primary uppercase">Activer abonnement quotidien</div>
                                     <p className="text-[8px] text-muted-foreground mt-0.5 uppercase tracking-tighter">Générer ce débit automatiquement chaque matin.</p>
                                 </Label>
                             </div>
-                        )}
+
+                            {mode === 'external' && isRecurring && (
+                                <div className="flex items-start gap-3 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 animate-in zoom-in-95">
+                                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-[9px] font-bold text-amber-700 uppercase leading-tight">
+                                        Note : Un profil client permanent sera créé pour gérer cet abonnement récurrent.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
