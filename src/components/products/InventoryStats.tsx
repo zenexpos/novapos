@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, Percent, ShoppingBag, Calendar, Landmark } from 'lucide-react';
+import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, Percent, ShoppingBag, Landmark } from 'lucide-react';
 import { differenceInDays, startOfDay, startOfMonth } from 'date-fns';
 import { formatCurrency, cn, safeNumber, preciseMultiply, calculateMarginRate } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { Product, Sale } from '@/lib/types';
+import type { Product, Sale } from '@/lib/types';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
     <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">

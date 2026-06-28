@@ -103,14 +103,12 @@ function ProductsContent() {
     const products = productsResult.value ?? [];
 
     const [suppliers, setSuppliers] = useState<Supplier[] | undefined>(undefined);
-    const isLoading = productsResult.isLoading || suppliers === undefined;
     
     const [isImportPreviewOpen, setIsImportPreviewOpen] = useState(false);
     const [importAnalysis, setImportAnalysis] = useState<ProductImportAnalysis | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
-    // FIX: Optimized categories fetching
     const categoriesResult = useLiveQuery<string[]>(async () => {
         const prods = await productService.getProducts();
         return Array.from(new Set(prods.map(p => p.category).filter(Boolean) as string[])).sort();
@@ -221,7 +219,7 @@ function ProductsContent() {
             setIsImportPreviewOpen(false);
             onDialogSuccess();
         } catch (error: any) {
-            toast.error("Échec de l'importation.");
+            toast.error("Échec de l'إنتقائية.");
         } finally {
             setIsImporting(false);
         }
@@ -260,6 +258,8 @@ function ProductsContent() {
         setSortBy('updatedAt_desc');
     };
 
+    const isLoading = productsResult.isLoading || suppliers === undefined;
+
     useKeyboardShortcuts([
         { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher un produit', ignoreInputFocus: true },
         { key: 'n', action: () => { setSelectedProduct(null); setIsProductDialogOpen(true); }, description: 'Nouveau produit', ignoreInputFocus: false }
@@ -271,7 +271,7 @@ function ProductsContent() {
         <div className="p-6 sm:p-4 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-32">
             <PageHeader
                 title="Management du Catalogue Elite"
-                description="Contrôle absolu des stocks, marges et flux marchandises"
+                description="Contرôle absolu des stocks, marges et flux marchandises"
                 icon={Package}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
@@ -426,7 +426,7 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
+                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commenceز par ajouter votre premier article Elite."} />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
