@@ -36,6 +36,20 @@ import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { useNetwork } from '@/hooks/useNetwork';
 
 export function AppHeader() {
+    const [mounted, setMounted] = useState(false);
+    const pathname = usePathname();
+    const { performBackgroundSync } = useAppActions();
+    const { isInstallable, install } = usePwaInstall();
+    const { status: networkStatus, isOnline } = useNetwork();
+    
+    const companyProfile = useAppStore(state => state.companyProfile);
+    const syncStatus = useAppStore(state => state.syncStatus);
+    const isSyncing = syncStatus === 'syncing';
+
+    useEffect(() => { 
+        setMounted(true); 
+    }, []);
+
     const navLinks = useMemo(() => [
         { href: '/dashboard',     label: 'Tableau de bord', icon: LayoutDashboard },
         { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
@@ -53,20 +67,16 @@ export function AppHeader() {
         { href: '/install',       label: 'Installer', icon: Download },
         { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
-    
-    const pathname = usePathname();
-    const { performBackgroundSync } = useAppActions();
-    const { isInstallable, install } = usePwaInstall();
-    const { status: networkStatus, isOnline } = useNetwork();
-    
-    const companyProfile = useAppStore(state => state.companyProfile);
-    const syncStatus = useAppStore(state => state.syncStatus);
-    const isSyncing = syncStatus === 'syncing';
 
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => { setMounted(true); }, []);
-
-    if (!mounted) return null;
+    if (!mounted) {
+        return (
+            <header className="sticky top-0 z-40 w-full nav-solid h-14 animate-pulse">
+                <div className="flex h-full items-center px-4">
+                    <div className="w-8 h-8 rounded-lg bg-white/10" />
+                </div>
+            </header>
+        );
+    }
 
     return (
         <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14">

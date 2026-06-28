@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ interface CartItemRowProps {
 }
 
 /**
- * FIXED: Memoized Row component to prevent UI lag on rapid typing
+ * Optimized Memoized Row Component to handle large carts smoothly.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
@@ -190,7 +190,10 @@ export function CartDisplay() {
         setIsMounted(true);
     }, []);
 
-    const selectedItem = selectedIndex !== null ? cart?.items[selectedIndex] : null;
+    const handleUpdateQty = useCallback((u: string, q: number) => updateItemQuantity(u, q), [updateItemQuantity]);
+    const handleUpdatePrice = useCallback((u: string, p: number) => updateItemPrice(u, p), [updateItemPrice]);
+    const handleUpdateTotal = useCallback((u: string, t: number) => updateItemTotal(u, t), [updateItemTotal]);
+    const handleRemove = useCallback((u: string) => removeItemFromCart(u), [removeItemFromCart]);
 
     useKeyboardShortcuts([
         {
@@ -225,7 +228,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-2">
                     <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scannez un article pour commencer</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scanneز un article pour commencer</p>
                 </div>
             </div>
         )
@@ -247,10 +250,10 @@ export function CartDisplay() {
                             key={item.uuid} 
                             item={item} 
                             isSelected={selectedIndex === index}
-                            onUpdate={updateItemQuantity} 
-                            onPriceUpdate={updateItemPrice}
-                            onTotalUpdate={updateItemTotal}
-                            onRemove={removeItemFromCart} 
+                            onUpdate={handleUpdateQty} 
+                            onPriceUpdate={handleUpdatePrice}
+                            onTotalUpdate={handleUpdateTotal}
+                            onRemove={handleRemove} 
                             onSelect={() => setSelectedIndex(index)}
                         />
                     ))}

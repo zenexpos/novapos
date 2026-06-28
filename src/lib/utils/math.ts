@@ -12,6 +12,7 @@ export const FINANCIAL_EPSILON = 0.000001;
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
+    // Uses Number.EPSILON to handle floating point representation errors accurately
     return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
@@ -30,8 +31,11 @@ export function roundQty(value: number): number {
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
     if (val === null || val === undefined) return 0;
-    const parsed = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
-    return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
+    if (typeof val === 'string') {
+        const parsed = parseFloat(val.replace(/[^0-9.-]+/g, ""));
+        return isNaN(parsed) || !isFinite(parsed) ? 0 : parsed;
+    }
+    return 0;
 }
 
 /**
@@ -79,9 +83,19 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
 }
 
 /**
- * Calculates TVA amount.
+ * Calculates Zakat based on net assets.
  */
-export function calculateTVA(totalTTC: number, tvaRate: number): number {
-    const ht = ttcToHt(totalTTC, tvaRate);
-    return totalTTC - ht;
+export function calculateZakat(netAssets: number, goldPrice: number): { due: boolean; amount: number } {
+    const nisab = goldPrice * 85;
+    if (netAssets >= nisab) {
+        return { due: true, amount: roundFinancial(netAssets * 0.025) };
+    }
+    return { due: false, amount: 0 };
+}
+
+/**
+ * Calculates Nisab threshold.
+ */
+export function calculateNisab(goldPrice: number): number {
+    return roundFinancial(safeNumber(goldPrice) * 85);
 }

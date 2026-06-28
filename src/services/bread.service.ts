@@ -145,24 +145,28 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
-        const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
-        
-        for (const order of orders) {
-            if (order.saleUuid || order.deletedAt) continue;
+        await db.transaction('rw', [db.bread_orders, db.sales, db.products, db.inventory_logs, db.customers, db.company_profile, db.sync_queue], async () => {
+            const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
+            
+            for (const order of orders) {
+                if (order.saleUuid || order.deletedAt) continue;
 
-            try {
-                // FIXED: Mapping correctly to SalesService expectations
+                // Correction logic: Pass cartQuantity to fulfill salesService requirements
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        cartQuantity: safeNumber(order.quantity), 
+                        cartQuantity: safeNumber(order.quantity),
                         quantity: safeNumber(order.quantity),
                         barcodes: [],
                         minStockLevel: 0,
-                        stockStatus: 'in_stock'
+                        stockStatus: 'in_stock',
+                        syncStatus: 'pending',
+                        version: 1,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
                     } as any],
                     discountType: 'fixed',
                     discountValue: 0,
@@ -179,10 +183,8 @@ class BreadService {
                         syncStatus: 'pending'
                     });
                 }
-            } catch (err) {
-                console.error(`[BreadService] Failed to bill order ${order.orderNumber}:`, err);
             }
-        }
+        });
 
         this.triggerSync();
     }
@@ -247,7 +249,7 @@ class BreadService {
                 const total = roundFinancial(quantity * unitPrice);
                 ordersToCreate.push({
                     uuid: uuidv4(),
-                    orderNumber: `AUTO-${uuidv4().substring(0, 8)}`, 
+                    orderNumber: `PENDING-${uuidv4().substring(0, 8)}`, 
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
@@ -271,10 +273,13 @@ class BreadService {
         }
 
         if (ordersToCreate.length > 0) {
-            for(let o of ordersToCreate) {
-                o.orderNumber = await this.generateOrderNumber();
-            }
-            await db.bread_orders.bulkAdd(ordersToCreate);
+            // Transaction for consistency and speed
+            await db.transaction('rw', [db.bread_orders, db.company_profile], async () => {
+                for(let o of ordersToCreate) {
+                    o.orderNumber = await this.generateOrderNumber();
+                }
+                await db.bread_orders.bulkAdd(ordersToCreate);
+            });
             this.triggerSync();
         }
     }

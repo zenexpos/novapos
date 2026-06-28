@@ -18,6 +18,11 @@ const triggerSync = () => {
     }
 };
 
+const sanitizeInput = (val: string): string => {
+    if (!val) return '';
+    return val.replace(/[<>]/g, '').trim();
+};
+
 const ALLOWED_SORT_FIELDS: Record<string, keyof Customer> = {
     outstandingBalance: 'outstandingBalance',
     totalSpent:        'totalSpent',
@@ -83,12 +88,10 @@ class CustomerService {
                 const valA = a[field];
                 const valB = b[field];
 
-                // FIX: Locale-aware sorting for strings (Arabic/French support)
                 if (typeof valA === 'string' && typeof valB === 'string') {
                     return isAsc ? valA.localeCompare(valB, 'fr') : valB.localeCompare(valA, 'fr');
                 }
                 
-                // Fallback to safe numeric comparison
                 const numA = safeNumber(valA);
                 const numB = safeNumber(valB);
                 return isAsc ? numA - numB : numB - numA;
@@ -110,16 +113,18 @@ class CustomerService {
         }
 
         const now = new Date();
-        const searchName = `${customerData.firstName} ${customerData.lastName}`.toLowerCase().trim();
+        const firstName = sanitizeInput(customerData.firstName);
+        const lastName = sanitizeInput(customerData.lastName);
+        const searchName = `${firstName} ${lastName}`.toLowerCase();
         const initialBal = roundFinancial(safeNumber(customerData.initialBalance));
 
         const newCustomer: Customer = {
             uuid: uuidv4(),
-            firstName: customerData.firstName.trim(),
-            lastName: customerData.lastName.trim(),
+            firstName,
+            lastName,
             searchName,
-            phone: customerData.phone.trim() || undefined,
-            address: customerData.address.trim() || undefined,
+            phone: sanitizeInput(customerData.phone) || undefined,
+            address: sanitizeInput(customerData.address) || undefined,
             settlementDay: customerData.settlementDay,
             creditLimit: roundFinancial(safeNumber(customerData.creditLimit)),
             initialBalance: initialBal,
@@ -130,7 +135,7 @@ class CustomerService {
             updatedAt: now,
             syncStatus: 'pending',
             version: 1,
-            debtStatus: initialBal > 0 ? 'due_soon' : 'none',
+            debtStatus: initialBal > 0.01 ? 'due_soon' : 'none',
             isOverLimit: false,
             breadProfile: {
                 recurrenceType: 'aucun',
@@ -153,17 +158,23 @@ class CustomerService {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
-        const firstName = updateData.firstName !== undefined ? updateData.firstName : existing.firstName;
-        const lastName  = updateData.lastName !== undefined ? updateData.lastName : existing.lastName;
-        const searchName = `${firstName} ${lastName}`.toLowerCase().trim();
-
         const finalUpdate: Partial<Customer> = {
             ...updateData,
-            searchName,
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: (existing.version || 1) + 1
         };
+
+        if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeInput(updateData.firstName);
+        if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeInput(updateData.lastName);
+        if (updateData.address !== undefined) finalUpdate.address = sanitizeInput(updateData.address);
+        if (updateData.phone !== undefined) finalUpdate.phone = sanitizeInput(updateData.phone);
+
+        if (finalUpdate.firstName || finalUpdate.lastName) {
+            const f = finalUpdate.firstName ?? existing.firstName;
+            const l = finalUpdate.lastName ?? existing.lastName;
+            finalUpdate.searchName = `${f} ${l}`.toLowerCase();
+        }
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             await db.customers.update(existing.id!, finalUpdate);
@@ -204,16 +215,12 @@ class CustomerService {
     }
 
     async bulkDelete(uuids: string[]): Promise<void> {
-        const customers = await db.customers.where('uuid').anyOf(uuids).toArray();
-        const nonZeroCustomers = customers.filter(c => Math.abs(safeNumber(c.outstandingBalance)) > 0.009);
-        
-        if (nonZeroCustomers.length > 0) {
-            throw new Error(`${nonZeroCustomers.length} client(s) ont des soldes non nuls et ne peuvent être supprimés.`);
-        }
-
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             for (const uuid of uuids) {
-                await this.deleteCustomer(uuid);
+                const customer = await db.customers.where('uuid').equals(uuid).first();
+                if (customer && Math.abs(safeNumber(customer.outstandingBalance)) <= 0.009) {
+                    await this.deleteCustomer(uuid);
+                }
             }
         });
     }
@@ -355,8 +362,8 @@ class CustomerService {
                         }
 
                         const data: CustomerFormData = {
-                            firstName: firstName.trim(),
-                            lastName: lastName.trim(),
+                            firstName: firstName.toString().trim(),
+                            lastName: lastName.toString().trim(),
                             phone: (row.phone || row.Téléphone || row.Telephone || '').toString().trim(),
                             address: (row.address || row.Adresse || '').toString().trim(),
                             initialBalance: safeNumber(row.initialBalance || row.Solde_Initial || 0),
