@@ -46,7 +46,7 @@ export function preciseMultiply(a: number, b: number): number {
 }
 
 /**
- * Calculate cart totals with absolute precision.
+ * Calculate cart totals with absolute precision and per-line rounding.
  */
 export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
     const subtotal = cart.items.reduce((acc, item) => {
@@ -80,7 +80,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
     const rate = safeNumber(tvaRate);
     if (rate === 0) return totalTTC;
-    return totalTTC / (1 + rate / 100);
+    return roundFinancial(totalTTC / (1 + rate / 100));
 }
 
 /**

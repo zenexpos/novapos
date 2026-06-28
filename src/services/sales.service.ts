@@ -10,7 +10,8 @@ import { useAppStore } from '@/stores/appStore';
 
 /**
  * iPOS Zen - Master Sales Domain Service.
- * Centralise les transactions de vente avec garantie d'atomicité (IndexedDB Transaction).
+ * Centralizes sales transactions with guaranteed atomicity (IndexedDB Transaction).
+ * PRODUCTION AUDIT: Hardened financial rounding and cross-entity integrity.
  */
 class SalesService {
   private triggerSync() {
@@ -31,8 +32,8 @@ class SalesService {
   }
 
   /**
-   * Crée une vente atomique.
-   * Met à jour le stock, le compte client et le journal d'audit en une seule opération.
+   * Creates an atomic sale.
+   * Updates stock, customer balance, and inventory logs in a single commit.
    */
   async createSale(saleData: {
     items: CartItem[];
@@ -47,25 +48,30 @@ class SalesService {
     }
 
     const now = new Date();
-    const subtotalCents = saleData.items.reduce(
-      (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
-      0,
-    );
+    
+    // 1. Calculate subtotal with item-level precision rounding
+    const subtotalCents = saleData.items.reduce((acc, item) => {
+        const itemTotal = preciseMultiply(item.price, item.cartQuantity);
+        return acc + Math.round(itemTotal * 100);
+    }, 0);
 
-    let discountCents = 0;
+    const subtotal = subtotalCents / 100;
+
+    // 2. Resolve discount
+    let discountAmount = 0;
     if (saleData.discountType === 'percentage') {
-      discountCents = Math.round((subtotalCents * safeNumber(saleData.discountValue)) / 100);
+        discountAmount = roundFinancial((subtotal * safeNumber(saleData.discountValue)) / 100);
     } else {
-      discountCents = Math.round(safeNumber(saleData.discountValue) * 100);
+        discountAmount = roundFinancial(safeNumber(saleData.discountValue));
     }
 
-    const totalCents = Math.max(0, subtotalCents - discountCents);
-    const amountPaidCents = Math.round(safeNumber(saleData.amountPaid) * 100);
-    const remainingCents = Math.max(0, totalCents - amountPaidCents);
+    const total = roundFinancial(Math.max(0, subtotal - discountAmount));
+    const amountPaid = roundFinancial(safeNumber(saleData.amountPaid));
+    const remainingBalance = roundFinancial(Math.max(0, total - amountPaid));
 
     const paymentStatus: Sale['paymentStatus'] =
-      Math.abs(remainingCents) < 1 ? 'paid' :
-      amountPaidCents > 1 ? 'partial' : 'unpaid';
+      Math.abs(remainingBalance) < 0.009 ? 'paid' :
+      amountPaid > 0.009 ? 'partial' : 'unpaid';
 
     const saleItems: SaleItem[] = saleData.items.map(item => ({
       productUuid: (item.uuid && !item.uuid.startsWith('custom-')) ? item.uuid : null,
@@ -79,11 +85,11 @@ class SalesService {
       uuid: uuidv4(),
       invoiceNumber: await this.generateInvoiceNumber(),
       items: saleItems,
-      subtotal: subtotalCents / 100,
-      discountAmount: discountCents / 100,
-      total: totalCents / 100,
-      amountPaid: amountPaidCents / 100,
-      remainingBalance: remainingCents / 100,
+      subtotal,
+      discountAmount,
+      total,
+      amountPaid,
+      remainingBalance,
       paymentStatus,
       customerUuid: saleData.customerUuid || undefined,
       createdAt: now,
@@ -94,7 +100,7 @@ class SalesService {
       isCancelled: false
     };
 
-    // TRANSACTION ATOMIQUE : IndexedDB Commit global
+    // ATOMIC TRANSACTION: Global IndexedDB Commit
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -102,6 +108,7 @@ class SalesService {
     ], async () => {
       await db.sales.add(newSale);
       
+      // Stock adjustment with audited log
       for (const item of saleData.items) {
         if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
@@ -114,6 +121,7 @@ class SalesService {
         }
       }
       
+      // Recalculate customer debt if identified
       if (newSale.customerUuid) {
         await customerService.recalculateCustomerStatus(newSale.customerUuid);
       }

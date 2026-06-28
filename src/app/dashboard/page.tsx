@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
@@ -18,25 +18,31 @@ import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { TopLists } from '@/components/dashboard/TopLists';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { useAppStore } from '@/stores/appStore';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 
 /**
  * Command Center Elite - iPOS Zen.
- * Vision stratégique complète de l'activité commerciale.
+ * PRODUCTION AUDIT: Implemented Hydration Guard to prevent SSR mismatches.
  */
 export default function DashboardPage() {
-    const { dateRange, setDate, isMounted } = useDateRange(29);
+    const [mounted, setMounted] = useState(false);
+    const { dateRange, setDate, isMounted: dateRangeMounted } = useDateRange(29);
     const companyProfile = useAppStore(state => state.companyProfile);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     
     const dataResult = useLiveQuery(
         async () => {
-            if (!isMounted || !dateRange?.from || !dateRange?.to) return null;
+            if (!mounted || !dateRange?.from || !dateRange?.to) return null;
             return await dashboardService.getDashboardData(dateRange.from, dateRange.to);
         },
-        [isMounted, dateRange],
+        [mounted, dateRange],
     );
     const data = dataResult.value;
-    const isLoading = dataResult.isLoading || !isMounted;
+    const isLoading = dataResult.isLoading || !mounted || !dateRangeMounted;
 
     const statCards = useMemo(() => [
         { title: 'Recettes', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
@@ -49,7 +55,20 @@ export default function DashboardPage() {
         { title: 'Marge %', value: `${(data?.stats.profitMargin ?? 0).toFixed(1)}%`, icon: TrendingUp, color: 'blue' as const },
     ], [data]);
 
-    if (!isMounted) return null;
+    if (!mounted) {
+        return (
+            <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-pulse">
+                <Skeleton className="h-10 w-64 rounded-xl" />
+                <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-4">
+                    {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+                </div>
+                <div className="grid lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-8 h-96"><Skeleton className="w-full h-full rounded-2xl" /></div>
+                    <div className="lg:col-span-4 h-96"><Skeleton className="w-full h-full rounded-2xl" /></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
