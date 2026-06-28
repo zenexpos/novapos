@@ -114,7 +114,7 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // FIX: Map quantity to cartQuantity for SalesService compatibility
+                // FIX: Financial Mapping for Auto-billing (Mapping quantity to cartQuantity)
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',

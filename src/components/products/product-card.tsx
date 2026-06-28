@@ -118,18 +118,18 @@ const ProductCardComponent = ({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem onClick={() => onEdit(product)}>
-                                <Edit className="mr-2 h-3.5 w-3.5" /> Modifier
+                                <Edit className="mr-2 h-4 w-4" /> Modifier
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onDuplicate(product)}>
-                                <Copy className="mr-2 h-3.5 w-3.5" /> Dupliquer
+                                <Copy className="mr-2 h-4 w-4" /> Dupliquer
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onHistory(product)}>
-                                <History className="mr-2 h-3.5 w-3.5" /> Historique
+                                <History className="mr-2 h-4 w-4" /> Historique
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onDelete(product)}
                                 className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

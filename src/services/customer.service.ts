@@ -135,7 +135,6 @@ class CustomerService {
             version: (existing.version || 1) + 1
         };
 
-        // Apply sanitization if name or address is changed
         if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeString(updateData.firstName);
         if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeString(updateData.lastName);
         if (updateData.address !== undefined) finalUpdate.address = sanitizeString(updateData.address);
@@ -166,7 +165,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error(`Révocation impossible : le solده de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
+            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
