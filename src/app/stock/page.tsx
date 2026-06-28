@@ -27,7 +27,7 @@ import { SupplierPaymentDialog } from '@/components/stock/SupplierPaymentDialog'
 import { SupplierDialog } from '@/components/stock/SupplierDialog';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { cn, formatCurrency, safeNumber } from '@/lib/utils';
-import Papa from 'papaparse';
+import { exportService } from '@/services/shared/export.service';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -135,7 +135,6 @@ export default function StockPage() {
 
     const totalSuppliersDebt = useMemo(() => {
         if (!suppliers) return 0;
-        // Accurate decimal reduce
         return suppliers.reduce((sum, s) => sum + Math.round(safeNumber(s.balance) * 100), 0) / 100;
     }, [suppliers]);
 
@@ -176,6 +175,7 @@ export default function StockPage() {
                 await supplierService.deleteSupplier(selectedSupplier.uuid);
                 toast.success(`Fournisseur "${selectedSupplier.name}" révoqué.`);
                 setIsDeleteSupplierOpen(false);
+                suppliersResult.refresh();
             } catch (e: any) {
                 toast.error(e.message);
             }
@@ -206,8 +206,9 @@ export default function StockPage() {
             await supplierService.bulkDelete(uuids);
             toast.success(`${uuids.length} fournisseur(s) supprimé(s).`);
             setSelectedSuppliers(new Set());
+            suppliersResult.refresh();
         } catch (e: any) {
-            toast.error("Échec de la suppression groupée (Vérifiez les soldes).");
+            toast.error("Échec de la suppression groupée (Vérifiez فواتير والمدفوعات).");
         }
     };
 
@@ -217,36 +218,30 @@ export default function StockPage() {
             ? suppliers.filter(s => selectedSuppliers.has(s.uuid))
             : suppliers;
 
-        const csv = Papa.unparse(toExport.map(s => ({
-            Nom: s.name,
-            Contact: s.contactPerson || '',
-            Téléphone: s.phone || '',
-            Email: s.email || '',
-            Adresse: s.address || '',
-            Solde: s.balance
-        })));
+        const data = toExport.map(s => ({
+            'Nom': s.name,
+            'Contact': s.contactPerson || '',
+            'Téléphone': s.phone || '',
+            'Email': s.email || '',
+            'Adresse': s.address || '',
+            'Solde Dû (DA)': s.balance
+        }));
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `ipos-fournisseurs-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        toast.success("Exportation terminée.");
+        exportService.exportToCsv(`liste-fournisseurs-${new Date().toISOString().split('T')[0]}`, data);
     };
 
     const resetFilters = () => setSearchQuery('');
 
     useKeyboardShortcuts([
-        { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher un flux', ignoreInputFocus: true },
+        { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher', ignoreInputFocus: true },
         { key: 'n', action: () => activeTab === 'suppliers' ? handleAddSupplier() : router.push('/stock/intake'), description: 'Nouvel élément', ignoreInputFocus: false }
     ], 'Logistique');
 
     return (
         <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
             <PageHeader
-                title="Elite Logistics Radar"
-                description="Contrôle des flux entrants & Management des partenaires"
+                title="Elite Logistics Hub"
+                description="Audit des flux entrants & Management des partenaires"
                 icon={Archive}
             >
                 <div className="flex gap-3 w-full sm:w-auto">
@@ -426,16 +421,16 @@ export default function StockPage() {
             </div>
 
             <StockIntakeDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} intake={selectedIntake} supplierName={selectedIntake?.supplierUuid ? supplierMap.get(selectedIntake.supplierUuid)?.name : 'Partenaire Inconnu'} />
-            <CancelIntakeDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} intake={selectedIntake} onSuccess={() => {}} />
-            <StockAdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onSuccess={() => {}} />
-            <SupplierPaymentDialog isOpen={isSupplierPayOpen} onOpenChange={setIsSupplierPayOpen} supplier={selectedSupplier} onSuccess={() => {}} />
-            <SupplierDialog isOpen={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} supplier={selectedSupplier} onSuccess={() => {}} />
+            <CancelIntakeDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} intake={selectedIntake} onSuccess={() => stockIntakesResult.refresh()} />
+            <StockAdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onSuccess={() => inventoryLogsResult.refresh()} />
+            <SupplierPaymentDialog isOpen={isSupplierPayOpen} onOpenChange={setIsSupplierPayOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
+            <SupplierDialog isOpen={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
             
             <ConfirmAlertDialog 
                 isOpen={isDeleteSupplierOpen} 
                 onOpenChange={setIsDeleteSupplierOpen} 
                 title={`Révoquer le partenaire ${selectedSupplier?.name} ?`} 
-                description="Cette action est irréversible. Seuls les comptes avec un solde nul et sans historique actif peuvent être supprimés." 
+                description="Cette action est irréversible. Seuls les comptes مع رصيد صفر وبدون تاريخ فواتير نشط يمكن حذفهم." 
                 onConfirm={performDeleteSupplier} 
                 confirmText="Confirmer Révocation" 
             />
@@ -444,7 +439,7 @@ export default function StockPage() {
                 isOpen={isBulkDeleteSupplierOpen}
                 onOpenChange={setIsBulkDeleteSupplierOpen}
                 title={`Révoquer ${selectedSuppliers.size} partenaires ?`}
-                description="Seuls les comptes sans historique et avec un solde nul seront effectivement supprimés pour préserver l'intégrité comptable."
+                description="سيتم حذف الحسابات ذات الرصيد الصفري فقط ولن يتم حذف الشركاء الذين لديهم تاريخ استلام نشط لضمان سلامة البيانات."
                 onConfirm={handleBulkDeleteSuppliers}
                 confirmText="Confirmer Révocation Groupée"
             />

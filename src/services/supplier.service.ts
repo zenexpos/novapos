@@ -87,7 +87,7 @@ class SupplierService {
     }
 
     /**
-     * Helper for quick updates, but always triggers a full recalculation for safety.
+     * Helper for quick updates, always triggers a full recalculation for safety.
      */
     async updateSupplierBalance(uuid: string, _amountChange: number): Promise<void> {
         await this.recalculateSupplierBalance(uuid);
@@ -137,7 +137,7 @@ class SupplierService {
 
         // Strict Financial Integrity: Only zero-balance suppliers can be deleted
         if (Math.abs(safeNumber(supplier.balance)) > 0.01) {
-            throw new Error(`Révocation impossible : le رصيد de "${supplier.name}" n'est pas nul (${supplier.balance} DA).`);
+            throw new Error(`Révocation impossible : le solde de "${supplier.name}" n'est pas nul (${supplier.balance} DA).`);
         }
 
         // Secondary check: Are there any associated intakes?
