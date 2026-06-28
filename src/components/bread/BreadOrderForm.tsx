@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Plus, User, UserPlus, Package, Clock, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, User, UserPlus, Loader2, AlertCircle } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -56,7 +56,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             let targetCustomerUuid = mode === 'registered' ? selectedClientUuid : undefined;
             let finalCustomName = mode === 'external' ? customName.trim() : undefined;
 
-            // Logique d'automatisation : Conversion d'un client externe en abonné permanent
+            // Automation Logic: Convert external client to permanent subscriber
             if (mode === 'external' && isRecurring) {
                 const names = customName.trim().split(' ');
                 const firstName = names[0];
@@ -72,7 +72,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 });
                 
                 targetCustomerUuid = newCustomer.uuid;
-                finalCustomName = undefined; // On utilise l'UUID maintenant
+                finalCustomName = undefined;
 
                 await customerService.updateCustomer(newCustomer.uuid, {
                     breadProfile: {
@@ -83,18 +83,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                     }
                 });
                 toast.info(`Nouveau profil créé pour ${firstName}.`);
-            }
-
-            await breadService.addManualBreadOrder({
-                customerUuid: targetCustomerUuid,
-                customName: finalCustomName,
-                date: currentDate,
-                quantity,
-                unitPrice,
-                pickupTime
-            });
-
-            if (mode === 'registered' && isRecurring && selectedClientUuid) {
+            } else if (mode === 'registered' && isRecurring && selectedClientUuid) {
                 const client = manualClients.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
                     isBreadClient: true,
@@ -106,6 +95,15 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                     }
                 });
             }
+
+            await breadService.addManualBreadOrder({
+                customerUuid: targetCustomerUuid,
+                customName: finalCustomName,
+                date: currentDate,
+                quantity,
+                unitPrice,
+                pickupTime
+            });
 
             toast.success("Commande enregistrée dans le flux.");
             onSuccess?.();
@@ -128,7 +126,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-lg rounded-3xl p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-lg rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
                 <DialogHeader className="bg-primary/5 p-6 border-b border-primary/10">
                     <div className="flex items-center gap-3">
                         <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">

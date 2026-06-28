@@ -23,12 +23,15 @@ import { toast } from 'sonner';
 import { ConfirmAlertDialog } from '../ui/ConfirmAlertDialog';
 import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Checkbox } from '../ui/checkbox';
 
 interface BreadOrderTableProps {
     orders: BreadOrderWithCustomer[];
+    selectedOrders: Set<string>;
+    onToggleSelection: (uuid: string) => void;
 }
 
-export function BreadOrderTable({ orders }: BreadOrderTableProps) {
+export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: BreadOrderTableProps) {
     const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
     const handleTogglePickup = async (order: BreadOrderWithCustomer) => {
@@ -60,25 +63,46 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
             <Table>
                 <TableHeader className="bg-muted/50 border-b border-white/5">
                     <TableRow className="hover:bg-transparent border-none">
+                        <TableHead className="w-12 px-6">
+                            <Checkbox 
+                                checked={orders.length > 0 && selectedOrders.size === orders.length}
+                                onCheckedChange={() => {
+                                    if (selectedOrders.size === orders.length) {
+                                        orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+                                    } else {
+                                        orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+                                    }
+                                }}
+                                className="border-primary data-[state=checked]:bg-primary"
+                            />
+                        </TableHead>
                         <TableHead className="w-[120px] p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Identifiant</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Partenaire Client</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Volume</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Montant</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Règlement</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Livraison</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut DB</TableHead>
-                        <TableHead className="w-[100px]"></TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {orders.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Aucun flux détecté dans le registre.</TableCell>
+                            <TableCell colSpan={9} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Aucun flux détecté dans le registre.</TableCell>
                         </TableRow>
                     ) : orders.map((order) => {
                         const isExternal = !order.customerUuid;
+                        const isSelected = selectedOrders.has(order.uuid);
                         return (
-                            <TableRow key={order.uuid} className="group border-b border-white/5 hover:bg-primary/5 transition-all">
+                            <TableRow key={order.uuid} className={cn("group border-b border-white/5 transition-all", isSelected ? "bg-primary/5" : "hover:bg-primary/5")}>
+                                <TableCell className="px-6">
+                                    <Checkbox 
+                                        checked={isSelected} 
+                                        onCheckedChange={() => onToggleSelection(order.uuid)}
+                                        className="border-primary data-[state=checked]:bg-primary"
+                                    />
+                                </TableCell>
                                 <TableCell className="p-6">
                                     <div className="flex items-center gap-2">
                                         <Hash className="h-3 w-3 opacity-30" />
@@ -117,7 +141,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                             checked={order.isPaid} 
                                             onCheckedChange={(checked) => handleTogglePayment(order, checked)}
                                             disabled={!!order.saleUuid}
-                                            className="data-[state=checked]:bg-emerald-500"
+                                            className="data-[state=checked]:bg-emerald-500 scale-90"
                                         />
                                         <span className={cn(
                                             "text-[8px] font-black uppercase tracking-widest",
@@ -133,7 +157,7 @@ export function BreadOrderTable({ orders }: BreadOrderTableProps) {
                                             checked={order.isDelivered} 
                                             onCheckedChange={() => handleTogglePickup(order)}
                                             disabled={!!order.saleUuid}
-                                            className="data-[state=checked]:bg-emerald-500"
+                                            className="data-[state=checked]:bg-emerald-500 scale-90"
                                         />
                                         <span className={cn(
                                             "text-[8px] font-black uppercase tracking-widest",

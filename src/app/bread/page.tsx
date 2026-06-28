@@ -25,7 +25,8 @@ import {
     Filter,
     LayoutGrid,
     List,
-    X
+    X,
+    CheckCircle2
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -43,10 +44,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAppStore } from '@/stores/appStore';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
     
     const viewMode = useAppStore(state => state.breadViewMode);
     const setViewMode = useAppStore(state => state.actions.setBreadViewMode);
@@ -62,6 +65,7 @@ export default function BreadPage() {
 
     useEffect(() => {
         breadService.ensureOrdersForDate(formattedDate);
+        setSelectedOrders(new Set());
     }, [formattedDate]);
 
     const ordersResult = useLiveQuery<BreadOrderWithCustomer[] | undefined>(
@@ -98,10 +102,31 @@ export default function BreadPage() {
         setCurrentDate(prev => addDays(prev, days));
     }, []);
 
-    const resetFilters = () => {
-        setSearchQuery('');
-        setStatusFilter('all');
-        setDeliveryFilter('all');
+    const toggleOrderSelection = (uuid: string) => {
+        setSelectedOrders(prev => {
+            const next = new Set(prev);
+            if (next.has(uuid)) next.delete(uuid);
+            else next.add(uuid);
+            return next;
+        });
+    };
+
+    const handleBulkDeliver = async () => {
+        if (selectedOrders.size === 0) return;
+        setIsProcessing(true);
+        try {
+            const uuids = Array.from(selectedOrders);
+            for (const uuid of uuids) {
+                await breadService.updateBreadOrderDeliveryStatus(uuid, true);
+            }
+            toast.success(`${selectedOrders.size} commandes marquées comme livrées.`);
+            setSelectedOrders(new Set());
+            ordersResult.refresh();
+        } catch (e) {
+            toast.error("Échec de la mise à jour groupée.");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const runAutomatedTask = async () => {
@@ -237,7 +262,7 @@ export default function BreadPage() {
                         <div className="animate-in fade-in duration-500">
                             {viewMode === 'list' ? (
                                 <div className="bg-card/40 rounded-lg border border-white/5 overflow-hidden">
-                                    <BreadOrderTable orders={filteredOrders} />
+                                    <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={toggleOrderSelection} />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
@@ -245,8 +270,8 @@ export default function BreadPage() {
                                         <BreadOrderCard 
                                             key={o.uuid} 
                                             order={o} 
-                                            isSelected={false} 
-                                            onToggleSelection={() => {}} 
+                                            isSelected={selectedOrders.has(o.uuid)} 
+                                            onToggleSelection={() => toggleOrderSelection(o.uuid)} 
                                             onUpdate={() => ordersResult.refresh()} 
                                         />
                                     ))}
@@ -260,6 +285,28 @@ export default function BreadPage() {
                     <BreadClientList onListChange={() => ordersResult.refresh()} />
                 </TabsContent>
             </Tabs>
+
+            {selectedOrders.size > 0 && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
+                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-6">
+                        <div className="flex items-center gap-4 pr-8 border-r border-white/10">
+                            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">{selectedOrders.size}</div>
+                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Sélections</span>
+                        </div>
+                        <Button 
+                            onClick={handleBulkDeliver}
+                            disabled={isProcessing}
+                            className="h-12 px-8 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl gap-3"
+                        >
+                            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            Marquer comme Livrés
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <BreadOrderForm 
                 isOpen={isFormOpen} 
