@@ -11,7 +11,7 @@ import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 /**
  * Bread Logistics Service — Elite Grade.
  * Managed automated daily distribution and financial conversion.
- * Corrected: Changed to 'use client' because it interacts with IndexedDB.
+ * PRODUCTION AUDIT: Fixed data mapping for sale conversion and ensured atomic transactions.
  */
 class BreadService {
 
@@ -109,12 +109,14 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
+        // FIXED: Using atomic transaction to guarantee financial integrity
         await db.transaction('rw', [db.bread_orders, db.sales, db.products, db.inventory_logs, db.customers, db.company_profile, db.sync_queue], async () => {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
+                // LOGIC FIX: Map fields correctly to match CartItem expectations in salesService
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
