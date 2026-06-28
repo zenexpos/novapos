@@ -37,7 +37,7 @@ import { useNetwork } from '@/hooks/useNetwork';
 
 /**
  * Enterprise Application Header.
- * Forensic Audit: Added hydration guard to prevent time/network status mismatches.
+ * Forensic Audit: Implemented hydration guard to prevent mismatches between SSR and Client.
  */
 export function AppHeader() {
     const [mounted, setMounted] = useState(false);
@@ -74,16 +74,16 @@ export function AppHeader() {
 
     if (!mounted) {
         return (
-            <header className="sticky top-0 z-40 w-full nav-solid h-14 animate-pulse">
+            <header className="sticky top-0 z-40 w-full nav-solid h-14 bg-secondary">
                 <div className="flex h-full items-center px-4">
-                    <div className="w-8 h-8 rounded-lg bg-white/10" />
+                    <div className="w-8 h-8 rounded-lg bg-white/10 animate-pulse" />
                 </div>
             </header>
         );
     }
 
     return (
-        <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14">
+        <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14 bg-secondary border-b border-white/10">
             <div className="flex h-full items-center gap-2 px-4 shadow-sm">
                 <Link
                     href="/dashboard"

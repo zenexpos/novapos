@@ -29,7 +29,8 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
- * Page de rapports simplifiée.
+ * Simplified Reports Page.
+ * Forensic Audit: Added hydration guard to prevent time mismatch errors.
  */
 export default function ReportsPage() {
     const [isMounted, setIsMounted] = useState(false);
@@ -66,14 +67,14 @@ export default function ReportsPage() {
 
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center opacity-20">
+            <div className="h-full flex items-center justify-center opacity-20 py-20">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="p-6 sm:p-4 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
+        <div className="p-6 sm:p-4 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-24">
             <PageHeader 
                 title="Rapports et Analyses" 
                 description="Suivez vos ventes, vos dépenses et votre stock"

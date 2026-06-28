@@ -11,6 +11,7 @@ import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 /**
  * Bread Logistics Service — Elite Grade.
  * Managed automated daily distribution and financial conversion.
+ * Corrected: Changed to 'use client' because it interacts with IndexedDB.
  */
 class BreadService {
 
@@ -114,7 +115,6 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // Data mapping fix: Sales service expects uuid and cartQuantity
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
