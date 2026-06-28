@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import type { BreadOrderWithCustomer } from '@/lib/types';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, roundQty } from '@/lib/utils';
 import { toast } from 'sonner';
 import { breadService } from '@/services/bread.service';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -45,16 +45,17 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
     const displayName = order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Inconnu');
 
     const handleQuantityChange = useCallback(async (newQuantity: number) => {
-        if (isNaN(newQuantity) || newQuantity < 0 || isBilled) return;
+        const val = roundQty(newQuantity);
+        if (isNaN(val) || val < 0 || isBilled) return;
         try {
-            await breadService.updateBreadOrderQuantity(order.uuid, newQuantity);
+            await breadService.updateBreadOrderQuantity(order.uuid, val);
         } catch (error) {
             toast.error("Erreur de mise à jour quantité.");
         }
     }, [order.uuid, isBilled]);
 
     useEffect(() => {
-        if (debouncedQuantity !== order.quantity && !isBilled) {
+        if (Math.abs(debouncedQuantity - order.quantity) > 0.001 && !isBilled) {
             handleQuantityChange(debouncedQuantity);
         }
     }, [debouncedQuantity, order.quantity, handleQuantityChange, isBilled]);
@@ -121,13 +122,13 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         )}>
             <div className="absolute top-6 right-6 z-10 flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isBilled && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" onClick={handleDelete}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" onClick={handleDelete} aria-label="Supprimer l'ordre">
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
                 {!isBilled ? (
                     <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm">
-                        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelection(order.uuid)} className="h-6 w-6 border-primary data-[state=checked]:bg-primary" />
+                        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelection(order.uuid)} className="h-6 w-6 border-primary data-[state=checked]:bg-primary" aria-label="Sélectionner l'ordre" />
                     </div>
                 ) : (
                     <TooltipProvider>
@@ -183,6 +184,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             disabled={isBilled}
                             min="0"
                             step="0.1"
+                            aria-label="Quantité de pain"
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-wide text-muted-foreground opacity-20">PCS</span>
                     </div>
@@ -198,7 +200,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                         onCheckedChange={togglePayment} 
                         disabled={isUpdatingStatus || isBilled}
                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                        aria-label="Toggle payment"
+                        aria-label="Statut de paiement"
                     />
                 </div>
 

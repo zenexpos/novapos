@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
-import { roundFinancial } from '@/lib/utils';
+import { roundFinancial, roundQty } from '@/lib/utils';
 
 class BreadService {
 
@@ -77,7 +77,7 @@ class BreadService {
     async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
         const price = data.unitPrice || profile?.breadPrice || 10;
-        const qty = Math.max(0, data.quantity);
+        const qty = roundQty(Math.max(0, data.quantity));
         const total = roundFinancial(qty * price);
 
         const newOrder: BreadOrder = {
@@ -183,7 +183,7 @@ class BreadService {
     }
 
     async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
-        const qty = Math.max(0, newQuantity);
+        const qty = roundQty(Math.max(0, newQuantity));
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.saleUuid) return;
 
@@ -246,7 +246,7 @@ class BreadService {
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
-                    quantity,
+                    quantity: roundQty(quantity),
                     unitPrice,
                     totalAmount: total,
                     amountPaid: 0,

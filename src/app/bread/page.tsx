@@ -19,15 +19,13 @@ import {
     ChevronRight, 
     Plus,
     Search,
-    Clock,
     Users,
     Calendar,
     Filter,
     LayoutGrid,
     List,
     X,
-    CheckCircle2,
-    CalendarSearch
+    CheckCircle2
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -165,7 +163,7 @@ export default function BreadPage() {
                         disabled={isProcessing}
                         className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
                     >
-                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
                         Auto-Facturation
                     </Button>
 
@@ -213,7 +211,7 @@ export default function BreadPage() {
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
                                 {searchQuery && (
-                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
+                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors" aria-label="Effacer recherche">
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
@@ -255,13 +253,12 @@ export default function BreadPage() {
                     <BreadStats date={formattedDate} />
                     
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center h-80 opacity-20">
-                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                            <p className="mt-4 font-bold uppercase tracking-widest">Indexation des flux...</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 opacity-20">
+                           {[...Array(8)].map((_, i) => <div key={i} className="h-48 bg-card rounded-2xl animate-pulse border border-white/5" />)}
                         </div>
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
-                            icon={CalendarSearch} 
+                            icon={Search} 
                             title="Aucune distribution" 
                             description={isFiltered ? "Aucun ordre ne correspond à vos filtres." : "Aucune commande enregistrée pour cette date."} 
                         />
@@ -307,7 +304,7 @@ export default function BreadPage() {
                             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             Marquer comme Livrés
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10">
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10" aria-label="Tout déselectionner">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
@@ -329,7 +326,7 @@ export default function BreadPage() {
                     <div className="space-y-4">
                         <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
-                            <Clock className="h-5 w-5 shrink-0" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0" />
                             <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
                         </div>
                     </div>
