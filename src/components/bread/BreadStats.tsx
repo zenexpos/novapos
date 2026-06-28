@@ -1,4 +1,5 @@
 'use client';
+
 import { useMemo } from 'react';
 import type { BreadOrder } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,7 @@ export function BreadStats({ date }: BreadStatsProps) {
     const stats = useMemo(() => {
         if (!ordersResult.value) return { 
             count: 0, totalPieces: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
-            unreceivedPieces: 0, transferred: 0, debts: 0, paidCount: 0, unpaidCount: 0
+            unreceivedPieces: 0, paidCount: 0, unpaidCount: 0
         };
         const orders = ordersResult.value;
 
@@ -47,55 +48,55 @@ export function BreadStats({ date }: BreadStatsProps) {
             paidVal: orders.reduce((s, o) => s + (o.isPaid ? o.totalAmount : o.amountPaid), 0),
             unpaidVal: orders.reduce((s, o) => s + (o.isPaid ? 0 : o.remainingAmount), 0),
             unreceivedPieces: orders.filter(o => !o.isDelivered).reduce((s, o) => s + (o.quantity || 0), 0),
-            transferred: orders.filter(o => o.transferredToCustomerAccount).length,
-            debts: orders.filter(o => o.transferredToCustomerAccount).reduce((s, o) => s + o.remainingAmount, 0),
             paidCount: orders.filter(o => o.isPaid).length,
             unpaidCount: orders.filter(o => !o.isPaid).length
         };
     }, [ordersResult.value]);
 
     if (ordersResult.isLoading) {
-        return <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
-        </div>;
+        return (
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/40" />)}
+            </div>
+        );
     }
 
     return (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-500">
             <StatCard 
-                title="Volume Total" 
+                title="Volume" 
                 value={`${stats.totalPieces} PCS`} 
                 icon={ShoppingBag} 
                 colorClass="bg-primary/10 text-primary" 
-                subtitle={`${stats.count} flux identifiés`}
+                subtitle={`${stats.count} flux actifs`}
             />
             <StatCard 
-                title="Commandes Payées" 
+                title="Payés" 
                 value={String(stats.paidCount)} 
                 icon={CheckCircle2} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
                 subtitle={formatCurrency(stats.paidVal)}
             />
             <StatCard 
-                title="Non Payées" 
+                title="Crédits" 
                 value={String(stats.unpaidCount)} 
                 icon={XCircle} 
                 colorClass="bg-orange-500/10 text-orange-500" 
                 subtitle={formatCurrency(stats.unpaidVal)}
             />
             <StatCard 
-                title="À Livrer" 
+                title="Attente" 
                 value={`${stats.unreceivedPieces} PCS`} 
                 icon={Truck} 
                 colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle="Pains restants"
+                subtitle="À distribuer"
             />
             <StatCard 
-                title="Valeur Totale" 
+                title="Valeur" 
                 value={formatCurrency(stats.totalVal)} 
                 icon={Landmark} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle="Chiffre attendu"
+                subtitle="Chiffre estimé"
             />
         </div>
     );

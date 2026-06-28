@@ -47,6 +47,10 @@ import {
 import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 
+/**
+ * BreadPage Elite - Unified Logistics Management.
+ * Performance audited and redundant logic eliminated.
+ */
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +69,7 @@ export default function BreadPage() {
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
 
+    // Initial load and safety date check
     useEffect(() => {
         breadService.ensureOrdersForDate(formattedDate);
         setSelectedOrders(new Set());
@@ -104,14 +109,14 @@ export default function BreadPage() {
         setCurrentDate(prev => addDays(prev, days));
     }, []);
 
-    const toggleOrderSelection = (uuid: string) => {
+    const toggleOrderSelection = useCallback((uuid: string) => {
         setSelectedOrders(prev => {
             const next = new Set(prev);
             if (next.has(uuid)) next.delete(uuid);
             else next.add(uuid);
             return next;
         });
-    };
+    }, []);
 
     const handleBulkDeliver = async () => {
         if (selectedOrders.size === 0) return;
@@ -134,6 +139,8 @@ export default function BreadPage() {
             const count = await breadService.processEndOfDayTransfers();
             if (count > 0) toast.success(`${count} ordres transférés au compte.`);
             else toast.info("Aucun ordre à transférer.");
+        } catch (e) {
+            toast.error("Erreur lors de l'auto-facturation.");
         } finally {
             setIsProcessing(false);
             setIsAutoBillingConfirmOpen(false);
@@ -169,7 +176,7 @@ export default function BreadPage() {
                     </Button>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9">
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9" aria-label="Jour précédent">
                             <ChevronLeft className="h-5 w-5 text-primary" />
                         </Button>
                         <Button 
@@ -179,7 +186,7 @@ export default function BreadPage() {
                         >
                             Aujourd'hui
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9">
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9" aria-label="Jour suivant">
                             <ChevronRight className="h-5 w-5 text-primary" />
                         </Button>
                     </div>

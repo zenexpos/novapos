@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
     const [quantity, setQuantity] = useState(order.quantity);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const debouncedQuantity = useDebounce(quantity, 500);
-    const breadPrice = useAppStore((state) => state.companyProfile?.breadPrice) || 0;
+    const breadPrice = useAppStore((state) => state.companyProfile?.breadPrice) || 10;
 
     const isBilled = !!order.saleUuid;
     const isPaid = order.isPaid;
@@ -47,12 +48,12 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
     const displayName = order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Inconnu');
 
     const handleQuantityChange = useCallback(async (newQuantity: number) => {
-        if (newQuantity < 0 || isBilled) return;
+        if (isNaN(newQuantity) || newQuantity < 0 || isBilled) return;
         try {
             await breadService.updateBreadOrderQuantity(order.uuid, newQuantity);
             onUpdate();
         } catch (error) {
-            toast.error("Erreur lors de la mise à jour de la quantité.");
+            toast.error("Erreur de mise à jour quantité.");
         }
     }, [order.uuid, onUpdate, isBilled]);
 
@@ -72,7 +73,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
             await breadService.updateBreadOrderDeliveryStatus(order.uuid, !isDelivered);
             onUpdate();
         } catch (e) {
-            toast.error("Échec du changement de statut.");
+            toast.error("Échec livraison.");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -82,10 +83,9 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         setIsUpdatingStatus(true);
         try {
             await breadService.updatePaymentStatus(order.uuid, checked);
-            toast.success(checked ? "Paiement validé" : "Règlement annulé");
             onUpdate();
         } catch (e) {
-            toast.error("Erreur de mise à jour du paiement.");
+            toast.error("Erreur paiement.");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -93,17 +93,13 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
 
     const handleQuickPay = async () => {
         if (isExternal) {
-            toast.error("Facturation impossible", { description: "Veuillez transformer ce client en abonné Premium pour activer le solde de compte." });
-            return;
-        }
-        if (breadPrice <= 0) {
-            toast.error("Prix unitaire non configuré.");
+            toast.error("Facturation impossible", { description: "Veuillez créer un profil client pour activer le compte Elite." });
             return;
         }
         setIsUpdatingStatus(true);
         try {
             await breadService.convertBreadOrdersToSales([order.uuid], breadPrice);
-            toast.success("Transaction convertie au compte client.");
+            toast.success("Transaction archivée au compte.");
             onUpdate();
         } catch (e) {
             toast.error("Échec de la conversion financière.");
@@ -116,10 +112,10 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
         if (isBilled) return;
         try {
             await breadService.deleteBreadOrder(order.uuid);
-            toast.success("Ordre de flux supprimé.");
+            toast.success("Ordre supprimé.");
             onUpdate();
         } catch (e) {
-            toast.error("Impossible de supprimer cet ordre.");
+            toast.error("Impossible de supprimer.");
         }
     };
 
@@ -130,10 +126,6 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
             isBilled ? "opacity-80 grayscale-[0.3]" : "bg-card",
             isExternal && !isBilled && "border-l-4 border-l-amber-500/30"
         )}>
-            <div className="absolute -right-4 -top-4 opacity-[0.02] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none">
-                <Sparkles className="h-32 w-32 rotate-12" />
-            </div>
-
             <div className="absolute top-6 right-6 z-10 flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isBilled && (
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" onClick={handleDelete}>
@@ -163,7 +155,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                     <div className="flex items-center gap-2 mb-1.5">
                         {isExternal ? (
                             <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black uppercase flex items-center gap-1.5 px-2 py-0.5">
-                                <CircleUser className="h-2.5 w-2.5" /> Client العابر
+                                <CircleUser className="h-2.5 w-2.5" /> Passage
                             </Badge>
                         ) : (
                             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase flex items-center gap-1.5 px-2 py-0.5">
@@ -174,18 +166,13 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                             "text-[8px] font-black uppercase px-2 py-0.5 border-none",
                             isPaid ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"
                         )}>
-                            {isPaid ? 'PAYÉ' : 'À RÉGLER'}
+                            {isPaid ? 'PAYÉ' : 'CRÉDIT'}
                         </Badge>
                         {order.syncStatus === 'pending' && <Clock className="h-3 w-3 text-muted-foreground/30 animate-pulse" />}
                     </div>
                     <CardTitle className="text-lg font-black leading-none tracking-tighter group-hover:text-primary transition-colors truncate pr-16 uppercase">
                         {displayName}
                     </CardTitle>
-                    {isBilled && (
-                        <p className="text-[9px] font-mono font-black uppercase text-emerald-600/60 mt-1 flex items-center gap-1.5 tracking-tighter">
-                            <Hash className="h-2.5 w-2.5" /> Transaction Archivée
-                        </p>
-                    )}
                 </div>
             </CardHeader>
 
@@ -198,10 +185,11 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                         <Input 
                             type="number"
                             value={quantity}
-                            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
                             className="h-9 text-xl font-black text-center bg-transparent border-none focus-visible:ring-0 w-full text-primary"
                             disabled={isBilled}
                             min="0"
+                            step="0.1"
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-wide text-muted-foreground opacity-20">PCS</span>
                     </div>
@@ -210,13 +198,14 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                 <div className="p-3 bg-muted/20 rounded-xl border border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Banknote className="h-3.5 w-3.5 text-primary opacity-40" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Règlement Cash</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Cash direct</span>
                     </div>
                     <Switch 
                         checked={isPaid} 
                         onCheckedChange={togglePayment} 
                         disabled={isUpdatingStatus || isBilled}
                         className="data-[state=checked]:bg-emerald-500 scale-90"
+                        aria-label="Toggle payment"
                     />
                 </div>
 
@@ -227,7 +216,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                         onClick={toggleDelivery}
                         disabled={isUpdatingStatus || isBilled}
                         className={cn(
-                            "rounded-2xl h-11 font-black text-[9px] uppercase tracking-[0.1em] gap-2 shadow-sm transition-all active:scale-95",
+                            "rounded-2xl h-11 font-black text-[9px] uppercase tracking-[0.1em] gap-2 shadow-sm",
                             isDelivered ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                         )}
                     >
@@ -240,7 +229,7 @@ export function BreadOrderCard({ order, isSelected, onToggleSelection, onUpdate 
                         onClick={handleQuickPay}
                         disabled={isBilled || isUpdatingStatus}
                         className={cn(
-                            "rounded-2xl h-11 font-black text-[9px] uppercase tracking-[0.1em] gap-2 shadow-sm transition-all active:scale-95",
+                            "rounded-2xl h-11 font-black text-[9px] uppercase tracking-[0.1em] gap-2 shadow-sm",
                             isBilled ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                         )}
                     >

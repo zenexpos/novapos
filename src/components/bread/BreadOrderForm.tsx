@@ -22,6 +22,10 @@ interface BreadOrderFormProps {
     onSuccess?: () => void;
 }
 
+/**
+ * BreadOrderForm Elite - Unified creation engine.
+ * Supports manual entry, subscriber mapping and automatic profile creation.
+ */
 export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }: BreadOrderFormProps) {
     const profile = useAppStore(state => state.companyProfile);
     const [mode, setMode] = useState<'registered' | 'external'>('registered');
@@ -56,11 +60,11 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             let targetCustomerUuid = mode === 'registered' ? selectedClientUuid : undefined;
             let finalCustomName = mode === 'external' ? customName.trim() : undefined;
 
-            // Automation Logic: Convert external client to permanent subscriber
+            // Automation Logic: Convert external client to permanent subscriber if recurring
             if (mode === 'external' && isRecurring) {
                 const names = customName.trim().split(' ');
                 const firstName = names[0];
-                const lastName = names.slice(1).join(' ') || '(Abonné)';
+                const lastName = names.slice(1).join(' ') || '(Elite)';
                 
                 const newCustomer = await customerService.addCustomer({
                     firstName,
@@ -82,7 +86,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                         weeklySchedule: {}
                     }
                 });
-                toast.info(`Nouveau profil créé pour ${firstName}.`);
+                toast.info(`Profil créé pour ${firstName}.`);
             } else if (mode === 'registered' && isRecurring && selectedClientUuid) {
                 const client = manualClients.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
@@ -105,12 +109,12 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 pickupTime
             });
 
-            toast.success("Commande enregistrée dans le flux.");
+            toast.success("Commande enregistrée.");
             onSuccess?.();
             onOpenChange(false);
             resetForm();
         } catch(e: any) {
-            toast.error("Échec de l'enregistrement.");
+            toast.error("Erreur de sauvegarde.");
         } finally {
             setIsLoading(false);
         }
@@ -133,20 +137,21 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             <Plus className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande</DialogTitle>
-                            <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Saisie manuelle d'un flux de pain</DialogDescription>
+                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Saisie Manuelle</DialogTitle>
+                            <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Nouveau flux de distribution</DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
 
                 <div className="p-6 space-y-6">
-                    <div className="flex p-1 bg-muted rounded-2xl">
+                    <div className="flex p-1 bg-muted rounded-2xl" role="tablist">
                         <button 
                             onClick={() => { setMode('registered'); setIsRecurring(false); }}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase transition-all",
                                 mode === 'registered' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
+                            aria-selected={mode === 'registered'}
                         >
                             <User className="h-3.5 w-3.5" /> Client iPOS
                         </button>
@@ -156,6 +161,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase transition-all",
                                 mode === 'external' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
+                            aria-selected={mode === 'external'}
                         >
                             <UserPlus className="h-3.5 w-3.5" /> Client de Passage
                         </button>
@@ -176,12 +182,12 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Identité du client</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Identité</Label>
                                 <Input 
                                     className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold"
                                     value={customName}
                                     onChange={e => setCustomName(e.target.value)}
-                                    placeholder="Ex: Client X..."
+                                    placeholder="Nom complet..."
                                 />
                             </div>
                         )}
@@ -193,7 +199,8 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     type="number" 
                                     className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
                                     value={quantity}
-                                    onChange={e => setQuantity(Number(e.target.value))}
+                                    onChange={e => setQuantity(parseFloat(e.target.value) || 0)}
+                                    step="0.1"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -216,8 +223,8 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     className="h-5 w-5 rounded-md border-primary"
                                 />
                                 <Label htmlFor="recurring" className="cursor-pointer flex-1">
-                                    <div className="text-[10px] font-black text-primary uppercase">Activer abonnement quotidien</div>
-                                    <p className="text-[8px] text-muted-foreground mt-0.5 uppercase tracking-tighter">Générer ce débit automatiquement chaque matin.</p>
+                                    <div className="text-[10px] font-black text-primary uppercase">Transformer en abonnement</div>
+                                    <p className="text-[8px] text-muted-foreground mt-0.5 uppercase tracking-tighter">Générer ce débit automatiquement tous les matins.</p>
                                 </Label>
                             </div>
 
@@ -225,7 +232,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 <div className="flex items-start gap-3 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 animate-in zoom-in-95">
                                     <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                                     <p className="text-[9px] font-bold text-amber-700 uppercase leading-tight">
-                                        Note : Un profil client permanent sera créé pour gérer cet abonnement récurrent.
+                                        Note : Un nouveau dossier client Premium sera créé automatiquement.
                                     </p>
                                 </div>
                             )}

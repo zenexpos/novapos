@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { BreadOrderWithCustomer } from '@/lib/types';
 import {
     Table, TableBody, TableCell, TableHead,
@@ -15,13 +15,14 @@ import {
     Hash, 
     CloudUpload,
     Clock,
-    CircleUser
+    CircleUser,
+    PackageCheck,
+    PackageX
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';
 import { toast } from 'sonner';
 import { ConfirmAlertDialog } from '../ui/ConfirmAlertDialog';
-import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Checkbox } from '../ui/checkbox';
 
@@ -35,12 +36,14 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
     const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
     const handleTogglePickup = async (order: BreadOrderWithCustomer) => {
+        if (order.saleUuid) return;
         const newState = !order.isDelivered;
         await breadService.updateBreadOrderDeliveryStatus(order.uuid, newState);
         toast.success(newState ? 'Article livré' : 'Livraison annulée');
     };
 
     const handleTogglePayment = async (order: BreadOrderWithCustomer, checked: boolean) => {
+        if (order.saleUuid) return;
         await breadService.updatePaymentStatus(order.uuid, checked);
         toast.success(checked ? 'Paiement confirmé' : 'Paiement annulé');
     };
@@ -49,13 +52,15 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
         if (!orderToDelete) return;
         try {
             await breadService.deleteBreadOrder(orderToDelete);
-            toast.success("Ordre de flux supprimé.");
+            toast.success("Ordre supprimé.");
         } catch (e: any) {
             toast.error(e.message);
         } finally {
             setOrderToDelete(null);
         }
     };
+
+    const isAllSelected = orders.length > 0 && selectedOrders.size === orders.length;
 
     return (
         <>
@@ -65,9 +70,9 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                     <TableRow className="hover:bg-transparent border-none">
                         <TableHead className="w-12 px-6">
                             <Checkbox 
-                                checked={orders.length > 0 && selectedOrders.size === orders.length}
+                                checked={isAllSelected}
                                 onCheckedChange={() => {
-                                    if (selectedOrders.size === orders.length) {
+                                    if (isAllSelected) {
                                         orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
                                     } else {
                                         orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
@@ -76,20 +81,20 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                 className="border-primary data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="w-[120px] p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Identifiant</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Identifiant</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Partenaire Client</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Volume</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Montant</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Règlement</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Livraison</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Statut</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Règlement</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Livraison</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Statut</TableHead>
                         <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {orders.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={9} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Aucun flux détecté dans le registre.</TableCell>
+                            <TableCell colSpan={9} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Aucun flux détecté.</TableCell>
                         </TableRow>
                     ) : orders.map((order) => {
                         const isExternal = !order.customerUuid;
@@ -112,18 +117,14 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                 <TableCell className="p-6">
                                     <div className="flex items-center gap-3">
                                         <div className={cn(
-                                            "p-2 rounded-lg shadow-inner transition-all",
+                                            "p-2 rounded-lg shadow-inner",
                                             isExternal ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"
                                         )}>
                                             {isExternal ? <CircleUser className="h-4 w-4" /> : <User className="h-4 w-4" />}
                                         </div>
                                         <div className="flex flex-col -space-y-0.5">
                                             <span className="font-black text-sm tracking-tight uppercase">{order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : (order.customName || 'Passage')}</span>
-                                            {isExternal ? (
-                                                <span className="text-[8px] font-bold text-amber-600 uppercase">Client Occasionnel</span>
-                                            ) : (
-                                                <span className="text-[8px] font-bold text-primary uppercase tracking-widest">Premium Member</span>
-                                            )}
+                                            <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">{isExternal ? 'Client Occasionnel' : 'Premium Member'}</span>
                                         </div>
                                     </div>
                                 </TableCell>
@@ -142,13 +143,8 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                             onCheckedChange={(checked) => handleTogglePayment(order, checked)}
                                             disabled={!!order.saleUuid}
                                             className="data-[state=checked]:bg-emerald-500 scale-90"
+                                            aria-label="Toggle payment"
                                         />
-                                        <span className={cn(
-                                            "text-[8px] font-black uppercase tracking-widest",
-                                            order.isPaid ? "text-emerald-500" : "text-orange-500"
-                                        )}>
-                                            {order.isPaid ? 'Payé' : 'Attente'}
-                                        </span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -158,13 +154,8 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                             onCheckedChange={() => handleTogglePickup(order)}
                                             disabled={!!order.saleUuid}
                                             className="data-[state=checked]:bg-emerald-500 scale-90"
+                                            aria-label="Toggle pickup"
                                         />
-                                        <span className={cn(
-                                            "text-[8px] font-black uppercase tracking-widest",
-                                            order.isDelivered ? "text-emerald-500" : "text-destructive"
-                                        )}>
-                                            {order.isDelivered ? 'Livré' : 'À livrer'}
-                                        </span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -176,8 +167,6 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                                         <Badge variant="outline" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[8px] font-black uppercase px-2">
                                                             <CloudUpload className="h-2.5 w-2.5" /> Facturé
                                                         </Badge>
-                                                    ) : order.syncStatus === 'pending' ? (
-                                                        <Clock className="h-4 w-4 text-muted-foreground/20 animate-pulse" />
                                                     ) : (
                                                         <Badge variant="outline" className="text-muted-foreground/30 text-[8px] font-black uppercase px-2 border-white/5">
                                                             Local
@@ -186,7 +175,7 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                                 </div>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                {order.saleUuid ? "Déjà intégré à la comptabilité" : "Enregistré localement"}
+                                                {order.saleUuid ? "Intégré à la comptabilité" : "Enregistré localement"}
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -198,6 +187,7 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
                                             size="icon" 
                                             className="h-8 w-8 text-destructive/20 hover:text-destructive hover:bg-destructive/5"
                                             onClick={() => setOrderToDelete(order.uuid)}
+                                            title="Supprimer"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -213,8 +203,8 @@ export function BreadOrderTable({ orders, selectedOrders, onToggleSelection }: B
         <ConfirmAlertDialog 
             isOpen={!!orderToDelete}
             onOpenChange={(open) => !open && setOrderToDelete(null)}
-            title="Supprimer l'ordre de distribution ?"
-            description="Cette opération est définitive وستؤثر على سجلات اليوم."
+            title="Supprimer l'ordre ?"
+            description="Cette opération est définitive."
             onConfirm={handleDelete}
             confirmText="Supprimer"
         />
