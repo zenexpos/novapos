@@ -23,14 +23,12 @@ import {
     Users,
     Calendar,
     Filter,
-    FilterX,
     LayoutGrid,
     List,
-    Printer,
-    CheckCircle2
+    X
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
-import type { BreadOrderWithCustomer, ViewMode } from '@/lib/types';
+import type { BreadOrderWithCustomer } from '@/lib/types';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
@@ -49,11 +47,12 @@ import { useAppStore } from '@/stores/appStore';
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    
+    const viewMode = useAppStore(state => state.breadViewMode);
+    const setViewMode = useAppStore(state => state.actions.setBreadViewMode);
     
     const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
     const [deliveryFilter, setDeliveryFilter] = useState<'all' | 'delivered' | 'pending'>('all');
-    const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'registered' | 'external'>('all');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -83,20 +82,17 @@ export default function BreadPage() {
             list = list.filter(o => o.isDelivered === (deliveryFilter === 'delivered'));
         }
 
-        if (clientTypeFilter !== 'all') {
-            list = list.filter(o => clientTypeFilter === 'registered' ? !!o.customerUuid : !o.customerUuid);
-        }
-
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
                 o.orderNumber.toLowerCase().includes(q) ||
                 (o.customer && `${o.customer.firstName} ${o.customer.lastName}`.toLowerCase().includes(q)) ||
-                (o.customName && o.customName.toLowerCase().includes(q))
+                (o.customName && o.customName.toLowerCase().includes(q)) ||
+                (o.notes && o.notes.toLowerCase().includes(q))
             );
         }
         return list;
-    }, [ordersResult.value, searchQuery, statusFilter, deliveryFilter, clientTypeFilter]);
+    }, [ordersResult.value, searchQuery, statusFilter, deliveryFilter]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
@@ -106,15 +102,14 @@ export default function BreadPage() {
         setSearchQuery('');
         setStatusFilter('all');
         setDeliveryFilter('all');
-        setClientTypeFilter('all');
     };
 
     const runAutomatedTask = async () => {
         setIsProcessing(true);
         try {
             const count = await breadService.processEndOfDayTransfers();
-            if (count > 0) toast.success(`${count} ordres transférés.`);
-            else toast.info("Rien à transférer.");
+            if (count > 0) toast.success(`${count} ordres transférés au compte.`);
+            else toast.info("Aucun ordre à transférer.");
         } finally {
             setIsProcessing(false);
         }
@@ -124,9 +119,9 @@ export default function BreadPage() {
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
         { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false }
-    ], 'Pain');
+    ], 'LogistiquePain');
 
-    const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all' || clientTypeFilter !== 'all';
+    const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all';
 
     return (
         <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
@@ -145,7 +140,7 @@ export default function BreadPage() {
                         className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
                     >
                         {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
-                        Auto-Transfert
+                        Auto-Facturation
                     </Button>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
@@ -177,38 +172,43 @@ export default function BreadPage() {
                             <Calendar className="h-4 w-4 mr-2" /> Distribution
                         </TabsTrigger>
                         <TabsTrigger value="subscribers" className="rounded-xl px-8 font-bold text-xs uppercase">
-                            <Users className="h-4 w-4 mr-2" /> Abonnés
+                            <Users className="h-4 w-4 mr-2" /> Abonnés Premium
                         </TabsTrigger>
                     </TabsList>
 
                     {activeTab === 'distribution' && (
                         <div className="flex gap-3 flex-grow max-w-4xl">
-                            <div className="relative flex-grow">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                            <div className="relative flex-grow group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                                 <Input 
-                                    placeholder="Rechercher un flux..."
+                                    placeholder="Rechercher (Nom, N°, Note)..."
                                     className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
+                                {searchQuery && (
+                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
                             </div>
                             
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className={cn("h-11 rounded-xl gap-2", isFiltered && "bg-primary/10")}>
+                                    <Button variant="outline" className={cn("h-11 rounded-xl gap-2", isFiltered && "bg-primary/10 border-primary/20")}>
                                         <Filter className="h-4 w-4 opacity-40" />
                                         Filtres
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="rounded-xl w-64 p-2">
-                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">Paiement</DropdownMenuLabel>
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">Statut Paiement</DropdownMenuLabel>
                                     <DropdownMenuRadioGroup value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
                                         <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold text-emerald-500">Payés</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold text-orange-500">Impayés</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold text-emerald-500">Réglés</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold text-orange-500">Non Réglés</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">Livraison</DropdownMenuLabel>
+                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">État Livraison</DropdownMenuLabel>
                                     <DropdownMenuRadioGroup value={deliveryFilter} onValueChange={(v: any) => setDeliveryFilter(v)}>
                                         <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value="delivered" className="text-xs font-bold text-emerald-500">Livrés</DropdownMenuRadioItem>
@@ -218,15 +218,9 @@ export default function BreadPage() {
                             </DropdownMenu>
 
                             <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
-                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')} title="Vue Grille"><LayoutGrid className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')} title="Vue Liste"><List className="h-4 w-4"/></Button>
                             </div>
-
-                            {isFiltered && (
-                                <Button variant="ghost" size="icon" onClick={resetFilters} className="h-11 w-11 rounded-xl text-destructive">
-                                    <FilterX className="h-4 w-4" />
-                                </Button>
-                            )}
                         </div>
                     )}
                 </div>
@@ -237,7 +231,7 @@ export default function BreadPage() {
                     {ordersResult.isLoading ? (
                         <div className="flex flex-col items-center justify-center h-80 opacity-20">
                             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                            <p className="mt-4 font-bold uppercase tracking-widest">Synchronisation...</p>
+                            <p className="mt-4 font-bold uppercase tracking-widest">Indexation des flux...</p>
                         </div>
                     ) : (
                         <div className="animate-in fade-in duration-500">
@@ -276,4 +270,3 @@ export default function BreadPage() {
         </div>
     );
 }
-

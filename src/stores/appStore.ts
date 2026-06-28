@@ -30,6 +30,7 @@ interface AppState {
     customersViewMode: ViewMode;
     expensesViewMode:  ViewMode;
     salesViewMode:     ViewMode;
+    breadViewMode:     ViewMode;
 
     actions: AppActions;
 }
@@ -68,6 +69,7 @@ interface AppActions {
     setCustomersViewMode: (mode: ViewMode) => void;
     setExpensesViewMode:  (mode: ViewMode) => void;
     setSalesViewMode:     (mode: ViewMode) => void;
+    setBreadViewMode:     (mode: ViewMode) => void;
 }
 
 const initialState: Omit<AppState, 'actions'> = {
@@ -82,6 +84,7 @@ const initialState: Omit<AppState, 'actions'> = {
     customersViewMode:       'grid',
     expensesViewMode:        'list',
     salesViewMode:           'grid',
+    breadViewMode:           'grid',
 };
 
 export const useAppStore = create<AppState>()(
@@ -154,16 +157,12 @@ export const useAppStore = create<AppState>()(
                     }
                 },
 
-                /**
-                 * Debounced Smart Sync (FORENSIC FIX)
-                 * Prevents "Sync Storms" by canceling previous scheduled timers.
-                 */
                 triggerSmartSync: () => {
                     if (_syncTimer) clearTimeout(_syncTimer);
                     _syncTimer = setTimeout(() => {
                         get().actions.performBackgroundSync();
                         _syncTimer = null;
-                    }, 8000); // 8 second cool-down period
+                    }, 8000);
                 },
 
                 processReturn: async (returnData) => {
@@ -225,6 +224,7 @@ export const useAppStore = create<AppState>()(
                 setCustomersViewMode: m => set({ customersViewMode: m }),
                 setExpensesViewMode:  m => set({ expensesViewMode:  m }),
                 setSalesViewMode:     m => set({ salesViewMode:     m }),
+                setBreadViewMode:     m => set({ breadViewMode:     m }),
             },
         }),
         {
@@ -237,6 +237,7 @@ export const useAppStore = create<AppState>()(
                 customersViewMode: state.customersViewMode,
                 expensesViewMode:  state.expensesViewMode,
                 salesViewMode:     state.salesViewMode,
+                breadViewMode:     state.breadViewMode,
             }),
         },
     ),
