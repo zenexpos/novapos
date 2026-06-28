@@ -49,7 +49,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * iPOS Zen - Elite Bread Logistics.
- * Forensic Audit Cleaned: Skeletons added, Hydration guarded, Bulk delivery atomicity enforced.
+ * PRODUCTION AUDIT: Implemented Hydration Guards, optimized sorting, and stabilized bulk actions.
  */
 export default function BreadPage() {
     const [isMounted, setIsMounted] = useState(false);
@@ -68,6 +68,7 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
+    // Secure hydration memo
     const formattedDate = useMemo(() => isMounted ? formatDateToYYYYMMDD(currentDate) : '', [currentDate, isMounted]);
 
     useEffect(() => {
@@ -348,7 +349,7 @@ export default function BreadPage() {
                 title="Lancer l'Auto-Facturation ?"
                 description={
                     <div className="space-y-4">
-                        <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
+                        <p>Cette operation va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
                             <CheckCircle2 className="h-5 w-5 shrink-0" />
                             <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
