@@ -11,7 +11,6 @@ import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 /**
  * Bread Logistics Service — Elite Grade.
  * Managed automated daily distribution and financial conversion.
- * PRODUCTION AUDIT: Fixed directive to 'use client' for IndexedDB access.
  */
 class BreadService {
 

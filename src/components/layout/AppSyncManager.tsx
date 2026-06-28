@@ -39,6 +39,7 @@ export function AppSyncManager({ children }: { children: React.ReactNode }) {
         const timeoutId = setTimeout(async () => {
             try {
                 // Task A: Process automated bread transfers (Elite Logistics)
+                // Use .catch to prevent crash if IndexedDB is still busy
                 await breadService.processEndOfDayTransfers().catch(e => console.warn("Bread cleanup skipped:", e));
                 
                 // Task B: Bi-directional Cloud Sync

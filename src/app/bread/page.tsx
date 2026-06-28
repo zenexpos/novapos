@@ -236,7 +236,7 @@ export default function BreadPage() {
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
                                 {searchQuery && (
-                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
+                                    <button onClick={() => searchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
@@ -279,7 +279,7 @@ export default function BreadPage() {
                     
                     {isLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                           {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)}
+                           {[...Array(8)].map((_, i) => <Skeleton className="h-48 w-full rounded-2xl" key={i} />)}
                         </div>
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
