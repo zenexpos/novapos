@@ -121,6 +121,22 @@ class BreadService {
         this.triggerSync();
     }
 
+    async bulkUpdateDeliveryStatus(uuids: string[], isDelivered: boolean): Promise<void> {
+        if (uuids.length === 0) return;
+        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
+            const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
+            for (const order of orders) {
+                await db.bread_orders.update(order.id!, {
+                    isDelivered,
+                    pickupStatus: isDelivered ? 'received' : 'unreceived',
+                    updatedAt: new Date(),
+                    syncStatus: 'pending'
+                });
+            }
+        });
+        this.triggerSync();
+    }
+
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
@@ -134,7 +150,6 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // Create a sale record for this distribution
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_PRODUCT',

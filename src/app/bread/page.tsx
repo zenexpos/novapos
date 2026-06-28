@@ -26,7 +26,8 @@ import {
     LayoutGrid,
     List,
     X,
-    CheckCircle2
+    CheckCircle2,
+    AlertTriangle
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -44,6 +45,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAppStore } from '@/stores/appStore';
+import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -58,6 +60,7 @@ export default function BreadPage() {
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
     const formattedDate = formatDateToYYYYMMDD(currentDate);
@@ -114,10 +117,7 @@ export default function BreadPage() {
         if (selectedOrders.size === 0) return;
         setIsProcessing(true);
         try {
-            const uuids = Array.from(selectedOrders);
-            for (const uuid of uuids) {
-                await breadService.updateBreadOrderDeliveryStatus(uuid, true);
-            }
+            await breadService.bulkUpdateDeliveryStatus(Array.from(selectedOrders), true);
             toast.success(`${selectedOrders.size} commandes marquées comme livrées.`);
             setSelectedOrders(new Set());
             ordersResult.refresh();
@@ -136,6 +136,7 @@ export default function BreadPage() {
             else toast.info("Aucun ordre à transférer.");
         } finally {
             setIsProcessing(false);
+            setIsAutoBillingConfirmOpen(false);
         }
     };
 
@@ -159,7 +160,7 @@ export default function BreadPage() {
                     <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={runAutomatedTask}
+                        onClick={() => setIsAutoBillingConfirmOpen(true)}
                         disabled={isProcessing}
                         className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
                     >
@@ -312,6 +313,23 @@ export default function BreadPage() {
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
                 onSuccess={() => ordersResult.refresh()}
+            />
+
+            <ConfirmAlertDialog
+                isOpen={isAutoBillingConfirmOpen}
+                onOpenChange={setIsAutoBillingConfirmOpen}
+                title="Lancer l'Auto-Facturation ?"
+                description={
+                    <div className="space-y-4">
+                        <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
+                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
+                            <AlertTriangle className="h-5 w-5 shrink-0" />
+                            <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
+                        </div>
+                    </div>
+                }
+                onConfirm={runAutomatedTask}
+                confirmText="Confirmer le transfert"
             />
         </div>
     );
