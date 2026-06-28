@@ -9,6 +9,10 @@ import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { useAppStore } from '@/stores/appStore';
 import { roundFinancial, roundQty } from '@/lib/utils';
 
+/**
+ * BreadService - Moteur logistique pour la distribution de pain.
+ * Intègre les transactions Dexie pour garantir l'intégrité des données locales.
+ */
 class BreadService {
 
     private triggerSync() {
@@ -58,6 +62,7 @@ class BreadService {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // Ne génère des ordres que pour aujourd'hui ou le futur
         if (date < todayStr) return;
 
         const activeBreadClientsCount = await db.customers
@@ -153,6 +158,7 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
+                // Création d'une vente pour chaque commande
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_PRODUCT',

@@ -14,8 +14,7 @@ import {
     User, 
     Hash, 
     CloudUpload,
-    CircleUser,
-    Package
+    CircleUser
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';

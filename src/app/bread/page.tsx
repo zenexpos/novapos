@@ -46,6 +46,10 @@ import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 
+/**
+ * BreadPage Elite - Gestion souveraine de la distribution.
+ * Optimisée pour la performance et la précision comptable.
+ */
 export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
