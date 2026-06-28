@@ -1,3 +1,4 @@
+
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -68,7 +69,7 @@ class SalesService {
       amountPaidCents > 0 ? 'partial' : 'unpaid';
 
     const saleItems: SaleItem[] = saleData.items.map(item => ({
-      productUuid: item.uuid.startsWith('custom-') ? null : item.uuid,
+      productUuid: (item.uuid && !item.uuid.startsWith('custom-')) ? item.uuid : null,
       name: item.name,
       price: safeNumber(item.price),
       purchasePrice: safeNumber(item.purchasePrice),
@@ -103,7 +104,7 @@ class SalesService {
       await db.sales.add(newSale);
       
       for (const item of saleData.items) {
-        if (item.uuid && !item.uuid.startsWith('custom-')) {
+        if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
             item.uuid, 
             -item.cartQuantity, 

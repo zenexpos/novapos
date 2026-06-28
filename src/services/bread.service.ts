@@ -1,3 +1,4 @@
+
 'use client';
 
 import { parseISO, format } from 'date-fns';
@@ -127,7 +128,7 @@ class BreadService {
 
     async bulkUpdateDeliveryStatus(uuids: string[], isDelivered: boolean): Promise<void> {
         if (uuids.length === 0) return;
-        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
+        await db.transaction('rw', [db.bread_orders], async () => {
             const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
@@ -145,41 +146,45 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
-        await db.transaction('rw', [
-            db.bread_orders, db.sales, db.customers, 
-            db.inventory_logs, db.products, db.payments, 
-            db.product_returns, db.sync_queue, db.company_profile
-        ], async () => {
-            const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
-            
-            for (const order of orders) {
-                if (order.saleUuid || order.deletedAt) continue;
+        // Note: salesService.createSale handles its own transactions internally.
+        // We iterate and process each order.
+        const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
+        
+        for (const order of orders) {
+            if (order.saleUuid || order.deletedAt) continue;
 
+            try {
+                // Prepare item to match salesService expectations (CartItem structure)
                 const sale = await salesService.createSale({
                     items: [{
-                        productUuid: 'BREAD_PRODUCT',
+                        uuid: 'BREAD_VIRTUAL_PROD',
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        quantity: order.quantity
+                        cartQuantity: order.quantity, // Correct field for total calculation
+                        quantity: order.quantity,
+                        barcodes: [],
+                        minStockLevel: 0,
+                        stockStatus: 'in_stock'
                     } as any],
                     discountType: 'fixed',
                     discountValue: 0,
-                    amountPaid: order.isPaid ? roundFinancial(order.quantity * breadPrice) : 0,
+                    amountPaid: order.isPaid ? roundFinancial(order.quantity * (breadPrice || order.unitPrice)) : 0,
                     customerUuid: order.customerUuid || undefined,
                 });
 
                 await db.bread_orders.update(order.id!, {
                     saleUuid: sale.uuid,
-                    paymentStatus: 'paid',
-                    isPaid: true,
                     transferredToCustomerAccount: true,
                     transferredAt: new Date(),
                     updatedAt: new Date(),
                     syncStatus: 'pending'
                 });
+            } catch (err) {
+                console.error(`[BreadService] Failed to bill order ${order.orderNumber}:`, err);
+                // Continue to next order even if one fails
             }
-        });
+        }
 
         this.triggerSync();
     }
@@ -244,7 +249,7 @@ class BreadService {
                 const total = roundFinancial(quantity * unitPrice);
                 ordersToCreate.push({
                     uuid: uuidv4(),
-                    orderNumber: `AUTO-${uuidv4().substring(0, 8)}`, // Will be finalized on generating order numbers if needed, or keeping it unique
+                    orderNumber: `AUTO-${uuidv4().substring(0, 8)}`, 
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
@@ -268,7 +273,6 @@ class BreadService {
         }
 
         if (ordersToCreate.length > 0) {
-            // Re-generate official numbers for auto-created orders
             for(let o of ordersToCreate) {
                 o.orderNumber = await this.generateOrderNumber();
             }
