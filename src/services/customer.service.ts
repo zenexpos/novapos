@@ -10,25 +10,10 @@ import { safeNumber, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 import { sanitizeString } from '@/lib/security/sanitization';
 
-const triggerSync = () => {
-    if (typeof window !== 'undefined') {
-        const state = useAppStore.getState();
-        if (state && state.actions) {
-            state.actions.triggerSmartSync();
-        }
-    }
-};
-
-const ALLOWED_SORT_FIELDS: Record<string, keyof Customer> = {
-    outstandingBalance: 'outstandingBalance',
-    totalSpent:        'totalSpent',
-    firstName:         'firstName',
-    lastName:          'lastName',
-    createdAt:         'createdAt',
-    creditLimit:       'creditLimit',
-    searchName:        'searchName',
-};
-
+/**
+ * iPOS Customer Domain Service.
+ * Specialized in CRM management, debt tracking, and forensic auditing.
+ */
 class CustomerService {
 
     async getCustomers(): Promise<Customer[]> {
@@ -72,40 +57,29 @@ class CustomerService {
             });
         }
 
-        if (filters.sortBy) {
-            const parts = filters.sortBy.split('_');
-            const order = parts.pop();
-            const rawField = parts.join('_');
+        const sortBy = filters.sortBy || 'createdAt_desc';
+        const [field, order] = sortBy.split('_');
+        const isAsc = order === 'asc';
+
+        customers.sort((a: any, b: any) => {
+            const valA = a[field];
+            const valB = b[field];
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return isAsc ? valA.localeCompare(valB, 'fr') : valB.localeCompare(valA, 'fr');
+            }
             
-            const field = (ALLOWED_SORT_FIELDS[rawField] ?? 'createdAt') as keyof Customer;
-            const isAsc = order === 'asc';
-
-            customers.sort((a: any, b: any) => {
-                const valA = a[field];
-                const valB = b[field];
-
-                if (typeof valA === 'string' && typeof valB === 'string') {
-                    return isAsc ? valA.localeCompare(valB, 'fr') : valB.localeCompare(valA, 'fr');
-                }
-                
-                const numA = safeNumber(valA);
-                const numB = safeNumber(valB);
-                return isAsc ? numA - numB : numB - numA;
-            });
-        } else {
-            customers.sort((a, b) => {
-                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                return dateB - dateA;
-            });
-        }
+            const numA = safeNumber(valA);
+            const numB = safeNumber(valB);
+            return isAsc ? numA - numB : numB - numA;
+        });
 
         return customers;
     }
 
     async addCustomer(customerData: CustomerFormData): Promise<Customer> {
         if (!customerData.firstName || !customerData.lastName) {
-            throw new Error('Prenom et nom requis.');
+            throw new Error('Prénom et nom requis.');
         }
 
         const now = new Date();
@@ -146,7 +120,7 @@ class CustomerService {
             await db.sync_queue.add({ table: 'customers', operation: 'CREATE', payload: newCustomer, timestamp: Date.now() });
         });
 
-        triggerSync();
+        this.triggerSync();
         return newCustomer;
     }
 
@@ -161,10 +135,10 @@ class CustomerService {
             version: (existing.version || 1) + 1
         };
 
+        // Apply sanitization if name or address is changed
         if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeString(updateData.firstName);
         if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeString(updateData.lastName);
         if (updateData.address !== undefined) finalUpdate.address = sanitizeString(updateData.address);
-        if (updateData.phone !== undefined) finalUpdate.phone = sanitizeString(updateData.phone);
 
         if (finalUpdate.firstName || finalUpdate.lastName) {
             const f = finalUpdate.firstName ?? existing.firstName;
@@ -183,7 +157,7 @@ class CustomerService {
         });
 
         const updated = await this.recalculateCustomerStatus(uuid);
-        triggerSync();
+        this.triggerSync();
         return updated;
     }
 
@@ -192,7 +166,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error(`Revocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
+            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
@@ -207,25 +181,13 @@ class CustomerService {
             });
         });
 
-        triggerSync();
-    }
-
-    async bulkDelete(uuids: string[]): Promise<void> {
-        await db.transaction('rw', [db.customers, db.sync_queue], async () => {
-            for (const uuid of uuids) {
-                const customer = await db.customers.where('uuid').equals(uuid).first();
-                if (customer && Math.abs(safeNumber(customer.outstandingBalance)) <= 0.009) {
-                    await this.deleteCustomer(uuid);
-                }
-            }
-        });
+        this.triggerSync();
     }
 
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-        const now = new Date();
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),
@@ -255,22 +217,25 @@ class CustomerService {
         const limit       = safeNumber(customer.creditLimit);
         const isOverLimit = limit > 0 ? newBalance > (limit + 0.009) : false;
 
-        let debtStatus: Customer['debtStatus'] = 'none';
-        if (newBalance > 0.009) {
-            debtStatus = 'due_soon'; 
-        }
-
         const customerUpdate: Partial<Customer> = {
             totalSpent,
             outstandingBalance: newBalance,
-            lastActivityDate: now,
             isOverLimit,
-            debtStatus,
-            updatedAt: now,
+            debtStatus: newBalance > 0.009 ? 'due_soon' : 'none',
+            updatedAt: new Date(),
         };
 
         await db.customers.update(customer.id!, customerUpdate);
         return { ...customer, ...customerUpdate };
+    }
+
+    private triggerSync() {
+        if (typeof window !== 'undefined') {
+            const state = useAppStore.getState();
+            if (state?.actions?.triggerSmartSync) {
+                state.actions.triggerSmartSync();
+            }
+        }
     }
 
     async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<Array<any>> {
@@ -326,7 +291,7 @@ class CustomerService {
             db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
         ]);
 
-        if (!customer) throw new Error("Client non trouve");
+        if (!customer) throw new Error("Client non trouvé");
 
         return {
             customer,
@@ -353,7 +318,7 @@ class CustomerService {
                         const lastName = row.lastName || row.Nom;
 
                         if (!firstName || !lastName) {
-                            analysis.errorRows.push({ ...row, error: "Identite incomplete" });
+                            analysis.errorRows.push({ ...row, error: "Identité incomplète" });
                             continue;
                         }
 

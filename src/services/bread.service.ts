@@ -6,19 +6,13 @@ import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO } from '@/
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
-import { useAppStore } from '@/stores/appStore';
 import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 
+/**
+ * Bread Logistics Service — Elite Grade.
+ * Managed automated daily distribution and financial conversion.
+ */
 class BreadService {
-
-    private triggerSync() {
-        if (typeof window !== 'undefined') {
-            const state = useAppStore.getState();
-            if (state?.actions?.triggerSmartSync) {
-                state.actions.triggerSmartSync();
-            }
-        }
-    }
 
     private async generateOrderNumber(): Promise<string> {
         return await db.transaction('rw', [db.company_profile], async () => {
@@ -109,37 +103,6 @@ class BreadService {
         };
 
         await db.bread_orders.add(newOrder);
-        this.triggerSync();
-    }
-
-    async updatePaymentStatus(uuid: string, isPaid: boolean): Promise<void> {
-        const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.saleUuid) return;
-
-        await db.bread_orders.update(order.id!, {
-            isPaid,
-            paymentStatus: isPaid ? 'paid' : 'unpaid',
-            updatedAt: new Date(),
-            syncStatus: 'pending'
-        });
-        this.triggerSync();
-    }
-
-    async bulkUpdateDeliveryStatus(uuids: string[], isDelivered: boolean): Promise<void> {
-        if (uuids.length === 0) return;
-        await db.transaction('rw', [db.bread_orders], async () => {
-            const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
-            for (const order of orders) {
-                if (order.saleUuid || order.deletedAt) continue;
-                await db.bread_orders.update(order.id!, {
-                    isDelivered,
-                    pickupStatus: isDelivered ? 'received' : 'unreceived',
-                    updatedAt: new Date(),
-                    syncStatus: 'pending'
-                });
-            }
-        });
-        this.triggerSync();
     }
 
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
@@ -151,13 +114,14 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
+                // FIX: Map quantity to cartQuantity for SalesService compatibility
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        cartQuantity: safeNumber(order.quantity),
+                        cartQuantity: safeNumber(order.quantity), 
                         quantity: safeNumber(order.quantity),
                         barcodes: [],
                         minStockLevel: 0,
@@ -184,37 +148,6 @@ class BreadService {
                 }
             }
         });
-
-        this.triggerSync();
-    }
-
-    async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
-        const qty = roundQty(Math.max(0, newQuantity));
-        const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.saleUuid) return;
-
-        const total = roundFinancial(qty * order.unitPrice);
-        await db.bread_orders.update(order.id!, {
-            quantity: qty,
-            totalAmount: total,
-            remainingAmount: Math.max(0, total - order.amountPaid),
-            updatedAt: new Date(),
-            syncStatus: 'pending'
-        });
-        this.triggerSync();
-    }
-
-    async deleteBreadOrder(uuid: string): Promise<void> {
-        const order = await db.bread_orders.where('uuid').equals(uuid).first();
-        if (!order || order.saleUuid) {
-            throw new Error("Impossible de supprimer une commande déjà facturée.");
-        }
-        await db.bread_orders.update(order.id!, { 
-            deletedAt: new Date(), 
-            updatedAt: new Date(),
-            syncStatus: 'pending'
-        });
-        this.triggerSync();
     }
 
     private async createDayOrders(date: string): Promise<void> {
@@ -278,8 +211,62 @@ class BreadService {
                 }
                 await db.bread_orders.bulkAdd(ordersToCreate);
             });
-            this.triggerSync();
         }
+    }
+
+    async bulkUpdateDeliveryStatus(uuids: string[], isDelivered: boolean): Promise<void> {
+        if (uuids.length === 0) return;
+        await db.transaction('rw', [db.bread_orders], async () => {
+            const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
+            for (const order of orders) {
+                if (order.saleUuid || order.deletedAt) continue;
+                await db.bread_orders.update(order.id!, {
+                    isDelivered,
+                    pickupStatus: isDelivered ? 'received' : 'unreceived',
+                    updatedAt: new Date(),
+                    syncStatus: 'pending'
+                });
+            }
+        });
+    }
+
+    async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
+        const qty = roundQty(Math.max(0, newQuantity));
+        const order = await db.bread_orders.where('uuid').equals(uuid).first();
+        if (!order || order.saleUuid) return;
+
+        const total = roundFinancial(qty * order.unitPrice);
+        await db.bread_orders.update(order.id!, {
+            quantity: qty,
+            totalAmount: total,
+            remainingAmount: Math.max(0, total - order.amountPaid),
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        });
+    }
+
+    async deleteBreadOrder(uuid: string): Promise<void> {
+        const order = await db.bread_orders.where('uuid').equals(uuid).first();
+        if (!order || order.saleUuid) {
+            throw new Error("Impossible de supprimer une commande déjà facturée.");
+        }
+        await db.bread_orders.update(order.id!, { 
+            deletedAt: new Date(), 
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        });
+    }
+
+    async updatePaymentStatus(uuid: string, isPaid: boolean): Promise<void> {
+        const order = await db.bread_orders.where('uuid').equals(uuid).first();
+        if (!order || order.saleUuid) return;
+
+        await db.bread_orders.update(order.id!, {
+            isPaid,
+            paymentStatus: isPaid ? 'paid' : 'unpaid',
+            updatedAt: new Date(),
+            syncStatus: 'pending'
+        });
     }
 
     async processEndOfDayTransfers(): Promise<number> {

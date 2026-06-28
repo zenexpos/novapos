@@ -1,19 +1,18 @@
 /**
  * iPOS Math Engine — Professional Precision Core.
- * Solves floating point issues to ensure accounting-grade accuracy.
+ * Solves floating point issues to ensure accounting-grade accuracy using Number.EPSILON.
  */
 
 export const FINANCIAL_PRECISION = 2;
-export const QTY_PRECISION = 3; // For weights (0.000)
-export const FINANCIAL_EPSILON = 0.000001;
+export const QTY_PRECISION = 3;
+export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
  * Standard Financial Rounding (2 decimals).
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
-    // Uses Number.EPSILON to handle floating point representation errors accurately
-    return Math.round((value + Number.EPSILON) * 100) / 100;
+    return Math.round((value + FINANCIAL_EPSILON) * 100) / 100;
 }
 
 /**
@@ -22,7 +21,7 @@ export function roundFinancial(value: number): number {
 export function roundQty(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const multiplier = Math.pow(10, QTY_PRECISION);
-    return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
+    return Math.round((value + FINANCIAL_EPSILON) * multiplier) / multiplier;
 }
 
 /**

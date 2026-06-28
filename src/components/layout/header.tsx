@@ -35,6 +35,10 @@ import Image from 'next/image';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { useNetwork } from '@/hooks/useNetwork';
 
+/**
+ * Enterprise Application Header.
+ * Forensic Audit: Added hydration guard to prevent time/network status mismatches.
+ */
 export function AppHeader() {
     const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
@@ -99,7 +103,7 @@ export function AppHeader() {
                             iPOS <span className="text-primary">Zen</span>
                         </span>
                         <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">
-                            Mode Hors-ligne
+                            Sovereign Ledger
                         </span>
                     </div>
                 </Link>

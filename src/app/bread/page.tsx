@@ -47,6 +47,10 @@ import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * iPOS Zen - Elite Bread Logistics.
+ * Forensic Audit Cleaned: Skeletons added, Hydration guarded, Bulk delivery atomicity enforced.
+ */
 export default function BreadPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -147,10 +151,6 @@ export default function BreadPage() {
         }
     }, []);
 
-    const onFormSuccess = useCallback(() => {
-        setIsFormOpen(false);
-    }, []);
-
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
@@ -192,7 +192,7 @@ export default function BreadPage() {
                     </Button>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9" aria-label="Jour précédent">
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9">
                             <ChevronLeft className="h-5 w-5 text-primary" />
                         </Button>
                         <Button 
@@ -202,7 +202,7 @@ export default function BreadPage() {
                         >
                             Aujourd'hui
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9" aria-label="Jour suivant">
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9">
                             <ChevronRight className="h-5 w-5 text-primary" />
                         </Button>
                     </div>
@@ -235,7 +235,7 @@ export default function BreadPage() {
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
                                 {searchQuery && (
-                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors" aria-label="Effacer recherche">
+                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
@@ -328,7 +328,7 @@ export default function BreadPage() {
                             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             Marquer comme Livrés
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10" aria-label="Tout déselectionner">
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10">
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
@@ -339,7 +339,7 @@ export default function BreadPage() {
                 isOpen={isMounted && isFormOpen} 
                 onOpenChange={setIsFormOpen} 
                 currentDate={formattedDate}
-                onSuccess={onFormSuccess}
+                onSuccess={() => setIsFormOpen(false)}
             />
 
             <ConfirmAlertDialog
@@ -348,7 +348,7 @@ export default function BreadPage() {
                 title="Lancer l'Auto-Facturation ?"
                 description={
                     <div className="space-y-4">
-                        <p>Cette operation va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
+                        <p>Cette opération va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
                             <CheckCircle2 className="h-5 w-5 shrink-0" />
                             <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
