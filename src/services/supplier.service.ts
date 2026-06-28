@@ -62,7 +62,7 @@ class SupplierService {
 
     /**
      * Audit & Repair: Recalculates supplier balance from raw data (Intakes vs Payments).
-     * ENSURES ABSOLUTE FINANCIAL ACCURACY.
+     * ENSURES ABSOLUTE FINANCIAL ACCURACY across offline sessions.
      */
     async recalculateSupplierBalance(supplierUuid: string): Promise<void> {
         const supplier = await db.suppliers.where('uuid').equals(supplierUuid).first();
@@ -73,6 +73,7 @@ class SupplierService {
             db.supplier_payments.where('supplierUuid').equals(supplierUuid).toArray(),
         ]);
 
+        // Precision arithmetic using cents to avoid floating point drift
         const totalPurchasesCents = intakes.reduce((sum, i) => sum + Math.round(safeNumber(i.totalValue) * 100), 0);
         const totalPaidCents = payments.reduce((sum, p) => sum + Math.round(safeNumber(p.amount) * 100), 0);
 
@@ -85,16 +86,11 @@ class SupplierService {
         });
     }
 
-    async updateSupplierBalance(uuid: string, amountChange: number): Promise<void> {
-        const supplier = await db.suppliers.where('uuid').equals(uuid).first();
-        if (!supplier?.id) return;
-        
-        const newBalance = roundFinancial(safeNumber(supplier.balance) + safeNumber(amountChange));
-        await db.suppliers.update(supplier.id, { 
-            balance: newBalance, 
-            updatedAt: new Date(), 
-            syncStatus: 'pending' 
-        });
+    /**
+     * Helper for quick updates, but always triggers a full recalculation for safety.
+     */
+    async updateSupplierBalance(uuid: string, _amountChange: number): Promise<void> {
+        await this.recalculateSupplierBalance(uuid);
     }
 
     async processSupplierPayment(paymentData: Omit<SupplierPayment, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<void> {
@@ -114,7 +110,7 @@ class SupplierService {
 
             await db.supplier_payments.add(newPayment);
             
-            // Audited Balance Update
+            // Recalculate using full audit path
             await this.recalculateSupplierBalance(paymentData.supplierUuid);
 
             await db.sync_queue.add({ table: 'supplier_payments', operation: 'CREATE', payload: newPayment, timestamp: Date.now() });
@@ -139,9 +135,15 @@ class SupplierService {
         const supplier = await db.suppliers.where('uuid').equals(uuid).first();
         if (!supplier?.id) return;
 
-        // Integrity Check: Only zero-balance suppliers can be revoked
+        // Strict Financial Integrity: Only zero-balance suppliers can be deleted
         if (Math.abs(safeNumber(supplier.balance)) > 0.01) {
-            throw new Error(`Révocation impossible : le solde de "${supplier.name}" n'est pas nul (${supplier.balance} DA).`);
+            throw new Error(`Révocation impossible : le رصيد de "${supplier.name}" n'est pas nul (${supplier.balance} DA).`);
+        }
+
+        // Secondary check: Are there any associated intakes?
+        const intakeCount = await db.stock_intakes.where('supplierUuid').equals(uuid).count();
+        if (intakeCount > 0) {
+            throw new Error("Révocation impossible : Ce partenaire possède un historique de facturation actif.");
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
@@ -159,7 +161,7 @@ class SupplierService {
     }
 
     async bulkDelete(uuids: string[]): Promise<void> {
-        await db.transaction('rw', [db.suppliers, db.sync_queue], async () => {
+        await db.transaction('rw', [db.suppliers, db.sync_queue, db.stock_intakes], async () => {
             for (const uuid of uuids) {
                 await this.deleteSupplier(uuid);
             }

@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { Supplier } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { HandCoins, Edit, Trash2, Phone, Building, ChevronRight } from 'lucide-react';
+import { HandCoins, Edit, Trash2, Phone, Building, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
@@ -20,6 +20,9 @@ interface SupplierTableProps {
     onToggleSelectAll: () => void;
 }
 
+type SortKey = 'name' | 'balance';
+type SortOrder = 'asc' | 'desc';
+
 export function SupplierTable({ 
     suppliers, 
     onPay, 
@@ -29,6 +32,39 @@ export function SupplierTable({
     onToggleSupplierSelection, 
     onToggleSelectAll 
 }: SupplierTableProps) {
+    const [sortKey, setSortKey] = useState<SortKey>('name');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortKey(key);
+            setSortOrder('asc');
+        }
+    };
+
+    const sortedSuppliers = [...suppliers].sort((a, b) => {
+        if (sortKey === 'name') {
+            return sortOrder === 'asc' 
+                ? a.name.localeCompare(b.name) 
+                : b.name.localeCompare(a.name);
+        }
+        if (sortKey === 'balance') {
+            return sortOrder === 'asc' 
+                ? a.balance - b.balance 
+                : b.balance - a.balance;
+        }
+        return 0;
+    });
+
+    const SortIcon = ({ colKey }: { colKey: SortKey }) => {
+        if (sortKey !== colKey) return <ChevronsUpDown className="ml-2 h-3 w-3 opacity-20" />;
+        return sortOrder === 'asc' 
+            ? <ChevronUp className="ml-2 h-3 w-3 text-primary" /> 
+            : <ChevronDown className="ml-2 h-3 w-3 text-primary" />;
+    };
+
     return (
         <div className="rounded-lg border border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
             <Table>
@@ -41,14 +77,22 @@ export function SupplierTable({
                                 className="border-primary data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="p-6 font-semibold text-[10px] uppercase text-muted-foreground/60">Partenaire</TableHead>
+                        <TableHead className="p-6">
+                            <button onClick={() => handleSort('name')} className="flex items-center text-[10px] font-black uppercase text-muted-foreground/60 hover:text-primary transition-colors">
+                                Partenaire <SortIcon colKey="name" />
+                            </button>
+                        </TableHead>
                         <TableHead className="p-6 font-semibold text-[10px] uppercase text-muted-foreground/60">Contact Elite</TableHead>
-                        <TableHead className="p-6 text-right font-semibold text-[10px] uppercase text-destructive">Solde Du (Dette)</TableHead>
+                        <TableHead className="p-6 text-right">
+                            <button onClick={() => handleSort('balance')} className="flex items-center justify-end w-full text-[10px] font-black uppercase text-destructive hover:text-primary transition-colors">
+                                Solde Du (Dette) <SortIcon colKey="balance" />
+                            </button>
+                        </TableHead>
                         <TableHead className="p-6 w-[150px] text-right font-semibold text-[10px] uppercase text-muted-foreground/60">Gestion</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {suppliers.map((supplier) => {
+                    {sortedSuppliers.map((supplier) => {
                         const isSelected = selectedSuppliers.has(supplier.uuid);
                         return (
                             <TableRow 
@@ -100,14 +144,13 @@ export function SupplierTable({
                                     </div>
                                 </TableCell>
                                 <TableCell className="p-6 text-right" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-10 transition-opacity duration-300">
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                         <Button 
                                             variant="outline" 
                                             size="icon" 
                                             className="h-10 w-10 rounded-xl border-white/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-lg"
                                             onClick={() => onPay(supplier)}
                                             disabled={supplier.balance <= 0}
-                                            title="Régler réelement"
                                         >
                                             <HandCoins className="h-4 w-4" />
                                         </Button>
