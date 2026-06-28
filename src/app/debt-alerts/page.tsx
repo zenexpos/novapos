@@ -303,6 +303,18 @@ export default function DebtAlertsPage() {
         { key: 'mild',     label: 'Actifs',     count: debtors.filter(d => d.tier === 'mild').length },
     ];
 
+    if (!isMounted) {
+        return (
+            <div className="p-4 sm:p-5 space-y-5 max-w-5xl mx-auto">
+                <Skeleton className="h-12 w-64 rounded-xl" />
+                <div className="grid grid-cols-3 gap-3">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+                </div>
+                <Skeleton className="h-96 w-full rounded-xl" />
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 sm:p-5 pb-24 max-w-5xl mx-auto space-y-5 animate-page-enter">
             <PageHeader

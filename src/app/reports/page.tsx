@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -26,17 +26,23 @@ import { reportsService } from '@/services/finance/reports.service';
 import { closingService } from '@/services/finance/closing.service';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Page de rapports simplifiée.
  */
 export default function ReportsPage() {
+    const [isMounted, setIsMounted] = useState(false);
     const statsResult = useLiveQuery(() => reportsService.getPeriodPerformance(30), []);
     const valuationResult = useLiveQuery(() => reportsService.getInventoryValuation(), []);
 
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const stats = statsResult.value;
     const valuation = valuationResult.value;
-    const isLoading = statsResult.isLoading || valuationResult.isLoading;
+    const isLoading = statsResult.isLoading || valuationResult.isLoading || !isMounted;
 
     const handleGenerateZReport = async () => {
         toast.promise(closingService.generateDailyZReport(), {
@@ -45,6 +51,18 @@ export default function ReportsPage() {
             error: 'Erreur lors du calcul'
         });
     };
+
+    if (!isMounted) {
+        return (
+            <div className="p-6 space-y-6 max-w-[1800px] mx-auto">
+                <Skeleton className="h-12 w-64 rounded-xl" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+                </div>
+                <Skeleton className="h-96 w-full rounded-xl" />
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
@@ -171,7 +189,7 @@ export default function ReportsPage() {
                     
                     <div className="p-6 bg-black/20 rounded-2xl border border-white/5 flex flex-col items-center text-center space-y-4">
                         <Clock className="h-8 w-8 text-muted-foreground/20" />
-                        <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-[0.2em]">Dernière mise à jour</p>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-[0.2em]">Rapport généré le</p>
                         <p className="text-xs font-bold text-primary">{new Date().toLocaleString('fr-FR')}</p>
                     </div>
                 </div>

@@ -48,6 +48,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BreadPage() {
+    const [isMounted, setIsMounted] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
@@ -66,9 +67,15 @@ export default function BreadPage() {
     const formattedDate = useMemo(() => formatDateToYYYYMMDD(currentDate), [currentDate]);
 
     useEffect(() => {
-        breadService.ensureOrdersForDate(formattedDate);
-        setSelectedOrders(new Set());
-    }, [formattedDate]);
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (isMounted) {
+            breadService.ensureOrdersForDate(formattedDate);
+            setSelectedOrders(new Set());
+        }
+    }, [formattedDate, isMounted]);
 
     const { value: orders, isLoading } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => breadService.getOrdersForDate(formattedDate),
@@ -151,6 +158,18 @@ export default function BreadPage() {
     ], 'LogistiquePain');
 
     const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all';
+
+    if (!isMounted) {
+        return (
+            <div className="p-6 space-y-6 max-w-[1800px] mx-auto">
+                <Skeleton className="h-10 w-64 rounded-xl" />
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
+                </div>
+                <Skeleton className="h-96 w-full rounded-2xl" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
