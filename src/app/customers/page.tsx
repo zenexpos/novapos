@@ -7,7 +7,7 @@ import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { Customer, ImportAnalysis } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Users, FileUp, Loader2, FileDown, FilterX, Trash2, LayoutGrid, List, UserPlus } from 'lucide-react';
+import { Plus, Search, Users, FileUp, Loader2, FileDown, FilterX, Trash2, LayoutGrid, List } from 'lucide-react';
 import { CustomerCard } from '@/components/customers/customer-card';
 import { CustomerTable } from '@/components/customers/CustomerTable';
 import { CustomerDialog } from '@/components/customers/customer-dialog';
@@ -21,7 +21,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Card } from '@/components/ui/card';
 import { customerService } from '@/services/customer.service';
 import { ImportPreviewDialog } from '@/components/customers/import-preview-dialog';
-import { cn } from '@/lib/utils';
 import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -89,7 +88,7 @@ function CustomersContent() {
             await customerService.deleteCustomer(selectedCustomer.uuid);
             setIsDeleteDialogOpen(false);
             setSelectedCustomer(null);
-            customersResult.refresh(); // Fixed: Added missing refresh
+            customersResult.refresh();
             toast.success('Client supprimé.');
         } catch (e: any) {
             toast.error(e?.message || 'Erreur suppression');
@@ -104,7 +103,7 @@ function CustomersContent() {
             customersResult.refresh();
             toast.success(`${selectedCustomers.size} clients supprimés.`);
         } catch (e: any) {
-            toast.error("Erreur lors de la suppression groupée.");
+            toast.error(e.message || "Erreur lors de la suppression groupée.");
         }
     };
 
@@ -117,6 +116,7 @@ function CustomersContent() {
         link.href = URL.createObjectURL(blob);
         link.download = `clients-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
+        toast.success("Registre exporté avec succès.");
     };
 
     const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,12 +164,12 @@ function CustomersContent() {
                 <div className="flex gap-2">
                     <Button variant="outline" asChild disabled={isAnalyzing} className="rounded-xl font-bold border-primary/20">
                         <label className="cursor-pointer flex items-center">
-                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
                             Importer
                             <input type="file" accept=".csv" className="sr-only" onChange={handleFileSelected} />
                         </label>
                     </Button>
-                    <Button variant="outline" onClick={handleExportCsv} className="rounded-xl font-bold border-primary/20"><FileUp className="mr-2 h-4 w-4" /> Exporter</Button>
+                    <Button variant="outline" onClick={handleExportCsv} className="rounded-xl font-bold border-primary/20"><FileDown className="mr-2 h-4 w-4" /> Exporter</Button>
                     <Button onClick={() => { setSelectedCustomer(null); setIsCustomerDialogOpen(true); }} className="rounded-xl font-bold shadow-lg"><Plus className="mr-2 h-4 w-4" /> Nouveau [N]</Button>
                 </div>
             </PageHeader>
@@ -230,7 +230,7 @@ function CustomersContent() {
                         </div>
                         <div className="flex items-center gap-6">
                             <Button variant="ghost" onClick={handleExportCsv} className="h-12 px-6 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-primary/10 transition-all">
-                                <FileUp className="mr-2 h-4 w-4" /> Exporter (.csv)
+                                <FileDown className="mr-2 h-4 w-4" /> Exporter (.csv)
                             </Button>
                             <Button variant="ghost" onClick={() => setIsBulkDeleteDialogOpen(true)} className="h-12 px-6 rounded-full font-black text-[10px] uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-all">
                                 <Trash2 className="mr-2 h-4 w-4" /> Supprimer

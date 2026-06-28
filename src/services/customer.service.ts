@@ -79,9 +79,15 @@ class CustomerService {
             const field = (ALLOWED_SORT_FIELDS[rawField] ?? 'createdAt') as keyof Customer;
             const isAsc = order === 'asc';
 
-            customers.sort((a, b) => {
+            customers.sort((a: any, b: any) => {
                 const valA = a[field] ?? 0;
                 const valB = b[field] ?? 0;
+                
+                // Correction Logic: Handle strings vs numbers in sorting
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                
                 if (valA < valB) return isAsc ? -1 : 1;
                 if (valA > valB) return isAsc ? 1 : -1;
                 return 0;
@@ -146,11 +152,6 @@ class CustomerService {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
-        // Fusion intelligente des profils imbriqués
-        const breadProfile = updateData.breadProfile 
-            ? { ...existing.breadProfile, ...updateData.breadProfile } 
-            : existing.breadProfile;
-
         const firstName = updateData.firstName !== undefined ? updateData.firstName : existing.firstName;
         const lastName  = updateData.lastName !== undefined ? updateData.lastName : existing.lastName;
         const searchName = `${firstName} ${lastName}`.toLowerCase().trim();
@@ -158,7 +159,6 @@ class CustomerService {
         const finalUpdate: Partial<Customer> = {
             ...updateData,
             searchName,
-            breadProfile: breadProfile as any,
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: (existing.version || 1) + 1
@@ -184,7 +184,7 @@ class CustomerService {
         if (!customer?.id) return;
 
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
-            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul.`);
+            throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
 
         const update = { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const };
@@ -203,6 +203,13 @@ class CustomerService {
     }
 
     async bulkDelete(uuids: string[]): Promise<void> {
+        const customers = await db.customers.where('uuid').anyOf(uuids).toArray();
+        const nonZeroCustomers = customers.filter(c => Math.abs(safeNumber(c.outstandingBalance)) > 0.009);
+        
+        if (nonZeroCustomers.length > 0) {
+            throw new Error(`${nonZeroCustomers.length} client(s) ont des soldes non nuls et ne peuvent être supprimés.`);
+        }
+
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             for (const uuid of uuids) {
                 await this.deleteCustomer(uuid);
