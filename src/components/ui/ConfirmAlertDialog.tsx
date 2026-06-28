@@ -41,11 +41,11 @@ export function ConfirmAlertDialog({
     const handleConfirm = async () => {
         setIsMutating(true);
         try {
-            // 1. Signal closure immediately
+            // 1. Signal closure immediately to release UI locks
             onOpenChange(false);
             
             // 2. Buffer delay to allow Radix UI to finish cleanup transitions
-            // and unblock the body tag.
+            // and unblock the body tag before executing potentially heavy DB operations.
             setTimeout(async () => {
                 try {
                     await onConfirm();
