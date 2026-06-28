@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Plus, User, UserPlus, Coins, Package, Clock, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, User, UserPlus, Package, Clock, Loader2, RefreshCw } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -47,13 +47,12 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             return;
         }
         if (mode === 'external' && !customName.trim()) {
-            toast.error("Entrez un nom.");
+            toast.error("Entrez un نام.");
             return;
         }
 
         setIsLoading(true);
         try {
-            // 1. Ajouter la commande pour aujourd'hui
             await breadService.addManualBreadOrder({
                 customerUuid: mode === 'registered' ? selectedClientUuid : undefined,
                 customName: mode === 'external' ? customName.trim() : undefined,
@@ -63,7 +62,6 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 pickupTime
             });
 
-            // 2. Si récurrent et client enregistré, mettre à jour le profil client via le modèle imbriqué
             if (mode === 'registered' && isRecurring && selectedClientUuid) {
                 const client = manualClients.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
@@ -75,7 +73,6 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                         weeklySchedule: client?.breadProfile?.weeklySchedule || {}
                     }
                 });
-                toast.success("Abonnement quotidien activé pour ce client.");
             }
 
             toast.success("Commande enregistrée.");
@@ -83,7 +80,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             onOpenChange(false);
             resetForm();
         } catch(e: any) {
-            toast.error(e.message || "Une erreur est survenue.");
+            toast.error("Échec de l'enregistrement.");
         } finally {
             setIsLoading(false);
         }
@@ -99,21 +96,21 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-lg rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-lg rounded-3xl p-0 overflow-hidden">
                 <DialogHeader className="bg-primary/5 p-6 border-b border-primary/10">
                     <div className="flex items-center gap-3">
                         <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">
                             <Plus className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande de Pain</DialogTitle>
-                            <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Saisie d'un flux de distribution direct</DialogDescription>
+                            <DialogTitle className="text-xl font-black tracking-tight uppercase">Nouvelle Commande</DialogTitle>
+                            <DialogDescription className="text-xs font-bold text-primary/40 uppercase tracking-widest mt-1">Saisie manuelle d'un flux de pain</DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
 
                 <div className="p-6 space-y-6">
-                    <div className="flex p-1 bg-muted rounded-2xl border border-white/5 shadow-inner">
+                    <div className="flex p-1 bg-muted rounded-2xl">
                         <button 
                             onClick={() => setMode('registered')}
                             className={cn(
@@ -121,7 +118,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 mode === 'registered' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
                         >
-                            <User className="h-3.5 w-3.5" /> Client Enregistré
+                            <User className="h-3.5 w-3.5" /> Client iPOS
                         </button>
                         <button 
                             onClick={() => setMode('external')}
@@ -130,14 +127,14 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 mode === 'external' ? "bg-background shadow-sm text-primary" : "text-muted-foreground opacity-50"
                             )}
                         >
-                            <UserPlus className="h-3.5 w-3.5" /> Client Passager
+                            <UserPlus className="h-3.5 w-3.5" /> Client de Passage
                         </button>
                     </div>
 
-                    <div className="grid gap-6">
+                    <div className="space-y-4">
                         {mode === 'registered' ? (
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Identifier le client</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Client Elite</Label>
                                 <Select value={selectedClientUuid} onValueChange={setSelectedClientUuid}>
                                     <SelectTrigger className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold">
                                         <SelectValue placeholder="Rechercher..." />
@@ -149,75 +146,63 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Nom du client</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Identité du client</Label>
                                 <Input 
                                     className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold"
                                     value={customName}
                                     onChange={e => setCustomName(e.target.value)}
+                                    placeholder="Ex: Client X..."
                                 />
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Quantité (Pains)</Label>
-                                <div className="relative group">
-                                    <Package className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
-                                    <Input 
-                                        type="number" 
-                                        className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
-                                        value={quantity}
-                                        onChange={e => setQuantity(Number(e.target.value))}
-                                    />
-                                </div>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Quantité (PCS)</Label>
+                                <Input 
+                                    type="number" 
+                                    className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
+                                    value={quantity}
+                                    onChange={e => setQuantity(Number(e.target.value))}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Heure de retrait</Label>
-                                <div className="relative group">
-                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
-                                    <Input 
-                                        type="time" 
-                                        className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
-                                        value={pickupTime}
-                                        onChange={e => setPickupTime(e.target.value)}
-                                    />
-                                </div>
+                                <Input 
+                                    type="time" 
+                                    className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg text-primary text-center"
+                                    value={pickupTime}
+                                    onChange={e => setPickupTime(e.target.value)}
+                                />
                             </div>
                         </div>
 
                         {mode === 'registered' && (
-                            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 transition-all hover:bg-primary/10">
+                            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
                                 <Checkbox 
                                     id="recurring" 
                                     checked={isRecurring} 
                                     onCheckedChange={(checked) => setIsRecurring(!!checked)}
                                     className="h-5 w-5 rounded-md border-primary"
                                 />
-                                <Label htmlFor="recurring" className="flex-1 cursor-pointer">
-                                    <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase">
-                                        <RefreshCw className="h-3 w-3" /> Rendre ce débit récurrent quotidiennement
-                                    </div>
-                                    <p className="text-[9px] text-muted-foreground mt-0.5">Le système générera ce débit automatiquement chaque matin.</p>
+                                <Label htmlFor="recurring" className="cursor-pointer">
+                                    <div className="text-[10px] font-black text-primary uppercase">Activer abonnement quotidien</div>
+                                    <p className="text-[8px] text-muted-foreground mt-0.5 uppercase tracking-tighter">Générer ce débit automatiquement chaque matin.</p>
                                 </Label>
                             </div>
                         )}
                     </div>
-
-                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 flex justify-between items-end shadow-inner">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Total à facturer</span>
-                        <span className="text-2xl font-black tracking-tighter tabular-nums text-primary">{(quantity * unitPrice).toFixed(2)} DA</span>
-                    </div>
                 </div>
 
-                <DialogFooter className="p-4 bg-muted/10 border-t border-white/5 gap-3">
+                <DialogFooter className="p-4 bg-muted/10 border-t border-white/5 flex gap-3">
                     <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl h-12 font-bold px-8">Annuler</Button>
                     <Button 
                         onClick={handleAdd} 
                         disabled={isLoading}
-                        className="flex-1 h-12 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 gap-3"
+                        className="flex-1 h-12 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-xl gap-3"
                     >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                        Valider la Commande
+                        Valider Flux
                     </Button>
                 </DialogFooter>
             </DialogContent>

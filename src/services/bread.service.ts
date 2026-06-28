@@ -11,6 +11,7 @@ import { roundFinancial } from '@/lib/utils';
 
 /**
  * iPOS Zen - Bread Distribution Domain Service.
+ * Specialized service for logistics and daily bread delivery tracking.
  */
 class BreadService {
 
@@ -62,6 +63,7 @@ class BreadService {
         const activeBreadClientsCount = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
             .count();
+        
         const existingCount = await db.bread_orders
             .where('date').equals(date)
             .filter(o => !o.deletedAt)
@@ -132,6 +134,7 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
+                // Create a sale record for this distribution
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_PRODUCT',
@@ -158,19 +161,6 @@ class BreadService {
         });
 
         this.triggerSync();
-    }
-
-    async billAllRemainingOrdersForDate(date: string, breadPrice: number): Promise<number> {
-        const pendingOrders = await db.bread_orders
-            .where('date').equals(date)
-            .filter(o => !o.saleUuid && !o.deletedAt)
-            .toArray();
-
-        const uuids = pendingOrders.map(o => o.uuid);
-        if (uuids.length > 0) {
-            await this.convertBreadOrdersToSales(uuids, breadPrice);
-        }
-        return uuids.length;
     }
 
     async updateBreadOrderQuantity(uuid: string, newQuantity: number): Promise<void> {
@@ -277,7 +267,7 @@ class BreadService {
             .filter(o => 
                 !o.deletedAt && 
                 !o.transferredToCustomerAccount && 
-                (o.date < todayStr || (o.date === todayStr && new Date().getHours() >= 23))
+                o.date < todayStr
             )
             .toArray();
 
