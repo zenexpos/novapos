@@ -109,6 +109,7 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
+        // AUDIT FIX: Expanded scope of transaction to include all recalculation paths
         await db.transaction('rw', [
           db.bread_orders, db.sales, db.products, 
           db.inventory_logs, db.customers, db.company_profile, 
@@ -119,6 +120,7 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
+                // Create a virtual cart item for the sale
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',

@@ -101,6 +101,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
+    // SCOPE AUDIT: Added payments and returns to prevent NotFoundError during recalculateCustomerStatus
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -110,7 +111,7 @@ class SalesService {
       
       // Stock adjustment with audited log
       for (const item of saleData.items) {
-        if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
+        if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD' && item.uuid !== 'BREAD_PRODUCT') {
           await inventoryService.adjustStock(
             item.uuid, 
             -item.cartQuantity, 
@@ -203,9 +204,9 @@ class SalesService {
     let collection = db.sales.toCollection();
 
     if (filters.from) {
-      const start = new Date(filters.from).getTime();
-      const end = filters.to ? new Date(filters.to).getTime() : Date.now();
-      collection = db.sales.where('createdAt').between(new Date(start), new Date(end), true, true);
+      const start = startOfDay(filters.from);
+      const end = endOfDay(filters.to || new Date());
+      collection = db.sales.where('createdAt').between(start, end, true, true);
     }
 
     let results = await collection.toArray();

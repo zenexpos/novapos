@@ -262,7 +262,7 @@ export function CartDisplay() {
                             isSelected={selectedIndex === index}
                             onUpdate={handleUpdateQty} 
                             onPriceUpdate={handleUpdatePrice}
-                            onTotalUpdate={handleUpdateTotal}
+                            handleTotalUpdate={handleUpdateTotal}
                             onRemove={handleRemove} 
                             onSelect={() => setSelectedIndex(index)}
                         />
