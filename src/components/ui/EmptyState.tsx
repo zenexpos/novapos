@@ -1,25 +1,28 @@
 'use client';
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { SearchX, Plus } from 'lucide-react';
+import { SearchX, Plus, LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
-    icon?: React.ElementType;
+    icon?: LucideIcon;
     title: string;
     description?: string;
     children?: React.ReactNode;
     className?: string;
     variant?: 'default' | 'search';
+    actionLabel?: string;
+    onAction?: () => void;
 }
 
 export function EmptyState({
-    icon: Icon, title, description, children, className, variant = 'default',
+    icon: Icon, title, description, children, className, variant = 'default', actionLabel, onAction
 }: EmptyStateProps) {
     const DisplayIcon = Icon ?? (variant === 'search' ? SearchX : Plus);
 
     return (
         <div className={cn(
-            'flex flex-col items-center justify-center py-20 px-8 text-center',
+            'flex flex-col items-center justify-center py-20 px-8 text-center bg-card/10 rounded-3xl border border-dashed border-border/50',
             'animate-fade-in',
             className,
         )}>
@@ -39,16 +42,20 @@ export function EmptyState({
             </h3>
 
             {description && (
-                <p className="text-sm text-muted-foreground/60 max-w-sm leading-relaxed mb-6">
+                <p className="text-sm text-muted-foreground/60 max-w-sm leading-relaxed mb-8">
                     {description}
                 </p>
             )}
 
-            {children && (
-                <div className="flex items-center gap-3 flex-wrap justify-center">
-                    {children}
-                </div>
-            )}
+            <div className="flex flex-col gap-4 items-center">
+                {actionLabel && onAction && (
+                    <Button onClick={onAction} className="rounded-2xl h-12 px-8 font-black uppercase text-xs tracking-widest shadow-xl gap-2">
+                        <Plus className="h-4 w-4" />
+                        {actionLabel}
+                    </Button>
+                )}
+                {children}
+            </div>
         </div>
     );
 }

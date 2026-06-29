@@ -25,7 +25,8 @@ import {
     LayoutGrid,
     List,
     X,
-    CheckCircle2
+    CheckCircle2,
+    Info
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -46,11 +47,13 @@ import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-/**
- * iPOS Zen - Elite Bread Logistics.
- * PRODUCTION AUDIT: Implemented Hydration Guards, optimized sorting, and stabilized bulk actions.
- */
 export default function BreadPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -68,7 +71,6 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
-    // Secure hydration memo
     const formattedDate = useMemo(() => isMounted ? formatDateToYYYYMMDD(currentDate) : '', [currentDate, isMounted]);
 
     useEffect(() => {
@@ -90,22 +92,14 @@ export default function BreadPage() {
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
         let list = orders;
-
-        if (statusFilter !== 'all') {
-            list = list.filter(o => o.isPaid === (statusFilter === 'paid'));
-        }
-
-        if (deliveryFilter !== 'all') {
-            list = list.filter(o => o.isDelivered === (deliveryFilter === 'delivered'));
-        }
-
+        if (statusFilter !== 'all') list = list.filter(o => o.isPaid === (statusFilter === 'paid'));
+        if (deliveryFilter !== 'all') list = list.filter(o => o.isDelivered === (deliveryFilter === 'delivered'));
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
                 o.orderNumber.toLowerCase().includes(q) ||
                 (o.customer && `${o.customer.firstName} ${o.customer.lastName}`.toLowerCase().includes(q)) ||
-                (o.customName && o.customName.toLowerCase().includes(q)) ||
-                (o.notes && o.notes.toLowerCase().includes(q))
+                (o.customName && o.customName.toLowerCase().includes(q))
             );
         }
         return list;
@@ -114,29 +108,6 @@ export default function BreadPage() {
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
     }, []);
-
-    const toggleOrderSelection = useCallback((uuid: string) => {
-        setSelectedOrders(prev => {
-            const next = new Set(prev);
-            if (next.has(uuid)) next.delete(uuid);
-            else next.add(uuid);
-            return next;
-        });
-    }, []);
-
-    const handleBulkDeliver = useCallback(async () => {
-        if (selectedOrders.size === 0) return;
-        setIsProcessing(true);
-        try {
-            await breadService.bulkUpdateDeliveryStatus(Array.from(selectedOrders), true);
-            toast.success(`${selectedOrders.size} commandes marquées comme livrées.`);
-            setSelectedOrders(new Set());
-        } catch (e) {
-            toast.error("Échec de la mise à jour groupée.");
-        } finally {
-            setIsProcessing(false);
-        }
-    }, [selectedOrders]);
 
     const runAutomatedTask = useCallback(async () => {
         setIsProcessing(true);
@@ -158,19 +129,7 @@ export default function BreadPage() {
         { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false }
     ], 'LogistiquePain', isMounted);
 
-    const isFiltered = searchQuery !== '' || statusFilter !== 'all' || deliveryFilter !== 'all';
-
-    if (!isMounted) {
-        return (
-            <div className="p-6 space-y-6 max-w-[1800px] mx-auto">
-                <Skeleton className="h-10 w-64 rounded-xl" />
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
-                </div>
-                <Skeleton className="h-96 w-full rounded-2xl" />
-            </div>
-        );
-    }
+    if (!isMounted) return null;
 
     return (
         <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
@@ -181,35 +140,32 @@ export default function BreadPage() {
                 <div className="flex items-center gap-3">
                     <PrintBreadListDialog orders={filteredOrders} currentDate={formattedDate} />
                     
-                    <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setIsAutoBillingConfirmOpen(true)}
-                        disabled={isProcessing}
-                        className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
-                    >
-                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-                        Auto-Facturation
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setIsAutoBillingConfirmOpen(true)}
+                                    disabled={isProcessing}
+                                    className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
+                                >
+                                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+                                    Régularisation des comptes
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Transférer les dettes non payées des jours précédents au solde des clients</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9">
-                            <ChevronLeft className="h-5 w-5 text-primary" />
-                        </Button>
-                        <Button 
-                            variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} 
-                            onClick={() => setCurrentDate(new Date())} 
-                            className="rounded-xl h-9 px-4 text-[10px] uppercase font-bold"
-                        >
-                            Aujourd'hui
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9">
-                            <ChevronRight className="h-5 w-5 text-primary" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9"><ChevronLeft className="h-5 w-5 text-primary" /></Button>
+                        <Button variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} onClick={() => setCurrentDate(new Date())} className="rounded-xl h-9 px-4 text-[10px] uppercase font-bold">Aujourd'hui</Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9"><ChevronRight className="h-5 w-5 text-primary" /></Button>
                     </div>
                     
-                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-bold shadow-lg gap-2">
-                        <Plus className="h-4 w-4" /> Nouvelle [N]
+                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-bold shadow-lg gap-2 bg-primary text-primary-foreground">
+                        <Plus className="h-4 w-4" /> Nouvelle Commande [N]
                     </Button>
                 </div>
             </PageHeader>
@@ -217,58 +173,19 @@ export default function BreadPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <div className="flex flex-col lg:flex-row justify-between gap-4">
                     <TabsList className="bg-card/40 border border-white/5 p-1 h-12 rounded-2xl">
-                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-bold text-xs uppercase">
-                            <Calendar className="h-4 w-4 mr-2" /> Distribution
-                        </TabsTrigger>
-                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-bold text-xs uppercase">
-                            <Users className="h-4 w-4 mr-2" /> Abonnés Premium
-                        </TabsTrigger>
+                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-bold text-xs uppercase">Distribution du jour</TabsTrigger>
+                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-bold text-xs uppercase">Clients Abonnés</TabsTrigger>
                     </TabsList>
 
                     {activeTab === 'distribution' && (
                         <div className="flex gap-3 flex-grow max-w-4xl">
                             <div className="relative flex-grow group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
-                                <Input 
-                                    placeholder="Rechercher (Nom, N°, Note)..."
-                                    className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm"
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                />
-                                {searchQuery && (
-                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                                <Input placeholder="Rechercher par nom ou numéro..." className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                             </div>
-                            
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className={cn("h-11 rounded-xl gap-2", isFiltered && "bg-primary/10 border-primary/20")}>
-                                        <Filter className="h-4 w-4 opacity-40" />
-                                        Filtres
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="rounded-xl w-64 p-2">
-                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">Statut Paiement</DropdownMenuLabel>
-                                    <DropdownMenuRadioGroup value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="paid" className="text-xs font-bold text-emerald-500">Réglés</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold text-orange-500">Non Réglés</DropdownMenuRadioItem>
-                                    </DropdownMenuRadioGroup>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">État Livraison</DropdownMenuLabel>
-                                    <DropdownMenuRadioGroup value={deliveryFilter} onValueChange={(v: any) => setDeliveryFilter(v)}>
-                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="delivered" className="text-xs font-bold text-emerald-500">Livrés</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="pending" className="text-xs font-bold text-amber-500">En attente</DropdownMenuRadioItem>
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
                             <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
-                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')} title="Vue Grille"><LayoutGrid className="h-4 w-4"/></Button>
-                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')} title="Vue Liste"><List className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                             </div>
                         </div>
                     )}
@@ -284,24 +201,29 @@ export default function BreadPage() {
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
                             icon={Search} 
-                            title="Aucune distribution" 
-                            description={isFiltered ? "Aucun ordre ne correspond à vos filtres." : "Aucune commande enregistrée pour cette date."} 
+                            title="Aucune commande détectée" 
+                            description={searchQuery ? "Aucun résultat pour cette recherche." : "Aucune commande enregistrée pour ce jour."}
+                            actionLabel="Créer une commande"
+                            onAction={() => setIsFormOpen(true)}
                         />
                     ) : (
                         <div className="animate-in fade-in duration-500">
                             {viewMode === 'list' ? (
                                 <div className="bg-card/40 rounded-lg border border-white/5 overflow-hidden">
-                                    <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={toggleOrderSelection} />
+                                    <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={(id) => setSelectedOrders(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(id)) next.delete(id); else next.add(id);
+                                        return next;
+                                    })} />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                                     {filteredOrders.map(o => (
-                                        <BreadOrderCard 
-                                            key={o.uuid} 
-                                            order={o} 
-                                            isSelected={selectedOrders.has(o.uuid)} 
-                                            onToggleSelection={toggleOrderSelection} 
-                                        />
+                                        <BreadOrderCard key={o.uuid} order={o} isSelected={selectedOrders.has(o.uuid)} onToggleSelection={(id) => setSelectedOrders(prev => {
+                                            const next = new Set(prev);
+                                            if (next.has(id)) next.delete(id); else next.add(id);
+                                            return next;
+                                        })} />
                                     ))}
                                 </div>
                             )}
@@ -314,45 +236,18 @@ export default function BreadPage() {
                 </TabsContent>
             </Tabs>
 
-            {selectedOrders.size > 0 && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-6">
-                        <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-                            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">{selectedOrders.size}</div>
-                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Sélections</span>
-                        </div>
-                        <Button 
-                            onClick={handleBulkDeliver}
-                            disabled={isProcessing}
-                            className="h-12 px-8 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl gap-3"
-                        >
-                            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                            Marquer comme Livrés
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedOrders(new Set())} className="h-10 w-10 rounded-full hover:bg-white/10">
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            <BreadOrderForm 
-                isOpen={isMounted && isFormOpen} 
-                onOpenChange={setIsFormOpen} 
-                currentDate={formattedDate}
-                onSuccess={() => setIsFormOpen(false)}
-            />
+            <BreadOrderForm isOpen={isMounted && isFormOpen} onOpenChange={setIsFormOpen} currentDate={formattedDate} onSuccess={() => setIsFormOpen(false)} />
 
             <ConfirmAlertDialog
                 isOpen={isAutoBillingConfirmOpen}
                 onOpenChange={setIsAutoBillingConfirmOpen}
-                title="Lancer l'Auto-Facturation ?"
+                title="Régularisation automatique des comptes"
                 description={
                     <div className="space-y-4">
-                        <p>Cette operation va transformer tous les ordres non facturés des jours précédents en dettes clients réelles.</p>
+                        <p>Cette opération va transformer tous les ordres non payés des jours passés en dettes réelles sur les comptes clients.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
-                            <CheckCircle2 className="h-5 w-5 shrink-0" />
-                            <p className="text-xs font-bold uppercase">Action irréversible sur les soldes comptables.</p>
+                            <Info className="h-5 w-5 shrink-0" />
+                            <p className="text-xs font-bold uppercase">Ceci simplifie la gestion des créances en évitant de vérifier chaque jour manuellement.</p>
                         </div>
                     </div>
                 }
