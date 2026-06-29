@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
-import { startOfMonth, subMonths, format } from 'date-fns';
+import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeNumber, roundFinancial } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
