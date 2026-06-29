@@ -121,12 +121,12 @@ class BreadService {
                         name: `Pain - Commande ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        cartQuantity: safeNumber(order.quantity), // Fixed mapping for sale service
+                        cartQuantity: safeNumber(order.quantity), 
                         quantity: safeNumber(order.quantity),
                         barcodes: [],
                         minStockLevel: 0,
                         stockStatus: 'in_stock',
-                        syncStatus: 'pending',
+                        syncStatus: 'synced',
                         version: 1,
                         createdAt: new Date(),
                         updatedAt: new Date()

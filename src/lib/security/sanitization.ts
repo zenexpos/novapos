@@ -10,6 +10,7 @@ export const sanitizeString = (str: string): string => {
         .replace(/javascript:/gi, '') // Protocol attack prevention
         .replace(/onclick/gi, '') // Event handler prevention
         .replace(/on\w+=/gi, '') // Any onAttribute handlers
+        .replace(/eval\(.*\)/gi, '') // Eval prevention
         .trim();
 };
 
@@ -31,5 +32,5 @@ export const escapeHtml = (unsafe: string): string => {
  */
 export const sanitizeSearchQuery = (query: string): string => {
     if (!query) return '';
-    return query.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
+    return query.replace(/[^a-zA-Z0-9\s\-_@.]/g, '').trim();
 };

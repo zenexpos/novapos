@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 const SUPABASE_SQL_SCRIPT = `-- ══════════════════════════════════════════════════════════
--- iPOS Zen — Schéma Cloud Elite (Certifié v2.9.5)
+-- iPOS Zen — Schéma Cloud Elite (Certifié Production v2.9.5)
 -- ══════════════════════════════════════════════════════════
 
 -- 0. PRÉREQUIS : Extension pour les UUID
@@ -165,7 +165,7 @@ export function SupabaseSqlDialog() {
                 className="h-10 rounded-xl border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all gap-2 px-4"
             >
                 <Terminal className="h-4 w-4" />
-                Génير SQL Cloud
+                Générer SQL Cloud
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -177,7 +177,7 @@ export function SupabaseSqlDialog() {
                                     <Database className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <DialogTitle className="text-lg font-semibold tracking-tight">Initialisation Saphir Elite</DialogTitle>
+                                    <Database className="text-lg font-semibold tracking-tight">Initialisation Saphir Elite</Database>
                                     <DialogDescription className="font-medium text-[10px] uppercase text-primary/50">Schéma souverain certifié compatible v2.9.5</DialogDescription>
                                 </div>
                             </div>

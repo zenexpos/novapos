@@ -28,7 +28,7 @@ interface CartItemRowProps {
 
 /**
  * PRODUCTION OPTIMIZATION: Memoized Row Component.
- * Ensures the main sales UI remains reactive even with 100+ items.
+ * Ensures the main sales UI remains reactive even with high-frequency updates.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
@@ -160,7 +160,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                         )}
                     />
                 </div>
-                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Ligne HT</p>
+                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Total Ligne</p>
             </div>
 
             <Button 
@@ -229,7 +229,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-2">
                     <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scanneز un article pour commencer</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scannez un article pour commencer</p>
                 </div>
             </div>
         )
