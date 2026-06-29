@@ -5,6 +5,7 @@
 
 export const FINANCIAL_PRECISION = 2;
 export const QTY_PRECISION = 3;
+export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
  * Standard Financial Rounding (2 decimals).
@@ -14,7 +15,7 @@ export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
     // Correcting floating point precision drift before rounding
-    return Math.round((value + Number.EPSILON) * factor) / factor;
+    return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
 /**
@@ -23,7 +24,7 @@ export function roundFinancial(value: number): number {
 export function roundQty(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const multiplier = Math.pow(10, QTY_PRECISION);
-    return Math.round((value + Number.EPSILON) * multiplier) / multiplier;
+    return Math.round((value + FINANCIAL_EPSILON) * multiplier) / multiplier;
 }
 
 /**
@@ -91,21 +92,4 @@ export function calculateTVA(totalTTC: number, tvaRate: number): { ht: number, t
  */
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
     return calculateTVA(totalTTC, tvaRate).ht;
-}
-
-/**
- * Zakat Calculation Logic.
- */
-export function calculateZakat(netAssets: number, goldPrice: number) {
-    const nisab = goldPrice * 85;
-    const isEligible = netAssets >= nisab;
-    return {
-        due: isEligible,
-        amount: isEligible ? roundFinancial(netAssets * 0.025) : 0,
-        nisab
-    };
-}
-
-export function calculateNisab(goldPrice: number): number {
-    return roundFinancial(safeNumber(goldPrice) * 85);
 }

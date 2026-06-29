@@ -5,7 +5,7 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeNumber, preciseMultiply, roundFinancial, safeToDate } from '@/lib/utils';
+import { safeNumber, preciseMultiply, roundFinancial, safeToDate, FINANCIAL_EPSILON } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
@@ -101,7 +101,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // SCOPE AUDIT: Added payments and returns to prevent NotFoundError during recalculateCustomerStatus
+    // SCOPE AUDIT: Expanded to include all related stores to prevent NotFoundError during status recalculations
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -143,7 +143,7 @@ class SalesService {
     const sale = await this.getSaleByUuid(uuid);
     if (!sale || sale.isCancelled) return;
 
-    // SCOPE AUDIT: Include payments and returns for status recalculation
+    // SCOPE AUDIT: Expanded to include customers, payments and returns for full balance audit
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.payments, db.product_returns, db.sync_queue

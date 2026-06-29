@@ -241,7 +241,7 @@ export function CartDisplay() {
         return (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-10 space-y-8 animate-in fade-in duration-1000">
                 <div className="p-10 rounded-[3rem] bg-muted/20 border-2 border-dashed border-border shadow-inner relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 transition-opacity" />
                     <Calculator className="h-24 w-24 text-muted-foreground/10 relative z-10 group-hover:scale-110 transition-transform duration-700" />
                 </div>
                 <div className="space-y-4">

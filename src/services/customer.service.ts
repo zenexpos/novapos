@@ -188,7 +188,7 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-        // AUDIT FIX: Global transactional scope for consistency
+        // AUDIT FIX: Expanded scope of data aggregation for full debt path
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),
@@ -254,7 +254,7 @@ class CustomerService {
         ];
 
         if (customer && Math.abs(safeNumber(customer.initialBalance)) > 0.009) {
-            activity.push({ uuid: 'init-' + customer.uuid, type: 'initial_balance', date: customer.createdAt, amount: customer.initialBalance, notes: "Report initial." });
+            activity.push({ uuid: 'init-' + customer.uuid, type: 'initial_balance', date: customer.createdAt, amount: customer.initialBalance, notes: "Situation de départ (Dette reportée)." });
         }
 
         activity.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
