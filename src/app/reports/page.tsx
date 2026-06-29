@@ -41,7 +41,14 @@ export default function ReportsPage() {
 
     useEffect(() => {
         setIsMounted(true);
+        // Defer time-sensitive operations to client mount to avoid hydration mismatch
         setCurrentTime(new Date().toLocaleString('fr-FR'));
+        
+        const timer = setInterval(() => {
+            setCurrentTime(new Date().toLocaleString('fr-FR'));
+        }, 60000);
+        
+        return () => clearInterval(timer);
     }, []);
 
     const stats = statsResult.value;

@@ -44,8 +44,10 @@ CREATE TABLE IF NOT EXISTS company_profile (
     zakat_use_sale_price  BOOLEAN DEFAULT true,
     last_sync_at          TIMESTAMPTZ,
     created_at            TIMESTAMPTZ DEFAULT NOW(),
-    updated_at            TIMESTAMPTZ DEFAULT NOW()
+    updated_at            TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at            TIMESTAMPTZ -- Logic Delete support for cloud
 );
+CREATE INDEX IF NOT EXISTS idx_company_profile_updated ON company_profile(updated_at);
 
 -- 2. PARTENAIRES (FOURNISSEURS)
 CREATE TABLE IF NOT EXISTS suppliers (
@@ -58,14 +60,16 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at      TIMESTAMPTZ DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS idx_suppliers_deleted_at ON suppliers(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_suppliers_deleted_at ON suppliers(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
+CREATE INDEX IF NOT EXISTS idx_suppliers_updated ON suppliers(updated_at);
 
 -- 3. FICHIER CLIENTS
 CREATE TABLE IF NOT EXISTS customers (
     uuid                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name            TEXT NOT NULL,
     last_name             TEXT NOT NULL,
+    search_name           TEXT,
     phone                 TEXT,
     address               TEXT,
     credit_limit          NUMERIC(15,2) DEFAULT 0,
@@ -76,8 +80,9 @@ CREATE TABLE IF NOT EXISTS customers (
     updated_at            TIMESTAMPTZ DEFAULT NOW(),
     deleted_at            TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS idx_customers_deleted_at ON customers(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_customers_deleted_at ON customers(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_customers_outstanding_balance ON customers(outstanding_balance);
+CREATE INDEX IF NOT EXISTS idx_customers_updated ON customers(updated_at);
 
 -- 4. CATALOGUE PRODUITS
 CREATE TABLE IF NOT EXISTS products (
@@ -90,12 +95,14 @@ CREATE TABLE IF NOT EXISTS products (
     barcodes          TEXT[],
     unit              TEXT DEFAULT 'Pièce',
     stock_status      TEXT DEFAULT 'in_stock',
+    category          TEXT DEFAULT 'Général',
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW(),
     deleted_at        TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_products_barcodes ON products USING GIN (barcodes);
+CREATE INDEX IF NOT EXISTS idx_products_updated ON products(updated_at);
 
 -- 5. GRAND LIVRE DES VENTES
 CREATE TABLE IF NOT EXISTS sales (
@@ -113,6 +120,8 @@ CREATE TABLE IF NOT EXISTS sales (
 );
 CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at);
 CREATE INDEX IF NOT EXISTS idx_sales_invoice_number ON sales(invoice_number);
+CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_uuid);
+CREATE INDEX IF NOT EXISTS idx_sales_updated ON sales(updated_at);
 
 -- 6. LOGISTIQUE DE DISTRIBUTION (BREAD)
 CREATE TABLE IF NOT EXISTS bread_orders (
@@ -125,9 +134,11 @@ CREATE TABLE IF NOT EXISTS bread_orders (
     is_delivered      BOOLEAN DEFAULT false,
     sale_uuid         UUID REFERENCES sales(uuid) ON DELETE SET NULL,
     created_at        TIMESTAMPTZ DEFAULT NOW(),
-    updated_at        TIMESTAMPTZ DEFAULT NOW()
+    updated_at        TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at        TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_bread_orders_date ON bread_orders(date);
+CREATE INDEX IF NOT EXISTS idx_bread_orders_updated ON bread_orders(updated_at);
 
 -- 7. AUDIT DES STOCKS
 CREATE TABLE IF NOT EXISTS inventory_logs (
@@ -140,6 +151,35 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
     created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_inventory_logs_product_uuid ON inventory_logs(product_uuid);
+CREATE INDEX IF NOT EXISTS idx_inventory_logs_created ON inventory_logs(created_at);
+
+-- 8. CHARGES (EXPENSES)
+CREATE TABLE IF NOT EXISTS expenses (
+    uuid              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    description       TEXT NOT NULL,
+    category          TEXT NOT NULL,
+    amount            NUMERIC(15,2) NOT NULL,
+    expense_date      TIMESTAMPTZ NOT NULL,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at        TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_updated ON expenses(updated_at);
+
+-- 9. VERSEMENTS (PAYMENTS)
+CREATE TABLE IF NOT EXISTS payments (
+    uuid              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_uuid     UUID REFERENCES customers(uuid) ON DELETE CASCADE,
+    amount            NUMERIC(15,2) NOT NULL,
+    payment_date      TIMESTAMPTZ NOT NULL,
+    notes             TEXT,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at        TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_uuid);
+CREATE INDEX IF NOT EXISTS idx_payments_updated ON payments(updated_at);
 `;
 
 export function SupabaseSqlDialog() {
@@ -177,7 +217,7 @@ export function SupabaseSqlDialog() {
                                     <Database className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <Database className="text-lg font-semibold tracking-tight">Initialisation Saphir Elite</Database>
+                                    <DialogTitle className="text-lg font-semibold tracking-tight">Initialisation Saphir Elite</DialogTitle>
                                     <DialogDescription className="font-medium text-[10px] uppercase text-primary/50">Schéma souverain certifié compatible v2.9.5</DialogDescription>
                                 </div>
                             </div>
