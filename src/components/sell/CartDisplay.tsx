@@ -27,7 +27,8 @@ interface CartItemRowProps {
 }
 
 /**
- * PRODUCTION OPTIMIZATION: Memoized Row Component to handle large carts smoothly.
+ * PRODUCTION OPTIMIZATION: Memoized Row Component.
+ * Ensures the main sales UI remains reactive even with 100+ items.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);

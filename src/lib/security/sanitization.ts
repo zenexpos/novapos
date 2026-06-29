@@ -13,12 +13,9 @@ export const sanitizeString = (str: string): string => {
         .trim();
 };
 
-export const sanitizeSearchQuery = (query: string): string => {
-    if (!query) return '';
-    // Allow alphanumeric, spaces, and basic separators for barcodes/refs
-    return query.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
-};
-
+/**
+ * Robust HTML escaping for output rendering.
+ */
 export const escapeHtml = (unsafe: string): string => {
     if (!unsafe || typeof unsafe !== 'string') return '';
     return unsafe
@@ -27,4 +24,12 @@ export const escapeHtml = (unsafe: string): string => {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+};
+
+/**
+ * Sanitizes search queries to allow only safe characters for barcodes and names.
+ */
+export const sanitizeSearchQuery = (query: string): string => {
+    if (!query) return '';
+    return query.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
 };
