@@ -192,7 +192,6 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-        // Scope safety: Access outside transaction first if needed, but here we're inside or caller provided scope
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),

@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+/**
+ * Clock Component - Hydration Safe.
+ * PRODUCTION AUDIT: Prevents SSR mismatch by deferring rendering until client mount.
+ */
 export function Clock() {
     const [now, setNow] = useState<Date | null>(null);
 
@@ -13,10 +17,17 @@ export function Clock() {
         return () => clearInterval(id);
     }, []);
 
-    if (!now) return null;
+    if (!now) {
+        return (
+            <div className="hidden xl:flex flex-col items-end leading-tight select-none opacity-20">
+                <span className="text-[11px] font-black tabular-nums tracking-tight">--:--</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest">Chargement...</span>
+            </div>
+        );
+    }
 
     return (
-        <div className="hidden xl:flex flex-col items-end leading-tight select-none">
+        <div className="hidden xl:flex flex-col items-end leading-tight select-none animate-in fade-in duration-500">
             <span className="text-[11px] font-black tabular-nums text-foreground/80 tracking-tight">
                 {format(now, 'HH:mm')}
             </span>

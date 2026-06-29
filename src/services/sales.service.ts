@@ -111,7 +111,7 @@ class SalesService {
       
       // Stock adjustment with audited log
       for (const item of saleData.items) {
-        if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD' && item.uuid !== 'BREAD_PRODUCT') {
+        if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
             item.uuid, 
             -item.cartQuantity, 
@@ -143,6 +143,7 @@ class SalesService {
     const sale = await this.getSaleByUuid(uuid);
     if (!sale || sale.isCancelled) return;
 
+    // SCOPE AUDIT: Include payments and returns for status recalculation
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.payments, db.product_returns, db.sync_queue
@@ -201,6 +202,7 @@ class SalesService {
     from?: Date;
     to?: Date;
   }): Promise<Sale[]> {
+    const { startOfDay, endOfDay } = await import('date-fns');
     let collection = db.sales.toCollection();
 
     if (filters.from) {

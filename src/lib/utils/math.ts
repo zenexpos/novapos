@@ -93,22 +93,3 @@ export function calculateTVA(totalTTC: number, tvaRate: number): { ht: number, t
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
     return calculateTVA(totalTTC, tvaRate).ht;
 }
-
-/**
- * Zakat Helper - Calculate Nissab
- */
-export function calculateNisab(goldPrice: number): number {
-    return roundFinancial(85 * goldPrice);
-}
-
-/**
- * Zakat Helper - Calculate Due Amount
- */
-export function calculateZakat(assets: number, goldPrice: number): { due: boolean, amount: number } {
-    const threshold = calculateNisab(goldPrice);
-    const isDue = assets >= threshold;
-    return {
-        due: isDue,
-        amount: isDue ? roundFinancial(assets * 0.025) : 0
-    };
-}
