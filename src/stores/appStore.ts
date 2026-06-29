@@ -183,7 +183,7 @@ export const useAppStore = create<AppState>()(
                         let itemsTotalCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        // TRANSACTION SCOPE FIX: Included all required stores for recalculateSupplierBalance
+                        // TRANSACTION SCOPE AUDIT: Included all required stores for recalculateSupplierBalance
                         await db.transaction('rw', [
                             db.products, db.suppliers, db.stock_intakes, 
                             db.inventory_logs, db.supplier_payments, db.sync_queue
@@ -256,8 +256,8 @@ export const useAppStore = create<AppState>()(
                             
                             await db.stock_intakes.add(newIntake);
                             
-                            // Audit: Recalculate supplier balance
-                            await supplierService.updateSupplierBalance(supplier.uuid, total);
+                            // AUDIT FIX: Use full recalculated balance path
+                            await supplierService.recalculateSupplierBalance(supplier.uuid);
                             
                             await db.sync_queue.add({ 
                                 table: 'stock_intakes', 

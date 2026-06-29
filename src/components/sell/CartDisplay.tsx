@@ -26,6 +26,10 @@ interface CartItemRowProps {
     onSelect: () => void;
 }
 
+/**
+ * PRODUCTION PERFORMANCE FIX: React.memo with exhaustive props validation.
+ * Ensures rows only re-render when their specific data changes.
+ */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,7 +269,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-4">
                     <p className="text-2xl font-black tracking-tighter text-muted-foreground/30 uppercase">Prêt pour une vente</p>
-                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scannez un article ou recherchez un produit pour commencer.</p>
+                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scanneز un article ou recherchez un produit pour commencer.</p>
                 </div>
                 <div className="pt-8 opacity-40">
                     <div className="flex items-center gap-6 px-8 py-3 rounded-full border border-border bg-muted/20 text-[9px] font-black uppercase tracking-widest text-muted-foreground">

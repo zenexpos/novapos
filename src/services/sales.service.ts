@@ -143,7 +143,7 @@ class SalesService {
     const sale = await this.getSaleByUuid(uuid);
     if (!sale || sale.isCancelled) return;
 
-    // FIX: Included all required stores for recalculateCustomerStatus
+    // FIXED: Included all required stores for recalculateCustomerStatus
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.payments, db.product_returns, db.sync_queue
