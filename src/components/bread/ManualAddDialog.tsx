@@ -1,2 +1,5 @@
-// Deprecated: Logic migrated to BreadOrderForm.tsx for better architectural cohesion.
+'use client';
+/**
+ * @fileOverview Composant déprécié. Logique migrée dans BreadOrderForm.tsx.
+ */
 export const ManualAddDialog = () => null;

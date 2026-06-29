@@ -101,6 +101,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
+    // Included all relevant stores for recalculateCustomerStatus audit trail
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,

@@ -187,6 +187,7 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
+        // Audit Trail: Recalculate using raw source data
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),

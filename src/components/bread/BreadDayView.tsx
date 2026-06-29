@@ -1,2 +1,5 @@
-// Deprecated: View logic consolidated in src/app/bread/page.tsx for performance optimization.
+'use client';
+/**
+ * @fileOverview Composant déprécié. Logique consolidée dans src/app/bread/page.tsx.
+ */
 export const BreadDayView = () => null;

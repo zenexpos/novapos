@@ -183,8 +183,11 @@ export const useAppStore = create<AppState>()(
                         let itemsTotalCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        // FIX: Added supplier_payments to the transaction array for recalculateSupplierBalance
-                        await db.transaction('rw', [db.products, db.suppliers, db.stock_intakes, db.inventory_logs, db.supplier_payments, db.sync_queue], async () => {
+                        // TRANSACTION SCOPE FIX: Included all required stores for recalculateSupplierBalance
+                        await db.transaction('rw', [
+                            db.products, db.suppliers, db.stock_intakes, 
+                            db.inventory_logs, db.supplier_payments, db.sync_queue
+                        ], async () => {
                             const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
                             for (const item of intakeData.items) {
@@ -196,24 +199,78 @@ export const useAppStore = create<AppState>()(
 
                                 let productUuid = item.productUuid;
                                 if (item.productUuid) {
-                                    await productService.updateProductFromIntake(item.productUuid, { purchasePrice: safeNumber(item.purchasePrice), price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined });
+                                    await productService.updateProductFromIntake(item.productUuid, { 
+                                        purchasePrice: safeNumber(item.purchasePrice), 
+                                        price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined 
+                                    });
                                 } else if (item.isNew) {
                                     productUuid = uuidv4();
-                                    await db.products.add({ uuid: productUuid, name: item.name, price: safeNumber(item.price), purchasePrice: safeNumber(item.purchasePrice), quantity: 0, minStockLevel: 0, barcodes: item.barcodes || [], unit: (item.unit as any) || 'Pièce', supplierUuid: supplier.uuid, stockStatus: 'out_of_stock', createdAt: new Date(), updatedAt: new Date(), syncStatus: 'pending', version: 1 });
+                                    await db.products.add({ 
+                                        uuid: productUuid, 
+                                        name: item.name, 
+                                        price: safeNumber(item.price), 
+                                        purchasePrice: safeNumber(item.purchasePrice), 
+                                        quantity: 0, 
+                                        minStockLevel: 0, 
+                                        barcodes: item.barcodes || [], 
+                                        unit: (item.unit as any) || 'Pièce', 
+                                        supplierUuid: supplier.uuid, 
+                                        stockStatus: 'out_of_stock', 
+                                        createdAt: new Date(), 
+                                        updatedAt: new Date(), 
+                                        syncStatus: 'pending', 
+                                        version: 1 
+                                    });
                                 }
-                                if (productUuid && qty > 0) await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
-                                if (productUuid) finalItems.push({ productUuid, productName: item.name, quantityReceived: qty, quantityDamaged: item.quantityDamaged, purchasePrice: safeNumber(item.purchasePrice), landingCost: landing });
+                                
+                                if (productUuid && qty > 0) {
+                                    await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
+                                }
+                                
+                                if (productUuid) {
+                                    finalItems.push({ 
+                                        productUuid, 
+                                        productName: item.name, 
+                                        quantityReceived: qty, 
+                                        quantityDamaged: item.quantityDamaged, 
+                                        purchasePrice: safeNumber(item.purchasePrice), 
+                                        landingCost: landing 
+                                    });
+                                }
                             }
 
                             const total = (itemsTotalCents + shippingCents) / 100;
-                            const newIntake = { uuid: intakeUuid, supplierUuid: supplier.uuid, invoiceNumber: intakeData.invoiceNumber, invoiceDate: intakeData.invoiceDate, shippingCost: intakeData.shippingCost, items: finalItems, totalValue: total, createdAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' as const, version: 1 };
+                            const newIntake = { 
+                                uuid: intakeUuid, 
+                                supplierUuid: supplier.uuid, 
+                                invoiceNumber: intakeData.invoiceNumber, 
+                                invoiceDate: intakeData.invoiceDate, 
+                                shippingCost: intakeData.shippingCost, 
+                                items: finalItems, 
+                                totalValue: total, 
+                                createdAt: new Date(), 
+                                updatedAt: new Date(), 
+                                syncStatus: 'pending' as const, 
+                                version: 1 
+                            };
+                            
                             await db.stock_intakes.add(newIntake);
+                            
+                            // Audit: Recalculate supplier balance
                             await supplierService.updateSupplierBalance(supplier.uuid, total);
-                            await db.sync_queue.add({ table: 'stock_intakes', operation: 'CREATE', payload: newIntake, timestamp: Date.now() });
+                            
+                            await db.sync_queue.add({ 
+                                table: 'stock_intakes', 
+                                operation: 'CREATE', 
+                                payload: newIntake, 
+                                timestamp: Date.now() 
+                            });
                         });
+                        
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
+                        console.error('Stock Intake Error:', err);
                         toast.error('Erreur stock', { description: err.message });
                         return false;
                     }
