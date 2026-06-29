@@ -14,6 +14,7 @@ export const FINANCIAL_EPSILON = Number.EPSILON;
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
+    // Correcting floating point precision drift before rounding
     return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
@@ -53,6 +54,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
+        // Round each line to avoid cumulative floating point errors
         return acc + roundFinancial(price * qty);
     }, 0);
 
