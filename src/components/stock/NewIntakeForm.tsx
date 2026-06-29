@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ShoppingBag, Truck, Hash, Loader2, PackagePlus, AlertCircle, ScanLine, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Save, ShoppingBag, Truck, Hash, Loader2, PackagePlus, AlertCircle, ScanLine, CheckCircle2, TrendingUp } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import type { Product, StockIntakeItem } from '@/lib/types';
@@ -184,7 +184,8 @@ export function NewIntakeForm() {
                                         <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 p-4">Désignation</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-center">Quantité</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">P.U Achat</TableHead>
-                                        <TableHead className="font-black text-[10px] uppercase text-primary/60 text-right">C. Revient</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-primary/60 text-right">P.U Vente</TableHead>
+                                        <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">C. Revient</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase text-emerald-500/60 text-right">Marge Est.</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase text-muted-foreground/60 text-right">Total HT</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
@@ -193,7 +194,7 @@ export function NewIntakeForm() {
                                 <TableBody>
                                     {items.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="h-80 text-center p-6 opacity-20">
+                                            <TableCell colSpan={8} className="h-80 text-center p-6 opacity-20">
                                                 <div className="flex flex-col items-center justify-center gap-6">
                                                     <PackagePlus className="h-16 w-16" />
                                                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">Scannez ou ajoutez des produits manuellement</p>
@@ -204,11 +205,12 @@ export function NewIntakeForm() {
                                         items.map((item) => {
                                             const qty = safeNumber(item.quantity);
                                             const cost = safeNumber(item.purchasePrice);
+                                            const sellPrice = safeNumber(item.price);
                                             // Precise landing cost calculation
                                             const landingCost = cost * (1 + shippingFactor);
                                             const rowTotal = preciseMultiply(qty, cost);
-                                            const margin = item.price > 0 ? ((item.price - landingCost) / item.price) * 100 : 0;
-                                            const isAtLoss = landingCost > item.price && item.price > 0;
+                                            const margin = sellPrice > 0 ? ((sellPrice - landingCost) / sellPrice) * 100 : 0;
+                                            const isAtLoss = landingCost > sellPrice && sellPrice > 0;
                                             
                                             return (
                                                 <TableRow key={item.id} className={cn("border-white/5 group hover:bg-white/5 transition-all", isAtLoss && "bg-destructive/5")}>
@@ -227,15 +229,25 @@ export function NewIntakeForm() {
                                                             step="0.001"
                                                             value={item.quantity} 
                                                             onChange={e => updateItem(item.id, 'quantity', e.target.value)}
-                                                            className="w-24 h-9 text-center bg-black/20 border-none mx-auto font-black"
+                                                            className="w-20 h-9 text-center bg-black/20 border-none mx-auto font-black"
                                                         />
                                                     </TableCell>
                                                     <TableCell className="p-4 text-right">
                                                         <Input 
                                                             type="number" 
+                                                            step="0.01"
                                                             value={item.purchasePrice || ''} 
                                                             onChange={e => updateItem(item.id, 'purchasePrice', e.target.value)}
-                                                            className="w-24 h-9 text-right bg-black/20 border-none font-mono font-black ml-auto"
+                                                            className="w-20 h-9 text-right bg-black/20 border-none font-mono font-black ml-auto"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="p-4 text-right">
+                                                        <Input 
+                                                            type="number" 
+                                                            step="0.01"
+                                                            value={item.price || ''} 
+                                                            onChange={e => updateItem(item.id, 'price', e.target.value)}
+                                                            className="w-20 h-9 text-right bg-primary/10 border-none font-mono font-black text-primary ml-auto shadow-inner"
                                                         />
                                                     </TableCell>
                                                     <TableCell className="p-4 text-right">
