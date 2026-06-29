@@ -51,7 +51,7 @@ export default function ReportsPage() {
     const handleGenerateZReport = async () => {
         toast.promise(closingService.generateDailyZReport(), {
             loading: 'Calcul de la clôture du jour...',
-            success: 'Rapport généré avec succès',
+            success: 'Rapport généré مع نجاح',
             error: 'Erreur lors du calcul'
         });
     };
