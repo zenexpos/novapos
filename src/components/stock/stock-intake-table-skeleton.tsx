@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /**
- * Skeleton لجدول استلامات المخزون لضمان تجربة مستخدم سلسة أثناء التحميل.
+ * Skeleton pour le tableau des réceptions de stock afin d'assurer une expérience utilisateur fluide pendant le chargement.
  */
 export function StockIntakeTableSkeleton() {
     return (

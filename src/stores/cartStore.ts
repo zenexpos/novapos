@@ -188,7 +188,7 @@ export const useCartStore = create<CartState>()(
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
                         
                         if (isStocked && calculatedQty > item.quantity + FINANCIAL_EPSILON) {
-                            toast.error('Stock insuffisant pour ce مبلغ');
+                            toast.error('Stock insuffisant pour ce montant');
                             return;
                         }
                         

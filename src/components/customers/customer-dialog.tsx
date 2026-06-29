@@ -197,7 +197,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                     <input id="initialBalance" type="number" placeholder="0.00 DA" value={formState.initialBalance || ''} onChange={handleInputChange} className="flex h-14 w-full rounded-xl bg-background border-none px-4 py-2 font-black text-2xl text-destructive text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-inner" />
                                     <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-destructive/20">DA</span>
                                 </div>
-                                <p className="text-[10px] text-destructive/50 text-center font-bold uppercase tracking-tight">Attention : Ce montant sera considéré comme une deتهتةيةتtte exigible dès la validation.</p>
+                                <p className="text-[10px] text-destructive/50 text-center font-bold uppercase tracking-tight">Attention : Ce montant sera considéré comme une dette exigible dès la validation.</p>
                             </div>
                         </div>
                     </div>
