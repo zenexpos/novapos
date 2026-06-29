@@ -1,7 +1,8 @@
+
 'use client';
 import React from 'react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -65,6 +66,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
             setFormState(initialFormState);
         }
         setError(null);
+        setSupplierSearch('');
     }, [product, isOpen, suppliers]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,9 +90,30 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
     const handleSupplierSelect = (uuid: string) => {
         const selected = suppliers.find(s => s.uuid === uuid);
-        if (selected) setFormState(prev => ({ ...prev, supplierUuid: selected.uuid, supplierName: selected.name }));
-        setSupplierPopoverOpen(false);
+        if (selected) {
+            setFormState(prev => ({ ...prev, supplierUuid: selected.uuid, supplierName: selected.name }));
+            setSupplierPopoverOpen(false);
+        }
     };
+
+    const handleCreateNewSupplier = (name: string) => {
+        setFormState(prev => ({ ...prev, supplierUuid: undefined, supplierName: name }));
+        setSupplierPopoverOpen(false);
+        toast.info(`Nouveau fournisseur: "${name}"`, {
+            description: "Il sera créé automatiquement lors de l'enregistrement du produit."
+        });
+    };
+
+    const filteredSuppliers = useMemo(() => {
+        if (!supplierSearch.trim()) return suppliers.slice(0, 20);
+        const q = supplierSearch.toLowerCase().trim();
+        return suppliers.filter(s => s.name.toLowerCase().includes(q));
+    }, [suppliers, supplierSearch]);
+
+    const showCreateOption = useMemo(() => {
+        if (!supplierSearch.trim()) return false;
+        return !suppliers.some(s => s.name.toLowerCase() === supplierSearch.toLowerCase().trim());
+    }, [suppliers, supplierSearch]);
 
     const proceedWithSubmit = async () => {
         if (isLoading) return;
@@ -124,7 +147,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
             onOpenChange(false);
             onSuccess();
         } catch (err: any) {
-            setError(err.message || "Une erreur est survenue.");
+            setError(err.message || "Une erreur est برزت.");
         } finally {
             setIsLoading(false);
         }
@@ -177,7 +200,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 <Package className="h-6 w-6" />
                             </div>
                             <div>
-                                <DialogTitle className="text-lg font-semibold tracking-tight">{product ? 'Éدition Elite' : 'Nouveau Produit Elite'}</DialogTitle>
+                                <DialogTitle className="text-lg font-semibold tracking-tight">{product ? 'Édition Elite' : 'Nouveau Produit Elite'}</DialogTitle>
                                 <DialogDescription className="font-medium">Paramétrage technique de la fiche produit Premium.</DialogDescription>
                             </div>
                         </div>
@@ -212,32 +235,21 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl shadow-sm border-white/5 overflow-hidden">
-                                                <Command>
+                                                <Command shouldFilter={false}>
                                                     <CommandInput 
                                                         placeholder="Chercher..." 
+                                                        value={supplierSearch}
                                                         onValueChange={setSupplierSearch} 
                                                     />
                                                     <CommandList>
                                                         <CommandEmpty>
-                                                            {supplierSearch && (
-                                                                <div 
-                                                                    className="p-4 text-center cursor-pointer hover:bg-primary/5 transition-colors"
-                                                                    onClick={() => {
-                                                                        setFormState(p => ({...p, supplierName: supplierSearch, supplierUuid: undefined}));
-                                                                        setSupplierPopoverOpen(false);
-                                                                        toast.info(`Nouveau fournisseur: "${supplierSearch}" (sera créé au moment du passage)`);
-                                                                    }}
-                                                                >
-                                                                    <Plus className="inline-block h-3.5 w-3.5 mr-2" />
-                                                                    Créer "{supplierSearch}"
-                                                                </div>
-                                                            )}
+                                                            {!showCreateOption && <p className="p-4 text-xs text-muted-foreground text-center">Aucun fournisseur trouvé</p>}
                                                         </CommandEmpty>
                                                         <CommandGroup>
-                                                            {suppliers.map(s => (
+                                                            {filteredSuppliers.map(s => (
                                                                 <CommandItem 
                                                                     key={s.uuid} 
-                                                                    value={s.name} 
+                                                                    value={s.uuid}
                                                                     onSelect={() => handleSupplierSelect(s.uuid)} 
                                                                     className="font-bold flex items-center justify-between"
                                                                 >
@@ -246,6 +258,18 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                                                 </CommandItem>
                                                             ))}
                                                         </CommandGroup>
+                                                        {showCreateOption && (
+                                                            <CommandGroup heading="Action">
+                                                                <CommandItem 
+                                                                    value="create-new"
+                                                                    onSelect={() => handleCreateNewSupplier(supplierSearch)}
+                                                                    className="text-primary font-bold"
+                                                                >
+                                                                    <Plus className="mr-2 h-4 w-4" />
+                                                                    Créer "{supplierSearch}"
+                                                                </CommandItem>
+                                                            </CommandGroup>
+                                                        )}
                                                     </CommandList>
                                                 </Command>
                                             </PopoverContent>
