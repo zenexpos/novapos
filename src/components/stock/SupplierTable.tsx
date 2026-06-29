@@ -85,7 +85,7 @@ export function SupplierTable({
                         <TableHead className="p-6 font-semibold text-[10px] uppercase text-muted-foreground/60">Contact Elite</TableHead>
                         <TableHead className="p-6 text-right">
                             <button onClick={() => handleSort('balance')} className="flex items-center justify-end w-full text-[10px] font-black uppercase text-destructive hover:text-primary transition-colors">
-                                Solde Du (Dette) <SortIcon colKey="balance" />
+                                Solde Dû <SortIcon colKey="balance" />
                             </button>
                         </TableHead>
                         <TableHead className="p-6 w-[150px] text-right font-semibold text-[10px] uppercase text-muted-foreground/60">Gestion</TableHead>
@@ -144,7 +144,7 @@ export function SupplierTable({
                                     </div>
                                 </TableCell>
                                 <TableCell className="p-6 text-right" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-10 transition-opacity duration-300">
                                         <Button 
                                             variant="outline" 
                                             size="icon" 

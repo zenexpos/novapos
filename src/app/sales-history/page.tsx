@@ -326,7 +326,7 @@ export default function SalesHistoryPage() {
                                         item.type === 'sale' ? (
                                             <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Client de passage'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
                                         ) : (
-                                            <Card key={item.data.uuid} className="app-card group bg-emerald-500/5 backdrop-blur-sm border-emerald-500/10 relative overflow-hidden rounded-lg p-6">
+                                            <Card key={item.data.uuid} className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm p-6 relative overflow-hidden group">
                                                 <div className="absolute -right-4 -top-4 opacity-[0.05] text-emerald-500 group-hover:opacity-10 transition-opacity"><HandCoins className="h-32 w-32 rotate-12" /></div>
                                                 <div className="flex justify-between items-start mb-6"><div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-inner"><HandCoins className="h-6 w-6" /></div><Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-3 py-1">Paiement Reçu</Badge></div>
                                                 <div className="space-y-1"><p className="text-[10px] font-semibold text-muted-foreground/40 uppercase">Encaissement Dette</p><p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p></div>
@@ -359,7 +359,7 @@ export default function SalesHistoryPage() {
             <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={selectedSale} />
             <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => historyDataResult.refresh()} />
             <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'Client de passage'} />
-            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action definitiva : réintégration du stock et ajustement τῶν soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
+            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Action définitive : réintégration du stock et ajustement des soldes clients." onConfirm={handleBulkCancel} confirmText="Confirmer Annulation" />
         </div>
     );
 }

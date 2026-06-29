@@ -5,25 +5,24 @@ import type { Product } from '@/lib/types';
 import { productService } from './product.service';
 
 /**
- * @fileOverview محرك التحليل السيمانتيكي لنتائج OCR.
- * يستخرج المنتجات والأسعار والكميات والموردين بذكاء.
+ * OCR Semantic Parsing Engine.
+ * Extracts products, prices, quantities and suppliers intelligently.
  */
 class OcrParserService {
-    // الكلمات الدلالية للأعمدة (بالعربية والفرنسية)
+    // Semantic keywords for column identification
     private readonly keywords = {
-        quantity: ['qte', 'quantité', 'quantite', 'qty', 'الكمية', 'الكميه', 'عد'],
-        price: ['pu', 'p.u', 'prix', 'unitaire', 'achat', 'السعر', 'سعر', 'ثمن'],
-        total: ['total', 'montant', 'ttc', 'ht', 'الإجمالي', 'الاجمالي', 'المجموع', 'مبلغ'],
-        designation: ['produit', 'désignation', 'designation', 'article', 'item', 'المنتج', 'الصنف', 'المادة', 'التعيين']
+        quantity: ['qte', 'quantité', 'quantite', 'qty'],
+        price: ['pu', 'p.u', 'prix', 'unitaire', 'achat'],
+        total: ['total', 'montant', 'ttc', 'ht'],
+        designation: ['produit', 'désignation', 'designation', 'article', 'item']
     };
 
     /**
-     * محاولة اكتشاف المورد من النص الخام.
+     * Attempts to detect supplier from raw text.
      */
     detectSupplier(text: string): string | null {
-        // المورد غالباً ما يكون في السطور الثلاثة الأولى أو بعد كلمات "مؤسسة" أو "شركة"
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-        const supplierKeywords = ['شركة', 'مؤسسة', 'EURL', 'SARL', 'ETS', 'ETS.', 'GROUPE'];
+        const supplierKeywords = ['EURL', 'SARL', 'ETS', 'ETS.', 'GROUPE'];
         
         for (const line of lines.slice(0, 5)) {
             if (supplierKeywords.some(kw => line.toUpperCase().includes(kw))) {
@@ -34,7 +33,7 @@ class OcrParserService {
     }
 
     /**
-     * تحليل السطور لاستخراج كائنات المنتجات.
+     * Parses invoice lines to extract product objects.
      */
     async parseInvoiceLines(lines: string[]): Promise<any[]> {
         const extractedItems: any[] = [];
@@ -43,11 +42,11 @@ class OcrParserService {
         for (const line of lines) {
             const cleanLine = this.cleanOcrText(line).trim().replace(/,/g, '.');
             
-            // البحث عن مجموعات الأرقام
+            // Search for number groups
             const numbers = cleanLine.match(/(\d+(?:\.\d+)?)/g);
             
             if (numbers && numbers.length >= 1) {
-                // استخراج الاسم (كل ما ليس رقماً أو رمزاً مالياً)
+                // Extract name (everything that is not a number or financial symbol)
                 const namePart = cleanLine.replace(/[\d.,]/g, '').replace(/[€$£]/g, '').trim();
                 
                 if (namePart.length > 2) {

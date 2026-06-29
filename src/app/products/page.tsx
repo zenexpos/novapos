@@ -42,7 +42,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -271,7 +270,7 @@ function ProductsContent() {
             >
                 <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
-                        <FileUp className="mr-2 h-4 w-4" /> Exporter Manifestه
+                        <FileUp className="mr-2 h-4 w-4" /> Exporter Manifeste
                     </Button>
                     <Button asChild variant="outline" disabled={isAnalyzing} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-primary/20 hover:bg-primary/5 shadow-sm">
                         <label htmlFor="csv-product-importer" className="cursor-pointer flex items-center">
@@ -424,7 +423,7 @@ function ProductsContent() {
                     <EmptyState 
                         icon={Archive} 
                         title="Silence de Catalogue" 
-                        description={isFiltered ? "Ajustez vos filtres لidentifier les références." : "Commencez par ajouter votre premier article Elite."} 
+                        description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} 
                         actionLabel="Ajouter un produit"
                         onAction={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }}
                     />

@@ -62,7 +62,6 @@ export default function StockPage() {
     const [isDeleteSupplierOpen, setIsDeleteSupplierOpen] = useState(false);
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
 
-    // Optimized Live Queries
     const suppliersResult = useLiveQuery<Supplier[]>(async () => {
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
@@ -138,7 +137,6 @@ export default function StockPage() {
         return suppliers.reduce((sum, s) => sum + Math.round(safeNumber(s.balance) * 100), 0) / 100;
     }, [suppliers]);
 
-    // Handlers
     const handleViewDetails = (intake: StockIntake) => {
         setSelectedIntake(intake);
         setIsDetailsOpen(true);
@@ -208,7 +206,7 @@ export default function StockPage() {
             setSelectedSuppliers(new Set());
             suppliersResult.refresh();
         } catch (e: any) {
-            toast.error("Échec de la suppression groupée (Vérifiez فواتير والمدفوعات).");
+            toast.error("Échec de la suppression groupée (Vérifiez factures et paiements).");
         }
     };
 
@@ -412,7 +410,7 @@ export default function StockPage() {
                                 <EmptyState 
                                     icon={Building} 
                                     title="Carnet Partenaires Vide" 
-                                    description="Commenceز par ajouter votre premier fournisseur pour gérer vos achats." 
+                                    description="Commencez par ajouter votre premier fournisseur pour gérer vos achats." 
                                     actionLabel="Nouveau Fournisseur"
                                     onAction={handleAddSupplier}
                                 />
@@ -442,7 +440,7 @@ export default function StockPage() {
                 isOpen={isDeleteSupplierOpen} 
                 onOpenChange={setIsDeleteSupplierOpen} 
                 title={`Révoquer le partenaire ${selectedSupplier?.name} ?`} 
-                description="Cette action est irréversible. Seuls les comptes مع رصيد صفر وبدون تاريخ فواتير نشط يمكن حذفهم." 
+                description="Cette action est irréversible. Seuls les comptes avec un solde nul et sans historique actif peuvent être supprimés." 
                 onConfirm={performDeleteSupplier} 
                 confirmText="Confirmer Révocation" 
             />
@@ -451,7 +449,7 @@ export default function StockPage() {
                 isOpen={isBulkDeleteSupplierOpen}
                 onOpenChange={setIsBulkDeleteSupplierOpen}
                 title={`Révoquer ${selectedSuppliers.size} partenaires ?`}
-                description="سيتم حذف الحسابات ذات الرصيد الصفري فقط ولن يتم حذف الشركاء الذين لديهم تاريخ استلام نشط لضمان سلامة البيانات."
+                description="Seuls les comptes avec un solde nul seront supprimés pour garantir l'intégrité des données."
                 onConfirm={handleBulkDeleteSuppliers}
                 confirmText="Confirmer Révocation Groupée"
             />

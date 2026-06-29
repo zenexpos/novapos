@@ -32,7 +32,8 @@ import {
     Search,
     ChevronRight,
     UserPlus,
-    Building2
+    Building2,
+    TrendingUp
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -53,7 +54,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn, safeNumber, formatCurrency } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Separator } from '@/components/ui/separator';
-import { v4 as uuidv4 } from 'uuid';
 
 interface ProductDialogProps {
     isOpen: boolean;
@@ -86,7 +86,6 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
     const [isLoading, setIsLoading] = useState(false);
     const [showPriceConfirm, setShowPriceConfirm] = useState(false);
 
-    // Supplier Selection State
     const [supplierSearch, setSupplierSearch] = useState('');
     const [isSupplierSelectOpen, setIsSupplierSelectOpen] = useState(false);
 
@@ -128,7 +127,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
     const handleSupplierSelect = (supplier: Supplier) => {
         setFormState(prev => ({ ...prev, supplierUuid: supplier.uuid, supplierName: supplier.name }));
         setIsSupplierSelectOpen(false);
-        toast.success(`تم اختيار المورد: ${supplier.name}`);
+        toast.success(`Fournisseur sélectionné : ${supplier.name}`);
     };
 
     const handleCreateNewSupplier = () => {
@@ -136,8 +135,8 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         if (!name) return;
         setFormState(prev => ({ ...prev, supplierUuid: undefined, supplierName: name }));
         setIsSupplierSelectOpen(false);
-        toast.info(`المورد "${name}" جديد`, {
-            description: "سيتم إنشاؤه تلقائياً عند حفظ المنتج."
+        toast.info(`Nouveau fournisseur : "${name}"`, {
+            description: "Il sera créé automatiquement lors de l'enregistrement du produit."
         });
     };
 
@@ -181,11 +180,11 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
             if (product) await productService.updateProduct(product.uuid, finalData);
             else await productService.addProduct(finalData);
             
-            toast.success(`تمت مزامنة المنتج بنجاح.`);
+            toast.success(`Produit enregistré avec succès.`);
             onOpenChange(false);
             onSuccess();
         } catch (err: any) {
-            setError(err.message || "حدث خطأ غير متوقع.");
+            setError(err.message || "Une erreur est survenue.");
         } finally {
             setIsLoading(false);
         }
@@ -205,7 +204,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
             key: 'Enter',
             ctrl: true,
             action: () => handleSubmit(),
-            description: 'حفظ المنتج',
+            description: 'Enregistrer le produit',
             ignoreInputFocus: true
         }
     ], 'ProductDialog', isOpen);
@@ -227,17 +226,17 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-4xl p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
                 <form onSubmit={handleSubmit}>
-                    <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
+                    <DialogHeader className="bg-primary/5 p-6 border-b border-primary/10">
                         <div className="flex items-center gap-4">
                             <div className="p-4 rounded-2xl bg-primary text-primary-foreground shadow-xl">
                                 <Package className="h-8 w-8" />
                             </div>
                             <div>
                                 <DialogTitle className="text-2xl font-black tracking-tight uppercase">
-                                    {product ? 'تعديل مرجع' : 'إضافة مرجع جديد'}
+                                    {product ? 'Édition du Produit' : 'Nouveau Produit Elite'}
                                 </DialogTitle>
                                 <DialogDescription className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40 mt-1">
-                                    {product ? `ID: ${product.uuid.substring(0,8)}` : 'بروتوكول إضافة منتج Elite'}
+                                    {product ? `ID: ${product.uuid.substring(0,8)}` : 'Protocole de création de référence'}
                                 </DialogDescription>
                             </div>
                         </div>
@@ -246,17 +245,16 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                     <div className="p-8 grid md:grid-cols-2 gap-x-12 gap-y-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
                         {error && <div className="md:col-span-2 p-4 bg-destructive/10 text-destructive rounded-2xl text-xs font-bold border border-destructive/20 text-center animate-in zoom-in-95">{error}</div>}
                         
-                        {/* SECTION 1: IDENTITY */}
                         <div className="space-y-6">
                             <SectionHeader 
-                                title="هوية المنتج" 
+                                title="Identité du Produit" 
                                 icon={FileText} 
-                                description="المعلومات الأساسية والتعريفية للمنتج."
+                                description="Informations de base et désignation."
                             />
                             
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name" className="text-[10px] font-black uppercase opacity-40 ml-1">التسمية التجارية *</Label>
+                                    <Label htmlFor="name" className="text-[10px] font-black uppercase opacity-40 ml-1">Désignation *</Label>
                                     <Input 
                                         id="name" 
                                         value={formState.name} 
@@ -269,7 +267,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase opacity-40 ml-1">الصنف</Label>
+                                        <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Catégorie</Label>
                                         <Input 
                                             id="category"
                                             value={formState.category} 
@@ -279,7 +277,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase opacity-40 ml-1">الوحدة</Label>
+                                        <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Unité</Label>
                                         <Select value={formState.unit} onValueChange={(value) => setFormState(s => ({ ...s, unit: value as any }))}>
                                             <SelectTrigger className="h-11 rounded-xl bg-muted/20 border-none shadow-inner font-bold">
                                                 <SelectValue />
@@ -292,7 +290,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase opacity-40 ml-1">المورد</Label>
+                                    <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Fournisseur</Label>
                                     <div 
                                         onClick={() => setIsSupplierSelectOpen(true)}
                                         className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/20 transition-all cursor-pointer group shadow-inner"
@@ -302,27 +300,26 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                                 <Building2 className="h-4 w-4 text-primary/60" />
                                             </div>
                                             <div className="flex flex-col -space-y-0.5">
-                                                <p className="font-bold text-sm tracking-tight">{formState.supplierName || "اختر مورداً..."}</p>
-                                                <p className="text-[9px] font-black uppercase text-muted-foreground/30 tracking-widest">{formState.supplierUuid ? "مورد مسجل" : "مورد جديد"}</p>
+                                                <p className="font-bold text-sm tracking-tight">{formState.supplierName || "Choisir un fournisseur..."}</p>
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground/30 tracking-widest">{formState.supplierUuid ? "Fournisseur enregistré" : "Nouveau fournisseur"}</p>
                                             </div>
                                         </div>
-                                        <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
+                                        <Search className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* SECTION 2: PRICING */}
                         <div className="space-y-6">
                             <SectionHeader 
-                                title="التسعير والهوامش" 
+                                title="Prix & Marges" 
                                 icon={Scale} 
-                                description="إدارة التكاليف وأرباح الوحدة."
+                                description="Gestion des coûts et profits."
                             />
                             
                             <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 space-y-6 shadow-inner">
                                 <div className="space-y-2">
-                                    <Label htmlFor="purchasePrice" className="text-[10px] font-black uppercase text-primary/60 ml-1">سعر الشراء (PMP)</Label>
+                                    <Label htmlFor="purchasePrice" className="text-[10px] font-black uppercase text-primary/60 ml-1">Prix d'Achat (PMP)</Label>
                                     <div className="relative group">
                                         <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/20 group-focus-within:text-primary transition-colors" />
                                         <Input 
@@ -339,7 +336,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="price" className="text-[10px] font-black uppercase text-primary ml-1">سعر البيع للجمهور</Label>
+                                    <Label htmlFor="price" className="text-[10px] font-black uppercase text-primary ml-1">Prix de Vente</Label>
                                     <div className="relative group">
                                         <div className="absolute -inset-1 bg-primary/20 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
                                         <Input 
@@ -358,7 +355,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 {safeNumber(formState.price) > 0 && (
                                     <div className="flex justify-between items-center px-2">
                                         <div className="flex flex-col">
-                                            <span className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-tighter">هامش الربح المقدر</span>
+                                            <span className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-tighter">Marge brute estimée</span>
                                             <span className={cn(
                                                 "text-lg font-black tracking-tighter",
                                                 safeNumber(formState.price) >= safeNumber(formState.purchasePrice) ? "text-emerald-500" : "text-destructive"
@@ -374,17 +371,16 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
                         <Separator className="md:col-span-2 bg-white/5" />
 
-                        {/* SECTION 3: STOCK */}
                         <div className="space-y-6">
                             <SectionHeader 
-                                title="المخزون واللوجستيات" 
+                                title="Stock & Logistique" 
                                 icon={Box} 
-                                description="متابعة الكميات وتنبيهات النقص."
+                                description="Gestion des quantités et alertes."
                             />
                             
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="quantity" className="text-[10px] font-black uppercase opacity-40 ml-1">الكمية المتوفرة</Label>
+                                    <Label htmlFor="quantity" className="text-[10px] font-black uppercase opacity-40 ml-1">Quantité en Stock</Label>
                                     <Input 
                                         id="quantity" 
                                         type="number" 
@@ -396,7 +392,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="minStockLevel" className="text-[10px] font-black uppercase text-amber-500/60 ml-1">تنبيه النقص (سواء)</Label>
+                                    <Label htmlFor="minStockLevel" className="text-[10px] font-black uppercase text-amber-500/60 ml-1">Seuil d'Alerte</Label>
                                     <Input 
                                         id="minStockLevel" 
                                         type="number" 
@@ -408,19 +404,18 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <Label className="text-[10px] font-black uppercase opacity-40 ml-1 flex items-center gap-2">
-                                        <CalendarClock className="h-3 w-3" /> تاريخ انتهاء الصلاحية
+                                        <CalendarClock className="h-3 w-3" /> Date d'Expiration
                                     </Label>
                                     <DatePicker date={formState.dateExpiration} setDate={(date) => setFormState(s => ({...s, dateExpiration: date }))}/>
                                 </div>
                             </div>
                         </div>
 
-                        {/* SECTION 4: BARCODES */}
                         <div className="space-y-6">
                             <SectionHeader 
-                                title="التتبع (Barcode)" 
+                                title="Traçabilité (Barcodes)" 
                                 icon={Hash} 
-                                description="إضافة رموز الباركود للتعرف السريع."
+                                description="Codes-barres pour identification rapide."
                             />
                             
                             <div className="p-6 rounded-3xl bg-black/40 border border-white/5 shadow-inner space-y-4">
@@ -432,7 +427,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                             onChange={(e) => setCurrentBarcode(e.target.value)} 
                                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddBarcode(); } }} 
                                             className="pl-10 h-11 rounded-xl bg-background border-none shadow-sm font-mono" 
-                                            placeholder="مسح أو إدخال..." 
+                                            placeholder="Scanner ou saisir..." 
                                         />
                                     </div>
                                     <Button type="button" onClick={handleAddBarcode} variant="secondary" className="h-11 w-11 rounded-xl border border-white/10 shadow-lg p-0">
@@ -442,7 +437,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 
                                 <div className="flex flex-wrap gap-2 min-h-12 items-start content-start">
                                     {formState.barcodes?.length === 0 ? (
-                                        <p className="text-[9px] font-bold uppercase text-muted-foreground/20 italic p-4 text-center w-full">لا يوجد كود محدد</p>
+                                        <p className="text-[9px] font-bold uppercase text-muted-foreground/20 italic p-4 text-center w-full">Aucun code défini</p>
                                     ) : (
                                         formState.barcodes?.map(b => (
                                             <Badge key={b} variant="outline" className="pl-3 pr-1 py-1.5 rounded-xl bg-muted/30 border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
@@ -464,7 +459,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
                     <DialogFooter className="p-6 bg-muted/30 border-t border-white/5 flex gap-4">
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-12 rounded-2xl font-black text-xs uppercase tracking-widest px-8" disabled={isLoading}>
-                            إلغاء
+                            Annuler
                         </Button>
                         <Button 
                             type="submit" 
@@ -472,14 +467,13 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                             className="flex-1 h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 gap-3"
                         >
                             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                            {product ? 'تحديث المرجع' : 'تأكيد الإضافة'}
+                            {product ? 'Mettre à jour' : 'Confirmer l\'ajout'}
                         </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
 
-        {/* PRICE LOSS CONFIRMATION */}
         <AlertDialog open={showPriceConfirm} onOpenChange={setShowPriceConfirm}>
             <AlertDialogContent className="rounded-3xl border-none shadow-2xl bg-card">
                 <AlertDialogHeader>
@@ -487,22 +481,21 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                         <div className="p-4 rounded-2xl bg-destructive/10">
                             <AlertTriangle className="h-8 w-8" />
                         </div>
-                        <AlertDialogTitle className="text-xl font-black tracking-tight uppercase">تنبيه: بيع بخسارة</AlertDialogTitle>
+                        <AlertDialogTitle className="text-xl font-black tracking-tight uppercase">Attention : Vente à perte</AlertDialogTitle>
                     </div>
                     <AlertDialogDescription className="text-sm font-medium leading-relaxed">
-                        سعر البيع (<b>{formatCurrency(formState.price || 0)}</b>) أقل من تكلفة الشراء (<b>{formatCurrency(formState.purchasePrice || 0)}</b>). هل أنت متأكد من تأكيد هذا السعر؟
+                        Le prix de vente (<b>{formatCurrency(formState.price || 0)}</b>) est inférieur au coût d'achat (<b>{formatCurrency(formState.purchasePrice || 0)}</b>). Souhaitez-vous confirmer ce prix ?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-3 mt-6">
-                    <AlertDialogCancel className="h-11 rounded-2xl font-bold border-none bg-muted/20">مراجعة</AlertDialogCancel>
+                    <AlertDialogCancel className="h-11 rounded-2xl font-bold border-none bg-muted/20">Réviser</AlertDialogCancel>
                     <AlertDialogAction onClick={proceedWithSubmit} className="h-11 rounded-2xl font-black text-xs uppercase bg-destructive hover:bg-destructive/90 shadow-xl">
-                        تأكيد البيع بخسارة
+                        Confirmer vente à perte
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
-        {/* SUPPLIER SELECTION DIALOG */}
         <Dialog open={isSupplierSelectOpen} onOpenChange={setIsSupplierSelectOpen}>
             <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
                 <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
@@ -511,8 +504,8 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                             <Building2 className="h-6 w-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight">قائمة الموردين</DialogTitle>
-                            <p className="text-[10px] font-bold uppercase text-primary/50">اختر مورداً لهذا المنتج</p>
+                            <DialogTitle className="text-xl font-black tracking-tight">Liste des Fournisseurs</DialogTitle>
+                            <p className="text-[10px] font-bold uppercase text-primary/50">Sélectionner un fournisseur pour ce produit</p>
                         </div>
                     </div>
                 </DialogHeader>
@@ -521,7 +514,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                     <div className="relative group">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <Input
-                            placeholder="البحث عن اسم المورد..."
+                            placeholder="Rechercher par nom..."
                             className="pl-14 h-11 text-lg font-bold rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20"
                             value={supplierSearch}
                             onChange={(e) => setSupplierSearch(e.target.value)}
@@ -544,7 +537,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                             </div>
                                             <div className="flex flex-col -space-y-0.5">
                                                 <p className="font-bold text-sm tracking-tight">{s.name}</p>
-                                                <p className="text-[10px] font-mono text-muted-foreground/50">{s.phone || 'بدون رقم هاتف'}</p>
+                                                <p className="text-[10px] font-mono text-muted-foreground/50">{s.phone || 'Sans téléphone'}</p>
                                             </div>
                                         </div>
                                         <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
@@ -553,7 +546,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                             ) : (
                                 <div className="text-center py-20 opacity-20">
                                     <Building2 className="h-12 w-12 mx-auto mb-4" />
-                                    <p className="text-sm font-bold uppercase">لا توجد نتائج</p>
+                                    <p className="text-sm font-bold uppercase">Aucun résultat</p>
                                 </div>
                             )}
                         </div>
@@ -566,14 +559,14 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                         onClick={() => setIsSupplierSelectOpen(false)}
                         className="flex-1 h-11 rounded-2xl font-bold text-[10px] uppercase tracking-wide"
                     >
-                        إلغاء
+                        Annuler
                     </Button>
                     {!isExistingSupplier && supplierSearch.trim() && (
                         <Button 
                             onClick={handleCreateNewSupplier}
                             className="flex-1 h-11 rounded-2xl font-bold text-[10px] uppercase tracking-wide gap-2 shadow-xl"
                         >
-                            <UserPlus className="h-4 w-4" /> إنشاء مورد جديد باسم "{supplierSearch}"
+                            <UserPlus className="h-4 w-4" /> Créer fournisseur "{supplierSearch}"
                         </Button>
                     )}
                 </div>

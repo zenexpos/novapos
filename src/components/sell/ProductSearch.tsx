@@ -133,7 +133,7 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     <Search className={cn("absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-500", searchQuery ? "text-primary scale-110" : "text-muted-foreground/30")} />
                     <Input
                         ref={inputRef}
-                        placeholder="Scanner أو rechercher [F3]..."
+                        placeholder="Scanner ou rechercher [F3]..."
                         className="pl-14 text-lg h-9 rounded-3xl bg-background border-none shadow-inner focus-visible:ring-primary/20 font-black tracking-tight"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}

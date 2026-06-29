@@ -141,18 +141,18 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="firstName" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Prénom *</Label>
-                                    <Input id="firstName" value={formState.firstName} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-base" placeholder="Ex: Ahmed" required />
+                                    <input id="firstName" value={formState.firstName} onChange={handleInputChange} className="flex h-12 w-full rounded-xl bg-black/20 border-none px-4 py-2 font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-inner" placeholder="Ex: Ahmed" required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="lastName" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Nom *</Label>
-                                    <Input id="lastName" value={formState.lastName} onChange={handleInputChange} className="h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-base" placeholder="Ex: Benali" required />
+                                    <input id="lastName" value={formState.lastName} onChange={handleInputChange} className="flex h-12 w-full rounded-xl bg-black/20 border-none px-4 py-2 font-bold text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-inner" placeholder="Ex: Benali" required />
                                 </div>
                             </div>
                             <div className="mt-4 space-y-2">
                                 <Label htmlFor="phone" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Téléphone</Label>
                                 <div className="relative">
                                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
-                                    <Input id="phone" value={formState.phone} onChange={handleInputChange} className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold" placeholder="05XX XX XX XX" />
+                                    <input id="phone" value={formState.phone} onChange={handleInputChange} className="flex h-12 w-full rounded-xl bg-black/20 border-none pl-11 pr-4 py-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-inner" placeholder="05XX XX XX XX" />
                                 </div>
                             </div>
                         </div>
@@ -170,15 +170,15 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                     </Label>
                                     <div className="relative">
                                         <CalendarClock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/30" />
-                                        <Input id="settlementDay" type="number" min="1" max="31" placeholder="Ex: 30" value={formState.settlementDay || ''} onChange={handleInputChange} className="pl-11 h-12 rounded-xl bg-background border-none shadow-sm font-black text-xl text-primary" />
+                                        <input id="settlementDay" type="number" min="1" max="31" placeholder="Ex: 30" value={formState.settlementDay || ''} onChange={handleInputChange} className="flex h-12 w-full rounded-xl bg-background border-none pl-11 pr-4 py-2 font-black text-xl text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-sm" />
                                     </div>
                                     <p className="text-[9px] text-muted-foreground/60 italic leading-tight px-1">Date mensuelle pour les rappels de paiement automatiques.</p>
                                 </div>
                                 <div className="space-y-3">
-                                    <Label htmlFor="creditLimit" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Plafظروف الائتمان (DA)</Label>
+                                    <Label htmlFor="creditLimit" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Plafond de Crédit (DA)</Label>
                                     <div className="relative">
                                         <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
-                                        <Input id="creditLimit" type="number" placeholder="Sans limite" value={formState.creditLimit || ''} onChange={handleInputChange} className="pl-11 h-12 rounded-xl bg-background border-none shadow-sm font-black text-xl" />
+                                        <input id="creditLimit" type="number" placeholder="Sans limite" value={formState.creditLimit || ''} onChange={handleInputChange} className="flex h-12 w-full rounded-xl bg-background border-none pl-11 pr-4 py-2 font-black text-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-sm" />
                                     </div>
                                     <p className="text-[9px] text-muted-foreground/60 italic leading-tight px-1">Montant maximal de dette autorisé avant blocage du compte.</p>
                                 </div>
@@ -194,10 +194,10 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                             <div className="space-y-2">
                                 <Label htmlFor="initialBalance" className="text-[10px] font-bold uppercase text-destructive/70 ml-1">Solde antérieur au système (Report)</Label>
                                 <div className="relative">
-                                    <Input id="initialBalance" type="number" placeholder="0.00 DA" value={formState.initialBalance || ''} onChange={handleInputChange} className="h-14 rounded-xl bg-background border-none shadow-inner font-black text-2xl text-destructive text-center" />
+                                    <input id="initialBalance" type="number" placeholder="0.00 DA" value={formState.initialBalance || ''} onChange={handleInputChange} className="flex h-14 w-full rounded-xl bg-background border-none px-4 py-2 font-black text-2xl text-destructive text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 shadow-inner" />
                                     <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-destructive/20">DA</span>
                                 </div>
-                                <p className="text-[10px] text-destructive/50 text-center font-bold uppercase tracking-tight">Attention : Ce montant sera considéré comme une dette exigible dès la validation.</p>
+                                <p className="text-[10px] text-destructive/50 text-center font-bold uppercase tracking-tight">Attention : Ce montant sera considéré comme une deتهتةيةتtte exigible dès la validation.</p>
                             </div>
                         </div>
                     </div>

@@ -58,7 +58,7 @@ export default function ReportsPage() {
     const handleGenerateZReport = async () => {
         toast.promise(closingService.generateDailyZReport(), {
             loading: 'Calcul de la clôture du jour...',
-            success: 'Rapport généré مع نجاح',
+            success: 'Rapport généré avec succès',
             error: 'Erreur lors du calcul'
         });
     };
@@ -100,7 +100,6 @@ export default function ReportsPage() {
                 </div>
             </PageHeader>
 
-            {/* KPIs Strip */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <ReportCard 
                     label="Recettes (30j)" 
