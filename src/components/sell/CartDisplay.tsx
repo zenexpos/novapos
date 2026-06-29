@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3 } from 'lucide-react';
+import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Info } from 'lucide-react';
 import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -26,10 +26,6 @@ interface CartItemRowProps {
     onSelect: () => void;
 }
 
-/**
- * PRODUCTION OPTIMIZATION: Memoized Row Component.
- * Ensures the main sales UI remains reactive even with high-frequency updates.
- */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,8 +71,17 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                     )}>
                         {item.name}
                     </p>
-                    {isCustom && <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Manuel</div>}
-                    {isPriceOverridden && <Edit3 className="h-3 w-3 text-blue-500" title="Prix modifié" />}
+                    {isCustom && <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Service Manuel</div>}
+                    {isPriceOverridden && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Edit3 className="h-3 w-3 text-blue-500 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>Le prix original de cet article a été modifié manuellement.</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
                 
                 <div className="flex items-center gap-2 mt-1">
@@ -99,14 +104,17 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <div className="p-1 rounded-md bg-destructive/10 animate-pulse cursor-help">
-                                        <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                                    <div className="p-1 rounded-md bg-destructive/10 animate-pulse cursor-help flex items-center gap-1 px-2 border border-destructive/20">
+                                        <AlertTriangle className="h-3 w-3 text-destructive" />
+                                        <span className="text-[8px] font-black text-destructive uppercase">Perte</span>
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="bg-destructive text-white border-none rounded-xl p-3 shadow-2xl">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-center">
-                                        Attention : Vente à perte !<br/>Coût : {formatCurrency(item.purchasePrice)}
-                                    </p>
+                                <TooltipContent className="bg-destructive text-white border-none rounded-xl p-4 shadow-2xl max-w-[250px]">
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-center border-b border-white/20 pb-2 mb-2">Attention : Vente à perte !</p>
+                                        <p className="text-[9px] font-medium leading-relaxed">Le prix de vente est inférieur à votre coût d'achat moyen (PMP).</p>
+                                        <p className="text-[10px] font-black text-center mt-2">PMP: {formatCurrency(item.purchasePrice)}</p>
+                                    </div>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -160,7 +168,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                         )}
                     />
                 </div>
-                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Total Ligne</p>
+                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total ligne</p>
             </div>
 
             <Button 
@@ -227,9 +235,16 @@ export function CartDisplay() {
                 <div className="p-8 rounded-3xl bg-muted/20 border border-border shadow-inner">
                     <Calculator className="h-24 w-24 text-muted-foreground/10" />
                 </div>
-                <div className="space-y-2">
-                    <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scanner un article pour commencer</p>
+                <div className="space-y-4">
+                    <p className="text-2xl font-black tracking-tighter text-muted-foreground/30 uppercase">Prêt pour une vente</p>
+                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scannez un article ou recherchez un produit pour commencer.</p>
+                </div>
+                <div className="pt-8 opacity-40">
+                    <div className="flex items-center gap-6 px-8 py-3 rounded-full border border-border bg-muted/20 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                        <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 rounded bg-muted border border-border">F3</kbd> Chercher</span>
+                        <span className="h-1 w-1 rounded-full bg-border" />
+                        <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 rounded bg-muted border border-border">F4</kbd> Manuel</span>
+                    </div>
                 </div>
             </div>
         )
@@ -239,8 +254,8 @@ export function CartDisplay() {
         <ScrollArea className="flex-grow">
             <div className="p-6">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center text-[9px] font-black uppercase text-muted-foreground/40 px-6 mb-6 tracking-widest">
-                    <div className="text-left">Designation Produit</div>
-                    <div className="text-center">Quantite</div>
+                    <div className="text-left">Désignation de l'article</div>
+                    <div className="text-center">Ajuster Quantité</div>
                     <div className="text-right">Total HT</div>
                     <div></div>
                 </div>

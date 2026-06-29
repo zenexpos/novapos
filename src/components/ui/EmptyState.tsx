@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { SearchX, Plus, LucideIcon } from 'lucide-react';
+import { cn } traditions from '@/lib/utils';
+import { SearchX, Plus, LucideIcon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
@@ -42,16 +42,17 @@ export function EmptyState({
             </h3>
 
             {description && (
-                <p className="text-sm text-muted-foreground/60 max-w-sm leading-relaxed mb-8">
+                <p className="text-sm text-muted-foreground/60 max-w-sm leading-relaxed mb-10">
                     {description}
                 </p>
             )}
 
             <div className="flex flex-col gap-4 items-center">
                 {actionLabel && onAction && (
-                    <Button onClick={onAction} className="rounded-2xl h-12 px-8 font-black uppercase text-xs tracking-widest shadow-xl gap-2">
-                        <Plus className="h-4 w-4" />
+                    <Button onClick={onAction} className="rounded-2xl h-14 px-10 font-black uppercase text-xs tracking-widest shadow-2xl gap-3 animate-bounce">
+                        <Plus className="h-5 w-5" />
                         {actionLabel}
+                        <ArrowRight className="h-4 w-4 ml-2 opacity-30" />
                     </Button>
                 )}
                 {children}
