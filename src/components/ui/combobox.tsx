@@ -1,8 +1,5 @@
 'use client';
 
-
-"use client"
-
 import * as React from "react"
 import { Check, ChevronsUpDown, User, UserX } from "lucide-react"
 
@@ -21,7 +18,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
 
 export interface ComboboxOption {
     value: string;
@@ -44,12 +40,21 @@ interface ComboboxProps {
     shouldFilter?: boolean;
 }
 
-
-export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(({ options, onSelect, value, placeholder, searchPlaceholder, notFoundMessage, onSearchChange, id, className, shouldFilter }, ref) => {
+export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(({ 
+    options, 
+    onSelect, 
+    value, 
+    placeholder, 
+    searchPlaceholder, 
+    notFoundMessage, 
+    onSearchChange, 
+    id, 
+    className, 
+    shouldFilter 
+}, ref) => {
   const [open, setOpen] = React.useState(false)
   const selectedOption = React.useMemo(() => options.find(o => o.value === value), [options, value]);
   
-  // Si onSearchChange est présent, on désactive le filtrage interne de cmdk par défaut sauf si spécifié autrement
   const isInternalFilteringDisabled = shouldFilter === false || (onSearchChange !== undefined && shouldFilter === undefined);
 
   return (
@@ -64,7 +69,6 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(({ op
           className={cn("w-full justify-between h-auto py-3 px-6 rounded-2xl bg-black/20 border-none shadow-inner group hover:bg-black/30 transition-all", className)}
         >
             <div className="flex items-center gap-4 overflow-hidden text-left flex-grow">
-                {/* Icon */}
                 <div className="flex-shrink-0">
                     {selectedOption?.value === 'walk-in' || !selectedOption ? (
                         <div className="p-2 rounded-xl bg-muted/50 text-muted-foreground group-hover:text-primary transition-colors">
@@ -76,7 +80,6 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(({ op
                         </div>
                     )}
                 </div>
-                {/* Text content */}
                 <div className="flex-grow truncate">
                   {selectedOption ? (
                     <div className="flex flex-col -space-y-0.5">
@@ -110,7 +113,6 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(({ op
                   keywords={[option.label, option.subLabel || '']}
                   disabled={option.disabled}
                   onSelect={(currentValue) => {
-                    // Logic: match by value if possible, cmdk returns value lowercase
                     const found = options.find(o => o.value.toLowerCase() === currentValue.toLowerCase());
                     onSelect(found ? found.value : currentValue);
                     setOpen(false);
