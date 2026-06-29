@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Info } from 'lucide-react';
+import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Info, Minus, Plus } from 'lucide-react';
 import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -54,54 +54,59 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
     const isPriceOverridden = (item as any).isPriceOverridden;
 
     return (
-        <div 
-            tabIndex={0}
-            onFocus={onSelect}
-            className={cn(
-                "grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center p-4 rounded-2xl border transition-all duration-300 group outline-none",
-                isSelected ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20 shadow-sm" : "bg-muted/20 border-border hover:bg-muted/30",
-                isZero && "opacity-50 grayscale"
-            )}
-        >
-            <div className="flex-grow min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                    <p className={cn(
-                        "font-bold text-sm tracking-tight truncate group-hover:text-primary transition-colors",
-                        isZero && "text-muted-foreground line-through"
-                    )}>
-                        {item.name}
-                    </p>
-                    {isCustom && <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Service Manuel</div>}
-                    {isPriceOverridden && (
-                        <TooltipProvider>
+        <TooltipProvider delayDuration={400}>
+            <div 
+                tabIndex={0}
+                onFocus={onSelect}
+                className={cn(
+                    "grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center p-4 rounded-2xl border transition-all duration-300 group outline-none",
+                    isSelected ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20 shadow-sm" : "bg-muted/20 border-border hover:bg-muted/30",
+                    isZero && "opacity-50 grayscale"
+                )}
+            >
+                <div className="flex-grow min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <p className={cn(
+                            "font-bold text-sm tracking-tight truncate group-hover:text-primary transition-colors",
+                            isZero && "text-muted-foreground line-through"
+                        )}>
+                            {item.name}
+                        </p>
+                        {isCustom && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase cursor-help">Manuel</div>
+                                </TooltipTrigger>
+                                <TooltipContent>Article ajouté manuellement sans code-barres.</TooltipContent>
+                            </Tooltip>
+                        )}
+                        {isPriceOverridden && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Edit3 className="h-3 w-3 text-blue-500 cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent>Le prix original de cet article a été modifié manuellement.</TooltipContent>
                             </Tooltip>
-                        </TooltipProvider>
-                    )}
-                </div>
-                
-                <div className="flex items-center gap-2 mt-1">
-                    <div className="relative group/price">
-                        <Coins className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/price:text-primary transition-colors" />
-                        <Input 
-                            type="number" min="0" step="1"
-                            value={item.price}
-                            onChange={(e) => handlePriceChange(e.target.value)}
-                            onFocus={e => e.target.select()}
-                            className={cn(
-                                "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg",
-                                isSellingAtLoss ? "text-destructive border-destructive/30" : isPriceOverridden ? "text-blue-600 border-blue-200" : ""
-                            )}
-                        />
+                        )}
                     </div>
-                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unit || 'pcs'}</span>
                     
-                    {isSellingAtLoss && (
-                        <TooltipProvider>
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className="relative group/price">
+                            <Coins className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/price:text-primary transition-colors" />
+                            <Input 
+                                type="number" min="0" step="1"
+                                value={item.price}
+                                onChange={(e) => handlePriceChange(e.target.value)}
+                                onFocus={e => e.target.select()}
+                                className={cn(
+                                    "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg",
+                                    isSellingAtLoss ? "text-destructive border-destructive/30" : isPriceOverridden ? "text-blue-600 border-blue-200" : ""
+                                )}
+                            />
+                        </div>
+                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unit || 'pcs'}</span>
+                        
+                        {isSellingAtLoss && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="p-1 rounded-md bg-destructive/10 animate-pulse cursor-help flex items-center gap-1 px-2 border border-destructive/20">
@@ -117,74 +122,91 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                                     </div>
                                 </TooltipContent>
                             </Tooltip>
-                        </TooltipProvider>
-                    )}
-                </div>
-            </div>
-            
-            <div className="flex flex-col items-center">
-                <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
-                    <button 
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
-                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                    >
-                        −
-                    </button>
-                    <Input
-                        ref={qtyInputRef}
-                        type="number" min="0" step="0.001"
-                        value={item.cartQuantity}
-                        onChange={(e) => handleQtyChange(e.target.value)}
-                        onFocus={e => e.target.select()}
-                        className={cn(
-                            "w-16 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0",
-                            isZero ? "text-destructive" : "text-primary"
                         )}
-                    />
-                    <button 
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
-                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                    >
-                        +
-                    </button>
+                    </div>
                 </div>
-            </div>
+                
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button 
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
+                                    className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                                >
+                                    <Minus className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Réduire</TooltipContent>
+                        </Tooltip>
+                        
+                        <Input
+                            ref={qtyInputRef}
+                            type="number" min="0" step="0.001"
+                            value={item.cartQuantity}
+                            onChange={(e) => handleQtyChange(e.target.value)}
+                            onFocus={e => e.target.select()}
+                            className={cn(
+                                "w-16 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0",
+                                isZero ? "text-destructive" : "text-primary"
+                            )}
+                        />
 
-            <div className="w-32 flex flex-col items-end">
-                <div className="relative group/total">
-                    <Calculator className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/total:text-primary transition-colors" />
-                    <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={isZero ? '0' : Math.round(lineTotal)}
-                        onChange={(e) => handleTotalChange(e.target.value)}
-                        onFocus={e => e.target.select()}
-                        className={cn(
-                            "h-10 w-28 pl-7 text-right font-black text-base tracking-tighter tabular-nums bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-xl",
-                            isZero && "text-muted-foreground/20 line-through"
-                        )}
-                    />
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button 
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
+                                    className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                                >
+                                    <Plus className="h-3.5 w-3.5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Augmenter</TooltipContent>
+                        </Tooltip>
+                    </div>
                 </div>
-                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total ligne</p>
-            </div>
 
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className={cn(
-                    "h-10 w-10 rounded-xl transition-all",
-                    isZero 
-                        ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
-                        : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
-                )}
-                onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
-            >
-                {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-            </Button>
-        </div>
+                <div className="w-32 flex flex-col items-end">
+                    <div className="relative group/total">
+                        <Calculator className="absolute left-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-muted-foreground/30 group-focus-within/total:text-primary transition-colors" />
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={isZero ? '0' : Math.round(lineTotal)}
+                            onChange={(e) => handleTotalChange(e.target.value)}
+                            onFocus={e => e.target.select()}
+                            className={cn(
+                                "h-10 w-28 pl-7 text-right font-black text-base tracking-tighter tabular-nums bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-xl",
+                                isZero && "text-muted-foreground/20 line-through"
+                            )}
+                        />
+                    </div>
+                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total ligne</p>
+                </div>
+
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "h-10 w-10 rounded-xl transition-all",
+                                isZero 
+                                    ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
+                                    : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
+                            )}
+                            onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
+                        >
+                            {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Retirer du panier</TooltipContent>
+                </Tooltip>
+            </div>
+        </TooltipProvider>
     );
 });
 CartItemRow.displayName = 'CartItemRow';
