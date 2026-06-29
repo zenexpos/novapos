@@ -4,11 +4,12 @@
  */
 
 export const sanitizeString = (str: string): string => {
-    if (!str) return '';
+    if (!str || typeof str !== 'string') return '';
     return str
         .replace(/[<>]/g, '') // Basic tag removal
         .replace(/javascript:/gi, '') // Simple protocol attack prevention
         .replace(/onclick/gi, '') // Event handler prevention
+        .replace(/on\w+=/gi, '') // Any onAttribute handlers
         .trim();
 };
 
@@ -19,6 +20,7 @@ export const sanitizeSearchQuery = (query: string): string => {
 };
 
 export const escapeHtml = (unsafe: string): string => {
+    if (!unsafe || typeof unsafe !== 'string') return '';
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

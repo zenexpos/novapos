@@ -13,7 +13,6 @@ import { sanitizeString } from '@/lib/security/sanitization';
 /**
  * iPOS Customer Domain Service.
  * Specialized in CRM management, debt tracking, and forensic auditing.
- * PRODUCTION AUDIT: Hardened input sanitization and unified balance calculations.
  */
 class CustomerService {
 
@@ -84,7 +83,6 @@ class CustomerService {
         }
 
         const now = new Date();
-        // SECURITY: Sanitize inputs to prevent XSS/Injection
         const firstName = sanitizeString(customerData.firstName);
         const lastName = sanitizeString(customerData.lastName);
         const searchName = `${firstName} ${lastName}`.toLowerCase();
@@ -166,7 +164,6 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(uuid).first();
         if (!customer?.id) return;
 
-        // FINANCIAL SAFETY: Block deletion of customers with active debt
         if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.009) {
             throw new Error(`Révocation impossible : le solde de "${customer.firstName} ${customer.lastName}" n'est pas nul (${customer.outstandingBalance} DA).`);
         }
@@ -198,7 +195,6 @@ class CustomerService {
 
         const activeSales = sales.filter(s => !s.isCancelled);
 
-        // Precise arithmetic in cents to avoid drift
         let totalDebtCents = Math.round(safeNumber(customer.initialBalance) * 100);
         let totalSpentCents = 0;
 
@@ -268,7 +264,7 @@ class CustomerService {
         const last6Months = Array.from({ length: 6 }).map((_, i) => {
             const date = subMonths(new Date(), i);
             return {
-                start: startOfMonth(date),
+                start: startOfDay(date),
                 label: format(date, 'MMM yy', { locale: fr })
             };
         }).reverse();

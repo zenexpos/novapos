@@ -21,7 +21,7 @@ const triggerSync = () => {
 class ProductService {
 
     /**
-     * FACTORY : Centralise la création d'une entité Product valide.
+     * FACTORY : Centralize creation of a valid Product entity.
      */
     createProductEntity(input: ProductCreateInput, customUuid?: string): Product {
         const now = new Date();
