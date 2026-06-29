@@ -19,13 +19,9 @@ import {
     ChevronRight, 
     Plus,
     Search,
-    Users,
     Calendar,
-    Filter,
     LayoutGrid,
     List,
-    X,
-    CheckCircle2,
     Info
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
@@ -34,15 +30,6 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -154,7 +141,7 @@ export default function BreadPage() {
                                     Régularisation des comptes
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transفérer les dettes non payées des jours précédents au solde des clients</TooltipContent>
+                            <TooltipContent>Transférer les dettes non payées des jours précédents au solde des clients</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 

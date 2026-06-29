@@ -109,7 +109,6 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
-        // FIXED: Included all required stores for recalculateCustomerStatus within salesService.createSale
         await db.transaction('rw', [
           db.bread_orders, db.sales, db.products, 
           db.inventory_logs, db.customers, db.company_profile, 
@@ -120,7 +119,6 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
 
-                // FIX: Map quantity to cartQuantity for salesService compatibility
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',

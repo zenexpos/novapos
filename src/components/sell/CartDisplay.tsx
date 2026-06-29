@@ -5,7 +5,7 @@ import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Info, Minus, Plus } from 'lucide-react';
+import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Minus, Plus } from 'lucide-react';
 import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -77,20 +77,10 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             {item.name}
                         </p>
                         {isCustom && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase cursor-help">Manuel</div>
-                                </TooltipTrigger>
-                                <TooltipContent>Article ajouté manuellement بدون code-barres.</TooltipContent>
-                            </Tooltip>
+                            <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Manuel</div>
                         )}
                         {isPriceOverridden && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Edit3 className="h-3 w-3 text-blue-500 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>Le prix original de cet article a été modifié manuellement.</TooltipContent>
-                            </Tooltip>
+                            <Edit3 className="h-3 w-3 text-blue-500" />
                         )}
                     </div>
                     
@@ -121,7 +111,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                                 <TooltipContent className="bg-destructive text-white border-none rounded-xl p-4 shadow-2xl max-w-[250px]">
                                     <div className="flex flex-col gap-1">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-center border-b border-white/20 pb-2 mb-2">Attention : Vente à perte !</p>
-                                        <p className="text-[9px] font-medium leading-relaxed">Le prix de vente est inférieur à votre coût d'achat moyen (PMP).</p>
+                                        <p className="text-[9px] font-medium leading-relaxed">Le prix de vente est inférieur à votre coût d'achat متوسط (PMP).</p>
                                         <p className="text-[10px] font-black text-center mt-2">PMP: {formatCurrency(item.purchasePrice)}</p>
                                     </div>
                                 </TooltipContent>
@@ -132,20 +122,13 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 
                 <div className="flex flex-col items-center">
                     <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button 
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
-                                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                                    >
-                                        <Minus className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Réduire</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
+                            className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                        >
+                            <Minus className="h-3.5 w-3.5" />
+                        </button>
                         
                         <Input
                             ref={qtyInputRef}
@@ -159,20 +142,13 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             )}
                         />
 
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button 
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
-                                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                                    >
-                                        <Plus className="h-3.5 w-3.5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Augmenter</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                        <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
+                            className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                        </button>
                     </div>
                 </div>
 
@@ -195,26 +171,19 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                     <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total HT</p>
                 </div>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className={cn(
-                                    "h-10 w-10 rounded-xl transition-all",
-                                    isZero 
-                                        ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
-                                        : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
-                                )}
-                                onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
-                            >
-                                {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Retirer du panier</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                        "h-10 w-10 rounded-xl transition-all",
+                        isZero 
+                            ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
+                            : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
+                    )}
+                    onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
+                >
+                    {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
             </div>
         </TooltipProvider>
     );
@@ -254,7 +223,7 @@ export function CartDisplay() {
                     setSelectedIndex(prev => prev === null || prev <= 0 ? cart.items.length - 1 : prev - 1);
                 }
             },
-            description: 'Ligne precedente',
+            description: 'Ligne précédente',
             ignoreInputFocus: true
         }
     ], 'ListePanier', isMounted && !!cart?.items.length);
@@ -269,14 +238,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-4">
                     <p className="text-2xl font-black tracking-tighter text-muted-foreground/30 uppercase">Prêt pour une vente</p>
-                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scanneز un article ou recherchez un produit pour commencer.</p>
-                </div>
-                <div className="pt-8 opacity-40">
-                    <div className="flex items-center gap-6 px-8 py-3 rounded-full border border-border bg-muted/20 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                        <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 rounded bg-muted border border-border">F3</kbd> Chercher</span>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                        <span className="flex items-center gap-1.5"><kbd className="px-1.5 py-0.5 rounded bg-muted border border-border">F4</kbd> Manuel</span>
-                    </div>
+                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scannez un article ou recherchez un produit pour commencer.</p>
                 </div>
             </div>
         )

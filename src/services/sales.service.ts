@@ -101,7 +101,6 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // Included all relevant stores for recalculateCustomerStatus audit trail
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -143,7 +142,6 @@ class SalesService {
     const sale = await this.getSaleByUuid(uuid);
     if (!sale || sale.isCancelled) return;
 
-    // FIXED: Included all required stores for recalculateCustomerStatus
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.payments, db.product_returns, db.sync_queue
@@ -169,6 +167,13 @@ class SalesService {
       if (sale.customerUuid) {
         await customerService.recalculateCustomerStatus(sale.customerUuid);
       }
+
+      await db.sync_queue.add({
+        table: 'sales',
+        operation: 'UPDATE',
+        payload: { ...sale, isCancelled: true },
+        timestamp: Date.now()
+      });
     });
 
     this.triggerSync();
