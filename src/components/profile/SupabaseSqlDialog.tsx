@@ -165,7 +165,7 @@ export function SupabaseSqlDialog() {
                 className="h-10 rounded-xl border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all gap-2 px-4"
             >
                 <Terminal className="h-4 w-4" />
-                Générer SQL Cloud
+                Génير SQL Cloud
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>

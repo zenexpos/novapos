@@ -7,7 +7,7 @@ export const sanitizeString = (str: string): string => {
     if (!str || typeof str !== 'string') return '';
     return str
         .replace(/[<>]/g, '') // Basic tag removal
-        .replace(/javascript:/gi, '') // Simple protocol attack prevention
+        .replace(/javascript:/gi, '') // Protocol attack prevention
         .replace(/onclick/gi, '') // Event handler prevention
         .replace(/on\w+=/gi, '') // Any onAttribute handlers
         .trim();

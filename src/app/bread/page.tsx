@@ -236,7 +236,7 @@ export default function BreadPage() {
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
                                 {searchQuery && (
-                                    <button onClick={() => searchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
+                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
@@ -252,7 +252,7 @@ export default function BreadPage() {
                                 <DropdownMenuContent className="rounded-xl w-64 p-2">
                                     <DropdownMenuLabel className="text-[10px] uppercase font-bold px-2 py-1">Statut Paiement</DropdownMenuLabel>
                                     <DropdownMenuRadioGroup value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioGroup>
                                         <DropdownMenuRadioItem value="paid" className="text-xs font-bold text-emerald-500">Réglés</DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold text-orange-500">Non Réglés</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>

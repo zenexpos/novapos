@@ -53,7 +53,6 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
-        // Round each line item to prevent floating point drift during accumulation
         return acc + roundFinancial(price * qty);
     }, 0);
 
