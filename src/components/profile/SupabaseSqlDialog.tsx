@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at      TIMESTAMPTZ DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ
 );
+CREATE INDEX IF NOT EXISTS idx_suppliers_deleted_at ON suppliers(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
 
 -- 3. FICHIER CLIENTS
 CREATE TABLE IF NOT EXISTS customers (
@@ -74,6 +76,8 @@ CREATE TABLE IF NOT EXISTS customers (
     updated_at            TIMESTAMPTZ DEFAULT NOW(),
     deleted_at            TIMESTAMPTZ
 );
+CREATE INDEX IF NOT EXISTS idx_customers_deleted_at ON customers(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_customers_outstanding_balance ON customers(outstanding_balance);
 
 -- 4. CATALOGUE PRODUITS
 CREATE TABLE IF NOT EXISTS products (
@@ -90,6 +94,8 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at        TIMESTAMPTZ DEFAULT NOW(),
     deleted_at        TIMESTAMPTZ
 );
+CREATE INDEX IF NOT EXISTS idx_products_deleted_at ON products(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_products_barcodes ON products USING GIN (barcodes);
 
 -- 5. GRAND LIVRE DES VENTES
 CREATE TABLE IF NOT EXISTS sales (
@@ -105,6 +111,8 @@ CREATE TABLE IF NOT EXISTS sales (
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_sales_created_at ON sales(created_at);
+CREATE INDEX IF NOT EXISTS idx_sales_invoice_number ON sales(invoice_number);
 
 -- 6. LOGISTIQUE DE DISTRIBUTION (BREAD)
 CREATE TABLE IF NOT EXISTS bread_orders (
@@ -119,6 +127,7 @@ CREATE TABLE IF NOT EXISTS bread_orders (
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_bread_orders_date ON bread_orders(date);
 
 -- 7. AUDIT DES STOCKS
 CREATE TABLE IF NOT EXISTS inventory_logs (
@@ -130,6 +139,7 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
     related_uuid      UUID,
     created_at        TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_inventory_logs_product_uuid ON inventory_logs(product_uuid);
 `;
 
 export function SupabaseSqlDialog() {

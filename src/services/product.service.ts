@@ -5,6 +5,7 @@ import type { Product, ProductCreateInput, ProductImportAnalysis } from '@/lib/t
 import { db } from '@/lib/db';
 import { calculateStockStatus, safeNumber, roundFinancial, safeToDate } from '@/lib/utils';
 import { inventoryService } from './inventory.service';
+import { sanitizeString } from '@/lib/security/sanitization';
 import Papa from 'papaparse';
 import { useAppStore } from '@/stores/appStore';
 
@@ -29,14 +30,14 @@ class ProductService {
         
         return {
             uuid: customUuid || uuidv4(),
-            name: input.name.trim(),
-            price: safeNumber(input.price),
-            purchasePrice: safeNumber(input.purchasePrice),
+            name: sanitizeString(input.name),
+            price: roundFinancial(safeNumber(input.price)),
+            purchasePrice: roundFinancial(safeNumber(input.purchasePrice)),
             quantity,
             minStockLevel,
             barcodes: input.barcodes || [],
             unit: input.unit || 'Pièce',
-            category: input.category || 'Général',
+            category: sanitizeString(input.category || 'Général'),
             dateExpiration: input.dateExpiration,
             supplierUuid: input.supplierUuid,
             stockStatus: calculateStockStatus(quantity, minStockLevel),
@@ -108,7 +109,6 @@ class ProductService {
                 else if (field === 'purchasePrice') { valA = a.purchasePrice; vbA = b.purchasePrice; }
                 else if (field === 'updatedAt') { valA = safeToDate(a.updatedAt).getTime(); vbA = safeToDate(b.updatedAt).getTime(); }
                 else if (field === 'margin') {
-                    // Optimized calculation: subtract once
                     valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
                     vbA = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }
@@ -123,9 +123,6 @@ class ProductService {
         return products;
     }
 
-    /**
-     * Ajoute un produit de manière atomique.
-     */
     async addProduct(input: ProductCreateInput): Promise<Product> {
         const initialQty = safeNumber(input.quantity);
         const newProduct = this.createProductEntity({ ...input, quantity: 0 });
@@ -161,6 +158,9 @@ class ProductService {
             updatedAt: new Date(), 
             syncStatus: 'pending' as const 
         };
+
+        if (data.name) update.name = sanitizeString(data.name);
+        if (data.category) update.category = sanitizeString(data.category);
         
         if (data.quantity !== undefined || data.minStockLevel !== undefined) {
             const finalQty = data.quantity !== undefined ? safeNumber(data.quantity) : existing.quantity;
@@ -186,11 +186,11 @@ class ProductService {
         if (!existing?.id) return;
 
         const update: Partial<Product> = {
-            purchasePrice: data.purchasePrice,
+            purchasePrice: roundFinancial(data.purchasePrice),
             updatedAt: new Date(),
             syncStatus: 'pending'
         };
-        if (data.price !== undefined) update.price = data.price;
+        if (data.price !== undefined) update.price = roundFinancial(data.price);
 
         await db.transaction('rw', [db.products, db.sync_queue], async () => {
             await db.products.update(existing.id!, update);
@@ -287,13 +287,13 @@ class ProductService {
                         }
 
                         const productData: ProductCreateInput = {
-                            name: name.trim(),
-                            price: safeNumber(row.price || row.Prix_Vente || row.Prix),
-                            purchasePrice: safeNumber(row.purchasePrice || row.Prix_Achat || row.PMP),
+                            name: sanitizeString(name),
+                            price: roundFinancial(safeNumber(row.price || row.Prix_Vente || row.Prix)),
+                            purchasePrice: roundFinancial(safeNumber(row.purchasePrice || row.Prix_Achat || row.PMP)),
                             quantity: safeNumber(row.quantity || row.Stock || 0),
                             minStockLevel: safeNumber(row.minStockLevel || row.Seuil || 10),
                             unit: (row.unit || row.Unité || row.Unite || 'Pièce') as any,
-                            category: row.category || row.Catégorie || row.Categorie || 'Général',
+                            category: sanitizeString(row.category || row.Catégorie || row.Categorie || 'Général'),
                             barcodes: row.barcodes ? (typeof row.barcodes === 'string' ? row.barcodes.split(',').map((b: string) => b.trim()) : []) : []
                         };
 
