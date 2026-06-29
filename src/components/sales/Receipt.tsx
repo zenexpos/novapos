@@ -74,13 +74,18 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                     <span>{fmt(sale.total)}</span>
                 </div>
                 
-                <div className="flex justify-between text-[8.5pt] mt-2 font-bold opacity-70">
+                <div className="flex justify-between text-[8.5pt] mt-2 opacity-70">
+                    <span>ANCIEN SOLDE:</span>
+                    <span>{fmt(oldBalance)}</span>
+                </div>
+
+                <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
                     <span>VERSEMENT REÇU:</span>
                     <span>{fmt(safeNumber(sale.amountPaid))}</span>
                 </div>
                 
                 <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
-                    <span>SOLDE À RECOUVRER:</span>
+                    <span>NOUVEAU SOLDE:</span>
                     <span>{fmt(finalDebtBalance)} DA</span>
                 </div>
             </div>
@@ -183,11 +188,15 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                         
                         <div className="space-y-1 pt-3 border-t border-gray-200">
                             <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
+                                <span>Solde Antérieur:</span>
+                                <span className="font-mono">{fmt(oldBalance)}</span>
+                            </div>
+                            <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
                                 <span>Versement reçu:</span>
                                 <span className="font-mono">{fmt(safeNumber(sale.amountPaid))}</span>
                             </div>
                             <div className="flex justify-between text-[11pt] font-black pt-2 bg-white px-2 py-1 rounded border border-gray-200 mt-1">
-                                <span className="uppercase">Solde à Recouvrer:</span>
+                                <span className="uppercase">Nouveau Solde:</span>
                                 <span className="font-mono text-red-600">{fmt(finalDebtBalance)} DA</span>
                             </div>
                         </div>
