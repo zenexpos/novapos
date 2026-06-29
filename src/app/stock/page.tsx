@@ -384,7 +384,13 @@ export default function StockPage() {
                                     </div>
                                 </div>
                                 {stockIntakes.length === 0 ? (
-                                    <EmptyState icon={Archive} title="Silence de Réception" description={searchQuery ? "Aucune facture correspondante." : "Aucune réception pour cette période."} />
+                                    <EmptyState 
+                                        icon={Archive} 
+                                        title="Silence de Réception" 
+                                        description={searchQuery ? "Aucune facture correspondante." : "Enregistrez vos factures d'achat pour gérer votre stock."} 
+                                        actionLabel="Nouvelle Réception"
+                                        onAction={() => router.push('/stock/intake')}
+                                    />
                                 ) : viewMode === 'list' ? (
                                     <StockIntakeTable intakes={stockIntakes} supplierMap={supplierMap} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
                                 ) : (
@@ -403,7 +409,13 @@ export default function StockPage() {
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers.length === 0 ? (
-                                <EmptyState icon={Building} title="Carnet Partenaires Vide" description="Commencez par ajouter votre premier fournisseur." />
+                                <EmptyState 
+                                    icon={Building} 
+                                    title="Carnet Partenaires Vide" 
+                                    description="Commenceز par ajouter votre premier fournisseur pour gérer vos achats." 
+                                    actionLabel="Nouveau Fournisseur"
+                                    onAction={handleAddSupplier}
+                                />
                             ) : (
                                 <SupplierTable 
                                     suppliers={filteredSuppliers} 

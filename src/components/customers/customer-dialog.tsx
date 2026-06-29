@@ -175,7 +175,7 @@ export function CustomerDialog({ isOpen, onOpenChange, customer, onSuccess }: Cu
                                     <p className="text-[9px] text-muted-foreground/60 italic leading-tight px-1">Date mensuelle pour les rappels de paiement automatiques.</p>
                                 </div>
                                 <div className="space-y-3">
-                                    <Label htmlFor="creditLimit" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Plafond de Crédit (DA)</Label>
+                                    <Label htmlFor="creditLimit" className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">Plafظروف الائتمان (DA)</Label>
                                     <div className="relative">
                                         <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
                                         <Input id="creditLimit" type="number" placeholder="Sans limite" value={formState.creditLimit || ''} onChange={handleInputChange} className="pl-11 h-12 rounded-xl bg-background border-none shadow-sm font-black text-xl" />

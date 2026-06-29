@@ -154,7 +154,7 @@ export default function BreadPage() {
                                     Régularisation des comptes
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transférer les dettes non payées des jours précédents au solde des clients</TooltipContent>
+                            <TooltipContent>Transفérer les dettes non payées des jours précédents au solde des clients</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 

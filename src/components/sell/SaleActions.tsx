@@ -104,7 +104,7 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
                                 <span className="text-[10px] font-black uppercase tracking-widest">Devis Proforma</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Générer un devis estimatif pour le client sans déduire du stock.</TooltipContent>
+                        <TooltipContent>Générer un devيس estimatif pour le client sans déduire du stock.</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>

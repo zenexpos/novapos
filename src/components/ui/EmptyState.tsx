@@ -54,7 +54,7 @@ export function EmptyState({
             <div className="mt-12 flex flex-col gap-6 items-center">
                 {actionLabel && onAction && (
                     <div className="relative group">
-                        <div className="absolute -inset-1 bg-primary/20 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500" />
+                        <div className="absolute -inset-1 bg-primary/20 blur-xl rounded-2xl opacity-0 group-hover:opacity-10 transition duration-500" />
                         <Button 
                             onClick={onAction} 
                             size="xl"

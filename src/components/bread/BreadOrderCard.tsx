@@ -128,7 +128,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all" 
+                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-10 transition-all" 
                         onClick={handleDelete} 
                     >
                         <Trash2 className="h-4 w-4" />

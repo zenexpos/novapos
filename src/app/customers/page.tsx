@@ -211,7 +211,13 @@ function CustomersContent() {
                         {[...Array(8)].map((_, i) => <Card key={i} className="rounded-3xl border-none animate-pulse h-48 bg-card/40" />)}
                     </div>
                ) : !customers?.length ? (
-                    <EmptyState icon={Users} title="Aucun client" description={isFiltered ? "Ajustez les filtres." : "Ajoutez un client pour commencer le suivi."} />
+                    <EmptyState 
+                        icon={Users} 
+                        title="Aucun client" 
+                        description={isFiltered ? "Ajustez les filtres pour identifier des clients." : "Ajoutez votre premier client pour commencer le suivi des dettes."} 
+                        actionLabel="Nouveau Client"
+                        onAction={() => { setSelectedCustomer(null); setIsCustomerDialogOpen(true); }}
+                    />
                ) : viewMode === 'list' ? (
                     <CustomerTable 
                         customers={customers} 

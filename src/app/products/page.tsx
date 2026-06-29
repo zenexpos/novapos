@@ -92,12 +92,7 @@ function ProductsContent() {
     const debounced = useDebouncedAbortSignal(searchQuery, 300);
 
     const productsResult = useLiveQuery<Product[]>(
-        () => productService.filterProducts({ 
-            query: debounced.debouncedValue, 
-            supplierUuid: selectedSupplier,
-            stockStatus: stockStatus as any, 
-            sortBy 
-        }),
+        () => productService.filterProducts({ query: debounced.debouncedValue, supplierUuid: selectedSupplier, stockStatus: stockStatus as any, sortBy }),
         [debounced.debouncedValue, selectedSupplier, stockStatus, sortBy]
     );
     const products = productsResult.value ?? [];
@@ -409,7 +404,7 @@ function ProductsContent() {
                                 <Archive className="h-4 w-4" /> Étiquettes
                             </button>
                             <button onClick={handleExportCsv} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-primary transition-colors">
-                                <FileUp className="h-4 w-4" /> Exporter
+                                <FileUp className="mr-2 h-4 w-4" /> Exporter
                             </button>
                             <button onClick={() => setIsBulkDeleteDialogOpen(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive hover:opacity-80 transition-colors">
                                 <Trash2 className="h-4 w-4" /> Supprimer
@@ -426,7 +421,13 @@ function ProductsContent() {
                {isLoading ? (
                     viewMode === 'grid' ? <ProductGridSkeleton /> : <ProductTableSkeleton />
                ) : products.length === 0 ? (
-                    <EmptyState icon={Archive} title="Silence de Catalogue" description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} />
+                    <EmptyState 
+                        icon={Archive} 
+                        title="Silence de Catalogue" 
+                        description={isFiltered ? "Ajustez vos filtres لidentifier les références." : "Commencez par ajouter votre premier article Elite."} 
+                        actionLabel="Ajouter un produit"
+                        onAction={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }}
+                    />
                ) : (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
