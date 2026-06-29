@@ -27,7 +27,7 @@ interface CartItemRowProps {
 }
 
 /**
- * PRODUCTION PERFORMANCE FIX: React.memo with exhaustive props validation.
+ * PRODUCTION PERFORMANCE FIX: React.memo with selective prop comparison.
  * Ensures rows only re-render when their specific data changes.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
@@ -71,13 +71,13 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 <div className="flex-grow min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <p className={cn(
-                            "font-bold text-sm tracking-tight truncate group-hover:text-primary transition-colors",
+                            "font-black text-sm tracking-tight truncate group-hover:text-primary transition-colors",
                             isZero && "text-muted-foreground line-through"
                         )}>
                             {item.name}
                         </p>
                         {isCustom && (
-                            <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase">Manuel</div>
+                            <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase border border-amber-500/20">Manuel</div>
                         )}
                         {isPriceOverridden && (
                             <Edit3 className="h-3 w-3 text-blue-500" />
@@ -93,25 +93,25 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                                 onChange={(e) => handlePriceChange(e.target.value)}
                                 onFocus={e => e.target.select()}
                                 className={cn(
-                                    "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg",
+                                    "h-7 w-24 pl-6 pr-1 text-[10px] font-black bg-background border-border shadow-sm focus-visible:ring-primary/20 rounded-lg tabular-nums",
                                     isSellingAtLoss ? "text-destructive border-destructive/30" : isPriceOverridden ? "text-blue-600 border-blue-200" : ""
                                 )}
                             />
                         </div>
-                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">/ {item.unit || 'pcs'}</span>
+                        <span className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">/ {item.unit || 'pcs'}</span>
                         
                         {isSellingAtLoss && (
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <div className="p-1 rounded-md bg-destructive/10 animate-pulse cursor-help flex items-center gap-1 px-2 border border-destructive/20">
+                                    <div className="p-1 rounded-lg bg-destructive/10 animate-pulse cursor-help flex items-center gap-1 px-2 border border-destructive/20">
                                         <AlertTriangle className="h-3 w-3 text-destructive" />
                                         <span className="text-[8px] font-black text-destructive uppercase">Perte</span>
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-destructive text-white border-none rounded-xl p-4 shadow-2xl max-w-[250px]">
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-center border-b border-white/20 pb-2 mb-2">Attention : Vente à perte !</p>
-                                        <p className="text-[9px] font-medium leading-relaxed">Le prix de vente est inférieur à votre coût d'achat متوسط (PMP).</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-center border-b border-white/20 pb-2 mb-2">Alerte : Vente à perte</p>
+                                        <p className="text-[9px] font-medium leading-relaxed">Le prix est inférieur à votre coût d'achat moyen (PMP).</p>
                                         <p className="text-[10px] font-black text-center mt-2">PMP: {formatCurrency(item.purchasePrice)}</p>
                                     </div>
                                 </TooltipContent>
@@ -121,7 +121,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 </div>
                 
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
+                    <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-inner">
                         <button 
                             type="button"
                             onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
@@ -137,7 +137,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             onChange={(e) => handleQtyChange(e.target.value)}
                             onFocus={e => e.target.select()}
                             className={cn(
-                                "w-16 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0",
+                                "w-16 text-center h-10 bg-transparent border-none shadow-none font-black text-lg focus-visible:ring-0 tabular-nums",
                                 isZero ? "text-destructive" : "text-primary"
                             )}
                         />
@@ -168,7 +168,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             )}
                         />
                     </div>
-                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total HT</p>
+                    <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total net</p>
                 </div>
 
                 <Button 
@@ -186,6 +186,13 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 </Button>
             </div>
         </TooltipProvider>
+    );
+}, (prev, next) => {
+    return (
+        prev.item.cartQuantity === next.item.cartQuantity &&
+        prev.item.price === next.item.price &&
+        prev.isSelected === next.isSelected &&
+        prev.item.uuid === next.item.uuid
     );
 });
 CartItemRow.displayName = 'CartItemRow';
@@ -232,13 +239,16 @@ export function CartDisplay() {
     
     if (!cart || cart.items.length === 0) {
         return (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-10 space-y-6 animate-in fade-in duration-1000">
-                <div className="p-8 rounded-3xl bg-muted/20 border border-border shadow-inner">
-                    <Calculator className="h-24 w-24 text-muted-foreground/10" />
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-10 space-y-8 animate-in fade-in duration-1000">
+                <div className="p-10 rounded-[3rem] bg-muted/20 border-2 border-dashed border-border shadow-inner relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Calculator className="h-24 w-24 text-muted-foreground/10 relative z-10 group-hover:scale-110 transition-transform duration-700" />
                 </div>
                 <div className="space-y-4">
-                    <p className="text-2xl font-black tracking-tighter text-muted-foreground/30 uppercase">Prêt pour une vente</p>
-                    <p className="text-[11px] font-bold uppercase text-muted-foreground/15 tracking-[0.4em] leading-relaxed max-w-[300px] mx-auto">Scannez un article ou recherchez un produit pour commencer.</p>
+                    <p className="text-2xl font-black tracking-tighter text-muted-foreground/30 uppercase">Console de Vente Prête</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground/15 tracking-[0.5em] leading-relaxed max-w-[300px] mx-auto">
+                        Scannez un article [F3] ou saisissez une référence manuelle [F4].
+                    </p>
                 </div>
             </div>
         )
@@ -248,9 +258,9 @@ export function CartDisplay() {
         <ScrollArea className="flex-grow">
             <div className="p-6">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 items-center text-[9px] font-black uppercase text-muted-foreground/40 px-6 mb-6 tracking-widest">
-                    <div className="text-left">Désignation de l'article</div>
-                    <div className="text-center">Ajuster Quantité</div>
-                    <div className="text-right">Total HT</div>
+                    <div className="text-left">Description Marchandise</div>
+                    <div className="text-center">Volume Flux</div>
+                    <div className="text-right">Audit Net (DA)</div>
                     <div></div>
                 </div>
 
@@ -262,7 +272,7 @@ export function CartDisplay() {
                             isSelected={selectedIndex === index}
                             onUpdate={handleUpdateQty} 
                             onPriceUpdate={handleUpdatePrice}
-                            handleTotalUpdate={handleUpdateTotal}
+                            onTotalUpdate={handleUpdateTotal}
                             onRemove={handleRemove} 
                             onSelect={() => setSelectedIndex(index)}
                         />
