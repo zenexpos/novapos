@@ -1,6 +1,6 @@
 /**
  * iPOS Zen Security Layer — Input Sanitization & XSS Prevention.
- * Standard protection for POS data entry.
+ * Pro-grade protection for POS data entry.
  */
 
 export const sanitizeString = (str: string): string => {

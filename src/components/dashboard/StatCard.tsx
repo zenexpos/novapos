@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -28,10 +28,14 @@ const colorMap = {
     amber:   'from-amber-500/20 to-amber-500/5 border-amber-500/20 text-amber-500',
 };
 
-export function StatCard({
+/**
+ * PRODUCTION OPTIMIZATION: Memoized Stat Card.
+ * Prevents re-rendering during periodic dashboard refreshes.
+ */
+const StatCardComponent = ({
     title, value, icon: Icon, change, isLoading,
     href, positiveIsGood = true, suffix, color = 'primary',
-}: StatCardProps) {
+}: StatCardProps) => {
     const isPositive = change !== undefined && change >= 0;
     const isGood     = positiveIsGood ? isPositive : !isPositive;
     const iconColors = colorMap[color];
@@ -90,3 +94,5 @@ export function StatCard({
     );
     return content;
 }
+
+export const StatCard = memo(StatCardComponent);

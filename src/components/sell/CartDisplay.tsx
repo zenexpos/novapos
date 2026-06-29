@@ -229,7 +229,7 @@ export function CartDisplay() {
                 </div>
                 <div className="space-y-2">
                     <p className="text-xl font-black tracking-tighter text-muted-foreground/20 uppercase">Terminal de Vente</p>
-                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scannez un article pour commencer</p>
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground/10 tracking-[0.3em]">Scanneز un article pour commencer</p>
                 </div>
             </div>
         )
