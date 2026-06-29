@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -18,7 +18,6 @@ import {
     Loader2, 
     X, 
     AlertTriangle, 
-    ChevronsUpDown, 
     Plus, 
     Package, 
     Hash, 
@@ -29,7 +28,11 @@ import {
     CheckCircle2,
     Tag,
     CalendarClock,
-    Scale
+    Scale,
+    Search,
+    ChevronRight,
+    UserPlus,
+    Building2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,11 +49,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { productService } from '@/services/product.service';
 import { supplierService } from '@/services/supplier.service';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn, safeNumber, formatCurrency } from '@/lib/utils';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ProductDialogProps {
     isOpen: boolean;
@@ -83,8 +86,9 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
     const [isLoading, setIsLoading] = useState(false);
     const [showPriceConfirm, setShowPriceConfirm] = useState(false);
 
+    // Supplier Selection State
     const [supplierSearch, setSupplierSearch] = useState('');
-    const [supplierPopoverOpen, setSupplierPopoverOpen] = useState(false);
+    const [isSupplierSelectOpen, setIsSupplierSelectOpen] = useState(false);
 
     useEffect(() => {
         if (product && isOpen) {
@@ -121,31 +125,33 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         setFormState(prev => ({...prev, barcodes: prev.barcodes?.filter(b => b !== barcodeToRemove)}));
     };
 
-    const handleSupplierSelect = (uuid: string) => {
-        const selected = suppliers.find(s => s.uuid === uuid);
-        if (selected) {
-            setFormState(prev => ({ ...prev, supplierUuid: selected.uuid, supplierName: selected.name }));
-            setSupplierPopoverOpen(false);
-        }
+    const handleSupplierSelect = (supplier: Supplier) => {
+        setFormState(prev => ({ ...prev, supplierUuid: supplier.uuid, supplierName: supplier.name }));
+        setIsSupplierSelectOpen(false);
+        toast.success(`تم اختيار المورد: ${supplier.name}`);
     };
 
-    const handleCreateNewSupplier = (name: string) => {
+    const handleCreateNewSupplier = () => {
+        const name = supplierSearch.trim();
+        if (!name) return;
         setFormState(prev => ({ ...prev, supplierUuid: undefined, supplierName: name }));
-        setSupplierPopoverOpen(false);
+        setIsSupplierSelectOpen(false);
         toast.info(`المورد "${name}" جديد`, {
             description: "سيتم إنشاؤه تلقائياً عند حفظ المنتج."
         });
     };
 
     const filteredSuppliers = useMemo(() => {
-        if (!supplierSearch.trim()) return suppliers.slice(0, 20);
+        if (!supplierSearch.trim()) return suppliers.slice(0, 50);
         const q = supplierSearch.toLowerCase().trim();
-        return suppliers.filter(s => s.name.toLowerCase().includes(q));
+        return suppliers.filter(s => 
+            s.name.toLowerCase().includes(q) || 
+            (s.phone && s.phone.includes(q))
+        );
     }, [suppliers, supplierSearch]);
 
-    const showCreateOption = useMemo(() => {
-        if (!supplierSearch.trim()) return false;
-        return !suppliers.some(s => s.name.toLowerCase() === supplierSearch.toLowerCase().trim());
+    const isExistingSupplier = useMemo(() => {
+        return suppliers.some(s => s.name.toLowerCase() === supplierSearch.toLowerCase().trim());
     }, [suppliers, supplierSearch]);
 
     const proceedWithSubmit = async () => {
@@ -287,55 +293,21 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
 
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase opacity-40 ml-1">المورد</Label>
-                                    <Popover open={supplierPopoverOpen} onOpenChange={setSupplierPopoverOpen}>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" className="w-full justify-between h-11 rounded-xl bg-muted/20 border-none shadow-inner font-bold text-xs group">
-                                                <Building className="mr-2 h-4 w-4 opacity-30 group-hover:text-primary transition-colors" />
-                                                <span className="truncate">{formState.supplierName || "اختر مورداً..."}</span>
-                                                <ChevronsUpDown className="ml-auto h-4 w-4 opacity-30" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl shadow-2xl border-white/5 overflow-hidden">
-                                            <Command shouldFilter={false}>
-                                                <CommandInput 
-                                                    placeholder="بحث عن مورد..." 
-                                                    value={supplierSearch}
-                                                    onValueChange={setSupplierSearch} 
-                                                    className="h-12 border-none"
-                                                />
-                                                <CommandList>
-                                                    <CommandEmpty>
-                                                        {!showCreateOption && <p className="p-4 text-xs text-muted-foreground text-center">لا توجد نتائج</p>}
-                                                    </CommandEmpty>
-                                                    <CommandGroup>
-                                                        {filteredSuppliers.map(s => (
-                                                            <CommandItem 
-                                                                key={s.uuid} 
-                                                                value={s.uuid}
-                                                                onSelect={() => handleSupplierSelect(s.uuid)} 
-                                                                className="font-bold flex items-center justify-between p-3"
-                                                            >
-                                                                {s.name}
-                                                                {formState.supplierUuid === s.uuid && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                    {showCreateOption && (
-                                                        <CommandGroup heading="إجراء">
-                                                            <CommandItem 
-                                                                value="create-new"
-                                                                onSelect={() => handleCreateNewSupplier(supplierSearch)}
-                                                                className="text-primary font-black p-3 bg-primary/5"
-                                                            >
-                                                                <Plus className="mr-2 h-4 w-4" />
-                                                                إنشاء مورد باسم "{supplierSearch}"
-                                                            </CommandItem>
-                                                        </CommandGroup>
-                                                    )}
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
+                                    <div 
+                                        onClick={() => setIsSupplierSelectOpen(true)}
+                                        className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border-2 border-transparent hover:border-primary/20 transition-all cursor-pointer group shadow-inner"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-xl bg-background border border-white/5 shadow-sm group-hover:scale-110 transition-transform">
+                                                <Building2 className="h-4 w-4 text-primary/60" />
+                                            </div>
+                                            <div className="flex flex-col -space-y-0.5">
+                                                <p className="font-bold text-sm tracking-tight">{formState.supplierName || "اختر مورداً..."}</p>
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground/30 tracking-widest">{formState.supplierUuid ? "مورد مسجل" : "مورد جديد"}</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -500,7 +472,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                             className="flex-1 h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 gap-3"
                         >
                             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                            {product ? 'تحديث الفتح' : 'تأكيد الإضافة'}
+                            {product ? 'تحديث المرجع' : 'تأكيد الإضافة'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -529,6 +501,84 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        {/* SUPPLIER SELECTION DIALOG */}
+        <Dialog open={isSupplierSelectOpen} onOpenChange={setIsSupplierSelectOpen}>
+            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-card">
+                <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">
+                            <Building2 className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-xl font-black tracking-tight">قائمة الموردين</DialogTitle>
+                            <p className="text-[10px] font-bold uppercase text-primary/50">اختر مورداً لهذا المنتج</p>
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                <div className="p-6 space-y-6">
+                    <div className="relative group">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <Input
+                            placeholder="البحث عن اسم المورد..."
+                            className="pl-14 h-11 text-lg font-bold rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20"
+                            value={supplierSearch}
+                            onChange={(e) => setSupplierSearch(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+
+                    <ScrollArea className="h-[350px] pr-4 -mr-4">
+                        <div className="space-y-2">
+                            {filteredSuppliers.length > 0 ? (
+                                filteredSuppliers.map(s => (
+                                    <div 
+                                        key={s.uuid}
+                                        onClick={() => handleSupplierSelect(s)}
+                                        className="group flex items-center justify-between p-4 rounded-2xl bg-muted/20 border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer shadow-inner"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2.5 rounded-xl bg-background border border-white/5 shadow-sm group-hover:scale-110 transition-transform">
+                                                <Building className="h-5 w-5 text-primary/60" />
+                                            </div>
+                                            <div className="flex flex-col -space-y-0.5">
+                                                <p className="font-bold text-sm tracking-tight">{s.name}</p>
+                                                <p className="text-[10px] font-mono text-muted-foreground/50">{s.phone || 'بدون رقم هاتف'}</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-20 opacity-20">
+                                    <Building2 className="h-12 w-12 mx-auto mb-4" />
+                                    <p className="text-sm font-bold uppercase">لا توجد نتائج</p>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </div>
+
+                <div className="p-4 bg-muted/10 border-t border-white/5 flex gap-3">
+                    <Button 
+                        variant="ghost" 
+                        onClick={() => setIsSupplierSelectOpen(false)}
+                        className="flex-1 h-11 rounded-2xl font-bold text-[10px] uppercase tracking-wide"
+                    >
+                        إلغاء
+                    </Button>
+                    {!isExistingSupplier && supplierSearch.trim() && (
+                        <Button 
+                            onClick={handleCreateNewSupplier}
+                            className="flex-1 h-11 rounded-2xl font-bold text-[10px] uppercase tracking-wide gap-2 shadow-xl"
+                        >
+                            <UserPlus className="h-4 w-4" /> إنشاء مورد جديد باسم "{supplierSearch}"
+                        </Button>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
         </>
     );
 }
