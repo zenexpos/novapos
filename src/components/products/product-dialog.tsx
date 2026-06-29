@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { DatePicker } from '../ui/date-picker';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { productService } from '@/services/product.service';
+import { supplierService } from '@/services/supplier.service';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn, safeNumber, formatCurrency } from '@/lib/utils';
@@ -96,6 +97,13 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
         setError(null);
         setIsLoading(true);
         try {
+            // Logic to create supplier if it's new
+            let targetSupplierUuid = formState.supplierUuid;
+            if (!targetSupplierUuid && formState.supplierName?.trim()) {
+                const resolvedSupplier = await supplierService.findOrCreateSupplier(formState.supplierName.trim());
+                targetSupplierUuid = resolvedSupplier.uuid;
+            }
+
             const finalData: ProductCreateInput = {
                 name: formState.name || '',
                 price: safeNumber(formState.price),
@@ -106,10 +114,8 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                 category: formState.category,
                 barcodes: formState.barcodes,
                 dateExpiration: formState.dateExpiration,
-                supplierUuid: formState.supplierUuid
+                supplierUuid: targetSupplierUuid
             };
-
-            console.log(`[ProductDialog] Submitting quantity: ${finalData.quantity}`);
 
             if (product) await productService.updateProduct(product.uuid, finalData);
             else await productService.addProduct(finalData);
@@ -171,7 +177,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                 <Package className="h-6 w-6" />
                             </div>
                             <div>
-                                <DialogTitle className="text-lg font-semibold tracking-tight">{product ? 'Édition Elite' : 'Nouveau Produit Elite'}</DialogTitle>
+                                <DialogTitle className="text-lg font-semibold tracking-tight">{product ? 'Éدition Elite' : 'Nouveau Produit Elite'}</DialogTitle>
                                 <DialogDescription className="font-medium">Paramétrage technique de la fiche produit Premium.</DialogDescription>
                             </div>
                         </div>
@@ -207,10 +213,39 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                                             </PopoverTrigger>
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl shadow-sm border-white/5 overflow-hidden">
                                                 <Command>
-                                                    <CommandInput placeholder="Chercher..." onValueChange={setSupplierSearch} />
+                                                    <CommandInput 
+                                                        placeholder="Chercher..." 
+                                                        onValueChange={setSupplierSearch} 
+                                                    />
                                                     <CommandList>
-                                                        <CommandEmpty><Button variant="link" className="text-xs" onClick={() => { setFormState(p => ({...p, supplierName: supplierSearch, supplierUuid: undefined})); setSupplierPopoverOpen(false); }}>Créer "{supplierSearch}"</Button></CommandEmpty>
-                                                        <CommandGroup>{suppliers.filter(s => s.name.toLowerCase().includes(supplierSearch.toLowerCase())).map(s => <CommandItem key={s.uuid} value={s.name} onSelect={() => handleSupplierSelect(s.uuid)} className="font-bold">{s.name}</CommandItem>)}</CommandGroup>
+                                                        <CommandEmpty>
+                                                            {supplierSearch && (
+                                                                <div 
+                                                                    className="p-4 text-center cursor-pointer hover:bg-primary/5 transition-colors"
+                                                                    onClick={() => {
+                                                                        setFormState(p => ({...p, supplierName: supplierSearch, supplierUuid: undefined}));
+                                                                        setSupplierPopoverOpen(false);
+                                                                        toast.info(`Nouveau fournisseur: "${supplierSearch}" (sera créé au moment du passage)`);
+                                                                    }}
+                                                                >
+                                                                    <Plus className="inline-block h-3.5 w-3.5 mr-2" />
+                                                                    Créer "{supplierSearch}"
+                                                                </div>
+                                                            )}
+                                                        </CommandEmpty>
+                                                        <CommandGroup>
+                                                            {suppliers.map(s => (
+                                                                <CommandItem 
+                                                                    key={s.uuid} 
+                                                                    value={s.name} 
+                                                                    onSelect={() => handleSupplierSelect(s.uuid)} 
+                                                                    className="font-bold flex items-center justify-between"
+                                                                >
+                                                                    {s.name}
+                                                                    {formState.supplierUuid === s.uuid && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
                                                     </CommandList>
                                                 </Command>
                                             </PopoverContent>
