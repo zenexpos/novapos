@@ -183,7 +183,8 @@ export const useAppStore = create<AppState>()(
                         let itemsTotalCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        await db.transaction('rw', [db.products, db.suppliers, db.stock_intakes, db.inventory_logs, db.sync_queue], async () => {
+                        // FIX: Added supplier_payments to the transaction array for recalculateSupplierBalance
+                        await db.transaction('rw', [db.products, db.suppliers, db.stock_intakes, db.inventory_logs, db.supplier_payments, db.sync_queue], async () => {
                             const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
                             for (const item of intakeData.items) {
