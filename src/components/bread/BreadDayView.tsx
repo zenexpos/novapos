@@ -1,2 +1,2 @@
-// Deprecated: Logic migrated to page.tsx for better performance and centralized state management.
+// Deprecated: View logic consolidated in src/app/bread/page.tsx for performance optimization.
 export const BreadDayView = () => null;

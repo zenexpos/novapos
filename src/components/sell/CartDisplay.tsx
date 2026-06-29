@@ -77,7 +77,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                                 <TooltipTrigger asChild>
                                     <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase cursor-help">Manuel</div>
                                 </TooltipTrigger>
-                                <TooltipContent>Article ajouté manuellement sans code-barres.</TooltipContent>
+                                <TooltipContent>Article ajouté manuellement بدون code-barres.</TooltipContent>
                             </Tooltip>
                         )}
                         {isPriceOverridden && (
@@ -128,18 +128,20 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 
                 <div className="flex flex-col items-center">
                     <div className="flex items-center bg-background rounded-xl border border-border overflow-hidden shadow-sm">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button 
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
-                                    className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                                >
-                                    <Minus className="h-3.5 w-3.5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Réduire</TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button 
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
+                                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                                    >
+                                        <Minus className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Réduire</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         
                         <Input
                             ref={qtyInputRef}
@@ -153,18 +155,20 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             )}
                         />
 
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button 
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
-                                    className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
-                                >
-                                    <Plus className="h-3.5 w-3.5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Augmenter</TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button 
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
+                                        className="px-3 h-10 hover:bg-muted text-muted-foreground hover:text-primary transition-colors font-black"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Augmenter</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
 
@@ -184,27 +188,29 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                             )}
                         />
                     </div>
-                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total ligne</p>
+                    <p className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1 mr-1">Sous-total HT</p>
                 </div>
 
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className={cn(
-                                "h-10 w-10 rounded-xl transition-all",
-                                isZero 
-                                    ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
-                                    : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
-                            )}
-                            onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
-                        >
-                            {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Retirer du panier</TooltipContent>
-                </Tooltip>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className={cn(
+                                    "h-10 w-10 rounded-xl transition-all",
+                                    isZero 
+                                        ? "text-destructive opacity-100 bg-destructive/5 hover:bg-destructive/10" 
+                                        : "text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100"
+                                )}
+                                onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
+                            >
+                                {isZero ? <X className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Retirer du panier</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </TooltipProvider>
     );
