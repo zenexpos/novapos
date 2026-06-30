@@ -184,48 +184,50 @@ class CustomerService {
     }
 
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
-        const customer = await db.customers.where('uuid').equals(customerUuid).first();
-        if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
+        return await db.transaction('rw', [db.customers, db.sales, db.payments, db.product_returns], async () => {
+            const customer = await db.customers.where('uuid').equals(customerUuid).first();
+            if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-        const [sales, payments, returns] = await Promise.all([
-            db.sales.where('customerUuid').equals(customerUuid).toArray(),
-            db.payments.where('customerUuid').equals(customerUuid).toArray(),
-            db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
-        ]);
+            const [sales, payments, returns] = await Promise.all([
+                db.sales.where('customerUuid').equals(customerUuid).toArray(),
+                db.payments.where('customerUuid').equals(customerUuid).toArray(),
+                db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
+            ]);
 
-        const activeSales = sales.filter(s => !s.isCancelled);
+            const activeSales = sales.filter(s => !s.isCancelled);
 
-        let totalDebtCents = Math.round(safeNumber(customer.initialBalance) * 100);
-        let totalSpentCents = 0;
+            let totalDebtCents = Math.round(safeNumber(customer.initialBalance) * 100);
+            let totalSpentCents = 0;
 
-        activeSales.forEach(s => {
-            totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
-            totalSpentCents += Math.round(safeNumber(s.total) * 100);
+            activeSales.forEach(s => {
+                totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
+                totalSpentCents += Math.round(safeNumber(s.total) * 100);
+            });
+            payments.forEach(p => {
+                totalDebtCents -= Math.round(safeNumber(p.amount) * 100);
+            });
+            returns.forEach(r => {
+                const net = Math.round(safeNumber(r.totalReturnValue) * 100) - Math.round(safeNumber(r.amountRefunded) * 100);
+                totalDebtCents  -= net;
+                totalSpentCents -= Math.round(safeNumber(r.totalReturnValue) * 100);
+            });
+
+            const newBalance  = roundFinancial(totalDebtCents / 100);
+            const totalSpent  = roundFinancial(Math.max(0, totalSpentCents / 100));
+            const limit       = safeNumber(customer.creditLimit);
+            const isOverLimit = limit > 0 ? newBalance > (limit + 0.009) : false;
+
+            const customerUpdate: Partial<Customer> = {
+                totalSpent,
+                outstandingBalance: newBalance,
+                isOverLimit,
+                debtStatus: newBalance > 0.009 ? 'due_soon' : 'none',
+                updatedAt: new Date(),
+            };
+
+            await db.customers.update(customer.id!, customerUpdate);
+            return { ...customer, ...customerUpdate };
         });
-        payments.forEach(p => {
-            totalDebtCents -= Math.round(safeNumber(p.amount) * 100);
-        });
-        returns.forEach(r => {
-            const net = Math.round(safeNumber(r.totalReturnValue) * 100) - Math.round(safeNumber(r.amountRefunded) * 100);
-            totalDebtCents  -= net;
-            totalSpentCents -= Math.round(safeNumber(r.totalReturnValue) * 100);
-        });
-
-        const newBalance  = roundFinancial(totalDebtCents / 100);
-        const totalSpent  = roundFinancial(Math.max(0, totalSpentCents / 100));
-        const limit       = safeNumber(customer.creditLimit);
-        const isOverLimit = limit > 0 ? newBalance > (limit + 0.009) : false;
-
-        const customerUpdate: Partial<Customer> = {
-            totalSpent,
-            outstandingBalance: newBalance,
-            isOverLimit,
-            debtStatus: newBalance > 0.009 ? 'due_soon' : 'none',
-            updatedAt: new Date(),
-        };
-
-        await db.customers.update(customer.id!, customerUpdate);
-        return { ...customer, ...customerUpdate };
     }
 
     private triggerSync() {

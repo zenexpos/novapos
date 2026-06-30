@@ -185,7 +185,8 @@ export const useAppStore = create<AppState>()(
 
                         await db.transaction('rw', [
                             db.products, db.suppliers, db.stock_intakes, 
-                            db.inventory_logs, db.supplier_payments, db.sync_queue
+                            db.inventory_logs, db.supplier_payments, db.sync_queue,
+                            db.company_profile
                         ], async () => {
                             const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
@@ -261,8 +262,8 @@ export const useAppStore = create<AppState>()(
                                 table: 'stock_intakes', 
                                 operation: 'CREATE', 
                                 payload: newIntake, 
-                                shadowId: Date.now()
-                            } as any);
+                                timestamp: Date.now()
+                            });
                         });
                         
                         get().actions.triggerSmartSync();
