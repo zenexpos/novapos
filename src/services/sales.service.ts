@@ -11,7 +11,6 @@ import { useAppStore } from '@/stores/appStore';
 /**
  * iPOS Zen - Master Sales Domain Service.
  * Centralizes sales transactions with guaranteed atomicity (IndexedDB Transaction).
- * PRODUCTION AUDIT: Hardened financial rounding and cross-entity integrity.
  */
 class SalesService {
   private triggerSync() {
@@ -101,7 +100,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // Hardened scope to include all stores accessed during status recalculation
+    // Standardized transaction array to prevent NotFoundError during cross-service updates
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,

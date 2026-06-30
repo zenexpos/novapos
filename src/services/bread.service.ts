@@ -11,7 +11,6 @@ import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 /**
  * Bread Logistics Service — Elite Grade.
  * Managed automated daily distribution and financial conversion.
- * PRODUCTION AUDIT: Fixed data mapping for sale conversion and ensured atomic transactions.
  */
 class BreadService {
 
@@ -109,7 +108,6 @@ class BreadService {
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
-        // AUDIT FIX: Expanded scope of transaction to include all recalculation paths
         await db.transaction('rw', [
           db.bread_orders, db.sales, db.products, 
           db.inventory_logs, db.customers, db.company_profile, 
