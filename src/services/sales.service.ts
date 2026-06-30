@@ -100,7 +100,6 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit (Zero Defect Hardening)
-    // Included all relevant tables to ensure balance integrity during high-concurrency operations.
     await db.transaction('rw', [
       db.sales, 
       db.products, 

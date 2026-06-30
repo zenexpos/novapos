@@ -25,7 +25,7 @@ export function calculateMarginRate(price: number, cost: number): number {
  * Calculates the Nisab threshold based on gold price (85g of gold).
  */
 export function calculateNisab(goldPricePerGram: number): number {
-    return goldPricePerGram * 85;
+    return roundFinancial(goldPricePerGram * 85);
 }
 
 /**

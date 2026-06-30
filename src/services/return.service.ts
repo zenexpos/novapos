@@ -9,7 +9,7 @@ import type { ProductReturn, ReturnItem, ReturnCreateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeToDate, roundFinancial } from '@/lib/utils';
+import { roundFinancial } from '@/lib/utils';
 
 class ReturnService {
 
@@ -43,7 +43,7 @@ class ReturnService {
 
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
-            db.customers, db.sales, db.payments, db.sync_queue, db.bread_orders
+            db.customers, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile
         ], async () => {
             await db.product_returns.add(newReturn);
 
@@ -77,7 +77,7 @@ class ReturnService {
     async processReturnCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [
             db.product_returns, db.products, db.customers,
-            db.inventory_logs, db.sales, db.payments, db.sync_queue, db.bread_orders
+            db.inventory_logs, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile
         ], async () => {
             const productReturn = await this.getReturnByUuid(uuid);
             if (!productReturn || !productReturn.id) throw new Error('Retour introuvable.');

@@ -28,7 +28,6 @@ interface CartItemRowProps {
 
 /**
  * PERFORMANCE OPTIMIZATION: React.memo
- * Ensures cart items only re-render if their data or selection state changes.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
