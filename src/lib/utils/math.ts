@@ -1,6 +1,6 @@
 /**
  * iPOS Math Engine — Professional Precision Core.
- * Solves floating point issues to ensure accounting-grade accuracy using Number.EPSILON.
+ * Audit Zero Defect : Utilisation stricte de Number.EPSILON pour neutraliser la dérive binaire.
  */
 
 export const FINANCIAL_PRECISION = 2;
@@ -8,8 +8,8 @@ export const QTY_PRECISION = 3;
 export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
- * Standard Financial Rounding (2 decimals).
- * High precision version with Epsilon guard.
+ * Arrondi financier standard (2 décimales).
+ * Version durcie avec garde Epsilon.
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
@@ -19,7 +19,7 @@ export function roundFinancial(value: number): number {
 }
 
 /**
- * Quantity Rounding (3 decimals for weights).
+ * Arrondi des quantités (3 décimales pour les poids).
  */
 export function roundQty(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
@@ -28,7 +28,7 @@ export function roundQty(value: number): number {
 }
 
 /**
- * Cleans and secures a number, avoids NaN.
+ * Nettoie et sécurise un nombre, évite NaN.
  */
 export function safeNumber(val: any): number {
     if (typeof val === 'number') return isNaN(val) || !isFinite(val) ? 0 : val;
@@ -41,15 +41,15 @@ export function safeNumber(val: any): number {
 }
 
 /**
- * Multiplication with financial precision.
- * Crucial for avoiding accumulation errors in ledger calculations.
+ * Multiplication avec précision financière.
+ * Crucial pour éviter l'accumulation d'erreurs dans le grand livre.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));
 }
 
 /**
- * Calculate cart totals with absolute precision and per-line rounding.
+ * Calcule les totaux du panier avec une précision absolue par ligne.
  */
 export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
     const subtotal = cart.items.reduce((acc, item) => {
@@ -78,7 +78,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
 }
 
 /**
- * Robust TVA Calculation.
+ * Calcul de TVA robuste.
  */
 export function calculateTVA(totalTTC: number, tvaRate: number): { ht: number, tva: number } {
     const rate = safeNumber(tvaRate);
@@ -89,8 +89,27 @@ export function calculateTVA(totalTTC: number, tvaRate: number): { ht: number, t
 }
 
 /**
- * Converts TTC amount to HT.
+ * Convertit un montant TTC en HT.
  */
 export function ttcToHt(totalTTC: number, tvaRate: number): number {
     return calculateTVA(totalTTC, tvaRate).ht;
+}
+
+/**
+ * Calcule le seuil du Nissab basé sur le prix de l'or (85g).
+ */
+export function calculateNisab(goldPricePerGram: number): number {
+    return roundFinancial(goldPricePerGram * 85);
+}
+
+/**
+ * Calcule la Zakat (2.5% des actifs nets si > Nissab).
+ */
+export function calculateZakat(netAssets: number, goldPricePerGram: number): { due: boolean; amount: number } {
+    const nisab = calculateNisab(goldPricePerGram);
+    const isDue = netAssets >= nisab;
+    return {
+        due: isDue,
+        amount: isDue ? roundFinancial(netAssets * 0.025) : 0
+    };
 }

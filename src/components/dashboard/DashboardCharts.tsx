@@ -13,8 +13,7 @@ interface DashboardChartsProps {
 }
 
 /**
- * PRODUCTION AUDIT: Fix Skeleton import from internal UI library.
- * Implemented React.memo for chart performance stabilization.
+ * PRODUCTION AUDIT : Correction de l'import Skeleton et mémoïsation pour performance.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
@@ -55,10 +54,6 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                                 <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
                                     <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
-                                </linearGradient>
-                                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.1}/>
-                                    <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground) / 0.1)" />
@@ -113,16 +108,6 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                                 strokeDasharray="5 5"
                                 fillOpacity={1} 
                                 fill="url(#colorProfit)" 
-                                isAnimationActive={false}
-                            />
-                             <Area 
-                                type="monotone" 
-                                dataKey="expenses" 
-                                name="Charges"
-                                stroke="hsl(var(--destructive))" 
-                                strokeWidth={1}
-                                fillOpacity={1} 
-                                fill="url(#colorExpenses)" 
                                 isAnimationActive={false}
                             />
                         </AreaChart>

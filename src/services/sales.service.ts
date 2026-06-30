@@ -1,4 +1,8 @@
 'use client';
+/**
+ * @fileOverview Service de gestion des ventes Maître.
+ * Audit Zero Defect : Centralisation des transactions atomiques et hardening financier.
+ */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { Sale, CartItem, SaleItem } from '@/lib/types';
@@ -8,10 +12,6 @@ import { customerService } from './customer.service';
 import { safeNumber, preciseMultiply, roundFinancial, safeToDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
-/**
- * iPOS Zen - Master Sales Domain Service.
- * Centralizes sales transactions with guaranteed atomicity (IndexedDB Transaction).
- */
 class SalesService {
   private triggerSync() {
     if (typeof window !== 'undefined') {
@@ -31,8 +31,8 @@ class SalesService {
   }
 
   /**
-   * Creates an atomic sale.
-   * Updates stock, customer balance, and inventory logs in a single commit.
+   * Crée une vente atomique.
+   * Met à jour le stock, le solde client et les logs d'inventaire en un seul commit.
    */
   async createSale(saleData: {
     items: CartItem[];
@@ -48,7 +48,6 @@ class SalesService {
 
     const now = new Date();
     
-    // 1. Calculate subtotal with item-level precision rounding
     const subtotalCents = saleData.items.reduce((acc, item) => {
         const itemTotal = preciseMultiply(item.price, item.cartQuantity);
         return acc + Math.round(itemTotal * 100);
@@ -56,7 +55,6 @@ class SalesService {
 
     const subtotal = subtotalCents / 100;
 
-    // 2. Resolve discount
     let discountAmount = 0;
     if (saleData.discountType === 'percentage') {
         discountAmount = roundFinancial((subtotal * safeNumber(saleData.discountValue)) / 100);
@@ -99,20 +97,12 @@ class SalesService {
       isCancelled: false
     };
 
-    // ATOMIC TRANSACTION: Global IndexedDB Commit (Zero Defect Hardening)
+    // ATOMIC TRANSACTION : Hardening Zero Defect (Include all potential impact tables)
     await db.transaction('rw', [
-      db.sales, 
-      db.products, 
-      db.inventory_logs, 
-      db.customers, 
-      db.company_profile, 
-      db.sync_queue,
-      db.payments,
-      db.product_returns,
-      db.bread_orders,
-      db.suppliers,
-      db.supplier_payments,
-      db.stock_intakes
+      db.sales, db.products, db.inventory_logs, db.customers, 
+      db.company_profile, db.sync_queue, db.payments,
+      db.product_returns, db.bread_orders, db.suppliers,
+      db.supplier_payments, db.stock_intakes
     ], async () => {
       await db.sales.add(newSale);
       
@@ -149,18 +139,10 @@ class SalesService {
     if (!sale || sale.isCancelled) return;
 
     await db.transaction('rw', [
-      db.sales, 
-      db.products, 
-      db.inventory_logs, 
-      db.customers, 
-      db.sync_queue,
-      db.payments,
-      db.product_returns,
-      db.bread_orders,
-      db.company_profile,
-      db.suppliers,
-      db.supplier_payments,
-      db.stock_intakes
+      db.sales, db.products, db.inventory_logs, db.customers, 
+      db.sync_queue, db.payments, db.product_returns, 
+      db.bread_orders, db.company_profile, db.suppliers,
+      db.supplier_payments, db.stock_intakes
     ], async () => {
       await db.sales.update(sale.id!, { 
         isCancelled: true, 
