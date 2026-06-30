@@ -8,6 +8,7 @@ import { useAppStore } from '@/stores/appStore';
 
 /**
  * iPOS Zen - Stock Management Service.
+ * PRODUCTION AUDIT: Hardened transactions and balance integrity.
  */
 class StockService {
     
@@ -46,13 +47,19 @@ class StockService {
             syncStatus: 'pending',
             version: 1
         };
-        const id = await db.stock_intakes.add(newIntake);
-        newIntake.id = id;
 
-        // Audited Balance Update
-        if (intakeData.supplierUuid) {
-            await supplierService.recalculateSupplierBalance(intakeData.supplierUuid);
-        }
+        await db.transaction('rw', [
+            db.stock_intakes, db.products, db.suppliers, 
+            db.inventory_logs, db.supplier_payments, db.sync_queue,
+            db.company_profile
+        ], async () => {
+            await db.stock_intakes.add(newIntake);
+
+            // Audited Balance Update
+            if (intakeData.supplierUuid) {
+                await supplierService.recalculateSupplierBalance(intakeData.supplierUuid);
+            }
+        });
 
         // Trigger Cloud Sync
         if (typeof window !== 'undefined') {
@@ -63,7 +70,11 @@ class StockService {
     }
 
     async processStockIntakeCancellation(intakeUuid: string): Promise<void> {
-        await db.transaction('rw', [db.stock_intakes, db.products, db.suppliers, db.inventory_logs, db.supplier_payments, db.sync_queue], async () => {
+        await db.transaction('rw', [
+            db.stock_intakes, db.products, db.suppliers, 
+            db.inventory_logs, db.supplier_payments, db.sync_queue,
+            db.company_profile
+        ], async () => {
             const intake = await db.stock_intakes.where('uuid').equals(intakeUuid).first();
             if (!intake || !intake.id) {
                 throw new Error("Réception de stock non trouvée.");
@@ -84,6 +95,13 @@ class StockService {
             if (supplierUuid) {
                 await supplierService.recalculateSupplierBalance(supplierUuid);
             }
+            
+            await db.sync_queue.add({
+                table: 'stock_intakes',
+                operation: 'DELETE',
+                payload: { uuid: intakeUuid },
+                timestamp: Date.now()
+            });
         });
 
         // Trigger Cloud Sync

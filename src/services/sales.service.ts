@@ -101,7 +101,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // SCOPE AUDIT: Expanded to include all related stores to prevent NotFoundError during status recalculations
+    // Hardened scope to include all stores potentially accessed during status recalculation
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -143,10 +143,10 @@ class SalesService {
     const sale = await this.getSaleByUuid(uuid);
     if (!sale || sale.isCancelled) return;
 
-    // SCOPE AUDIT: Expanded to include customers, payments and returns for full balance audit
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
-      db.customers, db.payments, db.product_returns, db.sync_queue
+      db.customers, db.payments, db.product_returns, db.sync_queue,
+      db.bread_orders, db.company_profile
     ], async () => {
       await db.sales.update(sale.id!, { 
         isCancelled: true, 

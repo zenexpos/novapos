@@ -14,12 +14,11 @@ class DashboardService {
         const start = startOfDay(from);
         const end = endOfDay(to);
 
-        // Calculate comparison period
         const diffDays = differenceInDays(end, start) + 1;
         const prevEnd = subDays(start, 1);
         const prevStart = subDays(prevEnd, diffDays - 1);
 
-        // 1. Parallel RAW Data Fetching (Optimized with cursors where possible)
+        // 1. Parallel RAW Data Fetching
         const [sales, expenses, payments, returns, intakes] = await Promise.all([
             db.sales.where('createdAt').between(start, end, true, true).toArray(),
             db.expenses.where('expenseDate').between(start, end, true, true).toArray(),
@@ -172,12 +171,22 @@ class DashboardService {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         const breadOrders = await db.bread_orders.where('date').equals(todayStr).toArray();
 
+        // 6. Hardened Activity Feed Query
+        // Optimized: Fetch only the strictly necessary rows from DB instead of loading all and slicing in JS
+        const [recentSales, recentPayments, recentExpenses, recentReturns, recentIntakes] = await Promise.all([
+            db.sales.where('createdAt').above(subDays(today, 7)).reverse().limit(15).toArray(),
+            db.payments.where('paymentDate').above(subDays(today, 7)).reverse().limit(15).toArray(),
+            db.expenses.where('expenseDate').above(subDays(today, 7)).reverse().limit(15).toArray(),
+            db.product_returns.where('createdAt').above(subDays(today, 7)).reverse().limit(15).toArray(),
+            db.stock_intakes.where('createdAt').above(subDays(today, 7)).reverse().limit(15).toArray()
+        ]);
+
         return {
             stats,
             salesByDay,
             topProducts,
             topCustomers,
-            recentActivity: this.aggregateActivity(activeSales, payments, expenses, returns, intakes),
+            recentActivity: this.aggregateActivity(recentSales, recentPayments, recentExpenses, recentReturns, recentIntakes),
             debtAging,
             breadSummary: {
                 totalOrders: breadOrders.length,
@@ -199,7 +208,6 @@ class DashboardService {
     }
 
     private aggregateActivity(sales: any[], payments: any[], expenses: any[], returns: any[], intakes: any[]): RecentActivity[] {
-        // Collect all, THEN sort, THEN slice (Correct Logic)
         const allEvents: RecentActivity[] = [
             ...sales.map(s => ({ id: s.uuid, type: 'sale' as const, title: `Vente #${s.invoiceNumber}`, description: s.customerUuid ? 'Client Premium' : 'Passage', timestamp: safeToDate(s.createdAt!), amount: s.total, status: 'success' as const })),
             ...payments.map(p => ({ id: p.uuid, type: 'payment' as const, title: `Paiement Reçu`, description: 'Règlement dette', timestamp: safeToDate(p.paymentDate), amount: p.amount, status: 'success' as const })),
@@ -214,7 +222,7 @@ class DashboardService {
     }
 
     private calcTrend(curr: number, prev: number) {
-        if (!prev || prev === 0) return curr > 0 ? 0 : 0; // Neutralize misleading 100% spikes
+        if (!prev || prev === 0) return 0;
         return ((curr - prev) / Math.abs(prev)) * 100;
     }
 

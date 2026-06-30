@@ -55,7 +55,9 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
     const { isCustomItemOpen, onCustomItemOpenChange } = props;
     const { addItemToCart } = useCartActions();
     const [searchQuery, setSearchQuery] = useState('');
-    const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 80);
+    
+    // Hardened Debounce for Production Stability (300ms)
+    const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
 
     const [searchResults, setSearchResults] = useState<Product[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -105,12 +107,18 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                 if (!signal.aborted) {
                     const results = data.slice(0, 15);
                     setSearchResults(results);
+                    
+                    // Exact Barcode Auto-Add
                     const q = debouncedSearchQuery.trim();
                     const exactMatch = results.find(p => p.barcodes?.some(b => b === q));
-                    if (exactMatch) handleSelect(exactMatch);
+                    if (exactMatch) {
+                        handleSelect(exactMatch);
+                    }
                 }
             } catch (e: any) {
-                if (!signal.aborted && e.name !== 'AbortError') setSearchError("Moteur de recherche indisponible.");
+                if (!signal.aborted && e.name !== 'AbortError') {
+                    setSearchError("Moteur de recherche temporairement indisponible.");
+                }
             } finally {
                 if (!signal.aborted) setIsSearching(false);
             }
@@ -138,13 +146,23 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         autoComplete="off"
-                        onKeyDown={(e) => { if (e.key === 'Enter' && searchResults.length > 0) { e.preventDefault(); handleSelect(searchResults[0]); } }}
+                        onKeyDown={(e) => { 
+                            if (e.key === 'Enter' && searchResults.length > 0) { 
+                                e.preventDefault(); 
+                                handleSelect(searchResults[0]); 
+                            } 
+                        }}
                     />
-                    {isSearching && <div className="absolute right-5 top-1/2 -translate-y-1/2"><Loader2 className="h-5 w-5 animate-spin text-primary opacity-40" /></div>}
+                    {isSearching && (
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2">
+                            <Loader2 className="h-5 w-5 animate-spin text-primary opacity-40" />
+                        </div>
+                    )}
                 </div>
                 <CustomItemDialog isOpen={isCustomItemOpen} onOpenChange={onCustomItemOpenChange}>
                     <Button variant="outline" onClick={() => onCustomItemOpenChange(true)} className="h-9 w-auto px-6 rounded-3xl border-none bg-primary/10 hover:bg-primary/20 hover:text-primary transition-all group gap-3">
-                        <ShoppingBag className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:-rotate-12"/><span className="text-[10px] font-black uppercase tracking-widest">Manuel [F4]</span>
+                        <ShoppingBag className="h-4 w-4 transition-transform group-hover:scale-110 group-hover:-rotate-12"/>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Manuel [F4]</span>
                     </Button>
                 </CustomItemDialog>
             </div>
@@ -157,22 +175,32 @@ export const ProductSelector = forwardRef<{ focusInput: () => void }, ProductSel
                     </div>
                 ) : !searchQuery.trim() ? (
                     <div className="h-full flex flex-col items-center justify-center py-24 text-center space-y-8">
-                        <div className="relative p-6 rounded-3xl bg-card border border-white/5 shadow-inner"><Search className="h-16 w-16 text-primary/10" /></div>
+                        <div className="relative p-6 rounded-3xl bg-card border border-white/5 shadow-inner">
+                            <Search className="h-16 w-16 text-primary/10" />
+                        </div>
                         <div className="space-y-2">
-                            <p className="text-sm font-black uppercase text-muted-foreground/30 tracking-[0.2em]">Prêt pour l'indexation [F3]</p>
-                            <p className="text-[10px] font-bold text-muted-foreground/10 uppercase tracking-widest">Utilisez le lecteur ou saisissez une référence</p>
+                            <p className="text-sm font-black uppercase text-muted-foreground/30 tracking-[0.2em]">Console Prête [F3]</p>
+                            <p className="text-[10px] font-bold text-muted-foreground/10 uppercase tracking-widest">Utilisez le scanner ou la saisie clavier</p>
                         </div>
                     </div>
                 ) : (
                     <div className="space-y-4 animate-in fade-in duration-500">
                         <div className="flex items-center justify-between px-3">
-                            <h3 className="text-[10px] font-black uppercase text-primary flex items-center gap-3 tracking-widest"><Sparkles className="h-3.5 w-3.5 text-primary" />Résultats Indexés</h3>
-                            <span className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-tighter">{searchResults.length} Trouvés</span>
+                            <h3 className="text-[10px] font-black uppercase text-primary flex items-center gap-3 tracking-widest">
+                                <Sparkles className="h-3.5 w-3.5 text-primary" />Résultats
+                            </h3>
+                            <span className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-tighter">{searchResults.length} Matchs</span>
                         </div>
                         <div className="grid grid-cols-1 gap-4">
-                            {searchResults.map(product => <SearchResultItem key={product.uuid} product={product} onSelect={handleSelect} />)}
+                            {searchResults.map(product => (
+                                <SearchResultItem key={product.uuid} product={product} onSelect={handleSelect} />
+                            ))}
                         </div>
-                        {!isSearching && searchResults.length === 0 && <div className="py-24 text-center opacity-20"><p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucun produit répertorié.</p></div>}
+                        {!isSearching && searchResults.length === 0 && (
+                            <div className="py-24 text-center opacity-20">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Aucune référence trouvée.</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </ScrollArea>
