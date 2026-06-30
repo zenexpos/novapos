@@ -14,7 +14,6 @@ export const FINANCIAL_EPSILON = Number.EPSILON;
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
-    // Standard rounding can fail on edge cases like 1.005, Epsilon fixes it.
     return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
@@ -55,7 +54,6 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
-        // Round each line to avoid cumulative binary drift
         return acc + roundFinancial(preciseMultiply(price, qty));
     }, 0);
 
@@ -99,7 +97,7 @@ export function ttcToHt(totalTTC: number, tvaRate: number): number {
  * Calcule le seuil du Nissab basé sur le prix de l'or (85g).
  */
 export function calculateNisab(goldPricePerGram: number): number {
-    return roundFinancial(goldPricePerGram * 85);
+    return roundFinancial(safeNumber(goldPricePerGram) * 85);
 }
 
 /**
@@ -107,9 +105,10 @@ export function calculateNisab(goldPricePerGram: number): number {
  */
 export function calculateZakat(netAssets: number, goldPricePerGram: number): { due: boolean; amount: number } {
     const nisab = calculateNisab(goldPricePerGram);
-    const isDue = netAssets >= nisab;
+    const assets = safeNumber(netAssets);
+    const isDue = assets >= nisab && nisab > 0;
     return {
         due: isDue,
-        amount: isDue ? roundFinancial(netAssets * 0.025) : 0
+        amount: isDue ? roundFinancial(assets * 0.025) : 0
     };
 }

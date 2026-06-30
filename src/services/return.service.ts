@@ -41,7 +41,7 @@ class ReturnService {
             version: 1
         };
 
-        // Hardened transaction scope covering all related domains
+        // Scope transactionnel durci
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
             db.customers, db.sales, db.payments, db.sync_queue, 
