@@ -14,15 +14,15 @@ interface DashboardChartsProps {
 
 /**
  * Command Center Analytics Engine.
- * PRODUCTION AUDIT: Fixed Skeleton import from UI library instead of lucide.
+ * PRODUCTION AUDIT: Fixed Skeleton import and added memoization.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
         return (
             <Card className="rounded-2xl border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden h-[400px]">
                 <div className="p-8 space-y-4">
-                    <Skeleton className="h-8 w-64 rounded-xl bg-muted/20" />
-                    <Skeleton className="h-[280px] w-full rounded-2xl bg-muted/10" />
+                    <Skeleton className="h-8 w-64 rounded-xl" />
+                    <Skeleton className="h-[280px] w-full rounded-2xl" />
                 </div>
             </Card>
         );

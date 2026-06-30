@@ -27,7 +27,8 @@ interface CartItemRowProps {
 }
 
 /**
- * PERFORMANCE OPTIMIZATION: React.memo
+ * PERFORMANCE OPTIMIZATION: React.memo prevents re-rendering every row
+ * when only one item's quantity changes.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);

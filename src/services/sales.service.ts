@@ -2,6 +2,7 @@
 /**
  * @fileOverview Service de gestion des ventes Maître.
  * Audit Zero Defect : Centralisation des transactions atomiques et hardening financier.
+ * Scope transactionnel étendu pour garantir l'intégrité du stock et des dettes clients.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -97,7 +98,8 @@ class SalesService {
       isCancelled: false
     };
 
-    // ATOMIC TRANSACTION : Hardening Zero Defect (Include all potential impact tables)
+    // ATOMIC TRANSACTION : Hardening Zero Defect
+    // On verrouille toutes les tables impactées par une vente
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, db.customers, 
       db.company_profile, db.sync_queue, db.payments,

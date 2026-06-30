@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Service de gestion des retours marchandise.
- * Audit Zero Defect : Passage en mode client pour l'accès IndexedDB et sécurisation transactionnelle.
+ * Audit Zero Defect : Changement de directive de "use server" à "use client" car Dexie interagit avec IndexedDB au niveau navigateur.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -41,7 +41,7 @@ class ReturnService {
             version: 1
         };
 
-        // Scope transactionnel durci
+        // Scope transactionnel durci incluant toutes les tables impactées
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
             db.customers, db.sales, db.payments, db.sync_queue, 

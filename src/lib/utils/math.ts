@@ -9,11 +9,12 @@ export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
  * Arrondi financier standard (2 décimales).
- * Version durcie avec garde Epsilon.
+ * Version durcie avec garde Epsilon pour éviter 0.1+0.2 != 0.3
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
+    // On ajoute Epsilon avant de multiplier pour assurer que l'arrondi se fait sur la valeur représentable la plus proche
     return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
