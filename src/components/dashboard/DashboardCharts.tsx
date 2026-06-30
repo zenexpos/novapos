@@ -14,7 +14,7 @@ interface DashboardChartsProps {
 
 /**
  * Command Center Analytics Engine.
- * PRODUCTION AUDIT: Hardened Skeleton imports and hydration safety.
+ * PRODUCTION AUDIT: Fixed Skeleton import from UI library instead of lucide.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
