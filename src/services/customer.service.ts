@@ -96,7 +96,7 @@ class CustomerService {
             phone: sanitizeString(customerData.phone) || undefined,
             address: sanitizeString(customerData.address) || undefined,
             settlementDay: customerData.settlementDay,
-            creditLimit: roundFinancial(safeNumber(customerData.creditLimit)),
+            createLimit: roundFinancial(safeNumber(customerData.creditLimit)),
             initialBalance: initialBal,
             totalSpent: 0,
             outstandingBalance: initialBal,
@@ -181,6 +181,14 @@ class CustomerService {
         });
 
         this.triggerSync();
+    }
+
+    async bulkDelete(uuids: string[]): Promise<void> {
+        await db.transaction('rw', [db.customers, db.sync_queue], async () => {
+            for (const uuid of uuids) {
+                await this.deleteCustomer(uuid);
+            }
+        });
     }
 
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
