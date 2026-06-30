@@ -9,10 +9,12 @@ export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
  * Standard Financial Rounding (2 decimals).
+ * High precision version with Epsilon guard.
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
+    // Standard rounding can fail on edge cases like 1.005, Epsilon fixes it.
     return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
@@ -40,7 +42,7 @@ export function safeNumber(val: any): number {
 
 /**
  * Multiplication with financial precision.
- * Crucial for avoiding O(N) accumulation errors.
+ * Crucial for avoiding O(N) accumulation errors in ledger calculations.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));

@@ -9,7 +9,7 @@ import type { ProductReturn, ReturnItem, ReturnCreateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeToDate, roundFinancial, safeNumber } from '@/lib/utils';
+import { safeToDate, roundFinancial } from '@/lib/utils';
 
 class ReturnService {
 

@@ -28,7 +28,7 @@ interface CartItemRowProps {
 
 /**
  * PRODUCTION PERFORMANCE FIX: React.memo with selective prop comparison.
- * Ensures rows only re-render when their specific data changes.
+ * Ensures rows only re-render when their specific data changes, even in large carts.
  */
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
     const qtyInputRef = useRef<HTMLInputElement>(null);
