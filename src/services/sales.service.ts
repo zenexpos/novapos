@@ -99,7 +99,7 @@ class SalesService {
       isCancelled: false
     };
 
-    // ATOMIC TRANSACTION: Global IndexedDB Commit
+    // ATOMIC TRANSACTION: Global IndexedDB Commit (Zero Defect Hardening)
     await db.transaction('rw', [
       db.sales, 
       db.products, 

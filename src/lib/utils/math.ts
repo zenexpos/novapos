@@ -42,7 +42,7 @@ export function safeNumber(val: any): number {
 
 /**
  * Multiplication with financial precision.
- * Crucial for avoiding O(N) accumulation errors in ledger calculations.
+ * Crucial for avoiding accumulation errors in ledger calculations.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));
