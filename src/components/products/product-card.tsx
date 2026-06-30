@@ -27,10 +27,10 @@ interface ProductCardProps {
 }
 
 const stockCfg: Record<StockStatus, { label: string; bg: string; text: string; border: string; dot: string; Icon: React.ElementType }> = {
-    in_stock:    { label: 'En stock',   bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
-    low_stock:   { label: 'Stock bas',  bg: 'bg-amber-500/10',   text: 'text-amber-500',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
-    out_of_stock: { label: 'Rupture',    bg: 'bg-red-500/10',     text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
-    overstock:   { label: 'Excédent',   bg: 'bg-blue-500/10',    text: 'text-blue-500',    border: 'border-blue-500/20',    dot: 'bg-blue-500',    Icon: Package       },
+    in_stock:    { label: 'En stock',   bg: 'bg-emerald-50/10', text: 'text-emerald-600', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
+    low_stock:   { label: 'Stock bas',  bg: 'bg-amber-50/10',   text: 'text-amber-600',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
+    out_of_stock: { label: 'Rupture',    bg: 'bg-red-50/10',     text: 'text-red-600',     border: 'border-red-500/20',     dot: 'bg-red-500',     Icon: XCircle       },
+    overstock:   { label: 'Excédent',   bg: 'bg-blue-50/10',    text: 'text-blue-600',    border: 'border-blue-500/20',    dot: 'bg-blue-500',    Icon: Package       },
 };
 
 /**
@@ -53,9 +53,9 @@ const ProductCardComponent = ({
     const expiryBadge = useMemo(() => {
         if (!product.dateExpiration) return null;
         const days = differenceInDays(new Date(product.dateExpiration), new Date());
-        if (days < 0)   return { label: 'Expiré',         cls: 'text-red-500 bg-red-500/10 border-red-500/20' };
-        if (days <= 7)  return { label: `${days}j restants`, cls: 'text-red-400 bg-red-500/8 border-red-400/20' };
-        if (days <= 30) return { label: `${days}j restants`, cls: 'text-amber-400 bg-amber-500/8 border-amber-400/20' };
+        if (days < 0)   return { label: 'Expiré',         cls: 'text-red-600 bg-red-50/10 border-red-500/20' };
+        if (days <= 7)  return { label: `${days}j restants`, cls: 'text-red-500 bg-red-50/8 border-red-400/20' };
+        if (days <= 30) return { label: `${days}j restants`, cls: 'text-amber-600 bg-amber-50/8 border-amber-400/20' };
         return null;
     }, [product.dateExpiration]);
 
@@ -215,8 +215,8 @@ const ProductCardComponent = ({
                     <div className={cn(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-black shadow-sm transition-transform group-hover:scale-105',
                         isGoodMargin
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                            ? 'bg-emerald-50/10 text-emerald-600 border-emerald-500/20'
+                            : 'bg-amber-50/10 text-amber-600 border-amber-500/20',
                     )}>
                         {isGoodMargin
                             ? <TrendingUp className="h-3.5 w-3.5" />

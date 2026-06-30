@@ -76,7 +76,7 @@ export function EmptyState({
                         </Button>
                         {/* Instructional hint */}
                         <div className="mt-8 flex items-center justify-center gap-2.5 text-[11px] font-black text-primary/50 uppercase tracking-widest animate-pulse">
-                            <MousePointer2 className="h-4 w-4" /> Cliquez pour démار الإجراء
+                            <MousePointer2 className="h-4 w-4" /> انقر هنا للبدء
                         </div>
                     </div>
                 )}

@@ -37,9 +37,9 @@ function getDebtState(customer: Customer): DebtState {
 }
 
 const debtConfig = {
-    clean:    { label: 'Solvable',  bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
-    due_soon: { label: 'Dû bientôt', bg: 'bg-amber-500/10',  text: 'text-amber-500',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: Clock        },
-    overdue:  { label: 'En retard',  bg: 'bg-red-500/10',    text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500 animate-pulse', Icon: AlertOctagon },
+    clean:    { label: 'Solvable',  bg: 'bg-emerald-50/10', text: 'text-emerald-600', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
+    due_soon: { label: 'Dû bientôt', bg: 'bg-amber-50/10',  text: 'text-amber-600',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: Clock        },
+    overdue:  { label: 'En retard',  bg: 'bg-red-50/10',    text: 'text-red-600',     border: 'border-red-500/20',     dot: 'bg-red-500 animate-pulse', Icon: AlertOctagon },
 };
 
 /**
