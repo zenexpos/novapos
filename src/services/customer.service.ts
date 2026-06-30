@@ -13,7 +13,6 @@ import { sanitizeString } from '@/lib/security/sanitization';
 /**
  * iPOS Customer Domain Service.
  * Specialized in CRM management, debt tracking, and forensic auditing.
- * PRODUCTION AUDIT: Hardened sanitization and transaction scoping.
  */
 class CustomerService {
 
@@ -188,7 +187,6 @@ class CustomerService {
         const customer = await db.customers.where('uuid').equals(customerUuid).first();
         if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-        // AUDIT FIX: Expanded scope of data aggregation for full debt path
         const [sales, payments, returns] = await Promise.all([
             db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),

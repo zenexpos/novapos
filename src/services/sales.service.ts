@@ -100,11 +100,16 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // Standardized transaction array to prevent NotFoundError during cross-service updates
     await db.transaction('rw', [
-      db.sales, db.products, db.inventory_logs, 
-      db.customers, db.company_profile, db.sync_queue,
-      db.payments, db.product_returns, db.bread_orders
+      db.sales, 
+      db.products, 
+      db.inventory_logs, 
+      db.customers, 
+      db.company_profile, 
+      db.sync_queue,
+      db.payments,
+      db.product_returns,
+      db.bread_orders
     ], async () => {
       await db.sales.add(newSale);
       
@@ -141,9 +146,15 @@ class SalesService {
     if (!sale || sale.isCancelled) return;
 
     await db.transaction('rw', [
-      db.sales, db.products, db.inventory_logs, 
-      db.customers, db.payments, db.product_returns, db.sync_queue,
-      db.bread_orders, db.company_profile
+      db.sales, 
+      db.products, 
+      db.inventory_logs, 
+      db.customers, 
+      db.sync_queue,
+      db.payments,
+      db.product_returns,
+      db.bread_orders,
+      db.company_profile
     ], async () => {
       await db.sales.update(sale.id!, { 
         isCancelled: true, 
