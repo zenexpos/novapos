@@ -37,6 +37,7 @@ import { ProductDetailsSheet } from '@/components/products/ProductDetailsSheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -423,7 +424,7 @@ function ProductsContent() {
                     <EmptyState 
                         icon={Archive} 
                         title="Silence de Catalogue" 
-                        description={isFiltered ? "Ajustez vos filtres pour identifier les références." : "Commencez par ajouter votre premier article Elite."} 
+                        description={isFiltered ? "Ajustez vos filtres pour identifier las références." : "Commencez par ajouter votre premier article Elite."} 
                         actionLabel="Ajouter un produit"
                         onAction={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }}
                     />
