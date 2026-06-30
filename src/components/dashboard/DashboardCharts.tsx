@@ -13,7 +13,8 @@ interface DashboardChartsProps {
 }
 
 /**
- * PRODUCTION AUDIT : Correction de l'import Skeleton et mémoïsation pour performance.
+ * Command Center Analytics Engine.
+ * PRODUCTION AUDIT: Hardened Skeleton imports and hydration safety.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
