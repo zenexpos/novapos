@@ -9,12 +9,10 @@ export const FINANCIAL_EPSILON = Number.EPSILON;
 
 /**
  * Standard Financial Rounding (2 decimals).
- * Uses EPSILON to prevent rounding errors like 1.005 becoming 1.00 instead of 1.01.
  */
 export function roundFinancial(value: number): number {
     if (isNaN(value) || !isFinite(value)) return 0;
     const factor = Math.pow(10, FINANCIAL_PRECISION);
-    // Correcting floating point precision drift before rounding
     return Math.round((value + FINANCIAL_EPSILON) * factor) / factor;
 }
 
@@ -42,6 +40,7 @@ export function safeNumber(val: any): number {
 
 /**
  * Multiplication with financial precision.
+ * Crucial for avoiding O(N) accumulation errors.
  */
 export function preciseMultiply(a: number, b: number): number {
     return roundFinancial(safeNumber(a) * safeNumber(b));
@@ -54,8 +53,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
-        // Round each line to avoid cumulative floating point errors
-        return acc + roundFinancial(price * qty);
+        return acc + roundFinancial(preciseMultiply(price, qty));
     }, 0);
 
     let discountAmount = 0;

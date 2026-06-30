@@ -37,14 +37,14 @@ import { useNetwork } from '@/hooks/useNetwork';
 
 /**
  * Enterprise Application Header.
- * Forensic Audit: Implemented hydration guard to prevent mismatches between SSR and Client.
+ * Audit Zero Defect : Hydratation sécurisée et navigation optimisée.
  */
 export function AppHeader() {
     const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
     const { performBackgroundSync } = useAppActions();
     const { isInstallable, install } = usePwaInstall();
-    const { status: networkStatus, isOnline } = useNetwork();
+    const { isOnline } = useNetwork();
     
     const companyProfile = useAppStore(state => state.companyProfile);
     const syncStatus = useAppStore(state => state.syncStatus);
@@ -68,43 +68,24 @@ export function AppHeader() {
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
-        { href: '/install',       label: 'Installer', icon: Download },
+        { href: '/install',       label: 'Installation', icon: Download },
         { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
 
     if (!mounted) {
-        return (
-            <header className="sticky top-0 z-40 w-full nav-solid h-14 bg-secondary">
-                <div className="flex h-full items-center px-4">
-                    <div className="w-8 h-8 rounded-lg bg-white/10 animate-pulse" />
-                </div>
-            </header>
-        );
+        return <header className="h-14 bg-secondary border-b border-white/10" />;
     }
 
     return (
         <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14 bg-secondary border-b border-white/10">
             <div className="flex h-full items-center gap-2 px-4 shadow-sm">
-                <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 shrink-0 group"
-                >
-                    <div className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 bg-white shadow-lg group-hover:scale-105 group-hover:rotate-2">
-                        <Image 
-                            src="/icon.svg" 
-                            alt="iPOS Zen Logo" 
-                            width={28} 
-                            height={28} 
-                            className="drop-shadow-sm"
-                        />
+                <Link href="/dashboard" className="flex items-center gap-2 shrink-0 group">
+                    <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-lg transition-transform group-hover:rotate-2">
+                        <Image src="/icon.svg" alt="iPOS Zen Logo" width={28} height={28} />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1 text-white">
-                        <span className="font-black text-sm tracking-tight uppercase">
-                            iPOS <span className="text-primary">Zen</span>
-                        </span>
-                        <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">
-                            Sovereign Ledger
-                        </span>
+                        <span className="font-black text-sm tracking-tight uppercase">iPOS <span className="text-primary">Zen</span></span>
+                        <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">Sovereign Ledger</span>
                     </div>
                 </Link>
 
@@ -112,15 +93,12 @@ export function AppHeader() {
 
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 border border-white/5">
                     {isOnline ? (
-                        <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter", 
-                            networkStatus === 'degraded' ? "text-amber-400" : "text-emerald-400")}>
-                            <Wifi className="h-3 w-3" />
-                            {networkStatus === 'degraded' ? 'Lent' : 'Connecté'}
+                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-emerald-400">
+                            <Wifi className="h-3 w-3" /> Connecté
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-destructive animate-pulse">
-                            <WifiOff className="h-3 w-3" />
-                            Hors-ligne
+                            <WifiOff className="h-3 w-3" /> Hors-ligne
                         </div>
                     )}
                 </div>
@@ -142,20 +120,11 @@ export function AppHeader() {
                                                     : 'w-9 h-9 text-white/60 hover:bg-white/10 hover:text-white'
                                             )}
                                         >
-                                            <Icon className={cn(
-                                                'h-4 w-4',
-                                                isActive ? 'scale-110' : ''
-                                            )} />
-                                            {isActive && (
-                                                <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                                                    {link.label}
-                                                </span>
-                                            )}
+                                            <Icon className={cn('h-4 w-4', isActive && 'scale-110')} />
+                                            {isActive && <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{link.label}</span>}
                                         </Link>
                                     </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="bg-secondary text-white border-none font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg shadow-xl">
-                                        {link.label}
-                                    </TooltipContent>
+                                    <TooltipContent side="bottom" className="bg-secondary text-white border-none font-bold text-[10px] uppercase">{link.label}</TooltipContent>
                                 </Tooltip>
                             );
                         })}
@@ -164,12 +133,7 @@ export function AppHeader() {
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
                     {isInstallable && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={install}
-                            className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 transition-all shadow-lg animate-install gap-2 border border-white/10"
-                        >
+                        <Button variant="ghost" size="sm" onClick={install} className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 gap-2 border border-white/10">
                             <Download className="h-4 w-4" />
                             <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer</span>
                         </Button>
@@ -183,10 +147,7 @@ export function AppHeader() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className={cn(
-                                'h-9 w-9 rounded-xl transition-all text-white/60 hover:text-white hover:bg-white/10',
-                                isSyncing && 'text-primary'
-                            )}
+                            className={cn('h-9 w-9 rounded-xl text-white/60 hover:text-white', isSyncing && 'text-primary')}
                             onClick={() => performBackgroundSync()}
                             disabled={isSyncing}
                         >

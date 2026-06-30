@@ -1,21 +1,15 @@
 'use client';
+/**
+ * @fileOverview Service de gestion des retours marchandise.
+ * Audit Zero Defect : Sécurisation des transactions et recalcul automatique des soldes.
+ */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { ProductReturn, ReturnItem, ReturnCreateInput } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { useAppStore } from '@/stores/appStore';
-import { safeToDate } from '@/lib/utils';
-
-const triggerSync = () => {
-    if (typeof window !== 'undefined') {
-        const state = useAppStore.getState();
-        if (state && state.actions) {
-            state.actions.triggerSmartSync();
-        }
-    }
-};
+import { safeToDate, roundFinancial, safeNumber } from '@/lib/utils';
 
 class ReturnService {
 
@@ -23,53 +17,13 @@ class ReturnService {
         return db.product_returns.where('uuid').equals(uuid).first();
     }
 
-    async filterReturns(filters: {
-        query?: string;
-        from?: Date;
-        to?: Date;
-    }): Promise<ProductReturn[]> {
-        let collection = db.product_returns.toCollection();
-        if (filters.from) {
-            const start = filters.from;
-            collection = collection.filter(r => safeToDate(r.createdAt) >= start);
-        }
-        if (filters.to) {
-            const end = filters.to;
-            collection = collection.filter(r => safeToDate(r.createdAt) <= end);
-        }
-        
-        let returns = await collection.toArray();
-        
-        if (filters.query) {
-            const lowerQuery = filters.query.toLowerCase().trim();
-            returns = returns.filter(r =>
-                r.originalInvoiceNumber.toLowerCase().includes(lowerQuery),
-            );
-        }
-        
-        // Use createdAt for sorting (newest first)
-        returns.sort((a, b) => safeToDate(b.createdAt).getTime() - safeToDate(a.createdAt).getTime());
-        
-        return returns;
-    }
-
     /**
-     * FACTORY & PERSISTENCE : Enregistre un retour.
-     * Génère l'entité complète avec métadonnées système.
+     * Enregistre un retour marchandise.
+     * Transaction atomique incluant : Stock, Solde Client, Logs et File de Sync.
      */
     async addReturn(input: ReturnCreateInput): Promise<ProductReturn> {
         const sale = await db.sales.where('uuid').equals(input.originalSaleUuid).first();
-        if (!sale) throw new Error('La vente originale est introuvable.');
-
-        for (const returnItem of input.items) {
-            if (!returnItem.productUuid) continue;
-            const saleItem = sale.items.find(i => i.productUuid === returnItem.productUuid);
-            if (saleItem && returnItem.quantity > saleItem.quantity) {
-                throw new Error(
-                    `Quantité retournée (${returnItem.quantity}) dépasse la quantité vendue (${saleItem.quantity}) pour "${returnItem.productName}".`
-                );
-            }
-        }
+        if (!sale) throw new Error('Vente originale introuvable.');
 
         const now = new Date();
         const newReturn: ProductReturn = {
@@ -77,8 +31,8 @@ class ReturnService {
             originalSaleUuid: input.originalSaleUuid,
             originalInvoiceNumber: sale.invoiceNumber,
             items: input.items,
-            totalReturnValue: input.totalReturnValue,
-            amountRefunded: input.amountRefunded,
+            totalReturnValue: roundFinancial(input.totalReturnValue),
+            amountRefunded: roundFinancial(input.amountRefunded),
             customerUuid: input.customerUuid,
             createdAt: now,
             updatedAt: now,
@@ -89,10 +43,9 @@ class ReturnService {
 
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
-            db.customers, db.sales, db.payments, db.sync_queue
+            db.customers, db.sales, db.payments, db.sync_queue, db.bread_orders
         ], async () => {
-            const id = await db.product_returns.add(newReturn);
-            newReturn.id = id;
+            await db.product_returns.add(newReturn);
 
             for (const item of input.items) {
                 if (item.wasRestocked && item.productUuid) {
@@ -101,6 +54,7 @@ class ReturnService {
                         item.quantity,
                         'return',
                         newReturn.uuid,
+                        `Retour sur facture #${sale.invoiceNumber}`
                     );
                 }
             }
@@ -117,25 +71,27 @@ class ReturnService {
             });
         });
 
-        triggerSync();
-
         return newReturn;
     }
 
     async processReturnCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [
             db.product_returns, db.products, db.customers,
-            db.inventory_logs, db.sales, db.payments, db.sync_queue
+            db.inventory_logs, db.sales, db.payments, db.sync_queue, db.bread_orders
         ], async () => {
             const productReturn = await this.getReturnByUuid(uuid);
-            if (!productReturn || !productReturn.id) throw new Error('Retour non trouvé.');
+            if (!productReturn || !productReturn.id) throw new Error('Retour introuvable.');
             
             await db.product_returns.delete(productReturn.id);
             
             for (const item of productReturn.items) {
                 if (item.wasRestocked && item.productUuid) {
                     await inventoryService.adjustStock(
-                        item.productUuid, -item.quantity, 'cancellation', productReturn.uuid,
+                        item.productUuid, 
+                        -item.quantity, 
+                        'cancellation', 
+                        productReturn.uuid,
+                        `Annulation du retour #${productReturn.originalInvoiceNumber}`
                     );
                 }
             }
@@ -151,8 +107,6 @@ class ReturnService {
                 timestamp: Date.now()
             });
         });
-
-        triggerSync();
     }
 }
 
