@@ -242,7 +242,7 @@ export function CartDisplay() {
                     <ShoppingCart className="h-36 w-36 text-muted-foreground/10 relative z-10 group-hover:scale-110 transition-transform duration-1000" />
                 </div>
                 <div className="space-y-5 max-w-sm">
-                    <p className="text-4xl font-black tracking-tighter text-muted-foreground/40 uppercase">Console Prête</p>
+                    <p className="text-4xl font-black tracking-tighter text-muted-foreground/40 uppercase">Console Prئة</p>
                     <p className="text-[12px] font-black uppercase text-muted-foreground/20 tracking-[0.5em] leading-relaxed">
                         En attente du prochain encaissement Elite.
                     </p>

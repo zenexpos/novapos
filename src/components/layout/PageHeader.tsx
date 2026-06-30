@@ -38,7 +38,7 @@ export function PageHeader({ title, description, children, className, icon: Icon
                         {title}
                     </h1>
                     {description && (
-                        <p className="text-[11px] md:text-sm font-bold text-muted-foreground/60 tracking-[0.15em] uppercase leading-relaxed">
+                        <p className="text-[11px] md:sm font-bold text-muted-foreground/60 tracking-[0.15em] uppercase leading-relaxed">
                             {description}
                         </p>
                     )}

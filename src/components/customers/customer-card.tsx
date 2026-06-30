@@ -201,7 +201,7 @@ const CustomerCardComponent = ({
                             className={cn(
                                 'h-full rounded-full transition-all duration-1000 ease-out',
                                 isOverLimit       ? 'bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.4)]' :
-                                creditUsage > 80  ? 'bg-amber-500' :
+                                creditUsage > 80  ? 'bg-amber-50' :
                                                     'bg-primary',
                             )}
                             style={{ width: `${Math.min(100, creditUsage)}%` }}
