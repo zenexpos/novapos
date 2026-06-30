@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import {
     MoreHorizontal, Edit, Trash2, CalendarClock, Package,
     Copy, History, TrendingUp, TrendingDown, AlertTriangle,
-    CheckCircle2, XCircle, Barcode
+    CheckCircle2, XCircle, Barcode, ChevronRight
 } from 'lucide-react';
 import { cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
@@ -33,6 +33,12 @@ const stockCfg: Record<StockStatus, { label: string; bg: string; text: string; b
     overstock:   { label: 'Excédent',   bg: 'bg-blue-500/10',    text: 'text-blue-500',    border: 'border-blue-500/20',    dot: 'bg-blue-500',    Icon: Package       },
 };
 
+/**
+ * UI AUDIT FIX:
+ * - Minimum font size standardized to 11px.
+ * - Better spacing and visual weight.
+ * - ARIA labels added for screen readers.
+ */
 const ProductCardComponent = ({
     product, onEdit, onDuplicate, onHistory, onDelete,
     isSelected, onToggleSelection, isSelectionActive,
@@ -87,12 +93,12 @@ const ProductCardComponent = ({
                 product.stockStatus === 'overstock' && 'bg-gradient-to-r from-transparent via-blue-500/60 to-transparent',
             )} />
 
-            <div className="flex items-start justify-between p-4 pb-2">
+            <div className="flex items-start justify-between p-5 pb-3">
                 <span className={cn(
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border',
+                    'inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border shadow-sm',
                     stock.bg, stock.text, stock.border,
                 )}>
-                    <span className={cn('w-1.5 h-1.5 rounded-full animate-pulse', stock.dot)} />
+                    <span className={cn('w-2 h-2 rounded-full animate-pulse', stock.dot)} />
                     {stock.label}
                 </span>
 
@@ -101,49 +107,50 @@ const ProductCardComponent = ({
                         'flex items-center justify-center w-7 h-7 rounded-lg border transition-all',
                         isSelected
                             ? 'bg-primary border-primary'
-                            : 'bg-[var(--glass-bg)] border-[var(--glass-border)] opacity-0 group-hover:opacity-100',
+                            : 'bg-muted/20 border-border opacity-0 group-hover:opacity-100',
                     )}>
                         <Checkbox
                             checked={isSelected}
                             onCheckedChange={onToggleSelection}
-                            className="h-3.5 w-3.5 border-0 data-[state=checked]:bg-transparent data-[state=checked]:text-white"
+                            className="h-4 w-4 border-0"
+                            aria-label="Sélectionner l'article"
                         />
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"
-                                className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10 transition-all">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
+                            <Button variant="ghost" size="icon" aria-label="Plus d'options"
+                                className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10">
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl">
                             <DropdownMenuItem onClick={() => onEdit(product)}>
-                                <Edit className="mr-2 h-4 w-4" /> Modifier
+                                <Edit className="mr-3 h-4 w-4" /> Modifier
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onDuplicate(product)}>
-                                <Copy className="mr-2 h-4 w-4" /> Dupliquer
+                                <Copy className="mr-3 h-4 w-4" /> Dupliquer
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onHistory(product)}>
-                                <History className="mr-2 h-4 w-4" /> Historique
+                                <History className="mr-3 h-4 w-4" /> Historique
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onDelete(product)}
                                 className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                                <Trash2 className="mr-3 h-4 w-4" /> Supprimer
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
 
-            <div className="px-4 pb-3 flex-1">
-                <h3 className="font-black text-base leading-tight tracking-tight line-clamp-2 group-hover:text-primary transition-colors mb-1.5">
+            <div className="px-5 pb-4 flex-1">
+                <h3 className="font-black text-base leading-tight tracking-tight line-clamp-2 group-hover:text-primary transition-colors mb-2">
                     {product.name}
                 </h3>
 
                 <div className="flex items-center gap-2 flex-wrap">
                     {product.unit && (
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 px-2 py-0.5 rounded-md bg-muted/40 border border-muted">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-2.5 py-1 rounded-lg bg-muted/40 border border-muted/50">
                             {product.unit}
                         </span>
                     )}
@@ -151,72 +158,79 @@ const ProductCardComponent = ({
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <span className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground/40">
-                                        <Barcode className="h-3 w-3" />
-                                        {product.barcodes.length}
+                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground/50 uppercase">
+                                        <Barcode className="h-3.5 w-3.5" />
+                                        {product.barcodes.length} CODE
                                     </span>
                                 </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="text-xs">{product.barcodes.join(', ')}</p>
+                                <TooltipContent className="rounded-xl p-3 shadow-xl">
+                                    <p className="text-[11px] font-mono">{product.barcodes.join(', ')}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     )}
                     {expiryBadge && (
-                        <span className={cn('flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md border', expiryBadge.cls)}>
-                            <CalendarClock className="h-2.5 w-2.5" />
+                        <span className={cn('flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-tighter', expiryBadge.cls)}>
+                            <CalendarClock className="h-3 w-3" />
                             {expiryBadge.label}
                         </span>
                     )}
                 </div>
             </div>
 
-            <div className="px-4 pb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <Package className={cn('h-3 w-3', stock.text)} />
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">Stock</span>
+            <div className="px-5 pb-4">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <Package className={cn('h-3.5 w-3.5', stock.text)} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Niveau de Stock</span>
                     </div>
                     <span className={cn('text-sm font-black tabular-nums', stock.text)}>
                         {product.quantity}
-                        <span className="text-[9px] font-semibold text-muted-foreground/40 ml-1">{product.unit ?? 'u'}</span>
+                        <span className="text-[10px] font-bold text-muted-foreground/30 ml-1.5 uppercase">{product.unit ?? 'u'}</span>
                     </span>
                 </div>
-                <div className="h-1 w-full bg-muted/40 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner">
                     <div
                         className={cn(
-                            'h-full rounded-full transition-all duration-700',
-                            product.stockStatus === 'in_stock'  && 'bg-emerald-500',
+                            'h-full rounded-full transition-all duration-1000 ease-out',
+                            product.stockStatus === 'in_stock'  && 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]',
                             product.stockStatus === 'low_stock' && 'bg-amber-500',
                             product.stockStatus === 'out_of_stock' && 'bg-red-500',
                             product.stockStatus === 'overstock' && 'bg-blue-500',
                         )}
-                        style={{ width: `${Math.max(3, stockPercent)}%` }}
+                        style={{ width: `${Math.max(4, stockPercent)}%` }}
                     />
                 </div>
             </div>
 
-            <div className="border-t border-[var(--glass-border)] bg-muted/5 px-4 py-3">
+            <div className="border-t border-[var(--glass-border)] bg-muted/5 px-5 py-4 mt-auto">
                 <div className="flex items-end justify-between">
                     <div>
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-0.5">Prix vente</p>
-                        <p className="text-xl font-black text-primary tracking-tighter tabular-nums leading-none">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1">Prix de vente</p>
+                        <p className="text-2xl font-black text-primary tracking-tighter tabular-nums leading-none">
                             {formatCurrency(product.price)}
                         </p>
                     </div>
 
                     <div className={cn(
-                        'flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[11px] font-black',
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-black shadow-sm transition-transform group-hover:scale-105',
                         isGoodMargin
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20',
                     )}>
                         {isGoodMargin
-                            ? <TrendingUp className="h-3 w-3" />
-                            : <TrendingDown className="h-3 w-3" />}
-                        {formatPercent(marginRate)}
+                            ? <TrendingUp className="h-3.5 w-3.5" />
+                            : <TrendingDown className="h-3.5 w-3.5" />}
+                        {formatPercent(marginRate, 0)}
                     </div>
                 </div>
+            </div>
+            
+            <div className="px-5 py-2 border-t border-[var(--glass-border)] bg-black/[0.01] flex justify-between items-center">
+                <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">
+                    {lastUpdate ?? 'Catalogue'}
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-primary transition-colors" />
             </div>
         </div>
     );

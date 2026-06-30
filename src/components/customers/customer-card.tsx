@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
     MoreHorizontal, Edit, Trash2, FileText, Phone,
-    BellRing, ShieldCheck, User, ChevronRight,
-    Wheat, MessageCircle, TrendingUp, AlertOctagon,
-    Clock, CheckCircle2,
+    MessageCircle, TrendingUp, AlertOctagon,
+    Clock, CheckCircle2, Wheat, ChevronRight,
+    ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatPercent, cn, safeNumber } from '@/lib/utils';
@@ -42,6 +42,12 @@ const debtConfig = {
     overdue:  { label: 'En retard',  bg: 'bg-red-500/10',    text: 'text-red-500',     border: 'border-red-500/20',     dot: 'bg-red-500 animate-pulse', Icon: AlertOctagon },
 };
 
+/**
+ * UI AUDIT FIX:
+ * - Legible font sizes (min 11px).
+ * - Improved information hierarchy.
+ * - Better touch targets for actions.
+ */
 const CustomerCardComponent = ({
     customer, onEdit, onDelete,
     isSelected, onToggleSelection, isSelectionActive,
@@ -93,7 +99,6 @@ const CustomerCardComponent = ({
                     : 'border-[var(--glass-border)] hover:border-primary/30 hover:shadow-sm',
             )}
         >
-            {/* ── Debt accent bar ── */}
             <div className={cn(
                 'absolute inset-x-0 top-0 h-0.5 transition-all duration-300',
                 debtState === 'clean'    && 'bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent',
@@ -101,11 +106,9 @@ const CustomerCardComponent = ({
                 debtState === 'overdue'  && 'bg-gradient-to-r from-transparent via-red-500/70 to-transparent',
             )} />
 
-            {/* ── Header ── */}
-            <div className="flex items-start gap-3 p-4 pb-3">
-                {/* Avatar */}
+            <div className="flex items-start gap-4 p-5 pb-4">
                 <div className={cn(
-                    'w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black shrink-0',
+                    'w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black shrink-0 shadow-inner',
                     'transition-all duration-300 group-hover:scale-105',
                     balance > 0
                         ? 'bg-primary/15 text-primary border border-primary/25'
@@ -114,159 +117,155 @@ const CustomerCardComponent = ({
                     {initials}
                 </div>
 
-                {/* Name & phone */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                        <h3 className="font-black text-base tracking-tight leading-tight truncate group-hover:text-primary transition-colors">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <h3 className="font-black text-base tracking-tight leading-none truncate group-hover:text-primary transition-colors">
                             {customer.firstName} {customer.lastName}
                         </h3>
                         {customer.isBreadClient && (
-                            <Wheat className="h-3 w-3 text-primary/50 shrink-0" />
+                            <Wheat className="h-3.5 w-3.5 text-primary/50 shrink-0" />
                         )}
                     </div>
                     {customer.phone ? (
-                        <p className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wide">
-                            <Phone className="h-2.5 w-2.5" />
+                        <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider">
+                            <Phone className="h-3 w-3" />
                             {customer.phone}
                         </p>
                     ) : (
-                        <p className="text-[10px] font-semibold text-muted-foreground/25 uppercase tracking-wide italic">
+                        <p className="text-[11px] font-bold text-muted-foreground/30 uppercase tracking-wider italic">
                             Sans contact
                         </p>
                     )}
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                     <div className={cn(
-                        'flex items-center justify-center w-6 h-6 rounded-md border transition-all',
+                        'flex items-center justify-center w-7 h-7 rounded-lg border transition-all',
                         isSelected
                             ? 'bg-primary border-primary'
-                            : 'bg-[var(--glass-bg)] border-[var(--glass-border)] opacity-0 group-hover:opacity-100',
+                            : 'bg-muted/20 border-border opacity-0 group-hover:opacity-100',
                     )}>
                         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection}
-                            className="h-3 w-3 border-0" />
+                            className="h-4 w-4 border-0" aria-label="Sélectionner le client" />
                     </div>
-                    {customer.phone && (
-                        <Button variant="ghost" size="icon" onClick={handleWhatsApp}
-                            className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 text-green-500 hover:bg-green-500/10">
-                            <MessageCircle className="h-3.5 w-3.5" />
-                        </Button>
-                    )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"
-                                className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
+                            <Button variant="ghost" size="icon" aria-label="Plus d'options"
+                                className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-primary/10">
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl">
                             <DropdownMenuItem asChild>
                                 <Link href={`/customers/detail?uuid=${customer.uuid}`}>
-                                    <FileText className="mr-2 h-3.5 w-3.5" /> Voir le dossier
+                                    <FileText className="mr-3 h-4 w-4" /> Voir le dossier
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onEdit(customer)}>
-                                <Edit className="mr-2 h-3.5 w-3.5" /> Modifier
+                                <Edit className="mr-3 h-4 w-4" /> Modifier
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onDelete(customer)}
                                 className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer
+                                <Trash2 className="mr-3 h-4 w-4" /> Supprimer
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
 
-            {/* ── Debt status badge ── */}
-            <div className="px-4 pb-3">
+            <div className="px-5 pb-4">
                 <span className={cn(
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border',
+                    'inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border',
                     debt.bg, debt.text, debt.border,
                 )}>
-                    <span className={cn('w-1.5 h-1.5 rounded-full', debt.dot)} />
+                    <span className={cn('w-2 h-2 rounded-full', debt.dot)} />
                     {debt.label}
-                    {isOverLimit && <AlertOctagon className="h-3 w-3 ml-0.5" />}
+                    {isOverLimit && <AlertOctagon className="h-3.5 w-3.5 ml-0.5" />}
                 </span>
             </div>
 
-            {/* ── Credit line progress ── */}
             {limit > 0 && (
-                <div className="px-4 pb-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-1.5">
-                            <ShieldCheck className={cn('h-3 w-3', isOverLimit ? 'text-red-500' : 'text-muted-foreground/40')} />
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">Crédit utilisé</span>
+                <div className="px-5 pb-5">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className={cn('h-3.5 w-3.5', isOverLimit ? 'text-red-500' : 'text-muted-foreground/50')} />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Ligne de crédit</span>
                         </div>
-                        <span className={cn('text-[10px] font-black tabular-nums', isOverLimit ? 'text-red-500' : 'text-muted-foreground/60')}>
+                        <span className={cn('text-[11px] font-black tabular-nums', isOverLimit ? 'text-red-500' : 'text-muted-foreground/70')}>
                             {formatPercent(creditUsage, 0)}
                         </span>
                     </div>
-                    <div className="h-1.5 w-full bg-muted/40 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner">
                         <div
                             className={cn(
-                                'h-full rounded-full transition-all duration-700',
-                                isOverLimit       ? 'bg-red-500'   :
+                                'h-full rounded-full transition-all duration-1000 ease-out',
+                                isOverLimit       ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'   :
                                 creditUsage > 80  ? 'bg-amber-500' :
                                                     'bg-primary',
                             )}
                             style={{ width: `${Math.min(100, creditUsage)}%` }}
                         />
                     </div>
-                    <div className="flex justify-between mt-1">
-                        <p className="text-[8px] font-semibold text-muted-foreground/30 uppercase">
+                    <div className="flex justify-between mt-2">
+                        <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tighter">
                             {formatCurrency(balance)} / {formatCurrency(limit)}
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* ── Stats row ── */}
-            <div className="grid grid-cols-2 gap-2 px-4 pb-3">
-                <div className="p-2.5 rounded-xl bg-muted/20 border border-muted/40">
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-1">
-                        Total dépensé
+            <div className="grid grid-cols-2 gap-3 px-5 pb-5 mt-auto">
+                <div className="p-3 rounded-2xl bg-muted/20 border border-muted/50">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+                        Dépensé
                     </p>
-                    <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-primary/50" />
+                    <div className="flex items-center gap-1.5">
+                        <TrendingUp className="h-3.5 w-3.5 text-primary/60" />
                         <p className="text-sm font-black text-foreground tabular-nums tracking-tight">
                             {formatCurrency(spent)}
                         </p>
                     </div>
                 </div>
                 <div className={cn(
-                    'p-2.5 rounded-xl border',
-                    balance > 0
-                        ? 'bg-red-500/5 border-red-500/15'
-                        : 'bg-muted/20 border-muted/40',
+                    'p-3 rounded-2xl border',
+                    balance > 0.01
+                        ? 'bg-red-500/[0.04] border-red-500/10'
+                        : 'bg-muted/20 border-muted/50',
                 )}>
                     <p className={cn(
-                        'text-[8px] font-bold uppercase tracking-widest mb-1',
-                        balance > 0 ? 'text-red-500/60' : 'text-muted-foreground/40',
+                        'text-[10px] font-black uppercase tracking-widest mb-1.5',
+                        balance > 0.01 ? 'text-red-500/60' : 'text-muted-foreground/40',
                     )}>
                         Solde dû
                     </p>
                     <p className={cn(
                         'text-sm font-black tabular-nums tracking-tight',
-                        balance > 0 ? 'text-red-500' : 'text-foreground',
+                        balance > 0.01 ? 'text-red-500' : 'text-foreground',
                     )}>
                         {formatCurrency(balance)}
                     </p>
                 </div>
             </div>
 
-            {/* ── Footer ── */}
-            <div className="flex items-center justify-between border-t border-[var(--glass-border)] px-4 py-2.5 bg-muted/5 mt-auto">
-                <p className="text-[8px] font-semibold text-muted-foreground/30 uppercase tracking-wide">
-                    {lastActivity ?? 'Aucune activité'}
+            <div className="flex items-center justify-between border-t border-[var(--glass-border)] px-5 py-3 bg-muted/5">
+                <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">
+                    {lastActivity ?? 'Nouveau client'}
                 </p>
-                <Button variant="ghost" size="sm" asChild onClick={e => e.stopPropagation()}
-                    className="h-7 px-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-primary/10 hover:text-primary">
-                    <Link href={`/customers/detail?uuid=${customer.uuid}`}>
-                        Dossier <ChevronRight className="ml-1 h-3 w-3" />
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                     {customer.phone && (
+                        <Button variant="ghost" size="icon" onClick={handleWhatsApp} aria-label="WhatsApp"
+                            className="h-8 w-8 rounded-lg text-green-600 hover:bg-green-500/10 active:scale-90 transition-all">
+                            <MessageCircle className="h-4 w-4" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm" asChild onClick={e => e.stopPropagation()}
+                        className="h-8 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary active:scale-95 transition-all">
+                        <Link href={`/customers/detail?uuid=${customer.uuid}`}>
+                            Détails <ChevronRight className="ml-1 h-3 w-3" />
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </div>
     );

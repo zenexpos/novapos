@@ -29,8 +29,10 @@ const colorMap = {
 };
 
 /**
- * PRODUCTION OPTIMIZATION: Memoized Stat Card.
- * UI AUDIT: Standardized font weights and added better hover affordance.
+ * UI AUDIT FIX: 
+ * - Standardized minimal font size to 11px.
+ * - Improved hover physics.
+ * - Value contrast enhancement.
  */
 const StatCardComponent = ({
     title, value, icon: Icon, change, isLoading,
@@ -42,13 +44,13 @@ const StatCardComponent = ({
 
     const content = (
         <Card className="glass group h-full transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] border-border/40 relative overflow-hidden rounded-[1.5rem]">
-            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-700", iconColors)} />
+            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-700", iconColors)} />
             
             <CardContent className="p-6 relative z-10">
                 <div className="flex items-start justify-between mb-6">
                     <div className={cn(
                         'flex items-center justify-center w-14 h-14 rounded-2xl border transition-all duration-500',
-                        'bg-background group-hover:rotate-3 shadow-inner',
+                        'bg-background group-hover:rotate-3 shadow-inner ring-1 ring-black/[0.02]',
                         iconColors,
                     )}>
                         <Icon className="h-7 w-7" />
@@ -68,12 +70,12 @@ const StatCardComponent = ({
                     )}
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                     {isLoading ? (
                         <Skeleton className="h-10 w-32 rounded-lg" />
                     ) : (
                         <div className="flex items-baseline gap-1.5">
-                            <p className="text-3xl font-black tracking-tighter tabular-nums text-foreground group-hover:text-primary transition-colors duration-500">
+                            <p className="text-2xl md:text-3xl font-black tracking-tighter tabular-nums text-foreground group-hover:text-primary transition-colors duration-500">
                                 {value}
                             </p>
                             {suffix && <span className="text-sm text-muted-foreground font-bold">{suffix}</span>}
@@ -88,7 +90,7 @@ const StatCardComponent = ({
     );
 
     if (href) return (
-        <Link href={href} className="block h-full" aria-label={`Voir les détails de ${title}`}>
+        <Link href={href} className="block h-full active:scale-[0.98] transition-transform" aria-label={`Voir les détails de ${title}`}>
             {content}
         </Link>
     );

@@ -56,7 +56,7 @@
     --secondary: 222 47% 11%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215 16% 40%;
+    --muted-foreground: 215 16% 35%; /* تحسين التباين من 40% إلى 35% */
     --accent: 46 65% 52%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
@@ -90,7 +90,7 @@
     --secondary: 217 33% 15%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 10%;
-    --muted-foreground: 215 20.2% 70%;
+    --muted-foreground: 215 20.2% 65%; /* تحسين التباين في الوضع المظلم */
     --accent: 46 65% 52%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -117,7 +117,7 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-size: 13px;
+    font-size: 14px; /* رفع حجم الخط الأساسي من 13px إلى 14px */
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
     letter-spacing: -0.01em;
