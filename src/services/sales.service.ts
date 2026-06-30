@@ -5,7 +5,7 @@ import type { Sale, CartItem, SaleItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { inventoryService } from './inventory.service';
 import { customerService } from './customer.service';
-import { safeNumber, preciseMultiply, roundFinancial, safeToDate, FINANCIAL_EPSILON } from '@/lib/utils';
+import { safeNumber, preciseMultiply, roundFinancial, safeToDate } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 
 /**
@@ -101,7 +101,7 @@ class SalesService {
     };
 
     // ATOMIC TRANSACTION: Global IndexedDB Commit
-    // Hardened scope to include all stores potentially accessed during status recalculation
+    // Hardened scope to include all stores accessed during status recalculation
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, 
       db.customers, db.company_profile, db.sync_queue,
@@ -109,7 +109,6 @@ class SalesService {
     ], async () => {
       await db.sales.add(newSale);
       
-      // Stock adjustment with audited log
       for (const item of saleData.items) {
         if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
@@ -122,7 +121,6 @@ class SalesService {
         }
       }
       
-      // Recalculate customer debt if identified
       if (newSale.customerUuid) {
         await customerService.recalculateCustomerStatus(newSale.customerUuid);
       }
