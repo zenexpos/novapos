@@ -55,6 +55,7 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
+        // Round each line to avoid cumulative binary drift
         return acc + roundFinancial(preciseMultiply(price, qty));
     }, 0);
 

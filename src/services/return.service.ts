@@ -2,6 +2,7 @@
 /**
  * @fileOverview Service de gestion des retours marchandise.
  * Audit Zero Defect : Sécurisation des transactions et recalcul automatique des soldes.
+ * Directive 'use client' requise pour l'accès direct à IndexedDB.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -43,7 +44,8 @@ class ReturnService {
 
         await db.transaction('rw', [
             db.product_returns, db.products, db.inventory_logs,
-            db.customers, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile
+            db.customers, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile,
+            db.suppliers, db.supplier_payments, db.stock_intakes
         ], async () => {
             await db.product_returns.add(newReturn);
 
@@ -77,7 +79,8 @@ class ReturnService {
     async processReturnCancellation(uuid: string): Promise<void> {
         await db.transaction('rw', [
             db.product_returns, db.products, db.customers,
-            db.inventory_logs, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile
+            db.inventory_logs, db.sales, db.payments, db.sync_queue, db.bread_orders, db.company_profile,
+            db.suppliers, db.supplier_payments, db.stock_intakes
         ], async () => {
             const productReturn = await this.getReturnByUuid(uuid);
             if (!productReturn || !productReturn.id) throw new Error('Retour introuvable.');

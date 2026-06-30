@@ -12,7 +12,11 @@ interface DashboardChartsProps {
     isLoading: boolean;
 }
 
-export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
+/**
+ * PRODUCTION AUDIT: Fix Skeleton import from internal UI library.
+ * Implemented React.memo for chart performance stabilization.
+ */
+const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
         return (
             <Card className="rounded-2xl border-white/5 bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden h-[400px]">
@@ -132,4 +136,6 @@ export function DashboardCharts({ data, isLoading }: DashboardChartsProps) {
             </CardContent>
         </Card>
     );
-}
+};
+
+export const DashboardCharts = React.memo(DashboardChartsComponent);
