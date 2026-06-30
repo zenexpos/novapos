@@ -14,7 +14,7 @@ interface DashboardChartsProps {
 
 /**
  * Command Center Analytics Engine.
- * PRODUCTION AUDIT: Fixed Skeleton import and added memoization.
+ * PRODUCTION AUDIT: Fixed Skeleton import and implemented React.memo for high-frequency dashboard updates.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {

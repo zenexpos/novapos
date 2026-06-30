@@ -1,7 +1,19 @@
 'use client';
 
 import { db } from '@/lib/db';
-import type { DashboardData, DashboardStats, SalesByDay, BreadSummary, DashboardAlert, RecentActivity, TopProduct, DebtAging, TopCustomer } from '@/lib/types';
+import type { 
+    DashboardData, 
+    DashboardStats, 
+    SalesByDay, 
+    BreadSummary, 
+    DashboardAlert, 
+    RecentActivity, 
+    TopProduct, 
+    DebtAging, 
+    TopCustomer,
+    Sale,
+    Expense
+} from '@/lib/types';
 import { startOfDay, endOfDay, format, eachDayOfInterval, differenceInDays, subDays } from 'date-fns';
 import { safeNumber, roundFinancial, safeToDate, preciseMultiply } from '@/lib/utils';
 
@@ -40,8 +52,8 @@ class DashboardService {
         const currExp = expenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
         const prevExp = prevExpenses.reduce((sum, e) => sum + safeNumber(e.amount), 0);
 
-        const getCogs = (saleList: any[]) => saleList.reduce((sum, s) => 
-            sum + (s.items || []).reduce((iSum: number, i: any) => iSum + (safeNumber(i.quantity) * safeNumber(i.purchasePrice)), 0)
+        const getCogs = (saleList: Sale[]) => saleList.reduce((sum, s) => 
+            sum + (s.items || []).reduce((iSum: number, i) => iSum + (safeNumber(i.quantity) * safeNumber(i.purchasePrice)), 0)
         , 0);
 
         const currCogs = getCogs(activeSales);
@@ -172,7 +184,6 @@ class DashboardService {
         const breadOrders = await db.bread_orders.where('date').equals(todayStr).toArray();
 
         // 6. Hardened Activity Feed Query
-        // Optimized: Fetch only the strictly necessary rows from DB instead of loading all and slicing in JS
         const [recentSales, recentPayments, recentExpenses, recentReturns, recentIntakes] = await Promise.all([
             db.sales.where('createdAt').above(subDays(today, 7)).reverse().limit(15).toArray(),
             db.payments.where('paymentDate').above(subDays(today, 7)).reverse().limit(15).toArray(),
@@ -221,7 +232,7 @@ class DashboardService {
             .slice(0, 15);
     }
 
-    private calcTrend(curr: number, prev: number) {
+    private calcTrend(curr: number, prev: number): number {
         if (!prev || prev === 0) return 0;
         return ((curr - prev) / Math.abs(prev)) * 100;
     }

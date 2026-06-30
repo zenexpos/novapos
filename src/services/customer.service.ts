@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale } from '@/lib/types';
+import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale, Payment, ProductReturn } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
@@ -323,7 +323,7 @@ class CustomerService {
                             continue;
                         }
 
-                        const data: CustomerFormData = {
+                        const data: Partial<Customer> = {
                             firstName: firstName.toString().trim(),
                             lastName: lastName.toString().trim(),
                             phone: (row.phone || row.Téléphone || row.Telephone || '').toString().trim(),
@@ -334,14 +334,14 @@ class CustomerService {
                         };
 
                         const existing = existingCustomers.find(c => 
-                            c.firstName.toLowerCase() === data.firstName.toLowerCase() && 
-                            c.lastName.toLowerCase() === data.lastName.toLowerCase()
+                            c.firstName.toLowerCase() === data.firstName?.toLowerCase() && 
+                            c.lastName.toLowerCase() === data.lastName?.toLowerCase()
                         );
 
                         if (existing) {
-                            analysis.customersToUpdate.push({ ...data, uuid: existing.uuid } as any);
+                            analysis.customersToUpdate.push({ ...data, uuid: existing.uuid });
                         } else {
-                            analysis.customersToAdd.push(data as any);
+                            analysis.customersToAdd.push(data);
                         }
                     }
                     resolve(analysis);
@@ -351,14 +351,14 @@ class CustomerService {
         });
     }
 
-    async executeImport(confirmedData: { toAdd: any[], toUpdate: any[] }): Promise<void> {
+    async executeImport(confirmedData: { toAdd: Partial<Customer>[], toUpdate: Partial<Customer>[] }): Promise<void> {
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             for (const item of confirmedData.toAdd) {
-                await this.addCustomer(item);
+                await this.addCustomer(item as CustomerFormData);
             }
             for (const item of confirmedData.toUpdate) {
                 const { uuid, ...rest } = item;
-                await this.updateCustomer(uuid, rest);
+                if (uuid) await this.updateCustomer(uuid, rest as CustomerUpdateInput);
             }
         });
     }
