@@ -96,7 +96,7 @@ class CustomerService {
             phone: sanitizeString(customerData.phone) || undefined,
             address: sanitizeString(customerData.address) || undefined,
             settlementDay: customerData.settlementDay,
-            createLimit: roundFinancial(safeNumber(customerData.creditLimit)),
+            creditLimit: roundFinancial(safeNumber(customerData.creditLimit)),
             initialBalance: initialBal,
             totalSpent: 0,
             outstandingBalance: initialBal,
