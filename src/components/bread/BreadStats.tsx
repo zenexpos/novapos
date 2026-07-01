@@ -7,6 +7,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { BreadOrder } from '@/lib/types';
 
 interface BreadStatsProps {
     date: string;
@@ -16,7 +17,7 @@ const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { tit
     <Card className="app-card bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
             <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
-            <div className={cn("p-2.5 rounded-xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
+            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
                 <Icon className="h-4 w-4" />
             </div>
         </CardHeader>
@@ -29,8 +30,8 @@ const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { tit
 StatCard.displayName = 'StatCard';
 
 export const BreadStats = memo(({ date }: BreadStatsProps) => {
-    const { value: orders, isLoading } = useLiveQuery(
-        () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve([]),
+    const { value: orders, isLoading } = useLiveQuery<BreadOrder[]>(
+        () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve<BreadOrder[]>([]),
         [date]
     );
 
