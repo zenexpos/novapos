@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale, Payment, ProductReturn } from '@/lib/types';
+import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale, Payment, ProductReturn, BreadProfile } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
@@ -128,12 +128,23 @@ class CustomerService {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
+        const { breadProfile, ...rest } = updateData;
+
         const finalUpdate: Partial<Customer> = {
-            ...updateData,
+            ...rest,
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: (existing.version || 1) + 1
         };
+
+        if (breadProfile) {
+            finalUpdate.breadProfile = {
+                recurrenceType: breadProfile.recurrenceType ?? existing.breadProfile?.recurrenceType ?? 'aucun',
+                defaultQuantity: breadProfile.defaultQuantity ?? existing.breadProfile?.defaultQuantity ?? 0,
+                weeklySchedule: breadProfile.weeklySchedule ?? existing.breadProfile?.weeklySchedule ?? {},
+                startDate: breadProfile.startDate ?? existing.breadProfile?.startDate,
+            };
+        }
 
         if (updateData.firstName !== undefined) finalUpdate.firstName = sanitizeString(updateData.firstName);
         if (updateData.lastName !== undefined) finalUpdate.lastName = sanitizeString(updateData.lastName);
