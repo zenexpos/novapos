@@ -22,7 +22,8 @@ import {
     Calendar,
     LayoutGrid,
     List,
-    Info
+    Info,
+    RefreshCw
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -50,9 +51,6 @@ export default function BreadPage() {
     const viewMode = useAppStore(state => state.breadViewMode);
     const setViewMode = useAppStore(state => state.actions.setBreadViewMode);
     
-    const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
-    const [deliveryFilter, setDeliveryFilter] = useState<'all' | 'delivered' | 'pending'>('all');
-
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
@@ -71,7 +69,7 @@ export default function BreadPage() {
         }
     }, [formattedDate, isMounted]);
 
-    const { value: orders, isLoading } = useLiveQuery<BreadOrderWithCustomer[]>(
+    const { value: orders, isLoading, refresh } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => isMounted ? breadService.getOrdersForDate(formattedDate) : Promise.resolve([]),
         [formattedDate, isMounted]
     );
@@ -79,8 +77,6 @@ export default function BreadPage() {
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
         let list = orders;
-        if (statusFilter !== 'all') list = list.filter(o => o.isPaid === (statusFilter === 'paid'));
-        if (deliveryFilter !== 'all') list = list.filter(o => o.isDelivered === (deliveryFilter === 'delivered'));
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
@@ -90,7 +86,7 @@ export default function BreadPage() {
             );
         }
         return list;
-    }, [orders, searchQuery, statusFilter, deliveryFilter]);
+    }, [orders, searchQuery]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
@@ -102,7 +98,7 @@ export default function BreadPage() {
             const count = await breadService.processEndOfDayTransfers();
             if (count > 0) toast.success(`${count} ordres transférés au compte.`);
             else toast.info("Aucun ordre à transférer.");
-        } catch (e) {
+        } catch (e: any) {
             toast.error("Erreur lors de l'auto-facturation.");
         } finally {
             setIsProcessing(false);
@@ -113,7 +109,8 @@ export default function BreadPage() {
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
-        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false }
+        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false },
+        { key: 'r', action: () => refresh(), description: 'Actualiser flux [R]', ignoreInputFocus: true }
     ], 'LogistiquePain', isMounted);
 
     if (!isMounted) return null;
@@ -124,7 +121,7 @@ export default function BreadPage() {
                 title="Logistique Pain Elite"
                 description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
             >
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <PrintBreadListDialog orders={filteredOrders} currentDate={formattedDate} />
                     
                     <TooltipProvider>
@@ -135,24 +132,28 @@ export default function BreadPage() {
                                     size="sm"
                                     onClick={() => setIsAutoBillingConfirmOpen(true)}
                                     disabled={isProcessing}
-                                    className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10"
+                                    className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10 font-bold"
                                 >
                                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-                                    Régularisation des comptes
+                                    Auto-facturation
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transférer les dettes non payées des jours précédents au solde des clients</TooltipContent>
+                            <TooltipContent>Transférer les impayés des jours passés en dettes réelles</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
                     <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
                         <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9"><ChevronLeft className="h-5 w-5 text-primary" /></Button>
-                        <Button variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} onClick={() => setCurrentDate(new Date())} className="rounded-xl h-9 px-4 text-[10px] uppercase font-bold">Aujourd'hui</Button>
+                        <Button variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} onClick={() => setCurrentDate(new Date())} className="rounded-xl h-9 px-4 text-[10px] uppercase font-black tracking-widest">Aujourd'hui</Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9"><ChevronRight className="h-5 w-5 text-primary" /></Button>
                     </div>
                     
-                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-bold shadow-lg gap-2 bg-primary text-primary-foreground">
+                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-black text-[10px] uppercase tracking-widest shadow-xl gap-2 bg-primary text-primary-foreground">
                         <Plus className="h-4 w-4" /> Nouvelle Commande [N]
+                    </Button>
+                    
+                    <Button variant="outline" size="icon" onClick={() => refresh()} className="rounded-xl h-10 w-10 border-white/5 bg-card/40">
+                        <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </PageHeader>
@@ -160,15 +161,15 @@ export default function BreadPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <div className="flex flex-col lg:flex-row justify-between gap-4">
                     <TabsList className="bg-card/40 border border-white/5 p-1 h-12 rounded-2xl">
-                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-bold text-xs uppercase">Distribution du jour</TabsTrigger>
-                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-bold text-xs uppercase">Clients Abonnés</TabsTrigger>
+                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-black text-[10px] uppercase tracking-widest">Distribution</TabsTrigger>
+                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-black text-[10px] uppercase tracking-widest">Abonnés</TabsTrigger>
                     </TabsList>
 
                     {activeTab === 'distribution' && (
                         <div className="flex gap-3 flex-grow max-w-4xl">
                             <div className="relative flex-grow group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                                <Input placeholder="Rechercher par nom ou numéro..." className="pl-10 h-11 rounded-xl bg-card border-none shadow-sm" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+                                <Input placeholder="Rechercher flux..." className="pl-12 h-11 rounded-xl bg-card border-none shadow-inner font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                             </div>
                             <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
                                 <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
@@ -183,20 +184,20 @@ export default function BreadPage() {
                     
                     {isLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                           {[...Array(8)].map((_, i) => <Skeleton className="h-48 w-full rounded-2xl" key={i} />)}
+                           {[...Array(8)].map((_, i) => <Skeleton className="h-48 w-full rounded-3xl" key={i} />)}
                         </div>
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
                             icon={Search} 
-                            title="Aucune commande détectée" 
-                            description={searchQuery ? "Aucun résultat pour cette recherche." : "Aucune commande enregistrée pour ce jour."}
-                            actionLabel="Créer une commande"
+                            title="Zone de Silence" 
+                            description={searchQuery ? "Ajustez vos filtres de recherche." : "Aucune distribution prévue pour ce jour."}
+                            actionLabel="Créer un ordre"
                             onAction={() => setIsFormOpen(true)}
                         />
                     ) : (
                         <div className="animate-in fade-in duration-500">
                             {viewMode === 'list' ? (
-                                <div className="bg-card/40 rounded-lg border border-white/5 overflow-hidden">
+                                <div className="bg-card/40 rounded-2xl border border-white/5 overflow-hidden shadow-sm">
                                     <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={(id) => setSelectedOrders(prev => {
                                         const next = new Set(prev);
                                         if (next.has(id)) next.delete(id); else next.add(id);
@@ -228,18 +229,18 @@ export default function BreadPage() {
             <ConfirmAlertDialog
                 isOpen={isAutoBillingConfirmOpen}
                 onOpenChange={setIsAutoBillingConfirmOpen}
-                title="Régularisation automatique des comptes"
+                title="Audit de Clôture Logistique"
                 description={
                     <div className="space-y-4">
-                        <p>Cette opération va transformer tous les ordres non payés des jours passés en dettes réelles sur les comptes clients.</p>
+                        <p>Cette opération va convertir tous les ordres non régularisés des jours passés en créances réelles sur les comptes clients Premium.</p>
                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
                             <Info className="h-5 w-5 shrink-0" />
-                            <p className="text-xs font-bold uppercase">Ceci simplifie la gestion des créances en évitant de vérifier chaque jour manuellement.</p>
+                            <p className="text-[10px] font-black uppercase leading-relaxed">Ceci est une action comptable irréversible qui garantit l'intégrité de vos flux de trésorerie.</p>
                         </div>
                     </div>
                 }
                 onConfirm={runAutomatedTask}
-                confirmText="Confirmer le transfert"
+                confirmText="Valider Transfert"
             />
         </div>
     );

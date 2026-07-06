@@ -19,9 +19,8 @@ import {
     Loader2, 
     Trash2, 
     User, 
-    Clock,
     Banknote,
-    Info
+    Clock
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { Badge } from '@/components/ui/badge';
@@ -93,7 +92,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
 
     const handleQuickPay = useCallback(async () => {
         if (isExternal) {
-            toast.error("Facturation impossible", { description: "Ce client n'a pas de compte Premium. Veuillez créer son profil d'abord." });
+            toast.error("Facturation impossible", { description: "Ce client n'a pas de compte Premium." });
             return;
         }
         setIsUpdatingStatus(true);
@@ -119,65 +118,63 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
 
     return (
         <Card className={cn(
-            "app-card group flex flex-col transition-all duration-500 bg-card/40 backdrop-blur-sm border-white/5 relative overflow-hidden rounded-3xl", 
-            isSelected ? "ring-2 ring-primary border-primary/30 shadow-2xl scale-[1.02] z-10" : "hover:bg-primary/5 shadow-sm",
-            isBilled ? "opacity-80 grayscale-[0.3]" : "bg-card",
+            "app-card group flex flex-col transition-all duration-300 bg-card/40 backdrop-blur-sm border-white/5 relative overflow-hidden rounded-3xl", 
+            isSelected ? "ring-2 ring-primary border-primary/30 shadow-xl scale-[1.01]" : "hover:bg-primary/5 shadow-sm",
+            isBilled ? "opacity-75 grayscale-[0.2]" : "bg-card",
         )}>
-            <div className="absolute top-6 right-6 z-10 flex gap-3 items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute top-6 right-6 z-10 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isBilled && (
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-10 transition-all" 
+                        className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity" 
                         onClick={handleDelete} 
                     >
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
-                {!isBilled ? (
-                    <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm">
+                <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm">
+                    {isBilled ? (
+                        <CircleCheckBig className="h-4 w-4 text-emerald-500" />
+                    ) : (
                         <Checkbox 
                             checked={isSelected} 
                             onCheckedChange={() => onToggleSelection(order.uuid)} 
-                            className="h-6 w-6 border-primary data-[state=checked]:bg-primary" 
+                            className="h-5 w-5 border-primary data-[state=checked]:bg-primary" 
                         />
-                    </div>
-                ) : (
-                    <div className="p-2 rounded-xl bg-emerald-500/10 shadow-inner">
-                        <CircleCheckBig className="h-5 w-5 text-emerald-500 animate-in zoom-in" />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             <CardHeader className="p-6 pb-2 space-y-3 relative z-10">
-                <div>
+                <div className="space-y-1">
                     <div className="flex items-center gap-2 mb-1.5">
                         {isExternal ? (
-                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[8px] font-black uppercase flex items-center gap-1.5 px-2 py-0.5">
+                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] font-black uppercase flex items-center gap-1 px-2 py-0.5">
                                 <CircleUser className="h-2.5 w-2.5" /> Passage
                             </Badge>
                         ) : (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase flex items-center gap-1.5 px-2 py-0.5">
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase flex items-center gap-1 px-2 py-0.5">
                                 <User className="h-2.5 w-2.5" /> Premium
                             </Badge>
                         )}
                         <Badge className={cn(
-                            "text-[8px] font-black uppercase px-2 py-0.5 border-none",
+                            "text-[9px] font-black uppercase px-2 py-0.5 border-none",
                             isPaid ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"
                         )}>
                             {isPaid ? 'PAYÉ' : 'À RÉGLER'}
                         </Badge>
                     </div>
-                    <CardTitle className="text-lg font-black leading-none tracking-tighter group-hover:text-primary transition-colors truncate pr-16 uppercase">
+                    <CardTitle className="text-lg font-black leading-tight tracking-tighter truncate pr-14 uppercase">
                         {displayName}
                     </CardTitle>
                 </div>
             </CardHeader>
 
-            <CardContent className="p-6 pt-2 space-y-6 relative z-10">
-                <div className="flex items-center gap-4 bg-black/20 rounded-2xl p-4 border border-white/5 group-hover:border-primary/20 transition-all shadow-inner">
-                    <div className="p-3 rounded-2xl bg-muted text-muted-foreground shadow-inner">
-                        <Package className="h-6 w-6" />
+            <CardContent className="p-6 pt-2 space-y-5 relative z-10">
+                <div className="flex items-center gap-4 bg-black/10 rounded-2xl p-4 border border-white/5 group-hover:border-primary/20 transition-all shadow-inner">
+                    <div className="p-3 rounded-xl bg-muted text-muted-foreground shadow-inner">
+                        <Package className="h-5 w-5" />
                     </div>
                     <div className="flex-grow relative">
                         <Input 
@@ -189,7 +186,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             min="0"
                             step="0.1"
                         />
-                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase tracking-wide text-muted-foreground opacity-20">PCS</span>
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-muted-foreground opacity-20">PCS</span>
                     </div>
                 </div>
 
@@ -199,30 +196,29 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             <Banknote className="h-4 w-4" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Paiement Cash</span>
-                            <span className="text-[8px] font-bold text-muted-foreground/40 uppercase">Règlement immédiat</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Cash direct</span>
                         </div>
                     </div>
                     <Switch 
                         checked={isPaid} 
                         onCheckedChange={togglePayment} 
                         disabled={isUpdatingStatus || isBilled}
-                        className="data-[state=checked]:bg-emerald-500 scale-110"
+                        className="data-[state=checked]:bg-emerald-500"
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4" onClick={(e) => e.stopPropagation()}>
+                <div className="grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
                     <Button 
                         variant={isDelivered ? "secondary" : "outline"} 
                         size="lg"
                         onClick={toggleDelivery}
                         disabled={isUpdatingStatus || isBilled}
                         className={cn(
-                            "rounded-2xl h-12 font-black text-[10px] uppercase tracking-[0.1em] gap-3 shadow-md",
+                            "rounded-2xl h-11 font-black text-[10px] uppercase tracking-widest gap-2 shadow-sm transition-all",
                             isDelivered ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                         )}
                     >
-                        {isUpdatingStatus ? <Loader2 className="h-5 w-5 animate-spin" /> : <Package className="h-5 w-5" />}
+                        {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
                         {isDelivered ? 'LIVRÉ' : 'LIVRER'}
                     </Button>
                     <TooltipProvider>
@@ -232,17 +228,17 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                                     variant={isBilled ? "secondary" : "outline"} 
                                     size="lg"
                                     onClick={handleQuickPay}
-                                    disabled={isBilled || isUpdatingStatus}
+                                    disabled={isBilled || isUpdatingStatus || isExternal}
                                     className={cn(
-                                        "rounded-2xl h-12 font-black text-[10px] uppercase tracking-[0.1em] gap-3 shadow-md",
+                                        "rounded-2xl h-11 font-black text-[10px] uppercase tracking-widest gap-2 shadow-sm transition-all",
                                         isBilled ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                                     )}
                                 >
-                                    {isBilled ? <CircleCheckBig className="h-5 w-5" /> : <Landmark className="h-5 w-5" />}
-                                    {isBilled ? 'DÉBITÉ' : 'AU COMPTE'}
+                                    {isBilled ? <Landmark className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                                    {isBilled ? 'AU COMPTE' : 'CRÉDIT'}
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Ajoute cette dette au compte client pour un paiement ultérieur.</TooltipContent>
+                            <TooltipContent>Transférer la dette sur le compte client Premium.</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </div>

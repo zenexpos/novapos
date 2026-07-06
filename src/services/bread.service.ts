@@ -1,6 +1,6 @@
 'use client';
 
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, startOfDay } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO } from '@/lib/types';
 import { db } from '@/lib/db';
@@ -14,6 +14,9 @@ import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
  */
 class BreadService {
 
+    /**
+     * Génère un numéro de commande séquentiel unique.
+     */
     private async generateOrderNumber(): Promise<string> {
         return await db.transaction('rw', [db.company_profile], async () => {
             const profile = await db.company_profile.toCollection().first();
@@ -30,6 +33,9 @@ class BreadService {
         });
     }
 
+    /**
+     * Récupère les ordres pour une date spécifique avec jointure client.
+     */
     async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
         if (!date) return [];
 
@@ -37,6 +43,8 @@ class BreadService {
             .where('date').equals(date)
             .filter(o => !o.deletedAt)
             .toArray();
+
+        if (orders.length === 0) return [];
 
         const customerUuids = Array.from(new Set(orders.map(o => o.customerUuid).filter(Boolean) as string[]));
         const customers = customerUuids.length > 0
@@ -50,26 +58,31 @@ class BreadService {
         })).sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
     }
 
+    /**
+     * Garantit la création des ordres pour les abonnés à une date donnée.
+     */
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         if (date < todayStr) return;
 
-        const activeBreadClientsCount = await db.customers
-            .filter(c => !!c.isBreadClient && !c.deletedAt)
-            .count();
-        
-        const existingCount = await db.bread_orders
-            .where('date').equals(date)
-            .filter(o => !o.deletedAt)
-            .count();
+        // Atomic check and create to prevent race conditions
+        await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile], async () => {
+            const existingCount = await db.bread_orders
+                .where('date').equals(date)
+                .filter(o => !o.deletedAt)
+                .count();
 
-        if (activeBreadClientsCount > 0 && existingCount === 0) {
-            await this.createDayOrders(date);
-        }
+            if (existingCount === 0) {
+                await this.createDayOrders(date);
+            }
+        });
     }
 
+    /**
+     * Ajoute un ordre manuel hors abonnement.
+     */
     async addManualBreadOrder(data: CreateBreadOrderDTO): Promise<void> {
         const profile = await db.company_profile.toCollection().first();
         const price = data.unitPrice || profile?.breadPrice || 10;
@@ -105,20 +118,23 @@ class BreadService {
         await db.bread_orders.add(newOrder);
     }
 
+    /**
+     * Convertit des ordres en ventes réelles (Dettes au compte).
+     */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
         await db.transaction('rw', [
           db.bread_orders, db.sales, db.products, 
           db.inventory_logs, db.customers, db.company_profile, 
-          db.sync_queue, db.payments, db.product_returns
+          db.sync_queue, db.payments, db.product_returns, db.suppliers,
+          db.supplier_payments, db.stock_intakes
         ], async () => {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
-                if (order.saleUuid || order.deletedAt) continue;
+                if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
-                // Create a virtual cart item for the sale
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
@@ -138,7 +154,7 @@ class BreadService {
                     discountType: 'fixed',
                     discountValue: 0,
                     amountPaid: order.isPaid ? roundFinancial(order.quantity * (breadPrice || order.unitPrice)) : 0,
-                    customerUuid: order.customerUuid || undefined,
+                    customerUuid: order.customerUuid,
                 });
 
                 if (sale) {
@@ -154,6 +170,9 @@ class BreadService {
         });
     }
 
+    /**
+     * Génère les ordres quotidiens basés sur les abonnements.
+     */
     private async createDayOrders(date: string): Promise<void> {
         const dayIndex = parseISO(date).getDay();
         const dayOfWeek = BREAD_WEEK_DAYS[dayIndex];
@@ -185,7 +204,7 @@ class BreadService {
                 const total = roundFinancial(quantity * unitPrice);
                 ordersToCreate.push({
                     uuid: uuidv4(),
-                    orderNumber: `PENDING-${uuidv4().substring(0, 8)}`, 
+                    orderNumber: '', // Will be set in transaction
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
@@ -209,12 +228,10 @@ class BreadService {
         }
 
         if (ordersToCreate.length > 0) {
-            await db.transaction('rw', [db.bread_orders, db.company_profile], async () => {
-                for(let o of ordersToCreate) {
-                    o.orderNumber = await this.generateOrderNumber();
-                }
-                await db.bread_orders.bulkAdd(ordersToCreate);
-            });
+            for(let o of ordersToCreate) {
+                o.orderNumber = await this.generateOrderNumber();
+                await db.bread_orders.add(o);
+            }
         }
     }
 
@@ -275,18 +292,21 @@ class BreadService {
 
     async processEndOfDayTransfers(): Promise<number> {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const profile = await db.company_profile.toCollection().first();
-        const price = profile?.breadPrice || 10;
         
         const pendingOrders = await db.bread_orders
             .filter(o => 
                 !o.deletedAt && 
                 !o.transferredToCustomerAccount && 
+                !!o.customerUuid &&
                 o.date < todayStr
             )
             .toArray();
 
         if (pendingOrders.length === 0) return 0;
+        
+        const profile = await db.company_profile.toCollection().first();
+        const price = profile?.breadPrice || 10;
+        
         const uuids = pendingOrders.map(o => o.uuid);
         await this.convertBreadOrdersToSales(uuids, price);
         return uuids.length;

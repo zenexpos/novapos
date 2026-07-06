@@ -22,7 +22,7 @@ const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { tit
             </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-            <div className="text-xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
             {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
@@ -31,7 +31,7 @@ StatCard.displayName = 'StatCard';
 
 export const BreadStats = memo(({ date }: BreadStatsProps) => {
     const { value: orders, isLoading } = useLiveQuery<BreadOrder[]>(
-        () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve<BreadOrder[]>([]),
+        () => date ? db.bread_orders.where('date').equals(date).filter(o => !o.deletedAt).toArray() : Promise.resolve([]),
         [date]
     );
 
