@@ -23,7 +23,10 @@ import {
     LayoutGrid,
     List,
     Info,
-    RefreshCw
+    RefreshCw,
+    Filter,
+    X,
+    FilterX
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
 import type { BreadOrderWithCustomer } from '@/lib/types';
@@ -41,11 +44,28 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+type DeliveryFilter = 'all' | 'delivered' | 'pending';
+type PaymentFilter = 'all' | 'paid' | 'unpaid';
 
 export default function BreadPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Nouveaux états de filtrage
+    const [filterDelivery, setFilterDelivery] = useState<DeliveryFilter>('all');
+    const [filterPayment, setFilterPayment] = useState<PaymentFilter>('all');
+    
     const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
     
     const viewMode = useAppStore(state => state.breadViewMode);
@@ -77,6 +97,8 @@ export default function BreadPage() {
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
         let list = orders;
+        
+        // 1. Filtrage par recherche
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
@@ -85,12 +107,35 @@ export default function BreadPage() {
                 (o.customName && o.customName.toLowerCase().includes(q))
             );
         }
+
+        // 2. Filtrage par livraison
+        if (filterDelivery === 'delivered') {
+            list = list.filter(o => o.isDelivered);
+        } else if (filterDelivery === 'pending') {
+            list = list.filter(o => !o.isDelivered);
+        }
+
+        // 3. Filtrage par paiement
+        if (filterPayment === 'paid') {
+            list = list.filter(o => o.isPaid);
+        } else if (filterPayment === 'unpaid') {
+            list = list.filter(o => !o.isPaid);
+        }
+
         return list;
-    }, [orders, searchQuery]);
+    }, [orders, searchQuery, filterDelivery, filterPayment]);
 
     const handleDateChange = useCallback((days: number) => {
         setCurrentDate(prev => addDays(prev, days));
     }, []);
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setFilterDelivery('all');
+        setFilterPayment('all');
+    };
+
+    const isFiltered = searchQuery !== '' || filterDelivery !== 'all' || filterPayment !== 'all';
 
     const runAutomatedTask = useCallback(async () => {
         setIsProcessing(true);
@@ -116,7 +161,7 @@ export default function BreadPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700">
+        <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700 pb-24">
             <PageHeader 
                 title="Logistique Pain Elite"
                 description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -166,12 +211,70 @@ export default function BreadPage() {
                     </TabsList>
 
                     {activeTab === 'distribution' && (
-                        <div className="flex gap-3 flex-grow max-w-4xl">
-                            <div className="relative flex-grow group">
+                        <div className="flex flex-wrap gap-3 items-center flex-grow max-w-5xl">
+                            <div className="relative flex-grow min-w-[200px] group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
-                                <Input placeholder="Rechercher flux..." className="pl-12 h-11 rounded-xl bg-card border-none shadow-inner font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                                <Input 
+                                    placeholder="Rechercher flux..." 
+                                    className="pl-12 h-11 rounded-xl bg-card border-none shadow-inner font-bold" 
+                                    value={searchQuery} 
+                                    onChange={e => setSearchQuery(e.target.value)} 
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
                             </div>
-                            <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
+
+                            <div className="flex gap-2">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-card px-4 font-bold text-xs uppercase gap-2">
+                                            <Filter className="h-3.5 w-3.5 opacity-50" />
+                                            {filterDelivery === 'all' ? 'Livraison' : filterDelivery === 'delivered' ? 'Livré' : 'En attente'}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
+                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-muted-foreground/40">Filtrer par livraison</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuRadioGroup value={filterDelivery} onValueChange={v => setFilterDelivery(v as any)}>
+                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous les états</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="delivered" className="text-xs font-bold uppercase text-emerald-500">Déjà livré</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="pending" className="text-xs font-bold uppercase text-amber-500">En attente</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-card px-4 font-bold text-xs uppercase gap-2">
+                                            <Filter className="h-3.5 w-3.5 opacity-50" />
+                                            {filterPayment === 'all' ? 'Paiement' : filterPayment === 'paid' ? 'Payé' : 'Impayé'}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
+                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-muted-foreground/40">Filtrer par règlement</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuRadioGroup value={filterPayment} onValueChange={v => setFilterPayment(v as any)}>
+                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Toutes transactions</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="paid" className="text-xs font-bold uppercase text-emerald-500">Flux Soldés</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold uppercase text-orange-500">Flux à régler</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                {isFiltered && (
+                                    <Button variant="ghost" size="icon" onClick={resetFilters} className="h-11 w-11 rounded-xl text-destructive hover:bg-destructive/10">
+                                        <FilterX className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5 ml-auto">
                                 <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
                                 <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                             </div>
@@ -190,9 +293,9 @@ export default function BreadPage() {
                         <EmptyState 
                             icon={Search} 
                             title="Zone de Silence" 
-                            description={searchQuery ? "Ajustez vos filtres de recherche." : "Aucune distribution prévue pour ce jour."}
-                            actionLabel="Créer un ordre"
-                            onAction={() => setIsFormOpen(true)}
+                            description={isFiltered ? "Ajustez vos filtres de recherche." : "Aucune distribution prévue pour ce jour."}
+                            actionLabel={isFiltered ? "Réinitialiser les filtres" : "Créer un ordre"}
+                            onAction={isFiltered ? resetFilters : () => setIsFormOpen(true)}
                         />
                     ) : (
                         <div className="animate-in fade-in duration-500">
