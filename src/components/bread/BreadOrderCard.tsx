@@ -1,3 +1,4 @@
+// ... (previous content preserved with fix)
 'use client';
 
 import { useState, useEffect, useCallback, memo } from 'react';
@@ -35,7 +36,7 @@ interface BreadOrderCardProps {
 const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: BreadOrderCardProps) => {
     const [quantity, setQuantity] = useState(order.quantity);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-    const debouncedQuantity = useDebounce(quantity, 500);
+    const debouncedQuantity = useDebounce(quantity, 800);
     const breadPrice = useAppStore((state) => state.companyProfile?.breadPrice) || 10;
 
     const isBilled = !!order.saleUuid;
@@ -50,7 +51,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         try {
             await breadService.updateBreadOrderQuantity(order.uuid, val);
         } catch (error) {
-            toast.error("Erreur de mise à jour quantité.");
+            toast.error("Échec de la mise à jour quantité.");
         }
     }, [order.uuid, isBilled]);
 
@@ -71,7 +72,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
             await breadService.bulkUpdateDeliveryStatus([order.uuid], !isDelivered);
             toast.success(isDelivered ? "Livraison annulée" : "Marqué comme livré");
         } catch (e) {
-            toast.error("Échec livraison.");
+            toast.error("Erreur statut livraison.");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -82,9 +83,9 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         setIsUpdatingStatus(true);
         try {
             await breadService.updatePaymentStatus(order.uuid, checked);
-            toast.success(checked ? "Marqué comme payé (Cash)" : "Mis en attente de paiement");
+            toast.success(checked ? "Validé Cash" : "Mis en attente");
         } catch (e) {
-            toast.error("Erreur paiement.");
+            toast.error("Erreur règlement.");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -92,15 +93,15 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
 
     const handleQuickPay = useCallback(async () => {
         if (isExternal) {
-            toast.error("Facturation impossible", { description: "Ce client n'a pas de compte Premium." });
+            toast.error("Compte requis", { description: "Seuls les clients Premium peuvent être facturés au compte." });
             return;
         }
         setIsUpdatingStatus(true);
         try {
             await breadService.convertBreadOrdersToSales([order.uuid], breadPrice);
-            toast.success("Transaction ajoutée au compte client.");
+            toast.success("Opération comptable validée.");
         } catch (e) {
-            toast.error("Échec de la conversion.");
+            toast.error("Erreur transfert financier.");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -110,23 +111,24 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
         if (isBilled) return;
         try {
             await breadService.deleteBreadOrder(order.uuid);
-            toast.success("Commande supprimée.");
+            toast.success("Ordre supprimé.");
         } catch (e) {
-            toast.error("Impossible de supprimer.");
+            toast.error("Action impossible.");
         }
     }, [order.uuid, isBilled]);
 
     return (
         <Card className={cn(
             "app-card group flex flex-col transition-all duration-300 bg-card/40 backdrop-blur-sm border-white/5 relative overflow-hidden rounded-3xl", 
-            isSelected ? "ring-2 ring-primary border-primary/30 shadow-xl scale-[1.01]" : "hover:bg-primary/5 shadow-sm",
-            isBilled ? "opacity-75 grayscale-[0.2]" : "bg-card",
+            isSelected ? "ring-2 ring-primary border-primary/30 shadow-xl" : "hover:bg-primary/5 shadow-sm",
+            isBilled ? "opacity-75 grayscale-[0.3]" : "bg-card",
         )}>
             <div className="absolute top-6 right-6 z-10 flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                 {!isBilled && (
                     <Button 
                         variant="ghost" 
                         size="icon" 
+                        aria-label="Supprimer ordre"
                         className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity" 
                         onClick={handleDelete} 
                     >
@@ -162,7 +164,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             "text-[9px] font-black uppercase px-2 py-0.5 border-none",
                             isPaid ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"
                         )}>
-                            {isPaid ? 'PAYÉ' : 'À RÉGLER'}
+                            {isPaid ? 'PAYÉ' : 'CRÉDIT'}
                         </Badge>
                     </div>
                     <CardTitle className="text-lg font-black leading-tight tracking-tighter truncate pr-14 uppercase">
@@ -179,6 +181,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                     <div className="flex-grow relative">
                         <Input 
                             type="number"
+                            aria-label="Quantité"
                             value={quantity}
                             onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
                             className="h-10 text-2xl font-black text-center bg-transparent border-none focus-visible:ring-0 w-full text-primary"
@@ -196,7 +199,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                             <Banknote className="h-4 w-4" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Cash direct</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Paiement Cash</span>
                         </div>
                     </div>
                     <Switch 
@@ -204,6 +207,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                         onCheckedChange={togglePayment} 
                         disabled={isUpdatingStatus || isBilled}
                         className="data-[state=checked]:bg-emerald-500"
+                        aria-label="Toggle paiement"
                     />
                 </div>
 
@@ -234,11 +238,13 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
                                         isBilled ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "border-white/5 bg-card/40"
                                     )}
                                 >
-                                    {isBilled ? <Landmark className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                                    {isBilled ? 'AU COMPTE' : 'CRÉDIT'}
+                                    {isBilled ? <CircleCheckBig className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+                                    {isBilled ? 'FACTURÉ' : 'CRÉDIT'}
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transférer la dette sur le compte client Premium.</TooltipContent>
+                            <TooltipContent>
+                                {isBilled ? "Déjà intégré à la comptabilité" : isExternal ? "Compte Premium requis" : "Transférer la dette sur le compte client."}
+                            </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </div>

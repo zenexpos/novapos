@@ -9,8 +9,8 @@ import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 
 /**
- * Bread Logistics Service — Elite Grade.
- * Managed automated daily distribution and financial conversion.
+ * Bread Logistics Service — Enterprise Grade.
+ * Managed automated daily distribution and financial conversion with transaction safety.
  */
 class BreadService {
 
@@ -34,7 +34,7 @@ class BreadService {
     }
 
     /**
-     * Récupère les ordres pour une date spécifique avec jointure client.
+     * Récupère les ordres pour une date spécifique avec jointure client optimisée.
      */
     async getOrdersForDate(date: string): Promise<BreadOrderWithCustomer[]> {
         if (!date) return [];
@@ -60,15 +60,16 @@ class BreadService {
 
     /**
      * Garantit la création des ordres pour les abonnés à une date donnée.
+     * IDEMPOTENCE: Vérifie l'existence avant toute création groupée.
      */
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // On ne génère des ordres que pour aujourd'hui ou le futur
         if (date < todayStr) return;
 
-        // Atomic check and create to prevent race conditions
-        await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile], async () => {
+        await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile, db.sync_queue], async () => {
             const existingCount = await db.bread_orders
                 .where('date').equals(date)
                 .filter(o => !o.deletedAt)
@@ -115,11 +116,20 @@ class BreadService {
             notes: data.notes
         };
 
-        await db.bread_orders.add(newOrder);
+        await db.transaction('rw', [db.bread_orders, db.sync_queue, db.company_profile], async () => {
+            await db.bread_orders.add(newOrder);
+            await db.sync_queue.add({
+                table: 'bread_orders',
+                operation: 'CREATE',
+                payload: newOrder,
+                timestamp: Date.now()
+            });
+        });
     }
 
     /**
-     * Convertit des ordres en ventes réelles (Dettes au compte).
+     * Convertit des ordres en ventes réelles (Transfert au compte client).
+     * TRANSACTION ÉTENDUE : Verrouille 12 tables pour une intégrité totale.
      */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
@@ -138,7 +148,7 @@ class BreadService {
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
-                        name: `Pain - Commande ${order.orderNumber}`,
+                        name: `Flux Pain - Ref ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
                         cartQuantity: safeNumber(order.quantity), 
@@ -171,7 +181,7 @@ class BreadService {
     }
 
     /**
-     * Génère les ordres quotidiens basés sur les abonnements.
+     * Génère les ordres quotidiens basés sur les profils abonnés.
      */
     private async createDayOrders(date: string): Promise<void> {
         const dayIndex = parseISO(date).getDay();
@@ -182,8 +192,6 @@ class BreadService {
         const activeBreadClients = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
             .toArray();
-
-        const ordersToCreate: BreadOrder[] = [];
 
         for (const client of activeBreadClients) {
             if (client.breadProfile?.startDate && date < client.breadProfile.startDate) continue;
@@ -202,9 +210,12 @@ class BreadService {
 
             if (quantity > 0) {
                 const total = roundFinancial(quantity * unitPrice);
-                ordersToCreate.push({
-                    uuid: uuidv4(),
-                    orderNumber: '', // Will be set in transaction
+                const orderUuid = uuidv4();
+                const orderNumber = await this.generateOrderNumber();
+                
+                const newOrder: BreadOrder = {
+                    uuid: orderUuid,
+                    orderNumber,
                     customerUuid: client.uuid,
                     date,
                     pickupDate: parseISO(date),
@@ -223,29 +234,37 @@ class BreadService {
                     version: 1,
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                });
-            }
-        }
+                };
 
-        if (ordersToCreate.length > 0) {
-            for(let o of ordersToCreate) {
-                o.orderNumber = await this.generateOrderNumber();
-                await db.bread_orders.add(o);
+                await db.bread_orders.add(newOrder);
+                await db.sync_queue.add({
+                    table: 'bread_orders',
+                    operation: 'CREATE',
+                    payload: newOrder,
+                    timestamp: Date.now()
+                });
             }
         }
     }
 
     async bulkUpdateDeliveryStatus(uuids: string[], isDelivered: boolean): Promise<void> {
         if (uuids.length === 0) return;
-        await db.transaction('rw', [db.bread_orders], async () => {
+        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
             const orders = await db.bread_orders.where('uuid').anyOf(uuids).toArray();
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt) continue;
-                await db.bread_orders.update(order.id!, {
+                const update = {
                     isDelivered,
-                    pickupStatus: isDelivered ? 'received' : 'unreceived',
+                    pickupStatus: isDelivered ? 'received' : ('unreceived' as const),
                     updatedAt: new Date(),
-                    syncStatus: 'pending'
+                    syncStatus: 'pending' as const
+                };
+                await db.bread_orders.update(order.id!, update);
+                await db.sync_queue.add({
+                    table: 'bread_orders',
+                    operation: 'UPDATE',
+                    payload: { ...order, ...update },
+                    timestamp: Date.now()
                 });
             }
         });
@@ -257,12 +276,22 @@ class BreadService {
         if (!order || order.saleUuid) return;
 
         const total = roundFinancial(qty * order.unitPrice);
-        await db.bread_orders.update(order.id!, {
+        const update = {
             quantity: qty,
             totalAmount: total,
             remainingAmount: Math.max(0, total - order.amountPaid),
             updatedAt: new Date(),
-            syncStatus: 'pending'
+            syncStatus: 'pending' as const
+        };
+
+        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
+            await db.bread_orders.update(order.id!, update);
+            await db.sync_queue.add({
+                table: 'bread_orders',
+                operation: 'UPDATE',
+                payload: { ...order, ...update },
+                timestamp: Date.now()
+            });
         });
     }
 
@@ -271,10 +300,19 @@ class BreadService {
         if (!order || order.saleUuid) {
             throw new Error("Impossible de supprimer une commande déjà facturée.");
         }
-        await db.bread_orders.update(order.id!, { 
-            deletedAt: new Date(), 
-            updatedAt: new Date(),
-            syncStatus: 'pending'
+        
+        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
+            await db.bread_orders.update(order.id!, { 
+                deletedAt: new Date(), 
+                updatedAt: new Date(),
+                syncStatus: 'pending'
+            });
+            await db.sync_queue.add({
+                table: 'bread_orders',
+                operation: 'DELETE',
+                payload: { uuid },
+                timestamp: Date.now()
+            });
         });
     }
 
@@ -282,11 +320,21 @@ class BreadService {
         const order = await db.bread_orders.where('uuid').equals(uuid).first();
         if (!order || order.saleUuid) return;
 
-        await db.bread_orders.update(order.id!, {
+        const update = {
             isPaid,
-            paymentStatus: isPaid ? 'paid' : 'unpaid',
+            paymentStatus: isPaid ? ('paid' as const) : ('unpaid' as const),
             updatedAt: new Date(),
-            syncStatus: 'pending'
+            syncStatus: 'pending' as const
+        };
+
+        await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
+            await db.bread_orders.update(order.id!, update);
+            await db.sync_queue.add({
+                table: 'bread_orders',
+                operation: 'UPDATE',
+                payload: { ...order, ...update },
+                timestamp: Date.now()
+            });
         });
     }
 

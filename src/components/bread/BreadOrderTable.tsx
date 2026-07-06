@@ -14,7 +14,9 @@ import {
     User, 
     Hash, 
     CloudUpload,
-    CircleUser
+    CircleUser,
+    CheckCircle2,
+    Package
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';
@@ -37,9 +39,9 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         const newState = !order.isDelivered;
         try {
             await breadService.bulkUpdateDeliveryStatus([order.uuid], newState);
-            toast.success(newState ? 'Article livré' : 'Livraison annulée');
+            toast.success(newState ? 'Livré' : 'En attente');
         } catch (e) {
-            toast.error("Erreur de mise à jour.");
+            toast.error("Erreur statut.");
         }
     }, []);
 
@@ -47,9 +49,9 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         if (order.saleUuid) return;
         try {
             await breadService.updatePaymentStatus(order.uuid, checked);
-            toast.success(checked ? 'Paiement confirmé' : 'Paiement annulé');
+            toast.success(checked ? 'Payé Cash' : 'Crédit');
         } catch (e) {
-            toast.error("Erreur de paiement.");
+            toast.error("Erreur règlement.");
         }
     }, []);
 
@@ -57,9 +59,9 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         if (!orderToDelete) return;
         try {
             await breadService.deleteBreadOrder(orderToDelete);
-            toast.success("Ordre supprimé.");
+            toast.success("Flux supprimé.");
         } catch (e: any) {
-            toast.error(e.message || "Erreur de suppression.");
+            toast.error(e.message || "Action refusée.");
         } finally {
             setOrderToDelete(null);
         }
@@ -90,19 +92,19 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                             />
                         </TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Identifiant</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Partenaire Client</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Volume</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Montant</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Client / Partenaire</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-center">Qté</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest text-right">Valeur</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Règlement</TableHead>
                         <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Livraison</TableHead>
-                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">Statut</TableHead>
+                        <TableHead className="p-6 text-[10px] font-black uppercase text-muted-foreground/60 text-center">État</TableHead>
                         <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {orders.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={9} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Aucun flux détecté.</TableCell>
+                            <TableCell colSpan={9} className="h-60 text-center opacity-20 italic font-black uppercase tracking-widest text-xs">Zone de silence logistique.</TableCell>
                         </TableRow>
                     ) : orders.map((order) => {
                         const isExternal = !order.customerUuid;
@@ -116,7 +118,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(order.uuid)}
                                         className="border-primary data-[state=checked]:bg-primary"
-                                        aria-label={`Sélectionner l'ordre de ${displayName}`}
+                                        aria-label={`Choisir ${displayName}`}
                                     />
                                 </TableCell>
                                 <TableCell className="p-6">
@@ -135,7 +137,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         </div>
                                         <div className="flex flex-col -space-y-0.5">
                                             <span className="font-black text-sm tracking-tight uppercase truncate max-w-[200px]">{displayName}</span>
-                                            <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">{isExternal ? 'Client Occasionnel' : 'Premium Member'}</span>
+                                            <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">{isExternal ? 'Passage' : 'Premium'}</span>
                                         </div>
                                     </div>
                                 </TableCell>
@@ -153,7 +155,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         onCheckedChange={(checked) => handleTogglePayment(order, checked)}
                                         disabled={!!order.saleUuid}
                                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                                        aria-label={`Statut paiement pour ${displayName}`}
+                                        aria-label="Toggle payé"
                                     />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -162,7 +164,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         onCheckedChange={() => handleTogglePickup(order)}
                                         disabled={!!order.saleUuid}
                                         className="data-[state=checked]:bg-emerald-500 scale-90"
-                                        aria-label={`Statut livraison pour ${displayName}`}
+                                        aria-label="Toggle livré"
                                     />
                                 </TableCell>
                                 <TableCell className="p-6 text-center">
@@ -172,7 +174,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                                 <div className="flex justify-center">
                                                     {order.saleUuid ? (
                                                         <Badge variant="outline" className="gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[8px] font-black uppercase px-2">
-                                                            <CloudUpload className="h-2.5 w-2.5" /> Facturé
+                                                            <CheckCircle2 className="h-2.5 w-2.5" /> Facturé
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="text-muted-foreground/30 text-[8px] font-black uppercase px-2 border-white/5">
@@ -182,7 +184,7 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                                 </div>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                {order.saleUuid ? "Intégré à la comptabilité" : "Enregistré localement"}
+                                                {order.saleUuid ? "Intégré au grand livre" : "Enregistrement local uniquement"}
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -192,9 +194,9 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
+                                            aria-label="Supprimer"
                                             className="h-8 w-8 text-destructive/20 hover:text-destructive hover:bg-destructive/5"
                                             onClick={() => setOrderToDelete(order.uuid)}
-                                            aria-label="Supprimer"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -210,10 +212,10 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         <ConfirmAlertDialog 
             isOpen={!!orderToDelete}
             onOpenChange={(open) => !open && setOrderToDelete(null)}
-            title="Supprimer l'ordre ?"
-            description="Cette opération est définitive."
+            title="Supprimer cet ordre ?"
+            description="Cette action est irréversible et annulera ce flux de distribution."
             onConfirm={handleDelete}
-            confirmText="Supprimer"
+            confirmText="Supprimer définitivement"
         />
         </>
     );
