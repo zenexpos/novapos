@@ -2,7 +2,7 @@
 
 import { parseISO, format, startOfDay } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO } from '@/lib/types';
+import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
@@ -173,7 +173,7 @@ class BreadService {
                         transferredToCustomerAccount: true,
                         transferredAt: new Date(),
                         updatedAt: new Date(),
-                        syncStatus: 'pending'
+                        syncStatus: 'pending' as const
                     });
                 }
             }
@@ -255,7 +255,7 @@ class BreadService {
                 if (order.saleUuid || order.deletedAt) continue;
                 const update = {
                     isDelivered,
-                    pickupStatus: isDelivered ? 'received' : ('unreceived' as const),
+                    pickupStatus: isDelivered ? ('received' as const) : ('unreceived' as const),
                     updatedAt: new Date(),
                     syncStatus: 'pending' as const
                 };
@@ -305,7 +305,7 @@ class BreadService {
             await db.bread_orders.update(order.id!, { 
                 deletedAt: new Date(), 
                 updatedAt: new Date(),
-                syncStatus: 'pending'
+                syncStatus: 'pending' as const
             });
             await db.sync_queue.add({
                 table: 'bread_orders',
