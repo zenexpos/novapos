@@ -11,10 +11,10 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v3 — Optimized for React 19 and stability.
+ * useLiveQuery v4 — Resilient Production Grade.
  * 
  * Fixes "Maximum update depth exceeded" by ensuring state updates only happen when necessary
- * and managing the subscription lifecycle more precisely.
+ * and managing the subscription lifecycle with stable internal triggers.
  */
 export function useLiveQuery<T>(
     querier:      () => T | Promise<T>,
@@ -27,32 +27,56 @@ export function useLiveQuery<T>(
     const [tick,      setTick]      = useState(0);
     
     // Maintain a stable reference to the latest querier function.
-    // This prevents re-subscribing to Dexie just because an inline arrow function was used in the component.
     const querierRef = useRef(querier);
     useEffect(() => {
         querierRef.current = querier;
     });
+
+    // Derived state for internal subscription ID based on shallow dependency comparison.
+    // This protects against unstable arrays/objects passed in 'deps'.
+    const [subId, setSubId] = useState(0);
+    const lastDeps = useRef(deps);
+    
+    const depsChanged = 
+        deps.length !== lastDeps.current.length || 
+        !deps.every((v, i) => v === lastDeps.current[i]);
+
+    if (depsChanged) {
+        lastDeps.current = deps;
+        setSubId(s => s + 1);
+    }
 
     const refresh = useCallback(() => setTick(t => t + 1), []);
 
     useEffect(() => {
         let isSubscribed = true;
         
-        // Reset state for new dependency set
-        setIsLoading(true);
+        // Reset state for new subscription only if we don't have a value (prevents flickering)
+        if (value === undefined) setIsLoading(true);
         setError(null);
 
-        // liveQuery returns an observable that tracks database changes.
-        // We use the latest version of the querier from our ref.
         const observable = liveQuery(() => querierRef.current());
         
         const subscription = observable.subscribe({
             next: (val) => {
                 if (!isSubscribed) return;
                 
-                // Batch updates in React 18+ will group these, 
-                // but we update value first as it's the primary data.
-                setValue(val);
+                setValue(prev => {
+                    // 1. Strict reference equality
+                    if (prev === val) return prev;
+                    
+                    // 2. Shallow comparison for arrays (standard Dexie result type)
+                    // This is the critical fix for "Maximum update depth exceeded" loops
+                    // caused by Dexie emitting new array instances for identical content.
+                    if (Array.isArray(prev) && Array.isArray(val)) {
+                        if (prev.length === val.length && prev.every((item, i) => item === val[i])) {
+                            return prev;
+                        }
+                    }
+                    
+                    return val;
+                });
+                
                 setIsLoading(false);
                 setError(null);
             },
@@ -68,10 +92,8 @@ export function useLiveQuery<T>(
             isSubscribed = false;
             subscription.unsubscribe();
         };
-        // The spread of deps ensures the subscription restarts only when 
-        // the external dependencies of the query actually change.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [...deps, tick]);
+    }, [subId, tick]);
 
     return { value, isLoading, error, refresh };
 }

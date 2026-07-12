@@ -32,6 +32,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import { startOfDay, endOfDay } from 'date-fns';
+import { EMPTY_ARRAY } from '@/lib/constants';
 
 type StockTab = 'intakes' | 'logs' | 'suppliers';
 
@@ -66,10 +67,10 @@ export default function StockPage() {
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
-    const suppliers = suppliersResult.value ?? [];
+    const suppliers = suppliersResult.value ?? (EMPTY_ARRAY as Supplier[]);
     
     const stockIntakesResult = useLiveQuery<StockIntake[]>(async () => {
-        if (!isMounted || !dateRange?.from) return [];
+        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as StockIntake[];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
@@ -90,10 +91,10 @@ export default function StockPage() {
 
         return filtered.sort((a,b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     }, [isMounted, dateRange, searchQuery, suppliers]);
-    const stockIntakes = stockIntakesResult.value ?? [];
+    const stockIntakes = stockIntakesResult.value ?? (EMPTY_ARRAY as StockIntake[]);
 
     const inventoryLogsResult = useLiveQuery<InventoryLog[]>(async () => {
-        if (!isMounted || !dateRange?.from) return [];
+        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as InventoryLog[];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
@@ -119,7 +120,7 @@ export default function StockPage() {
         const q = searchQuery.toLowerCase();
         return result.filter(l => l.productName.toLowerCase().includes(q));
     }, [isMounted, dateRange, searchQuery]);
-    const inventoryLogs = inventoryLogsResult.value ?? [];
+    const inventoryLogs = inventoryLogsResult.value ?? (EMPTY_ARRAY as InventoryLog[]);
 
     const filteredSuppliers = useMemo(() => {
         if (!suppliers) return [];

@@ -11,6 +11,10 @@ export const COMPANY_DOMAIN = 'iposzen.com';
 export const SYNC_INTERVAL_MS = 5 * 60 * 1000; 
 export const BACKUP_REMINDER_DAYS = 7;
 
+// Valeurs immuables pour stabiliser les dépendances React
+export const EMPTY_ARRAY = Object.freeze([]);
+export const EMPTY_OBJECT = Object.freeze({});
+
 // ── Bread Constants ──────────────────────────────────────────────────────────
 export const BREAD_WEEK_DAYS = [
     'dimanche',

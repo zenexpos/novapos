@@ -13,6 +13,7 @@ import { AddPaymentDialog } from '@/components/payments/AddPaymentDialog';
 import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
+import { EMPTY_ARRAY } from '@/lib/constants';
 
 /**
  * Barre d'information spécifique à la vente.
@@ -24,12 +25,13 @@ export function SaleInfoBar() {
     const { clearCart } = useCartActions();
     const [isMounted, setIsMounted] = useState(false);
 
-    const selectedUuids = cart?.customerUuids || [];
+    // Use EMPTY_ARRAY to keep dependencies stable when cart is null or customerUuids is empty
+    const selectedUuids = cart?.customerUuids || (EMPTY_ARRAY as string[]);
 
     const { value: customers } = useLiveQuery<Customer[]>(
         () => selectedUuids.length > 0 
             ? db.customers.where('uuid').anyOf(selectedUuids).toArray() 
-            : Promise.resolve([]),
+            : Promise.resolve(EMPTY_ARRAY as Customer[]),
         [selectedUuids]
     );
 
