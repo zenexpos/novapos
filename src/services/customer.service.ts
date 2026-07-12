@@ -12,7 +12,7 @@ import { sanitizeString } from '@/lib/security/sanitization';
 
 /**
  * iPOS Customer Domain Service.
- * Specialized in CRM management, debt tracking, and forensic auditing.
+ * Specialized in CRM management, debt tracking, and shared invoice auditing.
  */
 class CustomerService {
 
@@ -202,16 +202,18 @@ class CustomerService {
         });
     }
 
+    /**
+     * Recalculates customer balance accounting for shared multi-customer invoices.
+     */
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
         return await db.transaction('rw', [db.customers, db.sales, db.payments, db.product_returns], async () => {
             const customer = await db.customers.where('uuid').equals(customerUuid).first();
             if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-            const [sales, payments, returns] = await Promise.all([
-                db.sales.where('customerUuid').equals(customerUuid).toArray(),
-                db.payments.where('customerUuid').equals(customerUuid).toArray(),
-                db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
-            ]);
+            // Fetch sales where this customer is one of the participants
+            const sales = await db.sales.where('customerUuids').equals(customerUuid).toArray();
+            const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
+            const returns = await db.product_returns.where('customerUuid').equals(customerUuid).toArray();
 
             const activeSales = sales.filter(s => !s.isCancelled);
 
@@ -219,12 +221,19 @@ class CustomerService {
             let totalSpentCents = 0;
 
             activeSales.forEach(s => {
-                totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
-                totalSpentCents += Math.round(safeNumber(s.total) * 100);
+                // If the sale is shared, the debt and spent totals are divided equally
+                const participantCount = s.customerUuids.length || 1;
+                const sharedRemainingCents = Math.round((safeNumber(s.remainingBalance) * 100) / participantCount);
+                const sharedTotalCents = Math.round((safeNumber(s.total) * 100) / participantCount);
+
+                totalDebtCents  += sharedRemainingCents;
+                totalSpentCents += sharedTotalCents;
             });
+
             payments.forEach(p => {
                 totalDebtCents -= Math.round(safeNumber(p.amount) * 100);
             });
+
             returns.forEach(r => {
                 const net = Math.round(safeNumber(r.totalReturnValue) * 100) - Math.round(safeNumber(r.amountRefunded) * 100);
                 totalDebtCents  -= net;
@@ -260,14 +269,17 @@ class CustomerService {
 
     async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<Array<any>> {
         const [sales, payments, returns] = await Promise.all([
-            db.sales.where('customerUuid').equals(customerUuid).toArray(),
+            db.sales.where('customerUuids').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),
             db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
         ]);
 
         const customer = await this.getCustomerByUuid(customerUuid);
         const activity: any[] = [
-            ...sales.filter(s => !s.isCancelled).map(s => ({ ...s, type: 'sale', date: s.createdAt })),
+            ...sales.filter(s => !s.isCancelled).map(s => {
+                const partCount = s.customerUuids.length || 1;
+                return { ...s, type: 'sale', date: s.createdAt, isShared: partCount > 1, sharedTotal: s.total / partCount };
+            }),
             ...payments.map(p => ({ ...p, type: 'payment', date: p.paymentDate })),
             ...returns.map(r => ({ ...r, type: 'return', date: r.createdAt })),
         ];
@@ -281,7 +293,7 @@ class CustomerService {
     }
 
     async getCustomerMonthlySpending(customerUuid: string): Promise<{ month: string, total: number }[]> {
-        const sales = await db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled).toArray();
+        const sales = await db.sales.where('customerUuids').equals(customerUuid).filter(s => !s.isCancelled).toArray();
         const last6Months = Array.from({ length: 6 }).map((_, i) => {
             const date = subMonths(new Date(), i);
             return {
@@ -296,7 +308,10 @@ class CustomerService {
                     const d = new Date(s.createdAt!);
                     return d >= period.start && d < startOfMonth(subMonths(period.start, -1));
                 })
-                .reduce((sum, s) => sum + Math.round(safeNumber(s.total) * 100), 0);
+                .reduce((sum, s) => {
+                    const partCount = s.customerUuids.length || 1;
+                    return sum + Math.round((safeNumber(s.total) * 100) / partCount);
+                }, 0);
             
             return {
                 month: period.label,
@@ -308,7 +323,7 @@ class CustomerService {
     async getCustomerStatementData(customerUuid: string): Promise<{ customer: Customer, unpaidSales: Sale[] }> {
         const [customer, sales] = await Promise.all([
             this.getCustomerByUuid(customerUuid),
-            db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
+            db.sales.where('customerUuids').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
         ]);
 
         if (!customer) throw new Error("Client non trouvé");

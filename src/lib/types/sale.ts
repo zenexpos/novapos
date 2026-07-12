@@ -22,7 +22,7 @@ export interface Sale extends BaseEntity {
     amountPaid: number;
     remainingBalance: number;
     paymentStatus: SaleStatus;
-    customerUuid?: string;
+    customerUuids: string[]; // Updated to support multiple customers
     dueDate?: Date;
     isCancelled?: boolean;
     cancelledAt?: Date;
@@ -36,7 +36,7 @@ export interface Cart {
     id: string;
     name: string;
     items: CartItem[];
-    customerUuid: string | null;
+    customerUuids: string[]; // Updated to support multiple customers
     discount: {
         type: 'fixed' | 'percentage';
         value: number;

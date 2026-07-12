@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
-import type { Sale, CompanyProfile } from '@/lib/types';
+import React, { useState, useEffect } from 'react';
+import type { Sale, CompanyProfile, Customer } from '@/lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn, safeNumber, formatCurrency } from '@/lib/utils';
 import { numberToFrenchWords } from '@/lib/numberToWords';
+import { db } from '@/lib/db';
 
 interface ReceiptProps {
     sale: Sale;
@@ -16,15 +17,20 @@ interface ReceiptProps {
 }
 
 /**
- * Thermal Receipt (80mm) - High Density POS Standard
+ * Thermal Receipt (80mm) - Updated for Multi-Customer
  */
-const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
+const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'customerName' | 'oldBalance'>) => {
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    
+    useEffect(() => {
+        if (sale.customerUuids?.length > 0) {
+            db.customers.where('uuid').anyOf(sale.customerUuids).toArray().then(setCustomers);
+        }
+    }, [sale.customerUuids]);
+
     const fmt = (v: number) => formatCurrency(v);
     const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr }) : format(new Date(), 'dd/MM/yyyy HH:mm');
     
-    const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
-    const finalDebtBalance = oldBalance + currentDebtOfThisSale;
-
     return (
         <div className="thermal-receipt bg-white text-black font-mono text-[9pt] leading-tight p-2">
             <div className="text-center mb-4">
@@ -39,7 +45,16 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
 
             <div className="text-[7.5pt] space-y-1 mb-4">
                 <div className="flex justify-between"><span>DATE:</span> <span className="font-bold">{date}</span></div>
-                <div className="flex justify-between"><span>CLIENT:</span> <span className="font-bold truncate max-w-[45mm]">{customerName?.toUpperCase() || 'PASSAGE'}</span></div>
+                <div className="flex flex-col">
+                    <span>CLIENT(S):</span>
+                    {customers.length > 0 ? (
+                        customers.map(c => (
+                            <span key={c.uuid} className="font-bold uppercase ml-2">• {c.firstName} {c.lastName}</span>
+                        ))
+                    ) : (
+                        <span className="font-bold uppercase ml-2">• PASSAGE</span>
+                    )}
+                </div>
             </div>
 
             <table className="w-full text-[8pt] mb-4 border-collapse">
@@ -70,38 +85,39 @@ const ThermalReceipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Re
                     <span>{fmt(sale.total)}</span>
                 </div>
                 
-                <div className="flex justify-between text-[8.5pt] mt-2 opacity-70">
-                    <span>SOLDE ANTÉRIEUR:</span>
-                    <span>{fmt(oldBalance)}</span>
-                </div>
-
-                <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
+                <div className="flex justify-between text-[8.5pt] font-bold opacity-70 mt-2">
                     <span>VERSEMENT REÇU:</span>
                     <span>{fmt(safeNumber(sale.amountPaid))}</span>
                 </div>
                 
-                <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
-                    <span>NOUVEAU SOLDE:</span>
-                    <span className="text-red-600">{fmt(finalDebtBalance)}</span>
-                </div>
+                {sale.remainingBalance > 0 && (
+                    <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
+                        <span>DETTE PARTAGÉE:</span>
+                        <span className="text-red-600">{fmt(sale.remainingBalance)}</span>
+                    </div>
+                )}
             </div>
 
             <p className="text-center mt-8 text-[7pt] uppercase tracking-widest opacity-40">Merci de votre confiance</p>
-            <p className="text-center text-[6pt] opacity-20 mt-1">iPOS Zen Sovereign Ledger</p>
         </div>
     );
 };
 
 /**
- * A4 Invoice Layout - Modern ERP Standard
+ * A4 Invoice Layout - Updated for Multi-Customer
  */
-const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<ReceiptProps, 'receiptType'>) => {
+const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'customerName' | 'oldBalance'>) => {
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    
+    useEffect(() => {
+        if (sale.customerUuids?.length > 0) {
+            db.customers.where('uuid').anyOf(sale.customerUuids).toArray().then(setCustomers);
+        }
+    }, [sale.customerUuids]);
+
     const fmt = (v: number) => formatCurrency(v);
     const date = sale.createdAt ? format(new Date(sale.createdAt), 'dd MMMM yyyy', { locale: fr }) : format(new Date(), 'dd/MM/yyyy');
     
-    const currentDebtOfThisSale = Math.max(0, sale.total - sale.amountPaid);
-    const finalDebtBalance = oldBalance + currentDebtOfThisSale;
-
     return (
         <div className="a4-receipt bg-white text-black font-sans text-[9pt] leading-normal">
           <div className="print-frame">
@@ -110,11 +126,6 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                     <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">{profile?.companyName || 'iPOS ZEN'}</h1>
                     <p className="text-[9.5pt] opacity-70 leading-relaxed">{profile?.address}</p>
                     <p className="text-[9.5pt] font-bold">Tél: {profile?.phone} | {profile?.email}</p>
-                    
-                    <div className="grid grid-cols-2 gap-x-6 mt-4 text-[8pt] font-mono border-t border-gray-200 pt-2">
-                        {profile?.rcNumber && <p><span className="opacity-50">RC:</span> {profile.rcNumber}</p>}
-                        {profile?.nif && <p><span className="opacity-50">NIF:</span> {profile.nif}</p>}
-                    </div>
                 </div>
                 <div className="text-right">
                     <h2 className="text-lg font-black bg-black text-white px-5 py-2 inline-block mb-3">BON DE LIVRAISON</h2>
@@ -123,14 +134,20 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 mb-8">
-                <div className="print-box border-l-[6px] border-l-black">
-                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire / Client</h3>
-                    <p className="text-lg font-black uppercase">{customerName || 'Client de passage'}</p>
-                </div>
-                <div className="print-box flex flex-col justify-center text-center bg-gray-50/50">
-                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-1 tracking-widest">Mode de Règlement</h3>
-                    <p className="text-lg font-bold uppercase">{sale.paymentStatus === 'paid' ? 'Solde Cash (Espèces)' : 'Règlement différé / Crédit'}</p>
+            <div className="grid grid-cols-1 mb-8">
+                <div className="print-box border-l-[6px] border-l-black p-4 bg-gray-50/50">
+                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire(s) / Client(s)</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {customers.length > 0 ? (
+                            customers.map(c => (
+                                <p key={c.uuid} className="text-base font-black uppercase flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-black rounded-full" /> {c.firstName} {c.lastName}
+                                </p>
+                            ))
+                        ) : (
+                            <p className="text-lg font-black uppercase">Client de passage</p>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -174,21 +191,16 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                             <span className="font-black uppercase text-[10pt]">Net à Payer (TTC):</span>
                             <span className="text-2xl font-black tracking-tighter font-mono">{fmt(sale.total)}</span>
                         </div>
-                        
-                        <div className="space-y-1 pt-3 border-t border-gray-200">
-                            <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
-                                <span>Solde Antérieur:</span>
-                                <span className="font-mono">{fmt(oldBalance)}</span>
-                            </div>
-                            <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
-                                <span>Versement reçu:</span>
-                                <span className="font-mono">{fmt(safeNumber(sale.amountPaid))}</span>
-                            </div>
-                            <div className="flex justify-between text-[11pt] font-black pt-2 bg-white px-2 py-1 rounded border border-gray-200 mt-1">
-                                <span className="uppercase">Nouveau Solde:</span>
-                                <span className="font-mono text-red-600">{fmt(finalDebtBalance)}</span>
-                            </div>
+                        <div className="flex justify-between text-[8.5pt] font-bold opacity-70">
+                            <span>Versement reçu:</span>
+                            <span className="font-mono">{fmt(safeNumber(sale.amountPaid))}</span>
                         </div>
+                        {sale.remainingBalance > 0 && (
+                            <div className="flex justify-between text-[11pt] font-black pt-2 bg-white px-2 py-1 rounded border border-gray-200 mt-1">
+                                <span className="uppercase text-red-600">Reste à recouvrer (Shared):</span>
+                                <span className="font-mono text-red-600">{fmt(sale.remainingBalance)}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -198,13 +210,8 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
                 <p className="text-[9.5pt] font-bold italic text-black">{numberToFrenchWords(sale.total)}</p>
             </div>
 
-            <div className="flex justify-between text-center px-12 mb-12 no-break">
-                <div className="w-48 pt-2 border-t-2 border-dashed border-gray-300 text-[8pt] font-bold uppercase opacity-40">Cachet Établissement</div>
-                <div className="w-48 pt-2 border-t-2 border-dashed border-gray-300 text-[8pt] font-bold uppercase opacity-40">Signature Client</div>
-            </div>
-
             <footer className="mt-auto pt-6 border-t border-gray-100 flex justify-between items-center text-[7.5pt] text-gray-400 font-black uppercase tracking-[0.2em]">
-                <span>iPOS ZEN Sovereign Ledger</span>
+                <span>iPOS ZEN Shared Invoice System</span>
                 <span>Généré le {format(new Date(), 'dd/MM/yyyy HH:mm')}</span>
             </footer>
           </div>
@@ -213,11 +220,10 @@ const A4Receipt = ({ sale, profile, customerName, oldBalance = 0 }: Omit<Receipt
 };
 
 export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
-    ({ sale, profile, receiptType, customerName, oldBalance = 0 }, ref) => {
-        const props = { sale, profile, customerName, oldBalance };
+    ({ sale, profile, receiptType }, ref) => {
         return (
             <div ref={ref} className={cn("print-area-root", receiptType === 'thermal' ? 'thermal-receipt' : 'a4-receipt')}>
-                {receiptType === 'thermal' ? <ThermalReceipt {...props} /> : <A4Receipt {...props} />}
+                {receiptType === 'thermal' ? <ThermalReceipt sale={sale} profile={profile} /> : <A4Receipt sale={sale} profile={profile} />}
             </div>
         );
     }

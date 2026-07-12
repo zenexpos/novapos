@@ -1,8 +1,7 @@
 'use client';
 /**
  * @fileOverview Service de gestion des ventes Maître.
- * Audit Zero Defect : Centralisation des transactions atomiques et hardening financier.
- * Scope transactionnel étendu pour garantir l'intégrité du stock et des dettes clients.
+ * Updated to support Multi-Customer debt sharing.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -31,16 +30,12 @@ class SalesService {
     return db.sales.where('invoiceNumber').equals(invoiceNumber).first();
   }
 
-  /**
-   * Crée une vente atomique.
-   * Met à jour le stock, le solde client et les logs d'inventaire en un seul commit.
-   */
   async createSale(saleData: {
     items: CartItem[];
     discountType: 'fixed' | 'percentage';
     discountValue: number;
     amountPaid: number;
-    customerUuid?: string | null;
+    customerUuids: string[];
     dueDate?: Date;
   }): Promise<Sale> {
     if (!saleData.items || saleData.items.length === 0) {
@@ -89,7 +84,7 @@ class SalesService {
       amountPaid,
       remainingBalance,
       paymentStatus,
-      customerUuid: saleData.customerUuid || undefined,
+      customerUuids: saleData.customerUuids || [],
       createdAt: now,
       updatedAt: now,
       dueDate: saleData.dueDate,
@@ -98,8 +93,6 @@ class SalesService {
       isCancelled: false
     };
 
-    // ATOMIC TRANSACTION : Hardening Zero Defect
-    // On verrouille toutes les tables impactées par une vente
     await db.transaction('rw', [
       db.sales, db.products, db.inventory_logs, db.customers, 
       db.company_profile, db.sync_queue, db.payments,
@@ -120,8 +113,11 @@ class SalesService {
         }
       }
       
-      if (newSale.customerUuid) {
-        await customerService.recalculateCustomerStatus(newSale.customerUuid);
+      // Recalculate balances for ALL assigned customers
+      if (newSale.customerUuids.length > 0) {
+        for (const cUuid of newSale.customerUuids) {
+          await customerService.recalculateCustomerStatus(cUuid);
+        }
       }
 
       await db.sync_queue.add({
@@ -164,8 +160,10 @@ class SalesService {
         }
       }
 
-      if (sale.customerUuid) {
-        await customerService.recalculateCustomerStatus(sale.customerUuid);
+      if (sale.customerUuids.length > 0) {
+        for (const cUuid of sale.customerUuids) {
+          await customerService.recalculateCustomerStatus(cUuid);
+        }
       }
 
       await db.sync_queue.add({

@@ -13,7 +13,7 @@ import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/u
 
 /**
  * iPOS Zen - Cart Store (Enterprise Grade)
- * Implements high-precision financial math and stock logic.
+ * Updated to handle multiple customers per cart for shared invoices.
  */
 interface CartActions {
     getActiveCart:       () => Cart | null;
@@ -28,8 +28,9 @@ interface CartActions {
     updateItemPrice:     (productUuid: string, newPrice: number) => void;
     updateItemTotal:     (productUuid: string, total: number) => void;
 
-    setCustomer:  (customerUuid: string | null) => void;
-    setDiscount:  (type: 'fixed' | 'percentage', value: number) => void;
+    toggleCustomer:      (customerUuid: string) => void; // Toggle multiple customers
+    clearCustomers:      () => void;
+    setDiscount:         (type: 'fixed' | 'percentage', value: number) => void;
 
     clearCart:    () => void;
     processSale:  (amountPaid: number, dueDate?: Date) => Promise<Sale | null>;
@@ -42,9 +43,9 @@ interface CartState {
 }
 
 const defaultCart: Omit<Cart, 'id' | 'name'> = {
-    items:        [],
-    customerUuid: null,
-    discount:     { type: 'fixed', value: 0 },
+    items:         [],
+    customerUuids: [], // Array for multi-customer support
+    discount:      { type: 'fixed', value: 0 },
 };
 
 const INITIAL_CART_ID = 'initial-cart-id';
@@ -79,7 +80,7 @@ export const useCartStore = create<CartState>()(
                             const cart = state.carts[0];
                             if (cart) {
                                 cart.items = [];
-                                cart.customerUuid = null;
+                                cart.customerUuids = [];
                                 cart.discount = { type: 'fixed', value: 0 };
                             }
                             return;
@@ -171,7 +172,6 @@ export const useCartStore = create<CartState>()(
                         const item = cart?.items.find(i => i.uuid === productUuid);
                         if (item) {
                             item.price = roundFinancial(safeNumber(newPrice));
-                            // Mark for visual override indicator
                             (item as any).isPriceOverridden = Math.abs(item.price - (item as any).originalPrice || item.price) > FINANCIAL_EPSILON;
                         }
                     }));
@@ -183,7 +183,6 @@ export const useCartStore = create<CartState>()(
                         const item = cart?.items.find(i => i.uuid === productUuid);
                         if (!item || item.price <= 0) return;
                         
-                        // FIX: Precision divisional recalculation
                         const calculatedQty = roundQty(safeNumber(total) / item.price);
                         const isStocked = !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_PRODUCT';
                         
@@ -196,10 +195,24 @@ export const useCartStore = create<CartState>()(
                     }));
                 },
 
-                setCustomer: (customerUuid) => {
+                toggleCustomer: (customerUuid) => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
-                        if (cart) cart.customerUuid = customerUuid;
+                        if (cart) {
+                            const index = cart.customerUuids.indexOf(customerUuid);
+                            if (index >= 0) {
+                                cart.customerUuids.splice(index, 1);
+                            } else {
+                                cart.customerUuids.push(customerUuid);
+                            }
+                        }
+                    }));
+                },
+
+                clearCustomers: () => {
+                    set(produce((state: CartState) => {
+                        const cart = state.carts.find(c => c.id === state.activeCartId);
+                        if (cart) cart.customerUuids = [];
                     }));
                 },
 
@@ -215,7 +228,7 @@ export const useCartStore = create<CartState>()(
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
                             cart.items = [];
-                            cart.customerUuid = null;
+                            cart.customerUuids = [];
                             cart.discount = { type: 'fixed', value: 0 };
                         }
                     }));
@@ -234,14 +247,16 @@ export const useCartStore = create<CartState>()(
                             discountType:  activeCart.discount.type,
                             discountValue: activeCart.discount.value,
                             amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                            customerUuid:  activeCart.customerUuid,
+                            customerUuids: activeCart.customerUuids,
                             dueDate,
                         });
 
                         get().actions.clearCart();
 
-                        if (activeCart.customerUuid) {
-                            await customerService.recalculateCustomerStatus(activeCart.customerUuid);
+                        if (activeCart.customerUuids.length > 0) {
+                            for (const cUuid of activeCart.customerUuids) {
+                                await customerService.recalculateCustomerStatus(cUuid);
+                            }
                         }
 
                         useAppStore.getState().actions.triggerSmartSync();
