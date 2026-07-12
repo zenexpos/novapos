@@ -17,7 +17,7 @@ interface ReceiptProps {
 }
 
 /**
- * Thermal Receipt (80mm) - Updated for Multi-Customer
+ * Thermal Receipt (80mm) - Individual Copy
  */
 const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'customerName' | 'oldBalance'>) => {
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -46,7 +46,7 @@ const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'c
             <div className="text-[7.5pt] space-y-1 mb-4">
                 <div className="flex justify-between"><span>DATE:</span> <span className="font-bold">{date}</span></div>
                 <div className="flex flex-col">
-                    <span>CLIENT(S):</span>
+                    <span>CLIENT:</span>
                     {customers.length > 0 ? (
                         customers.map(c => (
                             <span key={c.uuid} className="font-bold uppercase ml-2">• {c.firstName} {c.lastName}</span>
@@ -68,9 +68,9 @@ const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'c
                 <tbody>
                     {sale.items.map((item, i) => (
                         <tr key={i} className="border-b border-gray-100">
-                            <td className="py-2 pr-1 font-bold uppercase truncate max-w-[35mm]">{item.name}</td>
-                            <td className="text-center py-2">{item.quantity}</td>
-                            <td className="text-right py-2 font-bold">{fmt(item.price * item.quantity)}</td>
+                            <td className="py-2 pr-1 font-bold uppercase truncate max-w-[35mm]">${item.name}</td>
+                            <td className="text-center py-2">${item.quantity}</td>
+                            <td className="text-right py-2 font-bold">${fmt(item.price * item.quantity)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -92,7 +92,7 @@ const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'c
                 
                 {sale.remainingBalance > 0 && (
                     <div className="flex justify-between font-black border-t border-black pt-2 text-[10pt] bg-gray-50 px-1 mt-1">
-                        <span>DETTE PARTAGÉE:</span>
+                        <span>DETTE INDIVIDUELLE:</span>
                         <span className="text-red-600">{fmt(sale.remainingBalance)}</span>
                     </div>
                 )}
@@ -104,7 +104,7 @@ const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'c
 };
 
 /**
- * A4 Invoice Layout - Updated for Multi-Customer
+ * A4 Invoice Layout - Individual Copy
  */
 const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'customerName' | 'oldBalance'>) => {
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -136,11 +136,11 @@ const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'custom
 
             <div className="grid grid-cols-1 mb-8">
                 <div className="print-box border-l-[6px] border-l-black p-4 bg-gray-50/50">
-                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Destinataire(s) / Client(s)</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <h3 className="text-[7.5pt] font-black uppercase text-gray-400 mb-2 tracking-widest">Client Destinataire</h3>
+                    <div className="grid grid-cols-1 gap-4">
                         {customers.length > 0 ? (
                             customers.map(c => (
-                                <p key={c.uuid} className="text-base font-black uppercase flex items-center gap-2">
+                                <p key={c.uuid} className="text-xl font-black uppercase flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 bg-black rounded-full" /> {c.firstName} {c.lastName}
                                 </p>
                             ))
@@ -197,7 +197,7 @@ const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'custom
                         </div>
                         {sale.remainingBalance > 0 && (
                             <div className="flex justify-between text-[11pt] font-black pt-2 bg-white px-2 py-1 rounded border border-gray-200 mt-1">
-                                <span className="uppercase text-red-600">Reste à recouvrer (Shared):</span>
+                                <span className="uppercase text-red-600">Reste à recouvrer:</span>
                                 <span className="font-mono text-red-600">{fmt(sale.remainingBalance)}</span>
                             </div>
                         )}
@@ -211,7 +211,7 @@ const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'custom
             </div>
 
             <footer className="mt-auto pt-6 border-t border-gray-100 flex justify-between items-center text-[7.5pt] text-gray-400 font-black uppercase tracking-[0.2em]">
-                <span>iPOS ZEN Shared Invoice System</span>
+                <span>iPOS ZEN Sovereign Ledger Copy</span>
                 <span>Généré le {format(new Date(), 'dd/MM/yyyy HH:mm')}</span>
             </footer>
           </div>

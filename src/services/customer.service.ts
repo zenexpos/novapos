@@ -12,7 +12,7 @@ import { sanitizeString } from '@/lib/security/sanitization';
 
 /**
  * iPOS Customer Domain Service.
- * Specialized in CRM management, debt tracking, and shared invoice auditing.
+ * Specialized in CRM management, debt tracking, and individual invoice auditing.
  */
 class CustomerService {
 
@@ -203,14 +203,14 @@ class CustomerService {
     }
 
     /**
-     * Recalculates customer balance accounting for shared multi-customer invoices.
+     * Recalculates customer balance. Now uses independent invoice values.
      */
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
         return await db.transaction('rw', [db.customers, db.sales, db.payments, db.product_returns], async () => {
             const customer = await db.customers.where('uuid').equals(customerUuid).first();
             if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-            // Fetch sales where this customer is one of the participants
+            // Fetch sales explicitly assigned to this customer
             const sales = await db.sales.where('customerUuids').equals(customerUuid).toArray();
             const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
             const returns = await db.product_returns.where('customerUuid').equals(customerUuid).toArray();
@@ -221,13 +221,9 @@ class CustomerService {
             let totalSpentCents = 0;
 
             activeSales.forEach(s => {
-                // If the sale is shared, the debt and spent totals are divided equally
-                const participantCount = s.customerUuids.length || 1;
-                const sharedRemainingCents = Math.round((safeNumber(s.remainingBalance) * 100) / participantCount);
-                const sharedTotalCents = Math.round((safeNumber(s.total) * 100) / participantCount);
-
-                totalDebtCents  += sharedRemainingCents;
-                totalSpentCents += sharedTotalCents;
+                // Bulk Copy logic: Each invoice in history for this user is 100% theirs
+                totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
+                totalSpentCents += Math.round(safeNumber(s.total) * 100);
             });
 
             payments.forEach(p => {
@@ -277,8 +273,7 @@ class CustomerService {
         const customer = await this.getCustomerByUuid(customerUuid);
         const activity: any[] = [
             ...sales.filter(s => !s.isCancelled).map(s => {
-                const partCount = s.customerUuids.length || 1;
-                return { ...s, type: 'sale', date: s.createdAt, isShared: partCount > 1, sharedTotal: s.total / partCount };
+                return { ...s, type: 'sale', date: s.createdAt };
             }),
             ...payments.map(p => ({ ...p, type: 'payment', date: p.paymentDate })),
             ...returns.map(r => ({ ...r, type: 'return', date: r.createdAt })),
@@ -309,8 +304,7 @@ class CustomerService {
                     return d >= period.start && d < startOfMonth(subMonths(period.start, -1));
                 })
                 .reduce((sum, s) => {
-                    const partCount = s.customerUuids.length || 1;
-                    return sum + Math.round((safeNumber(s.total) * 100) / partCount);
+                    return sum + Math.round(safeNumber(s.total) * 100);
                 }, 0);
             
             return {

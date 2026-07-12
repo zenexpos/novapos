@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Service de gestion des ventes Maître.
- * Updated to support Multi-Customer debt sharing.
+ * Audit Elite : Gestion des ventes individuelles (Supporte les appels en boucle pour le mode multi-client).
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +35,7 @@ class SalesService {
     discountType: 'fixed' | 'percentage';
     discountValue: number;
     amountPaid: number;
-    customerUuids: string[];
+    customerUuid?: string; // Single customer per record to ensure independent "copies"
     dueDate?: Date;
   }): Promise<Sale> {
     if (!saleData.items || saleData.items.length === 0) {
@@ -84,7 +84,7 @@ class SalesService {
       amountPaid,
       remainingBalance,
       paymentStatus,
-      customerUuids: saleData.customerUuids || [],
+      customerUuids: saleData.customerUuid ? [saleData.customerUuid] : [],
       createdAt: now,
       updatedAt: now,
       dueDate: saleData.dueDate,
@@ -101,6 +101,7 @@ class SalesService {
     ], async () => {
       await db.sales.add(newSale);
       
+      // Stock deduction for this specific copy
       for (const item of saleData.items) {
         if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
@@ -113,11 +114,9 @@ class SalesService {
         }
       }
       
-      // Recalculate balances for ALL assigned customers
-      if (newSale.customerUuids.length > 0) {
-        for (const cUuid of newSale.customerUuids) {
-          await customerService.recalculateCustomerStatus(cUuid);
-        }
+      // Recalculate balance for the specific customer
+      if (saleData.customerUuid) {
+        await customerService.recalculateCustomerStatus(saleData.customerUuid);
       }
 
       await db.sync_queue.add({
@@ -160,7 +159,7 @@ class SalesService {
         }
       }
 
-      if (sale.customerUuids.length > 0) {
+      if (sale.customerUuids && sale.customerUuids.length > 0) {
         for (const cUuid of sale.customerUuids) {
           await customerService.recalculateCustomerStatus(cUuid);
         }

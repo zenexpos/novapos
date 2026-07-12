@@ -13,7 +13,7 @@ import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/u
 
 /**
  * iPOS Zen - Cart Store (Enterprise Grade)
- * Updated to handle multiple customers per cart for shared invoices.
+ * Updated to support independent bulk invoicing for multiple customers.
  */
 interface CartActions {
     getActiveCart:       () => Cart | null;
@@ -28,7 +28,7 @@ interface CartActions {
     updateItemPrice:     (productUuid: string, newPrice: number) => void;
     updateItemTotal:     (productUuid: string, total: number) => void;
 
-    toggleCustomer:      (customerUuid: string) => void; // Toggle multiple customers
+    toggleCustomer:      (customerUuid: string) => void;
     clearCustomers:      () => void;
     setDiscount:         (type: 'fixed' | 'percentage', value: number) => void;
 
@@ -44,7 +44,7 @@ interface CartState {
 
 const defaultCart: Omit<Cart, 'id' | 'name'> = {
     items:         [],
-    customerUuids: [], // Array for multi-customer support
+    customerUuids: [], 
     discount:      { type: 'fixed', value: 0 },
 };
 
@@ -122,6 +122,8 @@ export const useCartStore = create<CartState>()(
                         const currentInCart = item ? item.cartQuantity : 0;
                         const totalRequested = roundQty(currentInCart + qtyToAdd);
 
+                        // Note: If bulk billing, the system assumes the customer has enough stock for ALL copies.
+                        // For the safety of the individual transaction, we check against the product stock.
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
                                 description: `Disponible: ${product.quantity}, Demandé: ${totalRequested}.`
@@ -241,26 +243,42 @@ export const useCartStore = create<CartState>()(
                     const activeItems = activeCart.items.filter(i => i.cartQuantity > 0);
                     if (activeItems.length === 0) return null;
 
+                    const customerUuids = activeCart.customerUuids;
+                    
                     try {
-                        const sale = await salesService.createSale({
-                            items:         activeItems,
-                            discountType:  activeCart.discount.type,
-                            discountValue: activeCart.discount.value,
-                            amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                            customerUuids: activeCart.customerUuids,
-                            dueDate,
-                        });
+                        let lastSale: Sale | null = null;
 
-                        get().actions.clearCart();
-
-                        if (activeCart.customerUuids.length > 0) {
-                            for (const cUuid of activeCart.customerUuids) {
-                                await customerService.recalculateCustomerStatus(cUuid);
+                        // INDEPENDENT COPIES LOGIC
+                        if (customerUuids.length > 1) {
+                            // Create separate independent sales for each selected customer
+                            // Each customer pays the specified amountPaid individually (or gets full debt)
+                            for (const cUuid of customerUuids) {
+                                lastSale = await salesService.createSale({
+                                    items:         activeItems,
+                                    discountType:  activeCart.discount.type,
+                                    discountValue: activeCart.discount.value,
+                                    amountPaid:    roundFinancial(safeNumber(amountPaid)),
+                                    customerUuid:  cUuid,
+                                    dueDate,
+                                });
                             }
+                            toast.success(`${customerUuids.length} Factures indépendantes générées.`);
+                        } else {
+                            // Standard single sale or Walk-in
+                            lastSale = await salesService.createSale({
+                                items:         activeItems,
+                                discountType:  activeCart.discount.type,
+                                discountValue: activeCart.discount.value,
+                                amountPaid:    roundFinancial(safeNumber(amountPaid)),
+                                customerUuid:  customerUuids[0], // undefined if empty
+                                dueDate,
+                            });
                         }
 
+                        get().actions.clearCart();
                         useAppStore.getState().actions.triggerSmartSync();
-                        return sale;
+                        
+                        return lastSale; // Return the last one for the print preview
                     } catch (error: any) {
                         toast.error('Transaction impossible', { description: error.message });
                         return null;
