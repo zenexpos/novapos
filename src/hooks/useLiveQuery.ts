@@ -11,17 +11,10 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v2 — Dexie v4 compatible.
- *
- * Améliorations v2:
- * - `refresh()` exposé pour forcer une re-souscription manuelle
- * - Évite les setState sur composant démonté (React 19 strict mode)
- * - Timeout de 10s pour éviter l'état isLoading infini sur erreur réseau
- * - defaultValue optionnel pour SSR / skeleton immédiat
- *
- * USAGE:
- *   const { value: products, isLoading, error, refresh } =
- *       useLiveQuery(() => db.products.toArray(), []);
+ * useLiveQuery v3 — Optimized for React 19 and stability.
+ * 
+ * Fixes "Maximum update depth exceeded" by ensuring state updates only happen when necessary
+ * and managing the subscription lifecycle more precisely.
  */
 export function useLiveQuery<T>(
     querier:      () => T | Promise<T>,
@@ -32,55 +25,53 @@ export function useLiveQuery<T>(
     const [isLoading, setIsLoading] = useState(true);
     const [error,     setError]     = useState<Error | null>(null);
     const [tick,      setTick]      = useState(0);
-    const mountedRef  = useRef(true);
-    const isLoadingRef = useRef(isLoading);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const stableQuerier = useCallback(querier, deps);
+    
+    // Maintain a stable reference to the latest querier function.
+    // This prevents re-subscribing to Dexie just because an inline arrow function was used in the component.
+    const querierRef = useRef(querier);
+    useEffect(() => {
+        querierRef.current = querier;
+    });
 
     const refresh = useCallback(() => setTick(t => t + 1), []);
 
     useEffect(() => {
-        mountedRef.current = true;
-        isLoadingRef.current = true;
+        let isSubscribed = true;
+        
+        // Reset state for new dependency set
         setIsLoading(true);
         setError(null);
 
-        // Timeout guard: if no result in 10s, clear loading state
-        const timeout = setTimeout(() => {
-            if (mountedRef.current && isLoadingRef.current) {
-                setIsLoading(false);
-                isLoadingRef.current = false;
-            }
-        }, 10_000);
-
-        const observable = liveQuery(stableQuerier);
+        // liveQuery returns an observable that tracks database changes.
+        // We use the latest version of the querier from our ref.
+        const observable = liveQuery(() => querierRef.current());
+        
         const subscription = observable.subscribe({
             next: (val) => {
-                if (!mountedRef.current) return;
+                if (!isSubscribed) return;
+                
+                // Batch updates in React 18+ will group these, 
+                // but we update value first as it's the primary data.
                 setValue(val);
                 setIsLoading(false);
-                isLoadingRef.current = false;
                 setError(null);
-                clearTimeout(timeout);
             },
             error: (err) => {
-                if (!mountedRef.current) return;
-                console.error('[useLiveQuery] error:', err);
+                if (!isSubscribed) return;
+                console.error('[useLiveQuery] subscription error:', err);
                 setError(err instanceof Error ? err : new Error(String(err)));
                 setIsLoading(false);
-                isLoadingRef.current = false;
-                clearTimeout(timeout);
             },
         });
 
         return () => {
-            mountedRef.current = false;
+            isSubscribed = false;
             subscription.unsubscribe();
-            clearTimeout(timeout);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stableQuerier, tick]);
+        // The spread of deps ensures the subscription restarts only when 
+        // the external dependencies of the query actually change.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [...deps, tick]);
 
     return { value, isLoading, error, refresh };
 }
