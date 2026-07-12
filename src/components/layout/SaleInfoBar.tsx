@@ -33,7 +33,7 @@ export function SaleInfoBar() {
         () => selectedUuids.length > 0 
             ? db.customers.where('uuid').anyOf(selectedUuids).toArray() 
             : Promise.resolve(EMPTY_ARRAY as Customer[]),
-        [...selectedUuids] // Spread to ensure stability on primitive values
+        [selectedUuids] // FIX: Keep fixed length dependency array
     );
 
     useEffect(() => { 
