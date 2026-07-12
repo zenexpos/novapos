@@ -1,4 +1,3 @@
-
 'use client';
 
 import { create } from 'zustand';
@@ -8,13 +7,12 @@ import type { Cart, CartItem, Product, Sale } from '@/lib/types';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { salesService } from '@/services/sales.service';
-import { customerService } from '@/services/customer.service';
 import { useAppStore } from './appStore';
 import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/utils';
 
 /**
  * iPOS Zen - Cart Store (Enterprise Grade)
- * Updated to support independent bulk invoicing for multiple customers.
+ * Unified cart management with Bulk Invoicing support for multiple customers.
  */
 interface CartActions {
     getActiveCart:       () => Cart | null;
@@ -123,8 +121,6 @@ export const useCartStore = create<CartState>()(
                         const currentInCart = item ? item.cartQuantity : 0;
                         const totalRequested = roundQty(currentInCart + qtyToAdd);
 
-                        // Note: If bulk billing, the system assumes the customer has enough stock for ALL copies.
-                        // For the safety of the individual transaction, we check against the product stock.
                         if (isStocked && product.quantity < totalRequested - FINANCIAL_EPSILON) {
                             toast.error(`Stock insuffisant pour "${product.name}"`, {
                                 description: `Disponible: ${product.quantity}, Demandé: ${totalRequested}.`
@@ -175,7 +171,7 @@ export const useCartStore = create<CartState>()(
                         const item = cart?.items.find(i => i.uuid === productUuid);
                         if (item) {
                             item.price = roundFinancial(safeNumber(newPrice));
-                            (item as any).isPriceOverridden = Math.abs(item.price - (item as any).originalPrice || item.price) > FINANCIAL_EPSILON;
+                            (item as any).isPriceOverridden = true;
                         }
                     }));
                 },
@@ -202,16 +198,10 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
-                            // Ensure the array exists for older persisted states
-                            if (!cart.customerUuids) {
-                                cart.customerUuids = [];
-                            }
+                            if (!cart.customerUuids) cart.customerUuids = [];
                             const index = cart.customerUuids.indexOf(customerUuid);
-                            if (index >= 0) {
-                                cart.customerUuids.splice(index, 1);
-                            } else {
-                                cart.customerUuids.push(customerUuid);
-                            }
+                            if (index >= 0) cart.customerUuids.splice(index, 1);
+                            else cart.customerUuids.push(customerUuid);
                         }
                     }));
                 },
@@ -248,15 +238,13 @@ export const useCartStore = create<CartState>()(
                     const activeItems = activeCart.items.filter(i => i.cartQuantity > 0);
                     if (activeItems.length === 0) return null;
 
-                    const customerUuids = activeCart.customerUuids || []; // Safeguard for older state
+                    const customerUuids = activeCart.customerUuids || [];
                     
                     try {
                         let lastSale: Sale | null = null;
 
-                        // INDEPENDENT COPIES LOGIC
-                        if (customerUuids.length > 1) {
-                            // Create separate independent sales for each selected customer
-                            // Each customer pays the specified amountPaid individually (or gets full debt)
+                        // Bulk Invoicing Logic: creates independent invoices per customer
+                        if (customerUuids.length > 0) {
                             for (const cUuid of customerUuids) {
                                 lastSale = await salesService.createSale({
                                     items:         activeItems,
@@ -267,15 +255,17 @@ export const useCartStore = create<CartState>()(
                                     dueDate,
                                 });
                             }
-                            toast.success(`${customerUuids.length} Factures indépendantes générées.`);
+                            if (customerUuids.length > 1) {
+                                toast.success(`${customerUuids.length} Factures souveraines générées.`);
+                            }
                         } else {
-                            // Standard single sale or Walk-in
+                            // Standard sale (Walk-in)
                             lastSale = await salesService.createSale({
                                 items:         activeItems,
                                 discountType:  activeCart.discount.type,
                                 discountValue: activeCart.discount.value,
                                 amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                                customerUuid:  customerUuids[0], // undefined if empty
+                                customerUuid:  undefined,
                                 dueDate,
                             });
                         }
@@ -283,7 +273,7 @@ export const useCartStore = create<CartState>()(
                         get().actions.clearCart();
                         useAppStore.getState().actions.triggerSmartSync();
                         
-                        return lastSale; // Return the last one for the print preview
+                        return lastSale;
                     } catch (error: any) {
                         toast.error('Transaction impossible', { description: error.message });
                         return null;

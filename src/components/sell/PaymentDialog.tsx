@@ -17,7 +17,7 @@ import {
 } from '@/lib/utils';
 import {
     Loader2, CheckCircle2, AlertCircle,
-    Wallet, ShieldAlert, UserX, UserCheck
+    Wallet, ShieldAlert, UserX, UserCheck, Users, Info
 } from 'lucide-react';
 import { PrintReceiptDialog } from '../sales/PrintReceiptDialog';
 import type { Sale, Customer } from '@/lib/types';
@@ -46,6 +46,8 @@ function PaymentDialogContent({
     const [approveOverLimit, setApproveOverLimit] = useState(false);
 
     const activeItems = useMemo(() => cart?.items.filter(i => i.cartQuantity > 0) || [], [cart?.items]);
+    const customerUuids = useMemo(() => cart?.customerUuids || [], [cart?.customerUuids]);
+    const isMultiCustomer = customerUuids.length > 1;
 
     const totals = useMemo(
         () => (cart ? calculateCartTotals({ ...cart, items: activeItems }) : { total: 0 }),
@@ -56,9 +58,8 @@ function PaymentDialogContent({
     const amountPaid   = roundFinancial(safeNumber(amountPaidStr));
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
-    // FIX: Financial precision comparison
     const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
-    const isCreditSale = !!(cart?.customerUuid && amountPaid < total - FINANCIAL_EPSILON);
+    const isCreditSale = !!(customerUuids.length > 0 && amountPaid < total - FINANCIAL_EPSILON);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -74,8 +75,8 @@ function PaymentDialogContent({
         setLastSale(null);
         setApproveOverLimit(false);
 
-        if (cart.customerUuid) {
-            customerService.getCustomerByUuid(cart.customerUuid).then(c => {
+        if (customerUuids.length === 1) {
+            customerService.getCustomerByUuid(customerUuids[0]).then(c => {
                 if (!isMountedRef.current) return;
                 setCustomer(c || null);
                 const now = new Date();
@@ -91,7 +92,7 @@ function PaymentDialogContent({
             setDueDate(undefined);
             setCustomer(null);
         }
-    }, [isOpen, cart, activeItems]);
+    }, [isOpen, cart, activeItems, customerUuids]);
 
     const projectedBalance = useMemo(() => {
         if (!customer) return 0;
@@ -103,8 +104,7 @@ function PaymentDialogContent({
         return projectedBalance > (customer.creditLimit + FINANCIAL_EPSILON);
     }, [customer, projectedBalance]);
 
-    // Safety: can't finalize if loading or negative pay (unless intentional partial)
-    const canFinalize = !isLoading && amountPaid >= 0 && (isFullPay || (!!cart?.customerUuid && (!isOverLimit || approveOverLimit)));
+    const canFinalize = !isLoading && amountPaid >= 0 && (isFullPay || (customerUuids.length > 0 && (!isOverLimit || approveOverLimit)));
 
     const handleProcessSale = useCallback(async () => {
         if (!canFinalize) return;
@@ -136,16 +136,29 @@ function PaymentDialogContent({
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg"><Wallet className="h-6 w-6" /></div>
                             <div>
-                                <DialogTitle className="text-xl font-black tracking-tight">Finaliser la Vente</DialogTitle>
-                                <DialogDescription className="text-xs font-bold uppercase text-primary/50">{cart.name}</DialogDescription>
+                                <DialogTitle className="text-xl font-black tracking-tight uppercase">Audit Encaissement</DialogTitle>
+                                <DialogDescription className="text-[10px] font-bold uppercase text-primary/50 tracking-widest">{cart.name}</DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
 
                     <div className="p-6 space-y-6">
-                        <div className="p-6 bg-muted rounded-2xl border border-border text-center space-y-1 shadow-inner">
-                            <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest">Total Net à Payer</p>
-                            <p className="text-4xl font-black text-primary tabular-nums tracking-tighter">{formatCurrency(total)}</p>
+                        {isMultiCustomer && (
+                            <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-start gap-3 animate-in slide-in-from-top-2">
+                                <Users className="h-5 w-5 text-primary shrink-0" />
+                                <div className="space-y-1">
+                                    <p className="text-xs font-black uppercase text-primary tracking-tight">Facturation Groupée Elite</p>
+                                    <p className="text-[10px] text-primary/70 leading-relaxed font-bold">
+                                        {customerUuids.length} factures indépendantes vont être générées. Le montant reçu sera appliqué à <span className="underline">chaque</span> copie.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-6 bg-muted rounded-2xl border border-border text-center space-y-1 shadow-inner relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-2 opacity-[0.02] group-hover:opacity-10 transition-opacity"><Wallet className="h-20 w-20" /></div>
+                            <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-[0.2em] relative z-10">Total Net à Percevoir</p>
+                            <p className="text-4xl font-black text-primary tabular-nums tracking-tighter relative z-10">{formatCurrency(total)}</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -155,7 +168,7 @@ function PaymentDialogContent({
                                     id="amount-paid"
                                     type="text"
                                     inputMode="decimal"
-                                    className="h-14 rounded-2xl bg-muted border-none shadow-inner text-2xl font-black text-center"
+                                    className="h-14 rounded-2xl bg-muted border-none shadow-inner text-2xl font-black text-center focus-visible:ring-primary/20"
                                     value={amountPaidStr}
                                     onChange={e => { if (/^[0-9]*\.?[0-9]*$/.test(e.target.value) || e.target.value === '') setAmountPaidStr(e.target.value); }}
                                     autoFocus
@@ -163,32 +176,44 @@ function PaymentDialogContent({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1">Monnaie Rendue</Label>
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1">Reliquat Monnaie</Label>
                                 <div className={cn('h-14 flex items-center justify-center rounded-2xl border-2 border-dashed text-2xl font-black tabular-nums transition-all', change >= 0.01 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-sm' : 'bg-muted border-border text-muted-foreground/20')}>
                                     {change >= 0.01 ? formatCurrency(change) : '0.00'}
                                 </div>
                             </div>
                         </div>
 
-                        <div className={cn("p-4 rounded-2xl border flex items-center gap-4", customer ? "bg-primary/5 border-primary/20" : "bg-amber-500/5 border-amber-500/20")}>
-                            <div className={cn("p-2.5 rounded-xl shadow-inner", customer ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500")}>
-                                {customer ? <UserCheck className="h-5 w-5" /> : <UserX className="h-5 w-5" />}
+                        {!isMultiCustomer ? (
+                            <div className={cn("p-4 rounded-2xl border flex items-center gap-4 transition-all duration-500", customer ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-amber-500/5 border-amber-500/20")}>
+                                <div className={cn("p-2.5 rounded-xl shadow-inner", customer ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500")}>
+                                    {customer ? <UserCheck className="h-5 w-5" /> : <UserX className="h-5 w-5" />}
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Affectation Client</p>
+                                    <p className="text-sm font-bold tracking-tight truncate">{customer ? `${customer.firstName} ${customer.lastName}` : "Client de passage"}</p>
+                                </div>
+                                {!customer && !isFullPay && <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px] font-black">Encaissement requis</Badge>}
                             </div>
-                            <div className="flex-grow min-w-0">
-                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Statut Client</p>
-                                <p className="text-sm font-bold tracking-tight truncate">{customer ? `${customer.firstName} ${customer.lastName}` : "Client de passage"}</p>
+                        ) : (
+                            <div className="p-4 rounded-2xl border border-primary/30 bg-primary/5 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm"><Users className="h-4 w-4" /></div>
+                                    <span className="text-xs font-black uppercase tracking-tight text-primary">{customerUuids.length} Clients Partenaires</span>
+                                </div>
+                                <Badge variant="outline" className="border-primary/40 text-primary font-black">BULK MODE</Badge>
                             </div>
-                            {!customer && !isFullPay && <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px]">Paiement requis</Badge>}
-                        </div>
+                        )}
 
-                        {isCreditSale && customer && (
+                        {isCreditSale && (customer || isMultiCustomer) && (
                             <div className="space-y-4 p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl animate-in zoom-in-95 duration-500">
                                 <div className="flex items-start gap-3">
                                     <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                                    <p className="text-amber-700 dark:text-amber-500 text-xs font-medium leading-relaxed">Mémorisation de <span className="font-black underline">{formatCurrency(total - amountPaid)}</span> au compte.</p>
+                                    <p className="text-amber-700 dark:text-amber-500 text-xs font-medium leading-relaxed">
+                                        Transfert de <span className="font-black underline">{formatCurrency(total - amountPaid)}</span> au registre des dettes.
+                                    </p>
                                 </div>
-                                {isOverLimit && (
-                                    <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3">
+                                {isOverLimit && !isMultiCustomer && (
+                                    <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3 shadow-inner">
                                         <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Crédit Dépassé</div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Autoriser exception</span>
@@ -197,23 +222,24 @@ function PaymentDialogContent({
                                     </div>
                                 )}
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/40">Échéance du règlement</Label>
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/40 ml-1">Échéance programmée</Label>
                                     <DatePicker date={dueDate} setDate={setDueDate} />
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="p-4 bg-muted border-t border-border flex gap-3">
-                        <Button variant="ghost" className="flex-1 h-12 rounded-2xl font-bold text-[10px] uppercase tracking-widest" onClick={() => onOpenChange(false)} disabled={isLoading}>Réviser</Button>
-                        <Button className="flex-[2] h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl gap-3" onClick={handleProcessSale} disabled={!canFinalize}>
-                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />} Valider [Enter]
+                    <DialogFooter className="p-4 bg-muted border-t border-border flex gap-3">
+                        <Button variant="ghost" className="flex-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest" onClick={() => onOpenChange(false)} disabled={isLoading}>Réviser Saisie</Button>
+                        <Button className="flex-[2] h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl gap-3 active:scale-95 transition-all" onClick={handleProcessSale} disabled={!canFinalize}>
+                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />} 
+                            Valider Encaissement [Enter]
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <PrintReceiptDialog isOpen={isReceiptOpen} onOpenChange={setIsReceiptOpen} sale={lastSale} customerName={customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'} />
+            <PrintReceiptDialog isOpen={isReceiptOpen} onOpenChange={setIsReceiptOpen} sale={lastSale} customerName={customer ? `${customer.firstName} ${customer.lastName}` : isMultiCustomer ? `${customerUuids.length} Clients` : 'Client de passage'} />
         </>
     );
 }

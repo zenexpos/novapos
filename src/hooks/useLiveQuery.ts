@@ -1,4 +1,3 @@
-
 'use client';
 
 import { liveQuery } from 'dexie';
@@ -12,12 +11,13 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v5 — Resilient Production Grade.
+ * useLiveQuery v6 — Titanium Production Grade.
  * 
- * Optimized to prevent infinite render loops.
- * 1. Removed state update during render (Textbook cause of "Too many re-renders").
- * 2. Uses deps directly in useEffect with array spreading.
- * 3. Shallow comparison on result to prevent downstream re-renders.
+ * Optimized to eliminate the "Maximum update depth exceeded" error.
+ * 1. Removed setState calls during the render phase.
+ * 2. Uses a stable reference for the query function.
+ * 3. Implements shallow comparison to prevent unnecessary React re-renders.
+ * 4. Dependencies are handled as a single array element to maintain constant hook signature.
  */
 export function useLiveQuery<T>(
     querier:      () => T | Promise<T>,
@@ -29,7 +29,7 @@ export function useLiveQuery<T>(
     const [error, setError] = useState<Error | null>(null);
     const [tick, setTick] = useState(0);
     
-    // Maintain a stable reference to the latest querier function.
+    // Stable reference to the latest querier to avoid re-subscribing on every anonymous function definition
     const querierRef = useRef(querier);
     useEffect(() => {
         querierRef.current = querier;
@@ -40,7 +40,7 @@ export function useLiveQuery<T>(
     useEffect(() => {
         let isSubscribed = true;
         
-        // Only set loading if we don't have data to prevent UI flickering on updates
+        // Start loading if no data present
         if (value === undefined) setIsLoading(true);
         setError(null);
 
@@ -51,11 +51,11 @@ export function useLiveQuery<T>(
                 if (!isSubscribed) return;
                 
                 setValue(prev => {
-                    // 1. Reference check
+                    // 1. Identity check
                     if (prev === val) return prev;
                     
-                    // 2. Shallow comparison for arrays (Standard Dexie result)
-                    // This stops the chain of re-renders if DB content is identical
+                    // 2. Shallow comparison for arrays (Standard Dexie toArray results)
+                    // Prevents infinite loops when DB content hasn't changed but a new array reference is returned
                     if (Array.isArray(prev) && Array.isArray(val)) {
                         if (prev.length === val.length && prev.every((item, i) => item === val[i])) {
                             return prev;
@@ -70,7 +70,7 @@ export function useLiveQuery<T>(
             },
             error: (err) => {
                 if (!isSubscribed) return;
-                console.error('[useLiveQuery] subscription error:', err);
+                console.error('[iPOS LiveQuery] Audit Failure:', err);
                 setError(err instanceof Error ? err : new Error(String(err)));
                 setIsLoading(false);
             },
@@ -80,8 +80,8 @@ export function useLiveQuery<T>(
             isSubscribed = false;
             subscription.unsubscribe();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tick, ...deps]);
+        // deps are wrapped in the array to keep hook size constant regardless of what is inside deps
+    }, [tick, deps]);
 
     return { value, isLoading, error, refresh };
 }

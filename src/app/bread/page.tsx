@@ -62,7 +62,7 @@ export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Advanced Filters
+    // Advanced UI Filters
     const [filterDelivery, setFilterDelivery] = useState<DeliveryFilter>('all');
     const [filterPayment, setFilterPayment] = useState<PaymentFilter>('all');
     
@@ -89,16 +89,19 @@ export default function BreadPage() {
         }
     }, [formattedDate, isMounted]);
 
+    // deps are stabilized to prevent infinite render loops
+    const liveDeps = useMemo(() => [formattedDate, isMounted], [formattedDate, isMounted]);
+    
     const { value: orders, isLoading, refresh } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => isMounted ? breadService.getOrdersForDate(formattedDate) : Promise.resolve([]),
-        [formattedDate, isMounted]
+        liveDeps
     );
 
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
         let list = orders;
         
-        // 1. Search Query
+        // 1. Search Query (Optimized)
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
@@ -108,14 +111,14 @@ export default function BreadPage() {
             );
         }
 
-        // 2. Delivery Filter
+        // 2. Delivery Status Filter
         if (filterDelivery === 'delivered') {
             list = list.filter(o => o.isDelivered);
         } else if (filterDelivery === 'pending') {
             list = list.filter(o => !o.isDelivered);
         }
 
-        // 3. Payment Filter
+        // 3. Payment Status Filter
         if (filterPayment === 'paid') {
             list = list.filter(o => o.isPaid);
         } else if (filterPayment === 'unpaid') {
@@ -141,10 +144,10 @@ export default function BreadPage() {
         setIsProcessing(true);
         try {
             const count = await breadService.processEndOfDayTransfers();
-            if (count > 0) toast.success(`${count} ordres transférés au compte.`);
-            else toast.info("Aucun ordre à transférer.");
+            if (count > 0) toast.success(`${count} ordres transférés au registre.`);
+            else toast.info("Audit terminé : Aucun ordre en souffrance.");
         } catch (e: any) {
-            toast.error("Erreur lors de l'auto-facturation.");
+            toast.error("Échec de l'auto-facturation.");
         } finally {
             setIsProcessing(false);
             setIsAutoBillingConfirmOpen(false);
@@ -154,15 +157,14 @@ export default function BreadPage() {
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
-        // Changed single key 'n' and 'r' to 'Alt+N' and 'Alt+R' to prevent collisions while typing
-        { key: 'n', alt: true, action: () => setIsFormOpen(true), description: 'Nouvelle commande [Alt+N]', ignoreInputFocus: false },
+        { key: 'n', alt: true, action: () => setIsFormOpen(true), description: 'Nouvelle distribution [Alt+N]', ignoreInputFocus: false },
         { key: 'r', alt: true, action: () => refresh(), description: 'Actualiser flux [Alt+R]', ignoreInputFocus: false }
     ], 'LogistiquePain', isMounted && !isFormOpen);
 
     if (!isMounted) return null;
 
     return (
-        <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700 pb-24">
+        <div className="p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-24">
             <PageHeader 
                 title="Logistique Pain Elite"
                 description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -178,53 +180,55 @@ export default function BreadPage() {
                                     size="sm"
                                     onClick={() => setIsAutoBillingConfirmOpen(true)}
                                     disabled={isProcessing}
-                                    className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10 font-bold"
+                                    className="rounded-xl border-amber-500/20 bg-amber-500/5 text-amber-600 gap-2 hover:bg-amber-500/10 font-black text-[10px] uppercase tracking-widest shadow-sm"
                                 >
                                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
                                     Auto-facturation
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transférer les impayés des jours passés en attente de facturation</TooltipContent>
+                            <TooltipContent className="max-w-xs text-center font-bold">
+                                Convertir les impayés des jours passés en dettes réelles au grand livre.
+                            </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
-                    <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5">
+                    <div className="flex gap-1 bg-black/20 p-1 rounded-2xl border border-white/5 shadow-inner">
                         <Button variant="ghost" size="icon" onClick={() => handleDateChange(-1)} className="rounded-xl h-9 w-9"><ChevronLeft className="h-5 w-5 text-primary" /></Button>
-                        <Button variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} onClick={() => setCurrentDate(new Date())} className="rounded-xl h-9 px-4 text-[10px] uppercase font-black tracking-widest">Aujourd'hui</Button>
+                        <Button variant={formattedDate === formatDateToYYYYMMDD(new Date()) ? "secondary" : "ghost"} onClick={() => setCurrentDate(new Date())} className="rounded-xl h-9 px-4 text-[10px] font-black uppercase tracking-[0.2em]">Aujourd'hui</Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDateChange(1)} className="rounded-xl h-9 w-9"><ChevronRight className="h-5 w-5 text-primary" /></Button>
                     </div>
                     
-                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-black text-[10px] uppercase tracking-widest shadow-xl gap-2 bg-primary text-primary-foreground">
-                        <Plus className="h-4 w-4" /> Nouvelle Commande [Alt+N]
+                    <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-black text-[10px] uppercase tracking-[0.2em] shadow-xl gap-3">
+                        <Plus className="h-4 w-4" /> Saisie [Alt+N]
                     </Button>
                     
-                    <Button variant="outline" size="icon" onClick={() => refresh()} className="rounded-xl h-10 w-10 border-white/5 bg-card/40">
+                    <Button variant="outline" size="icon" onClick={() => refresh()} className="rounded-xl h-10 w-10 border-white/5 bg-card/40 hover:bg-primary/5 transition-all">
                         <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </PageHeader>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="flex flex-col lg:flex-row justify-between gap-4">
-                    <TabsList className="bg-card/40 border border-white/5 p-1 h-12 rounded-2xl">
-                        <TabsTrigger value="distribution" className="rounded-xl px-8 font-black text-[10px] uppercase tracking-widest">Distribution</TabsTrigger>
-                        <TabsTrigger value="subscribers" className="rounded-xl px-8 font-black text-[10px] uppercase tracking-widest">Abonnés</TabsTrigger>
+                <div className="flex flex-col lg:flex-row justify-between gap-6 items-end lg:items-center bg-card/20 p-2 rounded-2xl border border-white/5 shadow-inner">
+                    <TabsList className="bg-black/20 border-none p-1 h-12 rounded-xl">
+                        <TabsTrigger value="distribution" className="rounded-lg px-8 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Distribution</TabsTrigger>
+                        <TabsTrigger value="subscribers" className="rounded-lg px-8 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Registre Abonnés</TabsTrigger>
                     </TabsList>
 
                     {activeTab === 'distribution' && (
-                        <div className="flex flex-wrap gap-3 items-center flex-grow max-w-5xl">
-                            <div className="relative flex-grow min-w-[200px] group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/30" />
+                        <div className="flex flex-wrap gap-3 items-center flex-grow max-w-5xl px-4">
+                            <div className="relative flex-grow min-w-[250px] group">
+                                <Search className={cn("absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-all duration-500", searchQuery ? "text-primary scale-110" : "text-muted-foreground/30")} />
                                 <Input 
-                                    placeholder="Rechercher flux..." 
-                                    className="pl-12 h-11 rounded-xl bg-card border-none shadow-inner font-bold" 
+                                    placeholder="Rechercher un flux ou une référence..." 
+                                    className="pl-12 h-11 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg" 
                                     value={searchQuery} 
                                     onChange={e => setSearchQuery(e.target.value)} 
                                 />
                                 {searchQuery && (
                                     <button 
                                         onClick={() => setSearchQuery('')}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors"
                                     >
                                         <X className="h-4 w-4" />
                                     </button>
@@ -234,36 +238,36 @@ export default function BreadPage() {
                             <div className="flex gap-2">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-card px-4 font-bold text-xs uppercase gap-2">
+                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 px-4 font-black text-[10px] uppercase tracking-widest gap-2 hover:bg-white/5">
                                             <Filter className="h-3.5 w-3.5 opacity-50" />
-                                            {filterDelivery === 'all' ? 'Livraison' : filterDelivery === 'delivered' ? 'Livré' : 'En attente'}
+                                            {filterDelivery === 'all' ? 'Livraison' : filterDelivery === 'delivered' ? 'Livré' : 'Attente'}
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
-                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-muted-foreground/40">Filtrer par livraison</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
+                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl bg-card/95 backdrop-blur-md">
+                                        <DropdownMenuLabel className="text-[9px] font-black uppercase text-muted-foreground/40 px-4 py-3">État de Distribution</DropdownMenuLabel>
+                                        <DropdownMenuSeparator className="opacity-10" />
                                         <DropdownMenuRadioGroup value={filterDelivery} onValueChange={v => setFilterDelivery(v as any)}>
-                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Tous les états</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="delivered" className="text-xs font-bold uppercase text-emerald-500">Déjà livré</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="pending" className="text-xs font-bold uppercase text-amber-500">En attente</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold py-3 px-4">Tous les états</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="delivered" className="text-xs font-bold py-3 px-4 text-emerald-500">Flux Distribués</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="pending" className="text-xs font-bold py-3 px-4 text-amber-500">En attente</DropdownMenuRadioItem>
                                         </DropdownMenuRadioGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-card px-4 font-bold text-xs uppercase gap-2">
+                                        <Button variant="outline" className="h-11 rounded-xl border-white/5 bg-black/20 px-4 font-black text-[10px] uppercase tracking-widest gap-2 hover:bg-white/5">
                                             <Filter className="h-3.5 w-3.5 opacity-50" />
-                                            {filterPayment === 'all' ? 'Paiement' : filterPayment === 'paid' ? 'Payé' : 'Impayé'}
+                                            {filterPayment === 'all' ? 'Règlement' : filterPayment === 'paid' ? 'Payé' : 'Crédit'}
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-xl">
-                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-muted-foreground/40">Filtrer par règlement</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
+                                    <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl bg-card/95 backdrop-blur-md">
+                                        <DropdownMenuLabel className="text-[9px] font-black uppercase text-muted-foreground/40 px-4 py-3">Audit de Paiement</DropdownMenuLabel>
+                                        <DropdownMenuSeparator className="opacity-10" />
                                         <DropdownMenuRadioGroup value={filterPayment} onValueChange={v => setFilterPayment(v as any)}>
-                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold uppercase">Toutes transactions</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="paid" className="text-xs font-bold uppercase text-emerald-500">Flux Soldés</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold uppercase text-orange-500">Flux à régler</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="all" className="text-xs font-bold py-3 px-4">Toutes transactions</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="paid" className="text-xs font-bold py-3 px-4 text-emerald-500">Soldés Cash</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold py-3 px-4 text-orange-500">Inscrits en Dette</DropdownMenuRadioItem>
                                         </DropdownMenuRadioGroup>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -275,33 +279,33 @@ export default function BreadPage() {
                                 )}
                             </div>
 
-                            <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5 ml-auto">
-                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                            <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5 ml-auto shadow-inner">
+                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9 transition-all" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9 transition-all" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <TabsContent value="distribution" className="space-y-6 outline-none">
+                <TabsContent value="distribution" className="space-y-8 outline-none animate-in fade-in duration-700">
                     <BreadStats date={formattedDate} />
                     
                     {isLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                           {[...Array(8)].map((_, i) => <Skeleton className="h-48 w-full rounded-3xl" key={i} />)}
+                           {[...Array(8)].map((_, i) => <Skeleton className="h-64 w-full rounded-[2.5rem] bg-card/40 border border-white/5 animate-pulse" key={i} />)}
                         </div>
                     ) : filteredOrders.length === 0 ? (
                         <EmptyState 
                             icon={Search} 
                             title="Zone de Silence" 
-                            description={isFiltered ? "Ajustez vos filtres de recherche." : "Aucune distribution prévue pour ce jour."}
-                            actionLabel={isFiltered ? "Réinitialiser les filtres" : "Créer un ordre"}
+                            description={isFiltered ? "Ajustez vos filtres pour identifier des flux spécifiques." : "Aucune distribution programmée pour cette signature temporelle."}
+                            actionLabel={isFiltered ? "Réinitialiser les filtres" : "Créer un ordre manuel"}
                             onAction={isFiltered ? resetFilters : () => setIsFormOpen(true)}
                         />
                     ) : (
-                        <div className="animate-in fade-in duration-500">
+                        <div className="animate-in fade-in duration-1000 slide-in-from-bottom-4">
                             {viewMode === 'list' ? (
-                                <div className="bg-card/40 rounded-2xl border border-white/5 overflow-hidden shadow-sm">
+                                <div className="bg-card/40 rounded-3xl border border-white/5 overflow-hidden shadow-xl">
                                     <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={(id) => setSelectedOrders(prev => {
                                         const next = new Set(prev);
                                         if (next.has(id)) next.delete(id); else next.add(id);
@@ -309,7 +313,7 @@ export default function BreadPage() {
                                     })} />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                                     {filteredOrders.map(o => (
                                         <BreadOrderCard key={o.uuid} order={o} isSelected={selectedOrders.has(o.uuid)} onToggleSelection={(id) => setSelectedOrders(prev => {
                                             const next = new Set(prev);
@@ -323,28 +327,31 @@ export default function BreadPage() {
                     )}
                 </TabsContent>
 
-                <TabsContent value="subscribers" className="outline-none">
+                <TabsContent value="subscribers" className="outline-none animate-in fade-in duration-700">
                     <BreadClientList onListChange={() => {}} />
                 </TabsContent>
             </Tabs>
 
-            <BreadOrderForm isOpen={isMounted && isFormOpen} onOpenChange={setIsFormOpen} currentDate={formattedDate} onSuccess={() => setIsFormOpen(false)} />
+            <BreadOrderForm isOpen={isMounted && isFormOpen} onOpenChange={setIsFormOpen} currentDate={formattedDate} onSuccess={() => { setIsFormOpen(false); refresh(); }} />
 
             <ConfirmAlertDialog
                 isOpen={isAutoBillingConfirmOpen}
                 onOpenChange={setIsAutoBillingConfirmOpen}
                 title="Audit de Clôture Logistique"
                 description={
-                    <div className="space-y-4">
-                        <p>Cette opération va convertir tous les ordres non régularisés des jours passés en créances réelles sur les comptes clients Premium.</p>
-                        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-700">
-                            <Info className="h-5 w-5 shrink-0" />
-                            <p className="text-[10px] font-black uppercase leading-relaxed">Ceci est une action comptable irréversible qui garantit l'intégrité de vos flux de trésorerie.</p>
+                    <div className="space-y-6">
+                        <p className="font-bold text-foreground leading-relaxed">Cette opération convertit irréversiblement tous les ordres non régularisés des jours passés en créances au grand livre pour les abonnés Premium.</p>
+                        <div className="p-5 bg-amber-500/10 border-2 border-amber-500/20 rounded-[1.5rem] flex gap-4 text-amber-700 shadow-inner relative overflow-hidden">
+                            <Info className="h-6 w-6 shrink-0 mt-1" />
+                            <div className="space-y-1 relative z-10">
+                                <p className="text-[11px] font-black uppercase tracking-widest leading-none mb-2">Avertissement Comptable</p>
+                                <p className="text-[10px] font-bold uppercase leading-relaxed opacity-80">Ceci garantit l'intégrité de vos flux de trésorerie et la continuité de la chaîne de confiance avec vos clients.</p>
+                            </div>
                         </div>
                     </div>
                 }
                 onConfirm={runAutomatedTask}
-                confirmText="Valider Transfert"
+                confirmText="Valider Transfert Financier"
             />
         </div>
     );
