@@ -62,7 +62,7 @@ export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Nouveaux états de filtrage
+    // Advanced Filters
     const [filterDelivery, setFilterDelivery] = useState<DeliveryFilter>('all');
     const [filterPayment, setFilterPayment] = useState<PaymentFilter>('all');
     
@@ -98,7 +98,7 @@ export default function BreadPage() {
         if (!orders) return [];
         let list = orders;
         
-        // 1. Filtrage par recherche
+        // 1. Search Query
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(o => 
@@ -108,14 +108,14 @@ export default function BreadPage() {
             );
         }
 
-        // 2. Filtrage par livraison
+        // 2. Delivery Filter
         if (filterDelivery === 'delivered') {
             list = list.filter(o => o.isDelivered);
         } else if (filterDelivery === 'pending') {
             list = list.filter(o => !o.isDelivered);
         }
 
-        // 3. Filtrage par paiement
+        // 3. Payment Filter
         if (filterPayment === 'paid') {
             list = list.filter(o => o.isPaid);
         } else if (filterPayment === 'unpaid') {
@@ -154,9 +154,10 @@ export default function BreadPage() {
     useKeyboardShortcuts([
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
-        { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false },
-        { key: 'r', action: () => refresh(), description: 'Actualiser flux [R]', ignoreInputFocus: false }
-    ], 'LogistiquePain', isMounted);
+        // Changed single key 'n' and 'r' to 'Alt+N' and 'Alt+R' to prevent collisions while typing
+        { key: 'n', alt: true, action: () => setIsFormOpen(true), description: 'Nouvelle commande [Alt+N]', ignoreInputFocus: false },
+        { key: 'r', alt: true, action: () => refresh(), description: 'Actualiser flux [Alt+R]', ignoreInputFocus: false }
+    ], 'LogistiquePain', isMounted && !isFormOpen);
 
     if (!isMounted) return null;
 
@@ -194,7 +195,7 @@ export default function BreadPage() {
                     </div>
                     
                     <Button onClick={() => setIsFormOpen(true)} className="rounded-2xl h-10 font-black text-[10px] uppercase tracking-widest shadow-xl gap-2 bg-primary text-primary-foreground">
-                        <Plus className="h-4 w-4" /> Nouvelle Commande [N]
+                        <Plus className="h-4 w-4" /> Nouvelle Commande [Alt+N]
                     </Button>
                     
                     <Button variant="outline" size="icon" onClick={() => refresh()} className="rounded-xl h-10 w-10 border-white/5 bg-card/40">

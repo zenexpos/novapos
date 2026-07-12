@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,7 +33,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
     const [selectedClientUuid, setSelectedClientUuid] = useState<string>('');
     const [customName, setCustomName] = useState('');
     const [quantity, setQuantity] = useState(10);
-    const [unitPrice, setUnitPrice] = useState(profile?.breadPrice || 10);
+    const [unitPrice, setUnitPrice] = useState(10);
     const [pickupTime, setPickupTime] = useState('08:00');
     const [isRecurring, setIsRecurring] = useState(false);
     const [isLoading, setIsLoading] = useState(false);

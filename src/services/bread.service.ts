@@ -1,6 +1,6 @@
 'use client';
 
-import { parseISO, format, startOfDay } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus } from '@/lib/types';
 import { db } from '@/lib/db';
@@ -60,13 +60,11 @@ class BreadService {
 
     /**
      * Garantit la création des ordres pour les abonnés à une date donnée.
-     * IDEMPOTENCE: Vérifie l'existence avant toute création groupée.
      */
     async ensureOrdersForDate(date: string): Promise<void> {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
-        // On ne génère des ordres que pour aujourd'hui ou le futur
         if (date < todayStr) return;
 
         await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile, db.sync_queue], async () => {
@@ -103,8 +101,8 @@ class BreadService {
             totalAmount: total,
             amountPaid: 0,
             remainingAmount: total,
-            paymentStatus: 'unpaid',
-            pickupStatus: 'unreceived',
+            paymentStatus: 'unpaid' as BreadPaymentStatus,
+            pickupStatus: 'unreceived' as BreadPickupStatus,
             isDelivered: false,
             isPaid: false,
             transferredToCustomerAccount: false,
@@ -128,8 +126,7 @@ class BreadService {
     }
 
     /**
-     * Convertit des ordres en ventes réelles (Transfert au compte client).
-     * TRANSACTION ÉTENDUE : Verrouille 12 tables pour une intégrité totale.
+     * Convertit des ordres en ventes réelles.
      */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
@@ -180,9 +177,6 @@ class BreadService {
         });
     }
 
-    /**
-     * Génère les ordres quotidiens basés sur les profils abonnés.
-     */
     private async createDayOrders(date: string): Promise<void> {
         const dayIndex = parseISO(date).getDay();
         const dayOfWeek = BREAD_WEEK_DAYS[dayIndex];
@@ -224,8 +218,8 @@ class BreadService {
                     totalAmount: total,
                     amountPaid: 0,
                     remainingAmount: total,
-                    paymentStatus: 'unpaid',
-                    pickupStatus: 'unreceived',
+                    paymentStatus: 'unpaid' as BreadPaymentStatus,
+                    pickupStatus: 'unreceived' as BreadPickupStatus,
                     isDelivered: false,
                     isPaid: false,
                     transferredToCustomerAccount: false,
@@ -255,7 +249,7 @@ class BreadService {
                 if (order.saleUuid || order.deletedAt) continue;
                 const update = {
                     isDelivered,
-                    pickupStatus: isDelivered ? ('received' as const) : ('unreceived' as const),
+                    pickupStatus: isDelivered ? ('received' as BreadPickupStatus) : ('unreceived' as BreadPickupStatus),
                     updatedAt: new Date(),
                     syncStatus: 'pending' as const
                 };
@@ -322,7 +316,7 @@ class BreadService {
 
         const update = {
             isPaid,
-            paymentStatus: isPaid ? ('paid' as const) : ('unpaid' as const),
+            paymentStatus: isPaid ? ('paid' as BreadPaymentStatus) : ('unpaid' as BreadPaymentStatus),
             updatedAt: new Date(),
             syncStatus: 'pending' as const
         };

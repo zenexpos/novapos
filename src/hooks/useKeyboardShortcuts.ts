@@ -14,8 +14,7 @@ export interface ShortcutConfig {
 }
 
 /**
- * Singleton registry outside of React lifecycle for maximum performance (FORENSIC FIX).
- * Avoids repeated object creations and linear filtering on every keydown.
+ * Singleton registry outside of React lifecycle for maximum performance.
  */
 const _registry = new Map<string, ShortcutConfig[]>();
 let _listenerAttached = false;
@@ -28,7 +27,9 @@ const isInputFocused = (): boolean => {
     const tag = el.tagName;
     const role = el.getAttribute('role');
     const type = el.getAttribute('type');
+    const isEditable = (el as HTMLElement).isContentEditable || el.getAttribute('contenteditable') === 'true';
     
+    // Robust detection of any input-like element
     return (
         tag === 'INPUT' ||
         tag === 'TEXTAREA' ||
@@ -38,8 +39,7 @@ const isInputFocused = (): boolean => {
         role === 'spinbutton' ||
         role === 'textbox' ||
         type === 'number' ||
-        el.getAttribute('contenteditable') === 'true' ||
-        (el as HTMLElement).isContentEditable
+        isEditable
     );
 };
 
@@ -66,7 +66,7 @@ function _globalHandler(event: KeyboardEvent) {
                 const focused = isInputFocused();
                 const isUniversal = pressedKey === 'Escape' || (pressedKey === 'Enter' && (event.ctrlKey || event.metaKey));
 
-                // Block context shortcuts if input is focused, unless it's a Universal/System command
+                // Block context shortcuts if input is focused, unless it's a Universal command or explicitly allowed
                 if (!isUniversal && focused && !config.ignoreInputFocus) continue;
 
                 if (config.preventDefault !== false) event.preventDefault();
@@ -87,7 +87,7 @@ export function useKeyboardShortcuts(
     id: string,
     active: boolean = true
 ): void {
-    // Keep a stable reference to shortcuts to avoid map thrashing during re-renders
+    // Keep a stable reference to shortcuts
     const shortcutsRef = useRef(shortcuts);
     shortcutsRef.current = shortcuts;
 
