@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -201,6 +202,10 @@ export const useCartStore = create<CartState>()(
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
+                            // Ensure the array exists for older persisted states
+                            if (!cart.customerUuids) {
+                                cart.customerUuids = [];
+                            }
                             const index = cart.customerUuids.indexOf(customerUuid);
                             if (index >= 0) {
                                 cart.customerUuids.splice(index, 1);
@@ -243,7 +248,7 @@ export const useCartStore = create<CartState>()(
                     const activeItems = activeCart.items.filter(i => i.cartQuantity > 0);
                     if (activeItems.length === 0) return null;
 
-                    const customerUuids = activeCart.customerUuids;
+                    const customerUuids = activeCart.customerUuids || []; // Safeguard for older state
                     
                     try {
                         let lastSale: Sale | null = null;
