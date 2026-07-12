@@ -146,8 +146,9 @@ export default function BreadPage() {
             const count = await breadService.processEndOfDayTransfers();
             if (count > 0) toast.success(`${count} ordres transférés au registre.`);
             else toast.info("Audit terminé : Aucun ordre en souffrance.");
-        } catch (e: any) {
-            toast.error("Échec de l'auto-facturation.");
+        } catch (e: unknown) {
+            const error = e as Error;
+            toast.error("Échec de l'auto-facturation.", { description: error.message });
         } finally {
             setIsProcessing(false);
             setIsAutoBillingConfirmOpen(false);
@@ -246,7 +247,7 @@ export default function BreadPage() {
                                     <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl bg-card/95 backdrop-blur-md">
                                         <DropdownMenuLabel className="text-[9px] font-black uppercase text-muted-foreground/40 px-4 py-3">État de Distribution</DropdownMenuLabel>
                                         <DropdownMenuSeparator className="opacity-10" />
-                                        <DropdownMenuRadioGroup value={filterDelivery} onValueChange={v => setFilterDelivery(v as any)}>
+                                        <DropdownMenuRadioGroup value={filterDelivery} onValueChange={v => setFilterDelivery(v as DeliveryFilter)}>
                                             <DropdownMenuRadioItem value="all" className="text-xs font-bold py-3 px-4">Tous les états</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="delivered" className="text-xs font-bold py-3 px-4 text-emerald-500">Flux Distribués</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="pending" className="text-xs font-bold py-3 px-4 text-amber-500">En attente</DropdownMenuRadioItem>
@@ -264,7 +265,7 @@ export default function BreadPage() {
                                     <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl bg-card/95 backdrop-blur-md">
                                         <DropdownMenuLabel className="text-[9px] font-black uppercase text-muted-foreground/40 px-4 py-3">Audit de Paiement</DropdownMenuLabel>
                                         <DropdownMenuSeparator className="opacity-10" />
-                                        <DropdownMenuRadioGroup value={filterPayment} onValueChange={v => setFilterPayment(v as any)}>
+                                        <DropdownMenuRadioGroup value={filterPayment} onValueChange={v => setFilterPayment(v as PaymentFilter)}>
                                             <DropdownMenuRadioItem value="all" className="text-xs font-bold py-3 px-4">Toutes transactions</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="paid" className="text-xs font-bold py-3 px-4 text-emerald-500">Soldés Cash</DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="unpaid" className="text-xs font-bold py-3 px-4 text-orange-500">Inscrits en Dette</DropdownMenuRadioItem>

@@ -2,7 +2,7 @@
 
 import { parseISO, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus } from '@/lib/types';
+import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus, SyncStatus } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
@@ -46,7 +46,7 @@ class BreadService {
 
         if (orders.length === 0) return [];
 
-        const customerUuids = Array.from(new Set(orders.map(o => o.customerUuid).filter(Boolean) as string[]));
+        const customerUuids = Array.from(new Set(orders.map(o => o.customerUuid).filter((uuid): uuid is string => !!uuid)));
         const customers = customerUuids.length > 0
             ? await db.customers.where('uuid').anyOf(customerUuids).toArray()
             : [];
@@ -101,8 +101,8 @@ class BreadService {
             totalAmount: total,
             amountPaid: 0,
             remainingAmount: total,
-            paymentStatus: 'unpaid' as BreadPaymentStatus,
-            pickupStatus: 'unreceived' as BreadPickupStatus,
+            paymentStatus: 'unpaid',
+            pickupStatus: 'unreceived',
             isDelivered: false,
             isPaid: false,
             transferredToCustomerAccount: false,
@@ -126,7 +126,7 @@ class BreadService {
     }
 
     /**
-     * Convertit des ordres en ventes réelles.
+     * Convertit des ordres en ventes réelles (Audit de Clôture).
      */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
@@ -142,6 +142,7 @@ class BreadService {
             for (const order of orders) {
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
+                // Create a standard sale entity to reflect in the ledger
                 const sale = await salesService.createSale({
                     items: [{
                         uuid: 'BREAD_VIRTUAL_PROD',
@@ -170,7 +171,7 @@ class BreadService {
                         transferredToCustomerAccount: true,
                         transferredAt: new Date(),
                         updatedAt: new Date(),
-                        syncStatus: 'pending' as const
+                        syncStatus: 'pending' as SyncStatus
                     });
                 }
             }
@@ -218,8 +219,8 @@ class BreadService {
                     totalAmount: total,
                     amountPaid: 0,
                     remainingAmount: total,
-                    paymentStatus: 'unpaid' as BreadPaymentStatus,
-                    pickupStatus: 'unreceived' as BreadPickupStatus,
+                    paymentStatus: 'unpaid',
+                    pickupStatus: 'unreceived',
                     isDelivered: false,
                     isPaid: false,
                     transferredToCustomerAccount: false,
@@ -249,9 +250,9 @@ class BreadService {
                 if (order.saleUuid || order.deletedAt) continue;
                 const update = {
                     isDelivered,
-                    pickupStatus: isDelivered ? ('received' as BreadPickupStatus) : ('unreceived' as BreadPickupStatus),
+                    pickupStatus: isDelivered ? 'received' as BreadPickupStatus : 'unreceived' as BreadPickupStatus,
                     updatedAt: new Date(),
-                    syncStatus: 'pending' as const
+                    syncStatus: 'pending' as SyncStatus
                 };
                 await db.bread_orders.update(order.id!, update);
                 await db.sync_queue.add({
@@ -275,7 +276,7 @@ class BreadService {
             totalAmount: total,
             remainingAmount: Math.max(0, total - order.amountPaid),
             updatedAt: new Date(),
-            syncStatus: 'pending' as const
+            syncStatus: 'pending' as SyncStatus
         };
 
         await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
@@ -299,7 +300,7 @@ class BreadService {
             await db.bread_orders.update(order.id!, { 
                 deletedAt: new Date(), 
                 updatedAt: new Date(),
-                syncStatus: 'pending' as const
+                syncStatus: 'pending' as SyncStatus
             });
             await db.sync_queue.add({
                 table: 'bread_orders',
@@ -316,9 +317,9 @@ class BreadService {
 
         const update = {
             isPaid,
-            paymentStatus: isPaid ? ('paid' as BreadPaymentStatus) : ('unpaid' as BreadPaymentStatus),
+            paymentStatus: isPaid ? 'paid' as BreadPaymentStatus : 'unpaid' as BreadPaymentStatus,
             updatedAt: new Date(),
-            syncStatus: 'pending' as const
+            syncStatus: 'pending' as SyncStatus
         };
 
         await db.transaction('rw', [db.bread_orders, db.sync_queue], async () => {
