@@ -155,7 +155,7 @@ export default function BreadPage() {
         { key: 'ArrowLeft', action: () => handleDateChange(-1), description: 'Jour précédent', ignoreInputFocus: true },
         { key: 'ArrowRight', action: () => handleDateChange(1), description: 'Jour suivant', ignoreInputFocus: true },
         { key: 'n', action: () => setIsFormOpen(true), description: 'Nouvelle commande [N]', ignoreInputFocus: false },
-        { key: 'r', action: () => refresh(), description: 'Actualiser flux [R]', ignoreInputFocus: true }
+        { key: 'r', action: () => refresh(), description: 'Actualiser flux [R]', ignoreInputFocus: false }
     ], 'LogistiquePain', isMounted);
 
     if (!isMounted) return null;
@@ -183,7 +183,7 @@ export default function BreadPage() {
                                     Auto-facturation
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Transférer les impayés des jours passés en dettes réelles</TooltipContent>
+                            <TooltipContent>Transférer les impayés des jours passés en attente de facturation</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
