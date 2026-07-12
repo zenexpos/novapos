@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -17,7 +18,7 @@ import { EMPTY_ARRAY } from '@/lib/constants';
 
 /**
  * Barre d'information spécifique à la vente.
- * Support multi-customer display.
+ * Support multi-customer display with stable dependency handling.
  */
 export function SaleInfoBar() {
     const cart      = useActiveCart();
@@ -25,14 +26,14 @@ export function SaleInfoBar() {
     const { clearCart } = useCartActions();
     const [isMounted, setIsMounted] = useState(false);
 
-    // Use EMPTY_ARRAY to keep dependencies stable when cart is null or customerUuids is empty
-    const selectedUuids = cart?.customerUuids || (EMPTY_ARRAY as string[]);
+    // Use EMPTY_ARRAY to keep identity stable
+    const selectedUuids = useMemo(() => cart?.customerUuids || (EMPTY_ARRAY as string[]), [cart?.customerUuids]);
 
     const { value: customers } = useLiveQuery<Customer[]>(
         () => selectedUuids.length > 0 
             ? db.customers.where('uuid').anyOf(selectedUuids).toArray() 
             : Promise.resolve(EMPTY_ARRAY as Customer[]),
-        [selectedUuids]
+        [...selectedUuids] // Spread to ensure stability on primitive values
     );
 
     useEffect(() => { 
