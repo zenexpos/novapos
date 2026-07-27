@@ -165,8 +165,8 @@ function ProductsContent() {
 
     const handleToggleSelection = useCallback((productUuid: string) => {
         setSelectedProducts(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(productUuid)) next.delete(productUuid);
+            const next = new Set(prev);
+            if (next.has(productUuid)) next.delete(productUuid);
             else next.add(productUuid);
             return next;
         });
@@ -355,7 +355,7 @@ function ProductsContent() {
                         <div className="h-4 w-px bg-white/10" />
                         <div className="flex items-center gap-4">
                             <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
-                            <button onClick={() => setIsBulkDeleteSupplierOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
+                            <button onClick={() => setIsBulkDeleteDialogOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
                         </div>
                     </div>
                 </div>
@@ -410,7 +410,7 @@ function ProductsContent() {
             <DeleteProductDialog isOpen={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} name={selectedProduct?.name} onConfirm={() => {
                 if (selectedProduct) productService.deleteProduct(selectedProduct.uuid).then(() => { setIsDeleteDialogOpen(false); productsResult.refresh(); });
             }} />
-            <PrintLabelsDialog isOpen={isPrintOpen} onOpenChange={setIsPrintDialogOpen} productUuids={Array.from(selectedProducts)} />
+            <PrintLabelsDialog isOpen={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen} productUuids={Array.from(selectedProducts)} />
             <DeleteMultipleProductsDialog isOpen={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen} count={selectedProducts.size} onConfirm={() => {
                 productService.bulkDelete(Array.from(selectedProducts)).then(() => { setIsBulkDeleteDialogOpen(false); setSelectedProducts(new Set()); productsResult.refresh(); });
             }} />
