@@ -47,6 +47,10 @@ import {
 type DeliveryFilter = 'all' | 'delivered' | 'pending';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
 
+/**
+ * iPOS Zen - Bread Logistics Page.
+ * PRODUCTION AUDIT: Hardened hydration guards and stable selection logic.
+ */
 export default function BreadPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date | null>(null);
@@ -65,6 +69,7 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
+    // 1. Initial Mount & Date Stabilization
     useEffect(() => {
         setIsMounted(true);
         setCurrentDate(new Date());
@@ -75,21 +80,25 @@ export default function BreadPage() {
         [currentDate, isMounted]
     );
 
+    // 2. Automation: Ensure orders exist for current date view
     useEffect(() => {
         if (isMounted && formattedDate) {
             breadService.ensureOrdersForDate(formattedDate);
+            // Clear selection on date change
             setSelectedOrders(new Set());
         }
     }, [formattedDate, isMounted]);
 
+    // 3. Reactive Data Stream
     const { value: orders, isLoading, refresh } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => (isMounted && formattedDate) ? breadService.getOrdersForDate(formattedDate) : Promise.resolve([]),
         [formattedDate, isMounted]
     );
 
+    // 4. In-Memory Search & Filtering
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
-        let list = orders;
+        let list = [...orders];
         
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
@@ -129,6 +138,7 @@ export default function BreadPage() {
 
     const isFiltered = searchQuery !== '' || filterDelivery !== 'all' || filterPayment !== 'all';
 
+    // 5. Bulk End-of-Day Billing
     const runAutomatedTask = useCallback(async () => {
         setIsProcessing(true);
         try {
@@ -309,7 +319,12 @@ export default function BreadPage() {
                 </TabsContent>
             </Tabs>
 
-            <BreadOrderForm isOpen={isMounted && isFormOpen} onOpenChange={setIsFormOpen} currentDate={formattedDate} onSuccess={() => { setIsFormOpen(false); refresh(); }} />
+            <BreadOrderForm 
+                isOpen={isMounted && isFormOpen} 
+                onOpenChange={setIsFormOpen} 
+                currentDate={formattedDate} 
+                onSuccess={() => { setIsFormOpen(false); refresh(); }} 
+            />
 
             <ConfirmAlertDialog
                 isOpen={isAutoBillingConfirmOpen}

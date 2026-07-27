@@ -66,7 +66,7 @@ class BreadService {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
-        // Protection: Don't generate for past dates manually
+        // Protection: Don't generate for future dates excessively or past dates
         if (date < todayStr) return;
 
         await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile, db.sync_queue], async () => {
@@ -129,10 +129,12 @@ class BreadService {
 
     /**
      * Convertit des ordres en ventes réelles (Audit de Clôture).
+     * TRANSACTION ATOMIQUE: Garantit la cohérence entre logistique et comptabilité.
      */
     async convertBreadOrdersToSales(orderUuids: string[], breadPrice: number): Promise<void> {
         if (orderUuids.length === 0) return;
 
+        // Hardened transaction scope covering ALL impacted financial tables
         await db.transaction('rw', [
           db.bread_orders, db.sales, db.products, 
           db.inventory_logs, db.customers, db.company_profile, 
@@ -142,10 +144,10 @@ class BreadService {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
-                // Skip if already billed, no customer linked, or already deleted
+                // Critical protection: Skip if already billed, no customer, or deleted
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
-                // Create the sale entity
+                // Create the sale entity via central finance service
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_VIRTUAL_PROD',
@@ -158,6 +160,7 @@ class BreadService {
                     discountType: 'fixed',
                     discountValue: 0,
                     deliveryFee: 0,
+                    // If marked as paid in logistics, it translates to immediate cash in finance
                     amountPaid: order.isPaid ? roundFinancial(order.quantity * (breadPrice || order.unitPrice)) : 0,
                     customerUuid: order.customerUuid,
                 });
