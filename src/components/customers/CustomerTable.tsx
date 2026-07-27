@@ -6,15 +6,15 @@ import {
     Table, TableBody, TableCell, TableHead,
     TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    MoreHorizontal, Edit, Trash2, FileText, Phone,
-    MessageCircle, Wheat, ChevronUp, ChevronDown,
-    ChevronsUpDown, BellRing, Clock, CheckCircle2,
+    MoreHorizontal, Edit, Trash2, FileText,
+    Wheat, ChevronUp, ChevronDown,
+    ChevronsUpDown, Clock, CheckCircle2,
+    TriangleAlert
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn, formatCurrency, safeNumber } from '@/lib/utils';
@@ -67,7 +67,7 @@ export function CustomerTable({
         <div className="rounded-xl border bg-card/30 backdrop-blur-sm overflow-hidden shadow-sm">
             <Table>
                 <TableHeader className="bg-muted/30">
-                    <TableRow className="border-b h-9">
+                    <TableRow className="border-b h-8">
                         <TableHead className="w-10 px-4">
                             <Checkbox checked={customers.length > 0 && selectedCustomers.size === customers.length} onCheckedChange={onToggleSelectAll}
                                 className="h-3.5 w-3.5 border-primary/40 data-[state=checked]:bg-primary" />
@@ -95,15 +95,17 @@ export function CustomerTable({
                     {sorted.map(c => {
                         const balance = safeNumber(c.outstandingBalance);
                         const isSelected = selectedCustomers.has(c.uuid);
+                        const isOverdue = c.debtStatus === 'overdue';
+
                         return (
-                            <TableRow key={c.uuid} onClick={() => onToggleSelection(c.uuid)} className={cn('group border-b cursor-pointer h-10', isSelected ? 'bg-primary/5' : 'hover:bg-muted/30')}>
+                            <TableRow key={c.uuid} onClick={() => onToggleSelection(c.uuid)} className={cn('group border-b cursor-pointer h-9', isSelected ? 'bg-primary/5' : 'hover:bg-muted/30')}>
                                 <TableCell className="px-4 py-0" onClick={e => e.stopPropagation()}>
                                     <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelection(c.uuid)} className="h-3.5 w-3.5 border-primary/40" />
                                 </TableCell>
                                 <TableCell className="px-2 py-0">
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-[11px] uppercase truncate max-w-[200px]">{c.firstName} {c.lastName}</span>
-                                        {c.isBreadClient && <Wheat className="h-3 w-3 text-primary/40 shrink-0" />}
+                                        {c.isBreadClient && <Wheat className="h-2.5 w-2.5 text-primary/40 shrink-0" />}
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-2 py-0 hidden md:table-cell">
@@ -113,18 +115,21 @@ export function CustomerTable({
                                     <span className="font-mono text-[11px] text-muted-foreground/40">{formatCurrency(c.totalSpent)}</span>
                                 </TableCell>
                                 <TableCell className="px-2 py-0 text-right">
-                                    <span className={cn('font-mono text-[11px] font-black tabular-nums', balance > 0 ? 'text-red-500' : 'text-emerald-600')}>{formatCurrency(balance)}</span>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <span className={cn('font-mono text-[11px] font-black tabular-nums', balance > 0.009 ? 'text-red-500' : 'text-emerald-600')}>{formatCurrency(balance)}</span>
+                                        {isOverdue && <TriangleAlert className="h-3 w-3 text-red-500 animate-pulse" />}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="px-4 py-0 text-right" onClick={e => e.stopPropagation()}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted transition-colors"><MoreHorizontal className="h-3.5 w-3.5 opacity-30" /></button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                            <DropdownMenuItem asChild className="text-xs font-bold"><Link href={`/customers/detail?uuid=${c.uuid}`}><FileText className="mr-2 h-3.5 w-3.5" /> Dossier</Link></DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onEdit(c)} className="text-xs font-bold"><Edit className="mr-2 h-3.5 w-3.5" /> Modifier</DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => onDelete(c)} className="text-destructive text-xs font-bold"><Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer</DropdownMenuItem>
+                                        <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-white/5">
+                                            <DropdownMenuItem asChild className="text-xs font-bold p-2"><Link href={`/customers/detail?uuid=${c.uuid}`}><FileText className="mr-2 h-3.5 w-3.5" /> Dossier</Link></DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onEdit(c)} className="text-xs font-bold p-2"><Edit className="mr-2 h-3.5 w-3.5" /> Modifier</DropdownMenuItem>
+                                            <DropdownMenuSeparator className="opacity-10" />
+                                            <DropdownMenuItem onClick={() => onDelete(c)} className="text-destructive text-xs font-bold p-2"><Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>

@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, ImportAnalysis, ImportRow, CustomerFormData, CustomerUpdateInput, Sale, Payment, ProductReturn, BreadProfile } from '@/lib/types';
+import type { Customer, ImportAnalysis, CustomerFormData, CustomerUpdateInput, ProductReturn } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
@@ -129,17 +129,13 @@ class CustomerService {
     async deleteCustomer(uuid: string): Promise<void> {
         const customer = await db.customers.where('uuid').equals(uuid).first();
         if (!customer?.id) return;
-        if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.01) throw new Error(`Solde non nul.`);
+        if (Math.abs(safeNumber(customer.outstandingBalance)) > 0.01) throw new Error(`Révocation impossible : solde non nul.`);
 
         await db.transaction('rw', [db.customers, db.sync_queue], async () => {
             await db.customers.update(customer.id!, { deletedAt: new Date(), updatedAt: new Date(), syncStatus: 'pending' });
             await db.sync_queue.add({ table: 'customers', operation: 'DELETE', payload: { uuid }, timestamp: Date.now() });
         });
         this.triggerSync();
-    }
-
-    async bulkDelete(uuids: string[]): Promise<void> {
-        for (const uuid of uuids) await this.deleteCustomer(uuid);
     }
 
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
@@ -151,6 +147,7 @@ class CustomerService {
             const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
             const returns = await db.product_returns.where('customerUuid').equals(customerUuid).toArray();
 
+            // Precision audit using cents-based arithmetic
             let debtCents = Math.round(safeNumber(customer.initialBalance) * 100);
             let spentCents = 0;
 
@@ -160,8 +157,8 @@ class CustomerService {
             });
             payments.forEach(p => debtCents -= Math.round(safeNumber(p.amount) * 100));
             returns.forEach(r => {
-                const netReturn = Math.round(safeNumber(r.totalReturnValue) * 100) - Math.round(safeNumber(r.amountRefunded) * 100);
-                debtCents -= netReturn;
+                const netReturnCents = Math.round(safeNumber(r.totalReturnValue) * 100) - Math.round(safeNumber(r.amountRefunded) * 100);
+                debtCents -= netReturnCents;
                 spentCents -= Math.round(safeNumber(r.totalReturnValue) * 100);
             });
 
@@ -172,8 +169,8 @@ class CustomerService {
             const update = {
                 totalSpent: spent,
                 outstandingBalance: balance,
-                isOverLimit: limit > 0 ? balance > (limit + 0.01) : false,
-                debtStatus: balance > 0.01 ? 'due_soon' : 'none' as any,
+                isOverLimit: limit > 0 ? balance > (limit + 0.009) : false,
+                debtStatus: (balance > 0.009 ? 'due_soon' : 'none') as any,
                 updatedAt: new Date()
             };
 
@@ -203,7 +200,7 @@ class CustomerService {
             ...returns.map(r => ({ ...r, type: 'return', date: r.createdAt })),
         ];
         if (customer && Math.abs(safeNumber(customer.initialBalance)) > 0.01) {
-            activity.push({ uuid: 'init-' + customer.uuid, type: 'initial_balance', date: customer.createdAt, amount: customer.initialBalance, notes: "Solde initial reporté." });
+            activity.push({ uuid: 'init-' + customer.uuid, type: 'initial_balance', date: customer.createdAt, amount: customer.initialBalance, notes: "Ouverture de dossier (Report)." });
         }
         return activity.sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime()).slice((page - 1) * limit, page * limit);
     }
@@ -254,6 +251,10 @@ class CustomerService {
             for (const item of confirmed.toAdd) await this.addCustomer(item);
             for (const item of confirmed.toUpdate) { const { uuid, ...rest } = item; if (uuid) await this.updateCustomer(uuid, rest); }
         });
+    }
+
+    async bulkDelete(uuids: string[]): Promise<void> {
+        for (const uuid of uuids) await this.deleteCustomer(uuid);
     }
 }
 

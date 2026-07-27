@@ -3,22 +3,22 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, AlertTriangle, Landmark } from 'lucide-react';
+import { Users, Landmark, TriangleAlert } from 'lucide-react';
 import { formatCurrency, cn, safeNumber } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { Customer } from '@/lib/types';
+import type { Customer } from '@/lib/types';
 
 const StatCard = ({ title, value, icon: Icon, colorClass }: { title: string, value: string, icon: any, colorClass: string }) => (
     <Card className="h-full bg-card/40 border-none shadow-sm rounded-xl overflow-hidden group">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
             <CardTitle className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest">{title}</CardTitle>
-            <div className={cn("p-1.5 rounded-lg", colorClass)}>
-                <Icon className="h-3 w-3" />
+            <div className={cn("p-1.5 rounded-lg shadow-inner", colorClass)}>
+                <Icon className="h-3.5 w-3.5" />
             </div>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-            <div className="text-lg font-black tracking-tight tabular-nums">{value}</div>
+            <div className="text-xl font-black tracking-tighter tabular-nums">{value}</div>
         </CardContent>
     </Card>
 );
@@ -41,7 +41,7 @@ export function CustomerStats() {
     });
 
     return {
-        total: customers.length,
+        total: customers.filter(c => !c.deletedAt).length,
         overdue: overdueCount,
         totalOutstanding: totalDebtCents / 100
     };
@@ -49,14 +49,14 @@ export function CustomerStats() {
 
   if (customers === undefined) {
     return (
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-500">
+    <div className="grid gap-3 grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-500">
       <StatCard 
         title="Fichier Clients" 
         value={String(stats.total)} 
@@ -72,7 +72,7 @@ export function CustomerStats() {
       <StatCard 
         title="Retards" 
         value={String(stats.overdue)} 
-        icon={AlertTriangle} 
+        icon={TriangleAlert} 
         colorClass="bg-amber-500/10 text-amber-500" 
       />
     </div>
