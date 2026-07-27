@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useActiveCart, useCartActions } from '@/stores/cartStore';
 import type { Customer } from '@/lib/types';
 import { calculateCartTotals, formatCurrency, cn } from '@/lib/utils';
-import { User, Receipt, UserX, Trash2, Phone, AlertTriangle, ShieldAlert, HandCoins } from 'lucide-react';
+import { User, Receipt, UserX, Trash2, Phone, ShieldAlert, HandCoins } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 /**
  * iPOS Zen - Enriched Sale Info Bar.
  * Displays critical cart metrics and detailed customer financial status in real-time.
- * Now includes instant debt settlement action.
  */
 export function SaleInfoBar() {
     const cart = useActiveCart();
@@ -27,6 +26,7 @@ export function SaleInfoBar() {
 
     const customerUuid = cart?.customerUuid;
 
+    // Stable query to prevent re-render loops
     const { value: customer, refresh: refreshCustomer } = useLiveQuery<Customer | undefined>(
         () => customerUuid ? db.customers.where('uuid').equals(customerUuid).first() : Promise.resolve(undefined),
         [customerUuid]
@@ -44,41 +44,30 @@ export function SaleInfoBar() {
 
     const handlePaymentSuccess = () => {
         refreshCustomer();
-        toast.success("Règlement enregistré avec succès.");
+        toast.success("Règlement enregistré.");
     };
 
     return (
         <div className="print-hide bg-card border-b border-border shadow-sm z-30 h-12 flex items-center px-4">
             <div className="flex items-center gap-6 w-full">
-                {/* 1. Cart Context */}
+                {/* 1. Cart Metrics */}
                 <div className="flex items-center gap-2 shrink-0">
                     <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                         <Receipt className="h-4 w-4" />
                     </div>
                     <div className="flex flex-col -space-y-1">
                         <span className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">{cart.name}</span>
-                        <span className="text-[10px] font-bold text-foreground">PANIER ACTIF</span>
+                        <span className="text-[10px] font-black text-primary tabular-nums">{formatCurrency(total)}</span>
                     </div>
                     <Badge variant="secondary" className="h-5 px-1.5 text-[9px] font-black bg-muted border-none ml-1">{itemCount} ITEMS</Badge>
                 </div>
 
                 <div className="h-5 w-px bg-border/60 mx-1" />
 
-                {/* 2. Financial Metrics - Total Net */}
-                <div className="flex items-center gap-4 shrink-0">
-                    <div className="flex flex-col -space-y-1">
-                        <span className="text-[8px] font-black uppercase text-muted-foreground/40">Total Net à Percevoir</span>
-                        <span className="text-xl font-black text-primary tabular-nums tracking-tighter">{formatCurrency(total)}</span>
-                    </div>
-                </div>
-
-                <div className="h-5 w-px bg-border/60 mx-1" />
-
-                {/* 3. Enriched Customer Identity & Credit Status */}
+                {/* 2. Customer Financial Pulse */}
                 <div className="flex items-center gap-6 flex-grow min-w-0">
                     {customer ? (
                         <>
-                            {/* Identity Section */}
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="p-2 rounded-xl bg-primary/10 text-primary shadow-inner">
                                     <User className="h-4 w-4" />
@@ -96,10 +85,9 @@ export function SaleInfoBar() {
                                 </div>
                             </div>
 
-                            {/* Global Debt Pulse & Quick Settle */}
                             <div className="flex items-center gap-4">
                                 <div className="flex flex-col -space-y-1">
-                                    <span className="text-[8px] font-black uppercase text-muted-foreground/40">Solde Antérieur</span>
+                                    <span className="text-[8px] font-black uppercase text-muted-foreground/40">Crédit Actuel</span>
                                     <div className="flex items-center gap-2">
                                         <span className={cn(
                                             "text-xs font-black tabular-nums tracking-tighter",
@@ -110,7 +98,7 @@ export function SaleInfoBar() {
                                         {customer.isOverLimit && (
                                             <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/20 animate-pulse">
                                                 <ShieldAlert className="h-2.5 w-2.5" />
-                                                <span className="text-[7px] font-black uppercase">Crédit Saturé</span>
+                                                <span className="text-[7px] font-black uppercase">Bloqué</span>
                                             </div>
                                         )}
                                     </div>
@@ -130,14 +118,14 @@ export function SaleInfoBar() {
                             </div>
                         </>
                     ) : (
-                        <div className="flex items-center gap-2.5 text-muted-foreground/30 italic group hover:text-muted-foreground/50 transition-colors">
-                            <UserX className="h-4 w-4 shrink-0 opacity-20 group-hover:opacity-100 transition-opacity" />
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">Vente de passage (Comptant)</span>
+                        <div className="flex items-center gap-2.5 text-muted-foreground/30 italic">
+                            <UserX className="h-4 w-4 shrink-0 opacity-20" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">Passage (Comptant)</span>
                         </div>
                     )}
                 </div>
 
-                {/* 4. Cart Maintenance Actions */}
+                {/* 3. Maintenance */}
                 <div className="flex items-center gap-2 shrink-0">
                     {cart.items.length > 0 && (
                         <Button
@@ -145,7 +133,6 @@ export function SaleInfoBar() {
                             size="icon-sm"
                             className="h-9 w-9 rounded-xl text-destructive/30 hover:text-destructive hover:bg-destructive/5 transition-all"
                             onClick={() => clearCart()}
-                            title="Vider le panier"
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -153,7 +140,6 @@ export function SaleInfoBar() {
                 </div>
             </div>
 
-            {/* Quick Settle Dialog */}
             {customer && (
                 <AddPaymentDialog 
                     isOpen={isPaymentDialogOpen}

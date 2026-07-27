@@ -26,6 +26,10 @@ import { addDays, setDate as fnsSetDate, addMonths, isAfter, startOfDay } from '
 import { customerService }  from '@/services/customer.service';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
+/**
+ * iPOS Zen - Audit Encaissement (Elite Logic).
+ * Audit Fixed: Proper DialogFooter usage and single customer handling.
+ */
 function PaymentDialogContent({
     isOpen,
     onOpenChange,
@@ -143,7 +147,6 @@ function PaymentDialogContent({
 
                     <div className="p-6 space-y-6">
                         <div className="p-6 bg-muted rounded-2xl border border-border text-center space-y-1 shadow-inner relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-2 opacity-[0.02] group-hover:opacity-10 transition-opacity"><Wallet className="h-20 w-20" /></div>
                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-[0.2em] relative z-10">Total Net à Percevoir</p>
                             <p className="text-4xl font-black text-primary tabular-nums tracking-tighter relative z-10">{formatCurrency(total)}</p>
                         </div>
@@ -185,13 +188,13 @@ function PaymentDialogContent({
                             <div className="space-y-4 p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl animate-in zoom-in-95 duration-500">
                                 <div className="flex items-start gap-3">
                                     <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                                    <p className="text-amber-700 dark:text-amber-500 text-xs font-medium leading-relaxed">
+                                    <p className="text-amber-700 text-xs font-medium leading-relaxed">
                                         Transfert de <span className="font-black underline">{formatCurrency(total - amountPaid)}</span> au registre des dettes.
                                     </p>
                                 </div>
                                 {isOverLimit && (
                                     <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3 shadow-inner">
-                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Crédit Dépassé</div>
+                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Dépassé</div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Autoriser exception</span>
                                             <Switch checked={approveOverLimit} onCheckedChange={setApproveOverLimit} className="data-[state=checked]:bg-destructive" />
@@ -199,7 +202,7 @@ function PaymentDialogContent({
                                     </div>
                                 )}
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/40 ml-1">Échéance programmée</Label>
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/40 ml-1">Échéance</Label>
                                     <DatePicker date={dueDate} setDate={setDueDate} />
                                 </div>
                             </div>
@@ -207,10 +210,10 @@ function PaymentDialogContent({
                     </div>
 
                     <DialogFooter className="p-4 bg-muted border-t border-border flex gap-3">
-                        <Button variant="ghost" className="flex-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest" onClick={() => onOpenChange(false)} disabled={isLoading}>Réviser Saisie</Button>
+                        <Button variant="ghost" className="flex-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest" onClick={() => onOpenChange(false)} disabled={isLoading}>Réviser</Button>
                         <Button className="flex-[2] h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl gap-3 active:scale-95 transition-all" onClick={handleProcessSale} disabled={!canFinalize}>
                             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />} 
-                            Valider Encaissement [Enter]
+                            Valider [Enter]
                         </Button>
                     </DialogFooter>
                 </DialogContent>

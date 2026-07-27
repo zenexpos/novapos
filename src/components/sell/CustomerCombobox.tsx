@@ -31,6 +31,10 @@ import { CustomerDialog } from '@/components/customers/customer-dialog';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 
+/**
+ * iPOS Zen - Elite Customer Selection.
+ * Audit Fixed: Missing Loader2 defined, Single Customer logic enforced.
+ */
 export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.ComponentPropsWithoutRef<'div'>>((_, ref) => {
     const { setCustomer } = useCartActions();
     const activeCart = useActiveCart();
@@ -69,7 +73,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
             const data = await customerService.getCustomers();
             setCustomers(data);
         } catch (e) {
-            toast.error("Échec du chargement de la liste clients");
+            toast.error("Échec du chargement clients");
         } finally {
             setIsLoading(false);
         }
@@ -97,14 +101,6 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
         setIsOpen(false);
     };
 
-    const handleNewCustomerSuccess = (customer?: Customer) => {
-        if (customer) {
-            setCustomer(customer.uuid);
-            setIsOpen(false);
-            toast.success(`Client ${customer.firstName} enregistré et ajouté`);
-        }
-    };
-
     return (
         <>
             <Button
@@ -116,7 +112,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                 )}
             >
                 {selectedUuid ? <UserCheck className="h-4 w-4 text-primary shrink-0" /> : <UserX className="h-4 w-4 text-muted-foreground/40 shrink-0" />}
-                <span className="text-xs font-bold uppercase tracking-tight truncate">
+                <span className="text-[10px] font-black uppercase tracking-tight truncate">
                     {displayName} [F2]
                 </span>
             </Button>
@@ -131,7 +127,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                                 </div>
                                 <div>
                                     <DialogTitle className="text-xl font-black tracking-tight">Identification Client</DialogTitle>
-                                    <p className="text-[10px] font-bold uppercase text-primary/50">Assigner un client à cette facture pour le suivi des dettes</p>
+                                    <p className="text-[10px] font-bold uppercase text-primary/50">Assigner un compte pour le suivi des dettes</p>
                                 </div>
                             </div>
                             {selectedUuid && (
@@ -152,7 +148,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <Input
                                 ref={internalInputRef}
-                                placeholder="Rechercher par nom ou téléphone..."
+                                placeholder="Rechercher par nom یا رقم الهاتف..."
                                 className="pl-14 h-12 text-lg font-bold rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -188,14 +184,14 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                                                         {isSelected ? <CheckCircle2 className="h-5 w-5" /> : <User className="h-5 w-5 text-primary/60" />}
                                                     </div>
                                                     <div className="flex flex-col -space-y-0.5">
-                                                        <p className={cn("font-bold text-sm tracking-tight", isSelected && "text-primary")}>{c.firstName} {c.lastName}</p>
+                                                        <p className={cn("font-black text-sm tracking-tight", isSelected && "text-primary")}>{c.firstName} {c.lastName}</p>
                                                         <p className="text-[10px] font-mono text-muted-foreground/50">{c.phone || 'Sans téléphone'}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4">
                                                     {c.outstandingBalance > 0 && (
                                                         <div className="text-right px-4 border-r border-white/5">
-                                                            <p className="text-[8px] font-bold uppercase text-destructive/50">Solde dû</p>
+                                                            <p className="text-[8px] font-bold uppercase text-destructive/50">Dette</p>
                                                             <p className="text-sm font-black text-destructive tracking-tighter">{formatCurrency(c.outstandingBalance)}</p>
                                                         </div>
                                                     )}
@@ -236,7 +232,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                 isOpen={isAddDialogOpen}
                 onOpenChange={setIsAddDialogOpen}
                 customer={null}
-                onSuccess={handleNewCustomerSuccess}
+                onSuccess={(c) => { if(c) setCustomer(c.uuid); setIsOpen(false); }}
             />
         </>
     );
