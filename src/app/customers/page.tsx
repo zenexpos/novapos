@@ -166,55 +166,55 @@ function CustomersContent() {
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || sortBy !== 'createdAt_desc';
     
     return (
-        <div className="p-4 sm:p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-700 pb-24">
+        <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader title="Gestion des Clients" description="Suivi des dettes et flux financiers.">
                 <div className="flex gap-2">
-                    <Button variant="outline" asChild disabled={isAnalyzing} className="rounded-xl font-bold border-primary/20">
+                    <Button variant="outline" size="sm" asChild disabled={isAnalyzing} className="rounded-lg font-bold">
                         <label className="cursor-pointer flex items-center">
                             {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
                             Importer
                             <input type="file" accept=".csv" className="sr-only" onChange={handleFileSelected} />
                         </label>
                     </Button>
-                    <Button variant="outline" onClick={handleExportCsv} className="rounded-xl font-bold border-primary/20"><FileDown className="mr-2 h-4 w-4" /> Exporter</Button>
-                    <Button onClick={() => { setSelectedCustomer(null); setIsCustomerDialogOpen(true); }} className="rounded-xl font-bold shadow-lg"><Plus className="mr-2 h-4 w-4" /> Nouveau [N]</Button>
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="rounded-lg font-bold"><FileDown className="mr-2 h-4 w-4" /> Exporter</Button>
+                    <Button size="sm" onClick={() => { setSelectedCustomer(null); setIsCustomerDialogOpen(true); }} className="rounded-lg font-bold shadow-sm"><Plus className="mr-2 h-4 w-4" /> Nouveau [N]</Button>
                 </div>
             </PageHeader>
 
             <CustomerStats />
 
-            <div className="flex flex-col lg:flex-row gap-3 bg-card/20 p-2 rounded-2xl border border-white/5 backdrop-blur-sm shadow-inner">
+            <div className="flex flex-col lg:flex-row gap-2 bg-muted/20 p-1.5 rounded-xl border">
                 <div className="relative flex-grow">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                    <Input ref={searchInputRef} placeholder="Rechercher... [F3]" className="pl-11 h-11 rounded-xl bg-black/20 border-none shadow-sm font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                    <Input ref={searchInputRef} placeholder="Rechercher... [F3]" className="pl-9 h-9 border-none bg-transparent shadow-none font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                 </div>
-                <div className="flex gap-2 px-2">
+                <div className="flex gap-2 px-1">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" className="rounded-xl h-11 bg-black/20 border-none font-bold text-xs uppercase">{sortOptions[sortBy]}</Button></DropdownMenuTrigger>
-                        <DropdownMenuContent className="rounded-xl border-none shadow-xl">
+                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="rounded-lg h-9 bg-background border-none font-bold text-xs uppercase">{sortOptions[sortBy]}</Button></DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end">
                             <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
                                 {Object.entries(sortOptions).map(([k, v]) => <DropdownMenuRadioItem key={k} value={k} className="text-xs font-bold uppercase">{v}</DropdownMenuRadioItem>)}
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
-                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                    <div className="flex bg-muted/40 p-1 rounded-lg border">
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                     </div>
-                    {isFiltered && <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl text-destructive hover:bg-destructive/10" onClick={resetFilters}><FilterX className="h-4 w-4" /></Button>}
+                    {isFiltered && <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-destructive" onClick={resetFilters}><FilterX className="h-4 w-4" /></Button>}
                 </div>
             </div>
 
             <div className="min-h-[450px]">
                {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[...Array(8)].map((_, i) => <Card key={i} className="rounded-3xl border-none animate-pulse h-48 bg-card/40" />)}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[...Array(8)].map((_, i) => <Card key={i} className="rounded-2xl border-none animate-pulse h-40 bg-muted/20" />)}
                     </div>
                ) : !customers?.length ? (
                     <EmptyState 
                         icon={Users} 
                         title="Aucun client" 
-                        description={isFiltered ? "Ajustez les filtres pour identifier des clients." : "Ajoutez votre premier client pour commencer le suivi des dettes."} 
+                        description={isFiltered ? "Ajustez les filtres." : "Commencez par ajouter un client."} 
                         actionLabel="Nouveau Client"
                         onAction={() => { setSelectedCustomer(null); setIsCustomerDialogOpen(true); }}
                     />
@@ -228,26 +228,20 @@ function CustomersContent() {
                         onToggleSelectAll={() => setSelectedCustomers(p => p.size === customers.length ? new Set() : new Set(customers.map(c => c.uuid)))} 
                     />
                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {customers.map(c => <CustomerCard key={c.uuid} customer={c} onEdit={handleEditCustomer} onDelete={handleDeleteCustomer} isSelected={selectedCustomers.has(c.uuid)} onToggleSelection={() => { const n = new Set(selectedCustomers); if (n.has(c.uuid)) n.delete(c.uuid); else n.add(c.uuid); setSelectedCustomers(n); }} isSelectionActive={selectedCustomers.size > 0} />)}
                     </div>
                )}
             </div>
 
             {selectedCustomers.size > 0 && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-6">
-                        <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-                            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">{selectedCustomers.size}</div>
-                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Sélections</span>
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <Button variant="ghost" onClick={handleExportCsv} className="h-12 px-6 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-primary/10 transition-all">
-                                <FileDown className="mr-2 h-4 w-4" /> Exporter (.csv)
-                            </Button>
-                            <Button variant="ghost" onClick={() => setIsBulkDeleteDialogOpen(true)} className="h-12 px-6 rounded-full font-black text-[10px] uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-all">
-                                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-                            </Button>
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-6">
+                        <span className="text-[10px] font-black uppercase text-primary">{selectedCustomers.size} sélectionnés</span>
+                        <div className="h-4 w-px bg-border" />
+                        <div className="flex items-center gap-4">
+                            <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
+                            <button onClick={() => setIsBulkDeleteDialogOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
                         </div>
                     </div>
                 </div>
