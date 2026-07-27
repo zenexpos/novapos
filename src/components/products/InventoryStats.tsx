@@ -3,24 +3,23 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TriangleAlert, TrendingUp, Percent, Landmark } from 'lucide-react';
-import { differenceInDays, startOfDay } from 'date-fns';
+import { TrendingUp, Percent, Landmark, Package } from 'lucide-react';
 import { formatCurrency, cn, safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import type { Product } from '@/lib/types';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
-    <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
-            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
-                <Icon className="h-5 w-5" />
+    <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-xl group overflow-hidden relative">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4 relative z-10">
+            <CardTitle className="text-[9px] font-black uppercase text-muted-foreground group-hover:text-primary transition-colors tracking-widest">{title}</CardTitle>
+            <div className={cn("p-2 rounded-lg shadow-inner", colorClass)}>
+                <Icon className="h-3.5 w-3.5" />
             </div>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left mb-1 tabular-nums">{value}</div>
-            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40 mt-1">{subtitle}</p>}
+        <CardContent className="px-4 pb-4 relative z-10">
+            <div className="text-xl font-black tracking-tighter text-foreground tabular-nums">{value}</div>
+            {subtitle && <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-0.5">{subtitle}</p>}
         </CardContent>
     </Card>
 );
@@ -30,41 +29,22 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
     const products = productsLive.value ?? [];
 
     const stats = useMemo(() => {
-        if (!products || products.length === 0) return { total: 0, active: 0, low: 0, out: 0, expiring: 0, totalValue: 0, totalRetail: 0, avgMargin: 0 };
-        const now = startOfDay(new Date());
+        if (!products || products.length === 0) return { total: 0, totalValue: 0, totalRetail: 0, avgMargin: 0, lowCount: 0 };
         
         let totalValAccumulatorCents = 0;
         let totalRetailAccumulatorCents = 0;
         let lowCount = 0;
-        let outCount = 0;
-        let expiringCount = 0;
-        let activeCount = 0;
 
         products.forEach(p => {
             const qty = safeNumber(p.quantity);
             const cost = safeNumber(p.purchasePrice);
             const retail = safeNumber(p.price);
-            const minStock = safeNumber(p.minStockLevel);
 
             if (qty > 0) {
                 totalValAccumulatorCents += Math.round(preciseMultiply(qty, cost) * 100);
                 totalRetailAccumulatorCents += Math.round(preciseMultiply(qty, retail) * 100);
-                activeCount++;
             }
-
-            if (qty <= 0) {
-                outCount++;
-            } else if (qty <= minStock) {
-                lowCount++;
-            }
-
-            if (p.dateExpiration) {
-                const expDate = startOfDay(new Date(p.dateExpiration));
-                const diff = differenceInDays(expDate, now);
-                if (diff >= 0 && diff <= 30) {
-                    expiringCount++;
-                }
-            }
+            if (qty <= safeNumber(p.minStockLevel)) lowCount++;
         });
 
         const totalValue = totalValAccumulatorCents / 100;
@@ -73,13 +53,10 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
 
         return {
             total: products.length,
-            active: activeCount,
-            low: lowCount,
-            out: outCount,
-            expiring: expiringCount,
             totalValue,
             totalRetail,
             avgMargin,
+            lowCount
         };
     }, [products]);
 
@@ -87,43 +64,41 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
 
     if (isLoading && products.length === 0) {
         return (
-             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40 animate-pulse" />
-                ))}
+             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-card/40 animate-pulse" />)}
             </div>
         );
     }
 
     return (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 animate-in fade-in duration-1000">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 animate-in fade-in duration-500">
             <StatCard 
-                title="Investissement Stock" 
+                title="Investissement" 
                 value={formatCurrency(stats.totalValue)} 
                 icon={Landmark} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
                 subtitle="Valeur d'achat (PMP)" 
             />
             <StatCard 
-                title="Ventes Potentielles" 
+                title="Ventes Est." 
                 value={formatCurrency(stats.totalRetail)} 
                 icon={TrendingUp} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle={`Profit estimé: ${formatCurrency(roundFinancial(stats.totalRetail - stats.totalValue))}`} 
+                subtitle={`Profit: ${formatCurrency(roundFinancial(stats.totalRetail - stats.totalValue))}`} 
             />
             <StatCard 
-                title="Marge Moyenne" 
-                value={`${stats.avgMargin.toFixed(1)}%`} 
+                title="Marge Brute" 
+                value={`${stats.avgMargin.toFixed(0)}%`} 
                 icon={Percent} 
                 colorClass="bg-violet-500/10 text-violet-500" 
-                subtitle="Rentabilité Elite" 
+                subtitle="Rentabilité globale" 
             />
             <StatCard 
-                title="Ruptures & Alertes" 
-                value={String(stats.out + stats.low)} 
-                icon={TriangleAlert} 
+                title="Alerte Stock" 
+                value={String(stats.lowCount)} 
+                icon={Package} 
                 colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle={`${stats.out} ruptures totales`} 
+                subtitle="Items à commander" 
             />
         </div>
     );
