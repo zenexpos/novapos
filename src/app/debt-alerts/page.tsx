@@ -27,8 +27,6 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 type DebtTier = 'critical' | 'warning' | 'mild';
 
 interface EnrichedDebtor {
@@ -79,32 +77,24 @@ function computeDebtors(customers: Customer[]): EnrichedDebtor[] {
 
 const tierConfig = {
     critical: {
-        bg:     'bg-red-500/8 border-red-500/20 hover:border-red-500/35',
-        accent: 'border-l-4 border-l-red-500',
-        badge:  'bg-red-500/12 text-red-500 border-red-500/20',
-        icon:   OctagonAlert,
+        bg:     'bg-red-500/5 border-red-500/10',
+        accent: 'border-l-2 border-l-red-500',
+        badge:  'text-red-500 bg-red-500/10',
         label:  'En retard',
-        dot:    'bg-red-500 animate-pulse',
     },
     warning: {
-        bg:     'bg-amber-500/8 border-amber-500/20 hover:border-amber-500/35',
-        accent: 'border-l-4 border-l-amber-500',
-        badge:  'bg-amber-500/12 text-amber-500 border-amber-500/20',
-        icon:   Clock,
+        bg:     'bg-amber-500/5 border-amber-500/10',
+        accent: 'border-l-2 border-l-amber-500',
+        badge:  'text-amber-600 bg-amber-500/10',
         label:  'Dû bientôt',
-        dot:    'bg-amber-500',
     },
     mild: {
-        bg:     'bg-[var(--glass-bg)] border-[var(--glass-border)] hover:border-primary/20',
-        accent: 'border-l-4 border-l-muted',
-        badge:  'bg-muted/30 text-muted-foreground border-muted',
-        icon:   CircleCheckBig,
+        bg:     'bg-card/40 border-border/40',
+        accent: 'border-l-2 border-l-muted-foreground/20',
+        badge:  'text-muted-foreground bg-muted/40',
         label:  'Actif',
-        dot:    'bg-muted-foreground/40',
     },
 } as const;
-
-// ─── DebtorRow ────────────────────────────────────────────────────────────────
 
 function DebtorRow({ debtor, onPay }: { debtor: EnrichedDebtor; onPay: (c: Customer) => void }) {
     const { customer, balance, tier, daysOverdue, nextDueDate } = debtor;
@@ -126,148 +116,93 @@ function DebtorRow({ debtor, onPay }: { debtor: EnrichedDebtor; onPay: (c: Custo
 
     return (
         <div className={cn(
-            'group relative flex items-center gap-4 px-4 py-3.5 rounded-xl border',
-            'transition-all duration-200 cursor-pointer',
+            'group flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-150',
             cfg.bg, cfg.accent,
         )}>
-            {/* Avatar */}
             <div className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0',
-                tier === 'critical' ? 'bg-red-500/15 text-red-500 border border-red-500/25'
-                : tier === 'warning' ? 'bg-amber-500/15 text-amber-500 border border-amber-500/25'
-                : 'bg-muted/50 text-muted-foreground border border-muted',
+                'w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 border',
+                tier === 'critical' ? 'border-red-500/20 text-red-500'
+                : tier === 'warning' ? 'border-amber-500/20 text-amber-500'
+                : 'border-border/40 text-muted-foreground',
             )}>
                 {initials}
             </div>
 
-            {/* Name + meta */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-black truncate">
+                    <p className="text-xs font-black truncate uppercase tracking-tight">
                         {customer.firstName} {customer.lastName}
                     </p>
-                    {isOverLimit && (
-                        <ShieldAlert className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                    )}
+                    {isOverLimit && <ShieldAlert className="h-3 w-3 text-red-500 shrink-0" />}
                 </div>
 
                 <div className="flex items-center gap-3 flex-wrap">
-                    {/* Status badge */}
-                    <span className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border',
-                        cfg.badge,
-                    )}>
-                        <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />
-                        {cfg.label}
-                        {daysOverdue !== null && daysOverdue > 0 && (
-                            <span> — {daysOverdue}j</span>
-                        )}
+                    <span className={cn('px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter', cfg.badge)}>
+                        {cfg.label} {daysOverdue !== null && daysOverdue > 0 && `(${daysOverdue}j)`}
                     </span>
 
-                    {/* Next due date */}
                     {nextDueDate && (
-                        <span className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-wide">
+                        <span className="text-[8px] font-bold text-muted-foreground/30 uppercase">
                             Éch. {format(nextDueDate, 'dd MMM', { locale: fr })}
                         </span>
                     )}
 
-                    {/* Phone */}
                     {customer.phone && (
-                        <span className="flex items-center gap-1 text-[9px] text-muted-foreground/35">
-                            <Phone className="h-2.5 w-2.5" />
-                            {customer.phone}
+                        <span className="flex items-center gap-1 text-[8px] text-muted-foreground/20 font-mono">
+                            <Phone className="h-2 w-2" /> {customer.phone}
                         </span>
                     )}
                 </div>
-
-                {/* Credit usage bar */}
-                {limit > 0 && (
-                    <div className="mt-2 flex items-center gap-2">
-                        <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
-                            <div
-                                className={cn(
-                                    'h-full rounded-full transition-all duration-700',
-                                    isOverLimit ? 'bg-red-500' : usage > 80 ? 'bg-amber-500' : 'bg-primary',
-                                )}
-                                style={{ width: `${Math.min(100, usage)}%` }}
-                            />
-                        </div>
-                        <span className="text-[8px] font-black text-muted-foreground/40 w-10 text-right tabular-nums">
-                            {usage.toFixed(0)}%
-                        </span>
-                    </div>
-                )}
             </div>
 
-            {/* Balance + actions */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
                     <p className={cn(
-                        'text-lg font-black tabular-nums tracking-tight',
-                        tier === 'critical' ? 'text-red-500'
-                        : tier === 'warning' ? 'text-amber-500'
-                        : 'text-foreground',
+                        'text-sm font-black tabular-nums tracking-tighter',
+                        tier === 'critical' ? 'text-red-500' : tier === 'warning' ? 'text-amber-500' : 'text-foreground',
                     )}>
                         {formatCurrencyCompact(balance)}
                     </p>
-                    <p className="text-[8px] font-semibold text-muted-foreground/30 uppercase">Solde dû</p>
+                    {limit > 0 && (
+                        <div className="w-12 h-1 bg-black/5 rounded-full mt-1 overflow-hidden">
+                            <div className={cn('h-full', isOverLimit ? 'bg-red-500' : usage > 80 ? 'bg-amber-500' : 'bg-primary')} style={{ width: `${usage}%` }} />
+                        </div>
+                    )}
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                    <Button
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); onPay(customer); }}
-                        className="h-7 px-3 rounded-lg text-[9px] font-black uppercase tracking-wide"
-                    >
-                        <HandCoins className="h-3 w-3 mr-1" />
+                <div className="flex items-center gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
+                    {customer.phone && (
+                        <Button variant="ghost" size="icon" onClick={handleWhatsApp} className="h-7 w-7 rounded-md text-emerald-500 hover:bg-emerald-500/10">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="icon" asChild className="h-7 w-7 rounded-md hover:bg-primary/10">
+                        <Link href={`/customers/detail?uuid=${customer.uuid}`}>
+                            <FileText className="h-3.5 w-3.5" />
+                        </Link>
+                    </Button>
+                    <Button size="sm" onClick={(e) => { e.stopPropagation(); onPay(customer); }} className="h-7 px-3 rounded-lg text-[9px] font-black uppercase">
                         Encaisser
                     </Button>
-                    <div className="flex gap-1">
-                        {customer.phone && (
-                            <Button
-                                variant="ghost" size="icon"
-                                onClick={handleWhatsApp}
-                                className="h-7 w-7 rounded-md text-green-500 hover:bg-green-500/10"
-                            >
-                                <MessageCircle className="h-3.5 w-3.5" />
-                            </Button>
-                        )}
-                        <Button
-                            variant="ghost" size="icon" asChild
-                            className="h-7 w-7 rounded-md hover:bg-primary/10"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <Link href={`/customers/detail?uuid=${customer.uuid}`}>
-                                <FileText className="h-3.5 w-3.5" />
-                            </Link>
-                        </Button>
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function DebtAlertsPage() {
-    const [search, setSearch]             = useState('');
-    const [tierFilter, setTierFilter]     = useState<'all' | DebtTier>('all');
+    const [search, setSearch] = useState('');
+    const [tierFilter, setTierFilter] = useState<'all' | DebtTier>('all');
     const [paymentCustomer, setPaymentCustomer] = useState<Customer | null>(null);
-    const [isMounted, setIsMounted]       = useState(false);
-    const deferredSearch                  = useDeferredValue(search);
+    const [isMounted, setIsMounted] = useState(false);
+    const deferredSearch = useDeferredValue(search);
 
     useEffect(() => { setIsMounted(true); }, []);
 
     const { value: customers, isLoading } = useLiveQuery(
-        () => db.customers.filter(c => safeNumber(c.outstandingBalance) > 0.01).toArray(),
+        () => db.customers.where('outstandingBalance').above(0.01).filter(c => !c.deletedAt).toArray(),
         [],
     );
-
-    const handlePaymentSuccess = useCallback(() => {
-        setPaymentCustomer(null);
-    }, []);
 
     const debtors = useMemo(() => computeDebtors(customers ?? []), [customers]);
 
@@ -284,162 +219,92 @@ export default function DebtAlertsPage() {
         return list;
     }, [debtors, tierFilter, deferredSearch]);
 
-    // KPIs
     const kpis = useMemo(() => ({
         total:    debtors.reduce((s, d) => s + d.balance, 0),
         critical: debtors.filter(d => d.tier === 'critical').length,
         warning:  debtors.filter(d => d.tier === 'warning').length,
-        count:    debtors.length,
     }), [debtors]);
 
     useKeyboardShortcuts([
         { key: 'f', action: () => document.getElementById('debt-search')?.focus(), description: 'Rechercher', ignoreInputFocus: false },
     ], 'Alertes');
 
-    const tierBtns: { key: 'all' | DebtTier; label: string; count: number }[] = [
-        { key: 'all',      label: 'Tous',       count: debtors.length },
-        { key: 'critical', label: 'En retard',  count: kpis.critical },
-        { key: 'warning',  label: 'Dû bientôt', count: kpis.warning },
-        { key: 'mild',     label: 'Actifs',     count: debtors.filter(d => d.tier === 'mild').length },
-    ];
-
-    if (!isMounted) {
-        return (
-            <div className="p-4 sm:p-5 space-y-5 max-w-5xl mx-auto">
-                <Skeleton className="h-12 w-64 rounded-xl" />
-                <div className="grid grid-cols-3 gap-3">
-                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
-                </div>
-                <Skeleton className="h-96 w-full rounded-xl" />
-            </div>
-        );
-    }
+    if (!isMounted) return null;
 
     return (
-        <div className="p-4 sm:p-5 pb-24 max-w-5xl mx-auto space-y-5 animate-page-enter">
-            <PageHeader
-                title="Alertes de Dettes"
-                description="Suivi des créances clients en temps réel"
-                icon={BellRing}
-            >
-                {/* KPI bar */}
-                <div className="flex items-center gap-3">
+        <div className="p-3 pb-24 max-w-[1400px] mx-auto space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2">
+                <div>
+                    <h1 className="text-xl font-black uppercase tracking-tighter leading-none">Radar d'Alertes</h1>
+                    <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Surveillance des créances clients</p>
+                </div>
+                <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-xl border border-white/5">
                     {[
-                        { label: 'Total dû', value: formatCurrencyCompact(kpis.total), color: 'text-primary' },
-                        { label: 'Critiques', value: kpis.critical, color: 'text-red-500' },
-                        { label: 'À venir', value: kpis.warning, color: 'text-amber-500' },
+                        { label: 'Total', value: formatCurrencyCompact(kpis.total), cls: 'text-primary' },
+                        { label: 'Critique', value: kpis.critical, cls: 'text-red-500' },
+                        { label: 'A venir', value: kpis.warning, cls: 'text-amber-500' },
                     ].map(k => (
-                        <div key={k.label} className="hidden sm:flex flex-col items-center px-3 py-1.5 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)]">
-                            <span className={cn('text-base font-black tabular-nums', k.color)}>{k.value}</span>
-                            <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/40">{k.label}</span>
+                        <div key={k.label} className="px-3 py-1 bg-card/60 rounded-lg text-center min-w-[70px]">
+                            <p className={cn('text-xs font-black tabular-nums', k.cls)}>{k.value}</p>
+                            <p className="text-[7px] font-bold uppercase opacity-30 tracking-tighter">{k.label}</p>
                         </div>
                     ))}
                 </div>
-            </PageHeader>
+            </div>
 
-            {/* Search + filters */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-card/30 p-1 rounded-xl border border-white/5">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/30" />
                     <Input
                         id="debt-search"
-                        placeholder="Rechercher un client..."
+                        placeholder="Rechercher... [F]"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="pl-10 h-10 rounded-xl bg-[var(--glass-bg)] border-[var(--glass-border)]"
+                        className="pl-8 h-8 rounded-lg bg-black/10 border-none text-xs font-bold"
                     />
                 </div>
 
-                <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
-                    {tierBtns.map(btn => (
+                <div className="flex gap-1">
+                    {(['all', 'critical', 'warning', 'mild'] as const).map(t => (
                         <button
-                            key={btn.key}
-                            onClick={() => setTierFilter(btn.key)}
+                            key={t}
+                            onClick={() => setTierFilter(t)}
                             className={cn(
-                                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all',
-                                tierFilter === btn.key
-                                    ? 'bg-primary/15 text-primary border border-primary/25'
-                                    : 'text-muted-foreground/50 hover:text-foreground hover:bg-muted/40',
+                                'px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
+                                tierFilter === t ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground/40 hover:text-foreground'
                             )}
                         >
-                            {btn.label}
-                            {btn.count > 0 && (
-                                <span className={cn(
-                                    'inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[8px] font-black',
-                                    tierFilter === btn.key
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted/60 text-muted-foreground',
-                                )}>
-                                    {btn.count}
-                                </span>
-                            )}
+                            {t === 'all' ? 'Tous' : t === 'critical' ? 'Retard' : t === 'warning' ? 'Bientôt' : 'Sain'}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Stat strip */}
-            <div className="grid grid-cols-3 gap-3">
-                {[
-                    { icon: Coins,     label: 'Total encours',   value: formatCurrency(kpis.total),  color: 'text-primary'    },
-                    { icon: OctagonAlert, label: 'Critiques',    value: `${kpis.critical} clients`,   color: 'text-red-500'    },
-                    { icon: Users2,    label: 'Débiteurs actifs', value: `${kpis.count} clients`,    color: 'text-foreground' },
-                ].map(stat => (
-                    <Card key={stat.label} className="overflow-hidden">
-                        <CardContent className="p-4 flex items-center gap-3">
-                            <div className={cn('p-2.5 rounded-xl bg-muted/30', stat.color)}>
-                                <stat.icon className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">{stat.label}</p>
-                                <p className={cn('text-base font-black tabular-nums leading-tight', stat.color)}>{stat.value}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+            <div className="min-h-[500px]">
+                {isLoading ? (
+                    <div className="space-y-1">
+                        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg bg-card/20" />)}
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <EmptyState icon={CircleCheckBig} title="Zone Calme" description="Aucune anomalie financière détectée." />
+                ) : (
+                    <div className="space-y-1">
+                        {filtered.map(debtor => (
+                            <DebtorRow key={debtor.customer.uuid} debtor={debtor} onPay={setPaymentCustomer} />
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* List */}
-            {isLoading ? (
-                <div className="space-y-2">
-                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
-                </div>
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={search ? Search : CircleCheckBig}
-                    title={search ? 'Aucun résultat' : 'Aucune dette en cours'}
-                    description={search
-                        ? `Aucun client trouvé pour "${search}".`
-                        : 'Tous vos clients sont à jour. Excellent !'}
-                />
-            ) : (
-                <div className="space-y-2 stagger-children">
-                    {filtered.map(debtor => (
-                        <DebtorRow
-                            key={debtor.customer.uuid}
-                            debtor={debtor}
-                            onPay={setPaymentCustomer}
-                        />
-                    ))}
-                </div>
-            )}
-
-            {/* Footer count */}
-            {filtered.length > 0 && (
-                <p className="text-center text-[10px] font-semibold text-muted-foreground/30 uppercase tracking-widest">
-                    {filtered.length} client{filtered.length > 1 ? 's' : ''} affiché{filtered.length > 1 ? 's' : ''}
-                </p>
-            )}
-
-            {/* Payment dialog */}
             {paymentCustomer && (
                 <AddPaymentDialog
                     isOpen={!!paymentCustomer}
-                    onOpenChange={open => { if (!open) setPaymentCustomer(null); }}
+                    onOpenChange={o => { if (!o) setPaymentCustomer(null); }}
                     customer={paymentCustomer}
-                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentSuccess={() => setPaymentCustomer(null)}
                 />
             )}
         </div>
     );
 }
+
