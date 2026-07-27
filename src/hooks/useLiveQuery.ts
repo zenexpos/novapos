@@ -11,12 +11,8 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v8 — Titanium Production Grade.
- * 
- * Optimized to eliminate the "Maximum update depth exceeded" and "Changed size" errors.
- * 1. Constant length dependency array [tick, deps_string].
- * 2. Stable reference for the query function.
- * 3. Deep dependency checking via stringification to prevent unnecessary re-subscribing.
+ * useLiveQuery v9 — Titanium Production Grade.
+ * Optimization: Uses a stable dependency key to prevent infinite re-subscription loops.
  */
 export function useLiveQuery<T>(
     querier:      () => T | Promise<T>,
@@ -28,7 +24,6 @@ export function useLiveQuery<T>(
     const [error, setError] = useState<Error | null>(null);
     const [tick, setTick] = useState(0);
     
-    // Stable reference to the latest querier
     const querierRef = useRef(querier);
     useEffect(() => {
         querierRef.current = querier;
@@ -36,7 +31,7 @@ export function useLiveQuery<T>(
 
     const refresh = useCallback(() => setTick(t => t + 1), []);
 
-    // Create a stable string key for dependencies to ensure fixed size and value comparison
+    // Create a stable string key for dependencies to prevent array-reference-change loops
     const depsKey = JSON.stringify(deps);
 
     useEffect(() => {
@@ -52,13 +47,13 @@ export function useLiveQuery<T>(
                 if (!isSubscribed) return;
                 
                 setValue(prev => {
-                    if (prev === val) return prev;
-                    // Strict comparison for arrays to prevent re-render loops
+                    // Deep check for arrays to prevent unnecessary re-renders
                     if (Array.isArray(prev) && Array.isArray(val)) {
-                        if (prev.length === val.length && prev.every((item, i) => item === val[i])) {
+                        if (prev.length === val.length && JSON.stringify(prev) === JSON.stringify(val)) {
                             return prev;
                         }
                     }
+                    if (prev === val) return prev;
                     return val;
                 });
                 
@@ -77,7 +72,6 @@ export function useLiveQuery<T>(
             isSubscribed = false;
             subscription.unsubscribe();
         };
-        // Fixed length dependency array to satisfy React Hook rules
     }, [tick, depsKey]);
 
     return { value, isLoading, error, refresh };

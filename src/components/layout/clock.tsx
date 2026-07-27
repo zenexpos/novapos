@@ -6,7 +6,6 @@ import { fr } from 'date-fns/locale';
 
 /**
  * Clock Component - Hydration Safe.
- * PRODUCTION AUDIT: Prevents SSR mismatch by deferring rendering until client mount.
  */
 export function Clock() {
     const [now, setNow] = useState<Date | null>(null);
@@ -17,21 +16,14 @@ export function Clock() {
         return () => clearInterval(id);
     }, []);
 
-    if (!now) {
-        return (
-            <div className="hidden xl:flex flex-col items-end leading-tight select-none opacity-20">
-                <span className="text-[11px] font-black tabular-nums tracking-tight">--:--</span>
-                <span className="text-[9px] font-semibold uppercase tracking-widest">Chargement...</span>
-            </div>
-        );
-    }
+    if (!now) return null;
 
     return (
-        <div className="hidden xl:flex flex-col items-end leading-tight select-none animate-in fade-in duration-500">
-            <span className="text-[11px] font-black tabular-nums text-foreground/80 tracking-tight">
+        <div className="flex flex-col items-end leading-none select-none">
+            <span className="text-[10px] font-black tabular-nums text-foreground/80 tracking-tight">
                 {format(now, 'HH:mm')}
             </span>
-            <span className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-widest">
+            <span className="text-[7px] font-bold text-muted-foreground/40 uppercase tracking-widest">
                 {format(now, 'EEE dd MMM', { locale: fr })}
             </span>
         </div>

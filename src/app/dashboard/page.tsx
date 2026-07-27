@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Elite Dashboard - iPOS Zen.
- * Optimized for performance and high financial clarity.
+ * Optimized for performance and hydration safety.
  */
 export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
@@ -31,17 +31,20 @@ export default function DashboardPage() {
         setMounted(true);
     }, []);
     
+    // Stable query dependencies to prevent hydration flickering
+    const dateFrom = dateRange?.from?.toISOString();
+    const dateTo = dateRange?.to?.toISOString();
+
     const dataResult = useLiveQuery(
         async () => {
             if (!mounted || !dateRange?.from || !dateRange?.to) return null;
             return await dashboardService.getDashboardData(dateRange.from, dateRange.to);
         },
-        [mounted, dateRange],
+        [mounted, dateFrom, dateTo],
     );
     const data = dataResult.value;
     const isLoading = dataResult.isLoading || !mounted || !dateRangeMounted;
 
-    // Focus on 4 core indicators to minimize distraction (Zen Philosophy)
     const statCards = useMemo(() => [
         { title: 'Chiffre d\'Affaires', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
         { title: 'Bénéfice Net', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
@@ -51,24 +54,20 @@ export default function DashboardPage() {
 
     if (!mounted) {
         return (
-            <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-pulse">
+            <div className="p-6 space-y-8 max-w-[1800px] mx-auto opacity-20">
                 <Skeleton className="h-10 w-64 rounded-xl" />
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
-                </div>
-                <div className="grid lg:grid-cols-12 gap-8">
-                    <div className="lg:col-span-8 h-96"><Skeleton className="w-full h-full rounded-2xl" /></div>
-                    <div className="lg:col-span-4 h-96"><Skeleton className="w-full h-full rounded-2xl" /></div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
+        <div className="p-4 sm:p-6 space-y-6 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-20">
             <PageHeader
-                title="Centre de Commande Souverain"
-                description="Analyse stratégique de la performance financière et logistique"
+                title="Tableau de Bord"
+                description="Analyse de la performance souveraine"
                 icon={LayoutDashboard}
             >
                 <div className="flex gap-4 items-center">
@@ -82,23 +81,22 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            <div className="grid lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-8 space-y-8">
+            <div className="grid lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
                     <DashboardCharts data={data?.salesByDay ?? []} isLoading={isLoading} />
-                    <div className="grid sm:grid-cols-2 gap-8">
+                    <div className="grid sm:grid-cols-2 gap-6">
                         <TopLists type="products" items={data?.topProducts ?? []} isLoading={isLoading} />
                         <TopLists type="customers" items={data?.topCustomers ?? []} isLoading={isLoading} />
                     </div>
                 </div>
 
-                <div className="lg:col-span-4 space-y-8">
+                <div className="lg:col-span-4 space-y-6">
                     <DashboardWidgets 
                         type="bread" 
                         data={data?.breadSummary} 
                         isLoading={isLoading} 
                         breadPrice={companyProfile?.breadPrice || 10}
                     />
-                    <DashboardWidgets type="alerts" data={data?.alerts} isLoading={isLoading} />
                     <ActivityFeed items={data?.recentActivity ?? []} isLoading={isLoading} />
                 </div>
             </div>

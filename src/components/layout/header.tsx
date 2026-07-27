@@ -37,7 +37,7 @@ import { useNetwork } from '@/hooks/useNetwork';
 
 /**
  * Enterprise Application Header.
- * Audit Zero Defect : Hydratation sécurisée et navigation optimisée.
+ * Standardisé 100% Français.
  */
 export function AppHeader() {
     const [mounted, setMounted] = useState(false);
@@ -55,7 +55,7 @@ export function AppHeader() {
     }, []);
 
     const navLinks = useMemo(() => [
-        { href: '/dashboard',     label: 'Tableau de bord', icon: LayoutDashboard },
+        { href: '/dashboard',     label: 'Dashboard', icon: LayoutDashboard },
         { href: '/sell',          label: 'Vendre',    icon: ShoppingCart },
         { href: '/products',      label: 'Produits',  icon: Package },
         { href: '/customers',     label: 'Clients',   icon: Users2 },
@@ -68,7 +68,6 @@ export function AppHeader() {
         { href: '/bread',         label: 'Pain',      icon: Wheat },
         { href: '/zakat',         label: 'Zakat',     icon: Coins },
         { href: '/profile',       label: 'Profil',    icon: UserCog },
-        { href: '/install',       label: 'Installation', icon: Download },
         { href: '/settings',      label: 'Réglages',  icon: Settings },
     ], []);
 
@@ -77,34 +76,22 @@ export function AppHeader() {
     }
 
     return (
-        <header className="print-hide sticky top-0 z-40 w-full nav-solid h-14 bg-secondary border-b border-white/10">
-            <div className="flex h-full items-center gap-2 px-4 shadow-sm">
+        <header className="print-hide sticky top-0 z-40 w-full h-14 bg-secondary border-b border-white/10">
+            <div className="flex h-full items-center gap-2 px-4">
                 <Link href="/dashboard" className="flex items-center gap-2 shrink-0 group">
-                    <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-lg transition-transform group-hover:rotate-2">
-                        <Image src="/icon.svg" alt="iPOS Zen Logo" width={28} height={28} />
+                    <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-md">
+                        <Image src="/icon.svg" alt="iPOS Zen" width={22} height={22} />
                     </div>
                     <div className="hidden lg:flex flex-col leading-none ml-1 text-white">
-                        <span className="font-black text-sm tracking-tight uppercase">iPOS <span className="text-primary">Zen</span></span>
-                        <span className="text-[8px] text-primary font-black tracking-[0.2em] uppercase opacity-70">Sovereign Ledger</span>
+                        <span className="font-black text-xs tracking-tight uppercase">iPOS <span className="text-primary">Zen</span></span>
+                        <span className="text-[7px] text-primary font-bold tracking-widest uppercase opacity-60">Sovereign</span>
                     </div>
                 </Link>
 
                 <div className="h-6 w-px bg-white/10 mx-2 shrink-0" />
 
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 border border-white/5">
-                    {isOnline ? (
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-emerald-400">
-                            <Wifi className="h-3 w-3" /> Connecté
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-tighter text-destructive animate-pulse">
-                            <WifiOff className="h-3 w-3" /> Hors-ligne
-                        </div>
-                    )}
-                </div>
-
                 <TooltipProvider delayDuration={0}>
-                    <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 scrollbar-hide px-2">
+                    <nav className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 scrollbar-hide px-2">
                         {navLinks.map((link) => {
                             const isActive = pathname.startsWith(link.href);
                             const Icon = link.icon as React.ElementType;
@@ -114,14 +101,14 @@ export function AppHeader() {
                                         <Link
                                             href={link.href}
                                             className={cn(
-                                                'relative flex items-center justify-center rounded-xl shrink-0 transition-all duration-200',
+                                                'relative flex items-center justify-center rounded-lg shrink-0 transition-all duration-200',
                                                 isActive
-                                                    ? 'h-9 px-4 bg-primary text-primary-foreground shadow-md'
-                                                    : 'w-9 h-9 text-white/60 hover:bg-white/10 hover:text-white'
+                                                    ? 'h-8 px-3 bg-primary text-primary-foreground shadow-sm'
+                                                    : 'w-8 h-8 text-white/40 hover:bg-white/10 hover:text-white'
                                             )}
                                         >
                                             <Icon className={cn('h-4 w-4', isActive && 'scale-110')} />
-                                            {isActive && <span className="ml-2 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{link.label}</span>}
+                                            {isActive && <span className="ml-2 text-[9px] font-black uppercase tracking-widest whitespace-nowrap">{link.label}</span>}
                                         </Link>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" className="bg-secondary text-white border-none font-bold text-[10px] uppercase">{link.label}</TooltipContent>
@@ -132,12 +119,16 @@ export function AppHeader() {
                 </TooltipProvider>
 
                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                    {isInstallable && (
-                        <Button variant="ghost" size="sm" onClick={install} className="h-9 px-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 gap-2 border border-white/10">
-                            <Download className="h-4 w-4" />
-                            <span className="hidden md:inline text-[9px] font-black uppercase tracking-widest">Installer</span>
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-black/20 border border-white/5 mr-2">
+                        {isOnline ? (
+                            <Wifi className="h-3 w-3 text-emerald-400" />
+                        ) : (
+                            <WifiOff className="h-3 w-3 text-destructive animate-pulse" />
+                        )}
+                        <span className={cn("text-[8px] font-black uppercase", isOnline ? "text-emerald-400" : "text-destructive")}>
+                            {isOnline ? "On" : "Off"}
+                        </span>
+                    </div>
 
                     <div className="hidden md:block text-white/80">
                         <Clock />
@@ -146,12 +137,12 @@ export function AppHeader() {
                     {companyProfile?.supabaseUrl && isOnline && (
                         <Button
                             variant="ghost"
-                            size="icon"
-                            className={cn('h-9 w-9 rounded-xl text-white/60 hover:text-white', isSyncing && 'text-primary')}
+                            size="icon-sm"
+                            className={cn('h-8 w-8 rounded-lg text-white/40 hover:text-white', isSyncing && 'text-primary')}
                             onClick={() => performBackgroundSync()}
                             disabled={isSyncing}
                         >
-                            <RefreshCw className={cn('h-4 w-4', isSyncing && 'animate-spin')} />
+                            <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
                         </Button>
                     )}
 
