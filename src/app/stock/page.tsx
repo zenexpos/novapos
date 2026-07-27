@@ -237,25 +237,26 @@ export default function StockPage() {
     ], 'Logistique');
 
     return (
-        <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
+        <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader
                 title="Elite Logistics Hub"
                 description="Audit des flux entrants & Management des partenaires"
                 icon={Archive}
+                className="mb-4"
             >
-                <div className="flex gap-3 w-full sm:w-auto">
+                <div className="flex gap-2 w-full sm:w-auto">
                     {activeTab === 'suppliers' ? (
-                        <Button onClick={handleAddSupplier} className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl gap-3">
-                            <UserPlus className="h-4 w-4" /> Nouveau Partenaire [N]
+                        <Button size="sm" onClick={handleAddSupplier} className="h-9 px-6 rounded-lg shadow-sm">
+                            <UserPlus className="h-4 w-4 mr-1.5" /> Nouveau [N]
                         </Button>
                     ) : (
                         <>
-                            <Button variant="outline" onClick={() => setIsAdjustmentOpen(true)} className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest border-primary/20 bg-card hover:bg-primary/5 transition-all gap-3 px-6">
-                                <ArrowUpDown className="h-4 w-4 text-primary" /> Correction Stock
+                            <Button variant="outline" size="sm" onClick={() => setIsAdjustmentOpen(true)} className="h-9 px-3 rounded-lg">
+                                <ArrowUpDown className="h-4 w-4 mr-1" /> Correction
                             </Button>
-                            <Button asChild className="flex-1 sm:flex-none h-12 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl gap-3">
+                            <Button size="sm" asChild className="h-9 px-6 rounded-lg shadow-sm">
                                 <Link href="/stock/intake">
-                                    <Plus className="h-4 w-4" /> Réception [N]
+                                    <Plus className="h-4 w-4 mr-1.5" /> Réception [N]
                                 </Link>
                             </Button>
                         </>
@@ -263,28 +264,26 @@ export default function StockPage() {
                 </div>
             </PageHeader>
 
-            <div className="animate-in slide-in-from-top-4 duration-700">
+            <div className="animate-in slide-in-from-top-2 duration-500">
                 {activeTab === 'suppliers' ? (
-                    <div className="grid gap-6 md:grid-cols-3">
-                        <div className="app-card p-6 rounded-lg glass flex items-center justify-between group overflow-hidden">
-                            <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-widest mb-3">Réseau Partenaires</p>
-                                <p className="text-3xl font-black tracking-tighter group-hover:scale-110 transition-transform origin-left">{suppliers.length}</p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                        <div className="app-card p-4 rounded-xl glass flex items-center justify-between border-none shadow-sm">
+                            <div>
+                                <p className="text-[9px] font-black uppercase text-muted-foreground/40 tracking-widest mb-1">Réseau Partenaires</p>
+                                <p className="text-xl font-black tracking-tighter">{suppliers.length}</p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-primary/10 text-primary shadow-inner relative z-10">
-                                <Building className="h-8 w-8" />
+                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                <Building className="h-4 w-4" />
                             </div>
-                            <Building className="absolute -right-6 -bottom-6 h-32 w-32 opacity-[0.02] group-hover:opacity-10 transition-opacity" />
                         </div>
-                        <div className="app-card p-6 rounded-lg glass flex items-center justify-between col-span-2 group overflow-hidden">
-                            <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase text-destructive/40 tracking-widest mb-3">Dette Globale Fournisseurs</p>
-                                <p className="text-3xl font-black tracking-tighter text-destructive group-hover:scale-105 transition-transform origin-left">{formatCurrency(totalSuppliersDebt)}</p>
+                        <div className="app-card p-4 rounded-xl glass flex items-center justify-between col-span-2 border-none shadow-sm">
+                            <div>
+                                <p className="text-[9px] font-black uppercase text-destructive/40 tracking-widest mb-1">Dette Globale Fournisseurs</p>
+                                <p className="text-xl font-black tracking-tighter text-destructive">{formatCurrency(totalSuppliersDebt)}</p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-destructive/10 text-destructive shadow-inner relative z-10">
-                                <Wallet className="h-8 w-8" />
+                            <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
+                                <Wallet className="h-4 w-4" />
                             </div>
-                            <Wallet className="absolute -right-6 -bottom-6 h-32 w-32 opacity-[0.02] group-hover:opacity-10 transition-opacity" />
                         </div>
                     </div>
                 ) : (
@@ -292,168 +291,113 @@ export default function StockPage() {
                 )}
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-card/20 p-2 rounded-lg border border-white/5 backdrop-blur-sm shadow-inner">
-                <div className="flex items-center gap-2 p-1.5 bg-black/20 rounded-lg border border-white/5 shadow-inner">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-muted/20 p-1.5 rounded-xl border">
+                <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
                     <button 
                         onClick={() => setActiveTab('intakes')}
                         className={cn(
-                            "flex items-center gap-3 px-8 py-3 rounded-lg text-[10px] font-black uppercase transition-all duration-500",
-                            activeTab === 'intakes' ? "bg-primary text-primary-foreground shadow-sm scale-105" : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5"
+                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
+                            activeTab === 'intakes' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
                         )}
                     >
-                        <Archive className="h-4 w-4" /> Réceptions
+                        Réceptions
                     </button>
                     <button 
                         onClick={() => setActiveTab('suppliers')}
                         className={cn(
-                            "flex items-center gap-3 px-8 py-3 rounded-lg text-[10px] font-black uppercase transition-all duration-500",
-                            activeTab === 'suppliers' ? "bg-primary text-primary-foreground shadow-sm scale-105" : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5"
+                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
+                            activeTab === 'suppliers' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
                         )}
                     >
-                        <Building className="h-4 w-4" /> Fournisseurs
+                        Fournisseurs
                     </button>
                     <button 
                         onClick={() => setActiveTab('logs')}
                         className={cn(
-                            "flex items-center gap-3 px-8 py-3 rounded-lg text-[10px] font-black uppercase transition-all duration-500",
-                            activeTab === 'logs' ? "bg-primary text-primary-foreground shadow-sm scale-105" : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5"
+                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
+                            activeTab === 'logs' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
                         )}
                     >
-                        <History className="h-4 w-4" /> Audit Flux
+                        Audit Flux
                     </button>
                 </div>
 
-                <div className="flex items-center gap-4 px-4">
-                    <div className="relative group flex-grow max-w-xs">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <div className="flex items-center gap-2 px-1">
+                    <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                         <Input 
                             ref={searchInputRef}
-                            placeholder="Rechercher [F3]..."
-                            className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-black text-lg"
+                            placeholder="Rechercher... [F3]"
+                            className="pl-9 h-9 border-none bg-transparent shadow-none font-bold text-xs"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
-                        {searchQuery && (
-                            <button onClick={resetFilters} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-destructive transition-colors">
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
                     </div>
-                    <DateRangePicker date={dateRange} setDate={setDate} />
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-9" />
+                    <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                    </div>
                 </div>
             </div>
 
             {activeTab === 'suppliers' && selectedSuppliers.size > 0 && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-sm rounded-full px-8 py-4 flex items-center gap-4">
-                        <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-                            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black shadow-lg">
-                                {selectedSuppliers.size}
-                            </div>
-                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Sélections</span>
-                        </div>
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-6">
+                        <span className="text-[10px] font-black uppercase text-primary">{selectedSuppliers.size} sélectionnés</span>
+                        <div className="h-4 w-px bg-border" />
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" onClick={handleExportSuppliers} className="rounded-full h-12 px-6 font-black text-[10px] uppercase hover:bg-primary/10 transition-all">
-                                <FileUp className="mr-2 h-4 w-4" /> Exporter (.csv)
-                            </Button>
-                            <Button variant="ghost" onClick={() => setIsBulkDeleteSupplierOpen(true)} className="rounded-full h-12 px-6 font-black text-[10px] uppercase text-destructive hover:bg-destructive/10 transition-all">
-                                <Trash2 className="mr-2 h-4 w-4" /> Révoquer Comptes
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedSuppliers(new Set())} className="rounded-full h-12 w-12 hover:bg-white/5 transition-all">
-                                <X className="h-4 w-4" />
-                            </Button>
+                            <button onClick={handleExportSuppliers} className="text-[9px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
+                            <button onClick={() => setIsBulkDeleteSupplierOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="min-h-[500px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="min-h-[500px]">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 border border-white/5 animate-pulse" />)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl bg-muted/20 border-none animate-pulse" />)}
                     </div>
                 ) : (
                     <>
                         {activeTab === 'intakes' && (
-                            <div className="space-y-4 animate-page-enter">
-                                <div className="flex justify-end px-4">
-                                    <div className="flex items-center gap-1.5 p-1.5 bg-black/20 rounded-lg border border-white/5 shadow-inner">
-                                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
-                                    </div>
+                            stockIntakes.length === 0 ? (
+                                <EmptyState icon={Archive} title="Aucune réception" description={searchQuery ? "Ajustez vos filtres." : "Enregistrez vos factures d'achat."} actionLabel="Nouvelle Réception" onAction={() => router.push('/stock/intake')} />
+                            ) : viewMode === 'list' ? (
+                                <StockIntakeTable intakes={stockIntakes} supplierMap={supplierMap} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {stockIntakes.map(s => (
+                                        <StockIntakeCard key={s.uuid} intake={s} supplierName={s.supplierUuid ? supplierMap.get(s.supplierUuid)?.name : undefined} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
+                                    ))}
                                 </div>
-                                {stockIntakes.length === 0 ? (
-                                    <EmptyState 
-                                        icon={Archive} 
-                                        title="Silence de Réception" 
-                                        description={searchQuery ? "Aucune facture correspondante." : "Enregistrez vos factures d'achat pour gérer votre stock."} 
-                                        actionLabel="Nouvelle Réception"
-                                        onAction={() => router.push('/stock/intake')}
-                                    />
-                                ) : viewMode === 'list' ? (
-                                    <StockIntakeTable intakes={stockIntakes} supplierMap={supplierMap} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {stockIntakes.map(s => (
-                                            <StockIntakeCard key={s.uuid} intake={s} supplierName={s.supplierUuid ? supplierMap.get(s.supplierUuid)?.name : undefined} onViewDetails={handleViewDetails} onCancelIntake={handleCancelIntake} />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            )
                         )}
                         {activeTab === 'logs' && (
                             inventoryLogs.length === 0 ? (
-                                <EmptyState icon={History} title="Journal Vierge" description="Aucun mouvement de stock détecté." />
+                                <EmptyState icon={History} title="Aucun mouvement" description="Aucune transaction de stock détectée." />
                             ) : <InventoryLogTable logs={inventoryLogs as any} />
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers.length === 0 ? (
-                                <EmptyState 
-                                    icon={Building} 
-                                    title="Carnet Partenaires Vide" 
-                                    description="Commencez par ajouter votre premier fournisseur pour gérer vos achats." 
-                                    actionLabel="Nouveau Fournisseur"
-                                    onAction={handleAddSupplier}
-                                />
+                                <EmptyState icon={Building} title="Carnet vide" description="Commencez par ajouter un fournisseur." actionLabel="Nouveau Fournisseur" onAction={handleAddSupplier} />
                             ) : (
-                                <SupplierTable 
-                                    suppliers={filteredSuppliers} 
-                                    onPay={handlePaySupplier} 
-                                    onEdit={handleEditSupplier} 
-                                    onDelete={handleDeleteSupplier} 
-                                    selectedSuppliers={selectedSuppliers}
-                                    onToggleSupplierSelection={handleToggleSupplierSelection}
-                                    onToggleSelectAll={handleToggleSelectAllSuppliers}
-                                />
+                                <SupplierTable suppliers={filteredSuppliers} onPay={handlePaySupplier} onEdit={handleEditSupplier} onDelete={handleDeleteSupplier} selectedSuppliers={selectedSuppliers} onToggleSupplierSelection={handleToggleSupplierSelection} onToggleSelectAll={handleToggleSelectAllSuppliers} />
                             )
                         )}
                     </>
                 )}
             </div>
 
-            <StockIntakeDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} intake={selectedIntake} supplierName={selectedIntake?.supplierUuid ? supplierMap.get(selectedIntake.supplierUuid)?.name : 'Partenaire Inconnu'} />
+            <StockIntakeDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} intake={selectedIntake} supplierName={selectedIntake?.supplierUuid ? supplierMap.get(selectedIntake.supplierUuid)?.name : 'Passage'} />
             <CancelIntakeDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} intake={selectedIntake} onSuccess={() => stockIntakesResult.refresh()} />
             <StockAdjustmentDialog isOpen={isAdjustmentOpen} onOpenChange={setIsAdjustmentOpen} onSuccess={() => inventoryLogsResult.refresh()} />
             <SupplierPaymentDialog isOpen={isSupplierPayOpen} onOpenChange={setIsSupplierPayOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
             <SupplierDialog isOpen={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
             
-            <ConfirmAlertDialog 
-                isOpen={isDeleteSupplierOpen} 
-                onOpenChange={setIsDeleteSupplierOpen} 
-                title={`Révoquer le partenaire ${selectedSupplier?.name} ?`} 
-                description="Cette action est irréversible. Seuls les comptes avec un solde nul et sans historique actif peuvent être supprimés." 
-                onConfirm={performDeleteSupplier} 
-                confirmText="Confirmer Révocation" 
-            />
-
-            <ConfirmAlertDialog
-                isOpen={isBulkDeleteSupplierOpen}
-                onOpenChange={setIsBulkDeleteSupplierOpen}
-                title={`Révoquer ${selectedSuppliers.size} partenaires ?`}
-                description="Seuls les comptes avec un solde nul seront supprimés pour garantir l'intégrité des données."
-                onConfirm={handleBulkDeleteSuppliers}
-                confirmText="Confirmer Révocation Groupée"
-            />
+            <ConfirmAlertDialog isOpen={isDeleteSupplierOpen} onOpenChange={setIsDeleteSupplierOpen} title="Révoquer le partenaire ?" description="Seuls les comptes avec un solde nul peuvent être supprimés." onConfirm={performDeleteSupplier} confirmText="Révoquer" />
+            <ConfirmAlertDialog isOpen={isBulkDeleteSupplierOpen} onOpenChange={setIsBulkDeleteSupplierOpen} title="Supprimer la sélection ?" description="Seuls les comptes avec un solde nul seront supprimés." onConfirm={handleBulkDeleteSuppliers} confirmText="Supprimer" />
         </div>
     );
 }

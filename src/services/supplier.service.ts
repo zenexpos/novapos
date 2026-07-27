@@ -86,13 +86,6 @@ class SupplierService {
         });
     }
 
-    /**
-     * Helper for quick updates, always triggers a full recalculation for safety.
-     */
-    async updateSupplierBalance(uuid: string, _amountChange: number): Promise<void> {
-        await this.recalculateSupplierBalance(uuid);
-    }
-
     async processSupplierPayment(paymentData: Omit<SupplierPayment, 'uuid' | 'createdAt' | 'updatedAt' | 'syncStatus' | 'version'>): Promise<void> {
         await db.transaction('rw', [db.suppliers, db.supplier_payments, db.sync_queue, db.stock_intakes], async () => {
             const supplier = await db.suppliers.where('uuid').equals(paymentData.supplierUuid).first();
