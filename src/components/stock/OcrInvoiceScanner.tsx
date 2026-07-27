@@ -53,7 +53,7 @@ export function OcrInvoiceScanner({ onResult, disabled }: OcrInvoiceScannerProps
             const enhancedDataUrl = await enhanceImage(file);
             setPreview(enhancedDataUrl);
             const Tesseract = await import('tesseract.js');
-            const { data } = await Tesseract.recognize(enhancedDataUrl, 'fra+ara', {
+            const { data } = await Tesseract.recognize(enhancedDataUrl, 'fra', {
                 logger: m => { if (m.status === 'recognizing text') setProgress(20 + (m.progress * 80)); }
             });
             const cleanedText = ocrParserService.cleanOcrText(data.text);

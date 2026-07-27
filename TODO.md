@@ -10,4 +10,4 @@
 - [ ] Ajout du support pour les balances électroniques (Scale Integration) via port série.
 - [ ] Amélioration du moteur de recherche global (Global Command Palette) pour un accès rapide.
 - [ ] Ajout de rapports de profits avancés (Profit par catégorie / fournisseur).
-- [ ] Support complet de langues supplémentaires (Arabe, Français) dans les documents imprimés.
+- [ ] Support complet de langues supplémentaires dans les documents imprimés.

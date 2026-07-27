@@ -6,13 +6,13 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 interface SettingsState {
     theme: 'light' | 'dark' | 'system';
     autoPrint: boolean;
-    language: 'fr' | 'ar';
+    language: 'fr';
     sidebarCollapsed: boolean;
     
     actions: {
         setTheme: (theme: 'light' | 'dark' | 'system') => void;
         toggleAutoPrint: () => void;
-        setLanguage: (lang: 'fr' | 'ar') => void;
+        setLanguage: (lang: 'fr') => void;
         toggleSidebar: () => void;
     };
 }
