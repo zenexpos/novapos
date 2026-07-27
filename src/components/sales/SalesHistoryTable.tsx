@@ -33,9 +33,9 @@ export const SalesHistoryTable = memo(({
     onCancel 
 }: SalesHistoryTableProps) => {
     const statusMap = {
-        paid: { text: 'مسددة', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-        partial: { text: 'جزئية', icon: AlertCircle, className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-        unpaid: { text: 'دين', icon: Clock, className: 'bg-red-500/10 text-red-600 border-red-500/20' },
+        paid: { text: 'كاش', className: 'bg-emerald-500/5 text-emerald-600 border-transparent' },
+        partial: { text: 'جزئي', className: 'bg-amber-500/5 text-amber-600 border-transparent' },
+        unpaid: { text: 'دين', className: 'bg-red-500/5 text-red-600 border-transparent' },
     };
 
     const handleToggleAll = (checked: boolean) => {
@@ -49,23 +49,23 @@ export const SalesHistoryTable = memo(({
     const isAllSelected = historyItems.length > 0 && selectedItems.size === historyItems.length;
 
     return (
-        <div className="rounded-2xl border bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
+        <div className="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
             <Table>
                 <TableHeader className="bg-muted/30">
-                    <TableRow className="border-none h-9">
-                        <TableHead className="w-[40px] px-3">
+                    <TableRow className="border-none h-8">
+                        <TableHead className="w-[30px] px-2">
                            <Checkbox
                                 checked={isAllSelected}
                                 onCheckedChange={handleToggleAll}
-                                className="border-primary/40 data-[state=checked]:bg-primary"
+                                className="h-3 w-3 border-primary/20 data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">الوقت</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">المرجع</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">العميل الشريك</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">حالة التدفق</TableHead>
-                        <TableHead className="px-2 text-right font-black text-[9px] uppercase text-primary tracking-widest">القيمة</TableHead>
-                        <TableHead className="w-[60px] px-4"></TableHead>
+                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الوقت</TableHead>
+                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">المرجع</TableHead>
+                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الشريك</TableHead>
+                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الحالة</TableHead>
+                        <TableHead className="px-1 text-right text-[8px] font-black uppercase text-primary tracking-widest">القيمة</TableHead>
+                        <TableHead className="w-[40px] px-2"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -86,76 +86,62 @@ export const SalesHistoryTable = memo(({
                                 key={uuid} 
                                 onClick={() => onToggleSelection(uuid)}
                                 className={cn(
-                                    "group transition-all border-b border-white/5 cursor-pointer h-10",
-                                    isSelected ? "bg-primary/5" : isSale ? "hover:bg-primary/5" : "hover:bg-emerald-500/5",
-                                    isCancelled && "opacity-40 grayscale"
+                                    "group transition-all border-b border-white/5 cursor-pointer h-8",
+                                    isSelected ? "bg-primary/5" : "hover:bg-primary/5",
+                                    isCancelled && "opacity-30 grayscale"
                                 )}
                             >
-                                <TableCell className="px-3 py-0" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-2 py-0" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox 
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(uuid)}
-                                        className="border-primary/40"
+                                        className="h-3 w-3 border-primary/10"
                                     />
                                 </TableCell>
-                                <TableCell className="px-2 py-0 whitespace-nowrap">
-                                    <div className="flex flex-col -space-y-1">
-                                        <span className="font-bold text-[10px]">{format(item.date, 'dd MMM', { locale: fr })}</span>
-                                        <span className="text-[8px] text-muted-foreground/40 uppercase">{format(item.date, 'HH:mm')}</span>
-                                    </div>
+                                <TableCell className="px-1 py-0 whitespace-nowrap">
+                                    <span className="font-bold text-[9px] tabular-nums">{format(item.date, 'dd/MM HH:mm')}</span>
                                 </TableCell>
-                                <TableCell className="px-2 py-0">
-                                    <div className="flex items-center gap-2">
-                                        <div className={cn(
-                                            "p-1.5 rounded-lg shadow-inner",
-                                            isSale ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-500"
-                                        )}>
-                                            {isSale ? <ReceiptIcon className="h-3 w-3" /> : <HandCoins className="h-3 w-3" />}
-                                        </div>
-                                        <span className="text-[9px] font-mono font-bold text-muted-foreground/50 tracking-tighter">
-                                            {isSale ? item.data.invoiceNumber.slice(-8) : 'CASH-RCV'}
-                                        </span>
-                                    </div>
+                                <TableCell className="px-1 py-0">
+                                    <span className="text-[8px] font-mono font-bold opacity-30 tracking-tighter">
+                                        {isSale ? item.data.invoiceNumber.slice(-6) : 'PYM-RCV'}
+                                    </span>
                                 </TableCell>
-                                <TableCell className="px-2 py-0">
-                                    <span className="font-bold tracking-tight text-[10px] uppercase truncate max-w-[150px] block group-hover:text-primary transition-colors">
+                                <TableCell className="px-1 py-0">
+                                    <span className="font-bold text-[9px] uppercase truncate max-w-[120px] block transition-colors group-hover:text-primary">
                                         {displayName}
                                     </span>
                                 </TableCell>
-                                <TableCell className="px-2 py-0">
+                                <TableCell className="px-1 py-0">
                                     {isCancelled ? (
-                                        <Badge variant="outline" className="px-1.5 py-0 rounded-md font-black text-[7px] uppercase tracking-tighter border-muted">ملغاة</Badge>
+                                        <span className="text-[7px] font-black uppercase opacity-20">ملغاة</span>
                                     ) : isSale ? (
-                                        <Badge variant="outline" className={cn("gap-1 px-1.5 py-0 rounded-md font-black text-[7px] uppercase tracking-tighter shadow-sm", statusMap[item.data.paymentStatus].className)}>
-                                            {React.createElement(statusMap[item.data.paymentStatus].icon, { className: "h-2 w-2" })}
+                                        <Badge variant="outline" className={cn("px-1 py-0 text-[6px] font-black uppercase border-none", statusMap[item.data.paymentStatus].className)}>
                                             {statusMap[item.data.paymentStatus].text}
                                         </Badge>
                                     ) : (
-                                        <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase italic opacity-60">
-                                            <CheckCircle className="h-2 w-2" /> تحصيل دين
-                                        </div>
+                                        <span className="text-[7px] font-black text-emerald-600 uppercase opacity-40 italic">تحصيل</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="px-2 py-0 text-right">
+                                <TableCell className="px-1 py-0 text-right">
                                     <span className={cn(
-                                        "font-black text-[11px] tabular-nums tracking-tighter",
-                                        isSale ? "text-foreground/80" : "text-emerald-600"
+                                        "font-black text-[10px] tabular-nums tracking-tighter",
+                                        isSale ? "text-foreground" : "text-emerald-600"
                                     )}>
                                         {isSale ? formatCurrency(item.data.total) : formatCurrency((item.data as any).amount)}
                                     </span>
                                 </TableCell>
-                                <TableCell className="px-4 py-0 text-right" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-2 py-0 text-right" onClick={(e) => e.stopPropagation()}>
                                     {isSale && !isCancelled && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button className="h-7 w-7 flex items-center justify-center rounded-md opacity-20 group-hover:opacity-100 hover:bg-muted transition-all">
-                                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                                <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all">
+                                                    <MoreHorizontal className="h-3 w-3" />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-white/5">
-                                                <DropdownMenuItem onClick={() => onViewDetails(item.data)} className="text-xs font-bold p-2"><FileText className="mr-2 h-3.5 w-3.5" /> فحص التفاصيل</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onPrint(item.data)} className="text-xs font-bold p-2"><Printer className="mr-2 h-3.5 w-3.5" /> طباعة الفاتورة</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onCancel(item.data)} className="text-destructive text-xs font-bold p-2"><Trash2 className="mr-2 h-3.5 w-3.5" /> إلغاء البيع</DropdownMenuItem>
+                                            <DropdownMenuContent align="end" className="w-32 rounded-xl border-white/5 bg-card">
+                                                <DropdownMenuItem onClick={() => onViewDetails(item.data)} className="text-[9px] font-black p-2 uppercase">فحص</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onPrint(item.data)} className="text-[9px] font-black p-2 uppercase">طباعة</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onCancel(item.data)} className="text-destructive text-[9px] font-black p-2 uppercase">إلغاء</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}

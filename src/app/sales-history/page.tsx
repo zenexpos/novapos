@@ -13,9 +13,7 @@ import {
     List, 
     RefreshCw, 
     FilterX, 
-    Clock, 
     TrendingUp,
-    Sparkles,
     Calendar,
     HandCoins,
     Receipt as ReceiptIcon,
@@ -82,10 +80,8 @@ export default function SalesHistoryPage() {
             to: dateRange?.to
         };
 
-        // 1. Fetch Sales
         const sales = await salesService.filterSales(filters);
 
-        // 2. Fetch Payments (Debt recovery)
         let paymentsQuery = db.payments.toCollection();
         if (dateRange?.from) {
             paymentsQuery = db.payments.where('paymentDate').between(startOfDay(dateRange.from), endOfDay(dateRange.to || new Date()), true, true);
@@ -102,7 +98,6 @@ export default function SalesHistoryPage() {
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
         }
 
-        // Only show payments when appropriate
         if (filterStatus !== 'all' && filterStatus !== 'paid') {
             filteredPayments = [];
         }
@@ -213,100 +208,91 @@ export default function SalesHistoryPage() {
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || !!dateRange?.from;
     
     return (
-        <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
+        <div className="p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader title="سجل التدفقات المالية" description="الأرشيف المركزي للمبيعات وتحصيل الديون">
                 <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={handleExportCsv} className="rounded-lg font-bold gap-2">
-                        <FileDown className="h-4 w-4" /> تصدير السجل
+                        <FileDown className="h-4 w-4" /> تصدير
                     </Button>
-                    <div className="flex items-center bg-muted/20 rounded-xl border p-1">
-                        <DateRangePicker date={dateRange} setDate={setDate} className="h-8 border-none bg-transparent shadow-none" />
-                    </div>
-                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => historyDataResult.refresh()}>
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-9" />
+                    <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" onClick={() => historyDataResult.refresh()}>
                         <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </PageHeader>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                 <div className="lg:col-span-1 space-y-4">
-                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
-                        <CardHeader className="bg-primary/5 border-b border-white/5 p-5">
-                            <CardTitle className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest"><Sparkles className="h-3.5 w-3.5" /> الأداء المالي</CardTitle>
+                    <Card className="rounded-xl border-none bg-card/40 shadow-sm overflow-hidden">
+                        <CardHeader className="bg-primary/5 border-b border-white/5 p-4">
+                            <CardTitle className="text-[10px] font-black uppercase text-primary tracking-widest">الأداء المالي</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-5 space-y-6">
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground/40 uppercase">حجم المبيعات (CA)</p>
-                                <p className="text-3xl font-black tracking-tighter text-primary tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
+                        <CardContent className="p-4 space-y-4">
+                            <div className="space-y-0.5">
+                                <p className="text-[9px] font-bold text-muted-foreground/40 uppercase">حجم المبيعات</p>
+                                <p className="text-2xl font-black tracking-tighter text-primary tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
                             </div>
-                            <div className="grid gap-3 pt-2">
-                                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                                    <p className="text-[9px] font-bold uppercase text-emerald-600 mb-1">السيولة المحصلة</p>
-                                    <p className="font-black text-xl text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
-                                </div>
-                                <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
-                                    <p className="text-[9px] font-bold uppercase text-red-600 mb-1">ديون في انتظار التحصيل</p>
-                                    <p className="font-black text-xl text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
-                                </div>
+                            <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                                <p className="text-[8px] font-bold uppercase text-emerald-600 mb-0.5">السيولة المحصلة</p>
+                                <p className="font-black text-lg text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+                                <p className="text-[8px] font-bold uppercase text-red-600 mb-0.5">ديون قيد التحصيل</p>
+                                <p className="font-black text-lg text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm p-5 space-y-5">
+                    <Card className="rounded-xl border-none bg-card/40 p-4 space-y-4">
                         <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input ref={searchInputRef} placeholder="بحث عن رقم فاتورة... [F3]" className="pl-9 h-10 rounded-xl bg-black/20 border-none font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
+                            <Input ref={searchInputRef} placeholder="رقم الفاتورة... [F3]" className="pl-9 h-9 rounded-lg bg-black/20 border-none font-bold text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
-                        <div className="space-y-3">
-                            <p className="text-[9px] font-black uppercase text-muted-foreground/30 ml-1 tracking-widest">تصفية حسب الحالة</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
-                                    <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-3 py-2 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-black/10 border-transparent text-muted-foreground/60 hover:bg-black/20")}>
-                                        {s === 'all' ? 'الكل' : s === 'paid' ? 'مسددة' : s === 'partial' ? 'جزئية' : 'ديون'}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
+                                <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-2 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-wider transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary" : "bg-black/10 border-transparent text-muted-foreground/60 hover:bg-black/20")}>
+                                    {s === 'all' ? 'الكل' : s === 'paid' ? 'مسددة' : s === 'partial' ? 'جزئية' : 'ديون'}
+                                </button>
+                            ))}
                         </div>
-                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase rounded-xl h-10 gap-2"><FilterX className="h-4 w-4" /> تصفير الفلاتر</Button>}
+                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[9px] font-bold uppercase rounded-lg h-8 gap-2"><FilterX className="h-3 w-3" /> تصفير</Button>}
                     </Card>
                 </div>
 
-                <div className="lg:col-span-3 space-y-4">
-                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-white/5 bg-muted/20">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm"><TrendingUp className="h-5 w-5" /></div>
-                                <div><CardTitle className="text-lg font-black tracking-tighter uppercase">ديناميكية التدفق</CardTitle><p className="text-[9px] font-bold uppercase text-primary/40">المبيعات مقابل السيولة النقدية</p></div>
+                <div className="lg:col-span-4 space-y-4">
+                    <Card className="rounded-xl border-none bg-card/40 shadow-sm overflow-hidden">
+                        <CardHeader className="flex flex-row items-center justify-between p-3 border-b border-white/5 bg-muted/20">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-primary/10 text-primary"><TrendingUp className="h-4 w-4" /></div>
+                                <CardTitle className="text-sm font-black tracking-tight uppercase">التدفق الزمني</CardTitle>
                             </div>
                             <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg">
                                 <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
                                 <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="h-64 p-4">
+                        <CardContent className="h-48 p-2">
                             {!isLoading && chartData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData}>
                                         <defs>
-                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
-                                            <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.2}/><stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/></linearGradient>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.1)" />
-                                        <XAxis dataKey="date" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={10} />
-                                        <YAxis fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dx={-10} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
-                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(16px)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} formatter={(v: number) => [formatCurrency(v), '']} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.05)" />
+                                        <XAxis dataKey="date" fontSize={8} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={5} />
+                                        <YAxis fontSize={8} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" />
+                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '10px', fontWeight: '900' }} />
                                         <Area type="monotone" dataKey="total" name="المبيعات" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} isAnimationActive={false} />
-                                        <Area type="monotone" dataKey="received" name="النقد المستلم" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="4 4" isAnimationActive={false} />
                                     </AreaChart>
                                 </ResponsiveContainer>
-                            ) : <div className="h-full flex flex-col items-center justify-center opacity-10 uppercase text-[10px] font-black italic gap-2"><Calendar className="h-10 w-10" /> {isLoading ? 'جاري التحميل...' : 'لا توجد بيانات للعرض'}</div>}
+                            ) : <div className="h-full flex items-center justify-center opacity-10 text-[10px] font-black uppercase">لا توجد بيانات</div>}
                         </CardContent>
                     </Card>
 
-                    <div className="min-h-[500px]">
+                    <div className="min-h-[400px]">
                         {isLoading ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-2xl bg-card/40 border border-white/5 animate-pulse" />)}
+                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-card/40 border border-white/5 animate-pulse" />)}
                             </div>
                         ) : historyData && historyData.length > 0 ? (
                             viewMode === 'list' ? (
@@ -320,39 +306,41 @@ export default function SalesHistoryPage() {
                                     onCancel={(s) => { setSelectedSale(s); setIsCancelOpen(true); }} 
                                 />
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {historyData.map(item => (
                                         item.type === 'sale' ? (
                                             <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'عابر'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
                                         ) : (
-                                            <Card key={item.data.uuid} className="rounded-2xl border-none bg-card/40 backdrop-blur-sm p-5 relative overflow-hidden group shadow-sm">
-                                                <div className="absolute -right-4 -top-4 opacity-[0.03] text-emerald-500 group-hover:opacity-10 transition-opacity"><HandCoins className="h-32 w-32 rotate-12" /></div>
-                                                <div className="flex justify-between items-start mb-4"><div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500"><HandCoins className="h-5 w-5" /></div><Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-2 py-0.5">تحصيل دين</Badge></div>
-                                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-muted-foreground/40 uppercase">المبلغ المقبوض</p><p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p></div>
-                                                <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-1"><p className="font-black text-sm tracking-tight truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p><div className="flex items-center gap-2 text-[9px] text-muted-foreground/40 font-bold uppercase tracking-wide"><Clock className="h-3 w-3 opacity-30" />{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</div></div>
+                                            <Card key={item.data.uuid} className="rounded-xl border-none bg-card/40 p-4 relative overflow-hidden group shadow-sm">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500"><HandCoins className="h-4 w-4" /></div>
+                                                    <Badge className="bg-emerald-500 text-white border-none uppercase text-[7px] font-black px-1.5 py-0">تحصيل</Badge>
+                                                </div>
+                                                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">المبلغ المقبوض</p>
+                                                <p className="text-xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p>
+                                                <div className="mt-3 pt-3 border-t border-white/5">
+                                                    <p className="font-black text-xs truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p>
+                                                    <p className="text-[7px] text-muted-foreground/30 font-bold uppercase mt-1">{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</p>
+                                                </div>
                                             </Card>
                                         )
                                     ))}
                                 </div>
                             )
-                        ) : <EmptyState icon={ReceiptIcon} title="السجل فارغ" description={isFiltered ? "جرب تعديل خيارات التصفية." : "لم يتم تسجيل أي عملية حتى الآن."}>
-                                <Button variant="outline" onClick={resetFilters} className="rounded-xl h-10 px-6 font-bold gap-2">
-                                    <FilterX className="h-4 w-4" /> تصفير
-                                </Button>
-                            </EmptyState>}
+                        ) : <EmptyState icon={ReceiptIcon} title="السجل فارغ" description="لم يتم تسجيل أي عمليات." />}
                     </div>
                 </div>
             </div>
 
             {selectedItems.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-6">
-                        <div className="flex items-center gap-4 pr-6 border-r border-white/10"><div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black">{selectedItems.size}</div><span className="text-[9px] font-black uppercase text-muted-foreground/60">تحديد</span></div>
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-6 py-2.5 flex items-center gap-6">
+                        <span className="text-[9px] font-black uppercase text-primary">{selectedItems.size} فواتير</span>
                         <div className="flex items-center gap-2">
-                            <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary px-3 py-2 transition-colors">تصدير</button>
-                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:bg-destructive/10 px-3 py-2 rounded-lg transition-colors">إلغاء المختار</button>
+                            <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
                         </div>
-                        <button onClick={() => setSelectedItems(new Set())} className="p-2 rounded-full hover:bg-white/10"><X className="h-4 w-4 opacity-40" /></button>
+                        <button onClick={() => setSelectedItems(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3.5 w-3.5 opacity-20" /></button>
                     </div>
                 </div>
             )}
