@@ -13,10 +13,8 @@ import {
     Trash2, 
     User, 
     Hash, 
-    CloudUpload,
     CircleUser,
-    CheckCircle2,
-    Package
+    CheckCircle2
 } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { breadService } from '@/services/bread.service';
@@ -71,9 +69,15 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
 
     const toggleSelectAll = useCallback((checked: boolean) => {
         if (checked) {
-            orders.forEach(o => { if(!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+            // Select all that are not selected
+            orders.forEach(o => {
+                if (!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid);
+            });
         } else {
-            orders.forEach(o => { if(selectedOrders.has(o.uuid)) onToggleSelection(o.uuid); });
+            // Deselect all that are selected
+            orders.forEach(o => {
+                if (selectedOrders.has(o.uuid)) onToggleSelection(o.uuid);
+            });
         }
     }, [orders, selectedOrders, onToggleSelection]);
 

@@ -22,10 +22,8 @@ import {
     Calendar,
     LayoutGrid,
     List,
-    Info,
     RefreshCw,
     Filter,
-    X,
     FilterX
 } from 'lucide-react';
 import { breadService } from '@/services/bread.service';
@@ -38,19 +36,11 @@ import { useAppStore } from '@/stores/appStore';
 import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuLabel,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -62,7 +52,6 @@ export default function BreadPage() {
     const [currentDate, setCurrentDate] = useState<Date | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Advanced UI Filters
     const [filterDelivery, setFilterDelivery] = useState<DeliveryFilter>('all');
     const [filterPayment, setFilterPayment] = useState<PaymentFilter>('all');
     
@@ -76,7 +65,6 @@ export default function BreadPage() {
     const [isAutoBillingConfirmOpen, setIsAutoBillingConfirmOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('distribution');
 
-    // Sync initialization to prevent hydration mismatch
     useEffect(() => {
         setIsMounted(true);
         setCurrentDate(new Date());
@@ -94,7 +82,6 @@ export default function BreadPage() {
         }
     }, [formattedDate, isMounted]);
 
-    // Query dependencies are stabilized
     const { value: orders, isLoading, refresh } = useLiveQuery<BreadOrderWithCustomer[]>(
         () => (isMounted && formattedDate) ? breadService.getOrdersForDate(formattedDate) : Promise.resolve([]),
         [formattedDate, isMounted]

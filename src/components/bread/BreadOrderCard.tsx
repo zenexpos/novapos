@@ -1,4 +1,3 @@
-// ... (previous content preserved with fix)
 'use client';
 
 import { useState, useEffect, useCallback, memo } from 'react';
@@ -20,8 +19,7 @@ import {
     Loader2, 
     Trash2, 
     User, 
-    Banknote,
-    Clock
+    Banknote
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +54,7 @@ const BreadOrderCardComponent = ({ order, isSelected, onToggleSelection }: Bread
     }, [order.uuid, isBilled]);
 
     useEffect(() => {
-        if (Math.abs(debouncedQuantity - order.quantity) > 0.001 && !isBilled) {
+        if (!isBilled && Math.abs(debouncedQuantity - order.quantity) > 0.001) {
             handleQuantityChange(debouncedQuantity);
         }
     }, [debouncedQuantity, order.quantity, handleQuantityChange, isBilled]);
