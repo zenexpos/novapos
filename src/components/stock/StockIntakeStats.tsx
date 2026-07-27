@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wallet, Archive, Building, TrendingUp, Sparkles } from 'lucide-react';
+import { Archive, Building, TrendingUp } from 'lucide-react';
 import { formatCurrency, cn, safeNumber } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -14,27 +14,23 @@ interface StockIntakeStatsProps {
     isLoading?: boolean;
 }
 
-const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
-    <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden relative">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6 relative z-10">
-            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
-            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
-                <Icon className="h-5 w-5" />
+const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
+    <Card className="app-card h-full bg-card/40 border-white/5 rounded-lg group overflow-hidden relative">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 relative z-10">
+            <CardTitle className="text-[9px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
+            <div className={cn("p-1.5 rounded-lg shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
+                <Icon className="h-3.5 w-3.5" />
             </div>
         </CardHeader>
-        <CardContent className="px-6 pb-6 relative z-10">
-            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left mb-1 tabular-nums">{value}</div>
-            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40">{subtitle}</p>}
+        <CardContent className="px-3 pb-3 relative z-10">
+            <div className="text-lg font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+            {subtitle && <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-0.5">{subtitle}</p>}
         </CardContent>
-        <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-10 transition-opacity duration-1000">
-            <Icon className="h-32 w-32 rotate-12" />
-        </div>
     </Card>
-);
+));
+StatCard.displayName = 'StatCard';
 
-export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: externalLoading }: StockIntakeStatsProps) => {
-    // Surveillance en direct des réceptions pour mettre à jour les stats instantanément
-    // Important: ne pas charger toute la table (toArray). On calcule les stats uniquement.
+export const StockIntakeStats = memo(({ intakes: externalIntakes, isLoading: externalLoading }: StockIntakeStatsProps) => {
     const liveStatsResult = useLiveQuery<{
         totalValue: number;
         intakeCount: number;
@@ -51,22 +47,9 @@ export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: external
         }
 
         const intakeCount = await db.stock_intakes.count();
-
-        // Dexie ne propose pas de SUM direct -> on calcule uniquement à partir du minimum nécessaire.
-        // Pour éviter de charger tous les enregistrements, nous cumulons la valeur par petits lots en utilisant l'index disponible.
         let totalValCents = 0;
         const supplierUuidSet = new Set<string>();
 
-        // Nous lisons uniquement les identifiants (id) par lots sans charger toute la table.
-        // Note: l'ID de stock_intakes est un auto-incrément (++id) numérique dans le schéma.
-        const cursor = db.stock_intakes
-            .orderBy('id')
-            .offset(0)
-            .limit(1);
-
-        // Dexie v4 supporte where().above/below + offset/limit, mais les primaryKeys ne sont pas uniformes sur toutes les versions.
-        // Nous allons plutôt nous appuyer sur le batching par curseur en lisant uniquement les champs id (en utilisant .toArray() sur un petit lot).
-        // chunkCount est le nombre de lots, pas le nombre total d'enregistrements.
         const chunkSize = 200;
         let offset = 0;
 
@@ -85,7 +68,6 @@ export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: external
             }
 
             offset += batch.length;
-            // Arrêter lorsqu'on atteint la fin de la table.
             if (batch.length < chunkSize) break;
         }
 
@@ -100,37 +82,38 @@ export const StockIntakeStats = ({ intakes: externalIntakes, isLoading: external
 
     if (liveStatsResult.value === undefined || externalLoading) {
         return (
-             <div className="grid gap-6 md:grid-cols-3">
+             <div className="grid gap-2 md:grid-cols-3">
                 {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40 border border-white/5 animate-pulse" />
+                    <Skeleton key={i} className="h-20 w-full rounded-lg bg-card/40 border border-white/5 animate-pulse" />
                 ))}
             </div>
         )
     }
 
     return (
-        <div className="grid gap-6 md:grid-cols-3 animate-in fade-in duration-700">
+        <div className="grid gap-2 md:grid-cols-3 animate-in fade-in duration-700">
             <StatCard 
-                title="Investissement Stock" 
+                title="Investissement" 
                 value={formatCurrency(stats.totalValue)} 
                 icon={TrendingUp} 
                 colorClass="bg-emerald-500/10 text-emerald-500"
-                subtitle="Valeur totale injectée"
+                subtitle="Valeur injectée"
             />
             <StatCard 
-                title="Bons de Réception" 
+                title="Bons" 
                 value={String(stats.intakeCount)} 
                 icon={Archive} 
                 colorClass="bg-primary/10 text-primary"
-                subtitle="Opérations validées"
+                subtitle="Opérations"
             />
             <StatCard 
-                title="Réseau Partenaires" 
+                title="Partenaires" 
                 value={String(stats.supplierCount)} 
                 icon={Building} 
                 colorClass="bg-amber-500/10 text-amber-500"
-                subtitle="Fournisseurs actifs"
+                subtitle="Fournisseurs"
             />
         </div>
     );
-};
+});
+StockIntakeStats.displayName = 'StockIntakeStats';

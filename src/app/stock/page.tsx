@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
     Search, Plus, Archive, LayoutGrid, List, History, 
-    ArrowUpDown, RefreshCw, Building, Wallet, UserPlus, 
-    Trash2, X, FileUp 
+    ArrowUpDown, RefreshCw, Building, Wallet, UserPlus
 } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
@@ -234,12 +233,12 @@ export default function StockPage() {
     const isLoading = suppliersResult.isLoading || (activeTab === 'intakes' && stockIntakesResult.isLoading);
 
     return (
-        <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
+        <div className="p-2 sm:p-4 space-y-2 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader
-                title="Elite Logistics Hub"
-                description="Audit des flux entrants & Management des partenaires"
+                title="Logistique"
+                description="Flux entrants & Partenaires"
                 icon={Archive}
-                className="mb-4"
+                className="mb-2"
             >
                 <div className="flex gap-2 w-full sm:w-auto">
                     {activeTab === 'suppliers' ? (
@@ -263,23 +262,23 @@ export default function StockPage() {
 
             <div className="animate-in slide-in-from-top-2 duration-500">
                 {activeTab === 'suppliers' ? (
-                    <div className="grid gap-3 md:grid-cols-3">
-                        <div className="app-card p-4 rounded-xl glass flex items-center justify-between border-none shadow-sm">
+                    <div className="grid gap-2 md:grid-cols-3">
+                        <div className="app-card p-3 rounded-xl glass flex items-center justify-between border-none shadow-sm">
                             <div>
-                                <p className="text-[9px] font-black uppercase text-muted-foreground/40 tracking-widest mb-1">Réseau Partenaires</p>
-                                <p className="text-xl font-black tracking-tighter">{suppliers.length}</p>
+                                <p className="text-[9px] font-black uppercase text-muted-foreground/40 tracking-widest mb-0.5">Réseau Partenaires</p>
+                                <p className="text-lg font-black tracking-tighter">{suppliers.length}</p>
                             </div>
-                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                                <Building className="h-4 w-4" />
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                                <Building className="h-3.5 w-3.5" />
                             </div>
                         </div>
-                        <div className="app-card p-4 rounded-xl glass flex items-center justify-between col-span-2 border-none shadow-sm">
+                        <div className="app-card p-3 rounded-xl glass flex items-center justify-between col-span-2 border-none shadow-sm">
                             <div>
-                                <p className="text-[9px] font-black uppercase text-destructive/40 tracking-widest mb-1">Dette Globale Fournisseurs</p>
-                                <p className="text-xl font-black tracking-tighter text-destructive">{formatCurrency(totalSuppliersDebt)}</p>
+                                <p className="text-[9px] font-black uppercase text-destructive/40 tracking-widest mb-0.5">Dette Globale Fournisseurs</p>
+                                <p className="text-lg font-black tracking-tighter text-destructive">{formatCurrency(totalSuppliersDebt)}</p>
                             </div>
-                            <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
-                                <Wallet className="h-4 w-4" />
+                            <div className="p-1.5 rounded-lg bg-destructive/10 text-destructive">
+                                <Wallet className="h-3.5 w-3.5" />
                             </div>
                         </div>
                     </div>
@@ -288,14 +287,14 @@ export default function StockPage() {
                 )}
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-muted/20 p-1.5 rounded-xl border">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1.5 bg-muted/20 p-1 rounded-xl border">
                 <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
                     {(['intakes', 'suppliers', 'logs'] as StockTab[]).map(tab => (
                         <button 
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={cn(
-                                "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
+                                "px-3 py-1.5 rounded-md text-[9px] font-black uppercase transition-all",
                                 activeTab === tab ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
                             )}
                         >
@@ -306,40 +305,27 @@ export default function StockPage() {
 
                 <div className="flex items-center gap-2 px-1 flex-grow lg:flex-grow-0">
                     <div className="relative flex-grow">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/50" />
                         <Input 
                             ref={searchInputRef}
                             placeholder="Rechercher... [F3]"
-                            className="pl-9 h-9 border-none bg-transparent shadow-none font-bold text-xs"
+                            className="pl-7 h-8 border-none bg-transparent shadow-none font-bold text-[10px]"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <DateRangePicker date={dateRange} setDate={setDate} className="h-9" />
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-xs" />
                     <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
-                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-6 w-6" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3 w-3"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-6 w-6" onClick={() => setViewMode('list')}><List className="h-3 w-3"/></Button>
                     </div>
                 </div>
             </div>
 
-            {activeTab === 'suppliers' && selectedSuppliers.size > 0 && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
-                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-6">
-                        <span className="text-[10px] font-black uppercase text-primary">{selectedSuppliers.size} sélectionnés</span>
-                        <div className="h-4 w-px bg-border" />
-                        <div className="flex items-center gap-4">
-                            <button onClick={handleExportSuppliers} className="text-[9px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
-                            <button onClick={() => setIsBulkDeleteSupplierOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="min-h-[500px]">
+            <div className="min-h-[400px]">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl bg-muted/20 border-none animate-pulse" />)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-muted/20 border-none animate-pulse" />)}
                     </div>
                 ) : (
                     <>
