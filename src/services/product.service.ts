@@ -100,21 +100,25 @@ class ProductService {
             const isAsc = order === 'asc';
 
             products.sort((a: any, b: any) => {
-                let valA: any = 0;
-                let vbA: any = 0;
+                let valA: any = a[field];
+                let valB: any = b[field];
                 
-                if (field === 'name') { valA = a.name; vbA = b.name; }
-                else if (field === 'quantity') { valA = a.quantity; vbA = b.quantity; }
-                else if (field === 'price') { valA = a.price; vbA = b.price; }
-                else if (field === 'purchasePrice') { valA = a.purchasePrice; vbA = b.purchasePrice; }
-                else if (field === 'updatedAt') { valA = safeToDate(a.updatedAt).getTime(); vbA = safeToDate(b.updatedAt).getTime(); }
+                if (field === 'updatedAt') { 
+                    valA = safeToDate(valA).getTime(); 
+                    valB = safeToDate(valB).getTime(); 
+                }
                 else if (field === 'margin') {
                     valA = a.price > 0 ? (a.price - a.purchasePrice) / a.price : 0;
-                    vbA = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
+                    valB = b.price > 0 ? (b.price - b.purchasePrice) / b.price : 0;
                 }
 
-                if (typeof valA === 'string') return isAsc ? valA.localeCompare(vbA) : vbA.localeCompare(valA);
-                return isAsc ? (valA as number) - (vbA as number) : (vbA as number) - (valA as number);
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    return isAsc ? valA.localeCompare(valB, 'fr') : valB.localeCompare(valA, 'fr');
+                }
+                
+                const numA = safeNumber(valA);
+                const numB = safeNumber(valB);
+                return isAsc ? numA - numB : numB - numA;
             });
         } else {
              products.sort((a, b) => safeToDate(b.updatedAt).getTime() - safeToDate(a.updatedAt).getTime());

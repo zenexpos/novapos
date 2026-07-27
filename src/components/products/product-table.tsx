@@ -14,7 +14,8 @@ import {
 import {
     MoreHorizontal, Edit, Trash2,
     Copy, ChevronUp, ChevronDown, ChevronsUpDown,
-    TrendingUp, TrendingDown, TriangleAlert, CheckCircle2, XCircle
+    TrendingUp, TrendingDown, TriangleAlert, CheckCircle2, XCircle,
+    History, FileText
 } from 'lucide-react';
 import {
     cn, formatCurrency, calculateMarginRate
@@ -42,11 +43,11 @@ const stockCfg = {
 } as const;
 
 const ProductRow = React.memo(({ 
-    product, isSelected, onToggle, onEdit, onDuplicate, onDelete, onSelect
+    product, isSelected, onToggle, onEdit, onDuplicate, onHistory, onDelete, onSelect
 }: { 
     product: Product, isSelected: boolean, onToggle: (u: string) => void, onEdit: (p: Product) => void, 
     onDuplicate: (p: Product) => void, onHistory: (p: Product) => void, onDelete: (p: Product) => void, 
-    onSelect: (p: Product) => void, onQuickEdit: (u: string, f: string, v: any) => void 
+    onSelect: (p: Product) => void
 }) => {
     const stock = stockCfg[product.stockStatus ?? 'in_stock'];
     const marginRate = calculateMarginRate(product.price, product.purchasePrice);
@@ -111,10 +112,12 @@ const ProductRow = React.memo(({
                             <MoreHorizontal className="h-3.5 w-3.5 opacity-30" />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuContent align="end" className="w-44 rounded-xl shadow-xl border-white/5">
+                        <DropdownMenuItem onClick={() => onSelect(product)} className="text-xs font-bold p-2"><FileText className="mr-2 h-3.5 w-3.5" /> Détails</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEdit(product)} className="text-xs font-bold p-2"><Edit className="mr-2 h-3.5 w-3.5" /> Éditer</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onHistory(product)} className="text-xs font-bold p-2"><History className="mr-2 h-3.5 w-3.5" /> Historique</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onDuplicate(product)} className="text-xs font-bold p-2"><Copy className="mr-2 h-3.5 w-3.5" /> Copier</DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="opacity-10" />
                         <DropdownMenuItem onClick={() => onDelete(product)} className="text-destructive text-xs font-bold p-2"><Trash2 className="mr-2 h-3.5 w-3.5" /> Supprimer</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -127,6 +130,7 @@ ProductRow.displayName = 'ProductRow';
 export function ProductTable({
     products, onEdit, onDuplicate, onHistory, onDelete, onSelect,
     selectedProducts, onToggleProductSelection, onToggleSelectAll,
+    suppliers
 }: ProductTableProps) {
     const [sortKey, setSortKey] = useState<'name' | 'price' | 'qty'>('name');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -176,7 +180,6 @@ export function ProductTable({
                             onHistory={onHistory}
                             onDelete={onDelete}
                             onSelect={onSelect}
-                            onQuickEdit={() => {}}
                         />
                     ))}
                 </TableBody>
