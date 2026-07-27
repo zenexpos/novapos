@@ -64,18 +64,18 @@ export const StockIntakeTable = memo(({ intakes, supplierMap, onViewDetails, onC
                     <TableRow className="border-none h-9">
                         <TableHead className="px-3">
                             <button onClick={() => handleSort('supplier')} className="flex items-center text-[9px] font-black uppercase text-muted-foreground/60 hover:text-primary transition-colors tracking-widest">
-                                Mvrd <SortIcon colKey="supplier" />
+                                FOURNISSEUR <SortIcon colKey="supplier" />
                             </button>
                         </TableHead>
-                        <TableHead className="px-3 text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest">Ref</TableHead>
+                        <TableHead className="px-3 text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest">RÉF</TableHead>
                         <TableHead className="px-3 text-center">
                             <button onClick={() => handleSort('date')} className="flex items-center justify-center w-full text-[9px] font-black uppercase text-muted-foreground/60 hover:text-primary transition-colors tracking-widest">
-                                Date <SortIcon colKey="date" />
+                                DATE <SortIcon colKey="date" />
                             </button>
                         </TableHead>
                         <TableHead className="px-3 text-right">
                             <button onClick={() => handleSort('total')} className="flex items-center justify-end w-full text-[9px] font-black uppercase text-primary hover:text-primary transition-colors tracking-widest">
-                                Val <SortIcon colKey="total" />
+                                VALEUR <SortIcon colKey="total" />
                             </button>
                         </TableHead>
                         <TableHead className="w-[50px] px-2"></TableHead>
