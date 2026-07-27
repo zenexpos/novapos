@@ -77,7 +77,7 @@ export function ReturnTable({ returns, customerMap, selectedReturns, onToggleSel
                                     <span className="text-[8px] font-mono font-bold opacity-30">#{r.originalInvoiceNumber.slice(-6)}</span>
                                 </TableCell>
                                 <TableCell className="px-1 py-0">
-                                    <span className="font-bold text-[8px] uppercase truncate max-w-[100px] block group-hover:text-primary transition-colors">
+                                    <span className="font-bold text-[8px] uppercase truncate max-w-[150px] block group-hover:text-primary transition-colors">
                                         {customer ? `${customer.firstName} ${customer.lastName}` : 'عابر'}
                                     </span>
                                 </TableCell>

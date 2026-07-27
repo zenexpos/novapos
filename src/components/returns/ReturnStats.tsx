@@ -13,16 +13,16 @@ interface ReturnStatsProps {
 }
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
-    <Card className="h-full bg-card/30 border-white/5 rounded-xl group overflow-hidden shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
-            <CardTitle className="text-[8px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all tracking-widest">{title}</CardTitle>
-            <div className={cn("p-1.5 rounded-lg shadow-inner", colorClass)}>
-                <Icon className="h-3 w-3" />
+    <Card className="h-full bg-card/30 border-white/5 rounded-lg group overflow-hidden shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-2.5">
+            <CardTitle className="text-[7px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all tracking-widest">{title}</CardTitle>
+            <div className={cn("p-1 rounded-md shadow-inner", colorClass)}>
+                <Icon className="h-2.5 w-2.5" />
             </div>
         </CardHeader>
-        <CardContent className="px-3 pb-3">
-            <div className="text-base font-black tracking-tighter text-foreground tabular-nums leading-none">{value}</div>
-            {subtitle && <p className="text-[7px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
+        <CardContent className="px-2.5 pb-2.5">
+            <div className="text-sm font-black tracking-tighter text-foreground tabular-nums leading-none">{value}</div>
+            {subtitle && <p className="text-[6px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-0.5">{subtitle}</p>}
         </CardContent>
     </Card>
 );
@@ -41,16 +41,16 @@ export function ReturnStats({ returns, isLoading }: ReturnStatsProps) {
 
     if (isLoading) {
         return (
-            <div className="grid gap-2 grid-cols-3">
+            <div className="grid gap-1.5 grid-cols-3">
                 {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-xl bg-card/20" />
+                    <Skeleton key={i} className="h-14 w-full rounded-lg bg-card/20" />
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="grid gap-2 grid-cols-1 sm:grid-cols-3 animate-in fade-in duration-500">
+        <div className="grid gap-1.5 grid-cols-1 sm:grid-cols-3 animate-in fade-in duration-500">
             <StatCard 
                 title="إجمالي المرتجعات" 
                 value={formatCurrency(stats.totalValue)} 

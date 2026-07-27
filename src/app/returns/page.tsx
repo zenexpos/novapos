@@ -24,7 +24,6 @@ import { ReturnDetailsDialog } from '@/components/returns/ReturnDetailsDialog';
 import { CancelReturnDialog } from '@/components/returns/CancelReturnDialog';
 import { ReturnStats } from '@/components/returns/ReturnStats';
 import Link from 'next/link';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -81,8 +80,7 @@ export default function ReturnsPage() {
     const handleToggleSelection = (uuid: string) => {
         setSelectedReturns(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(uuid)) newSet.delete(uuid);
-            else newSet.add(uuid);
+            if (newSet.has(uuid)) next.delete(uuid); else next.add(uuid);
             return newSet;
         });
     };
@@ -145,25 +143,25 @@ export default function ReturnsPage() {
     ], 'Retours', isMounted);
 
     return (
-        <div className="p-3 space-y-3 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="p-2 space-y-2 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-20">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
                 <div>
-                    <h1 className="text-xl font-black tracking-tighter uppercase leading-none">Registre des Retours</h1>
-                    <p className="text-[9px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-1">Régularisation des flux marchandises</p>
+                    <h1 className="text-lg font-black tracking-tighter uppercase leading-none">Registre المرتجعات</h1>
+                    <p className="text-[8px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-0.5">Régularisation des flux marchandises</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-8 rounded-lg font-bold text-[10px] uppercase gap-2">
-                        <FileUp className="h-3.5 w-3.5" /> تصدير
+                <div className="flex flex-wrap gap-1.5">
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-7 rounded-lg font-bold text-[9px] uppercase gap-1.5">
+                        <FileUp className="h-3 w-3" /> تصدير
                     </Button>
-                    <Button asChild size="sm" className="h-8 rounded-lg font-black text-[10px] uppercase gap-2 shadow-sm">
-                        <Link href="/returns/new"><Plus className="h-3.5 w-3.5" /> Nouveau</Link>
+                    <Button asChild size="sm" className="h-7 rounded-lg font-black text-[9px] uppercase gap-1.5 shadow-sm">
+                        <Link href="/returns/new"><Plus className="h-3 w-3" /> Nouveau</Link>
                     </Button>
                 </div>
             </div>
 
             <ReturnStats returns={returns} isLoading={isLoading} />
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-card/30 p-1.5 rounded-xl border">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1.5 bg-card/30 p-1 rounded-xl border">
                 <div className="relative group flex-grow max-w-xl">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
                     <Input 
@@ -174,19 +172,19 @@ export default function ReturnsPage() {
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-[10px] sm:w-[220px]" />
-                    <div className="flex items-center gap-1.5 p-1 bg-muted/20 rounded-lg border">
+                <div className="flex items-center gap-1.5">
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-[9px] sm:w-[200px]" />
+                    <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-lg border">
                         <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3.5 w-3.5"/></Button>
                         <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5"/></Button>
                     </div>
                 </div>
             </div>
 
-            <div className="min-h-[500px]">
+            <div className="min-h-[450px]">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-card/20 border-none animate-pulse" />)}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
+                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-card/20 border-none animate-pulse" />)}
                     </div>
                 ) : returns.length === 0 ? (
                     <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بتسجيل أول عملية إرجاع سلع."} />
@@ -201,7 +199,7 @@ export default function ReturnsPage() {
                             onCancel={handleCancelReturn}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
                             {returns.map(r => (
                                 <ReturnHistoryCard 
                                     key={r.uuid} 
@@ -219,7 +217,7 @@ export default function ReturnsPage() {
             </div>
 
             {selectedReturns.size > 0 && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
+                <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
                     <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-5 py-2 flex items-center gap-4">
                         <span className="text-[9px] font-black uppercase text-primary">{selectedReturns.size} عمليات</span>
                         <div className="h-3 w-px bg-border" />
