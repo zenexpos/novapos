@@ -17,7 +17,7 @@ import type { Product, Supplier, ProductCreateInput } from '@/lib/types';
 import { 
     Loader2, 
     X, 
-    AlertTriangle, 
+    TriangleAlert, 
     Plus, 
     Package, 
     Hash, 
@@ -478,7 +478,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                 <AlertDialogHeader>
                     <div className="flex items-center gap-4 mb-4 text-destructive">
                         <div className="p-4 rounded-2xl bg-destructive/10">
-                            <AlertTriangle className="h-8 w-8" />
+                            <TriangleAlert className="h-8 w-8" />
                         </div>
                         <AlertDialogTitle className="text-xl font-black tracking-tight uppercase">Attention : Vente à perte</AlertDialogTitle>
                     </div>

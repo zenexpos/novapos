@@ -14,7 +14,7 @@ import {
 import {
     MoreHorizontal, Edit, Trash2,
     Copy, History, ChevronUp, ChevronDown, ChevronsUpDown,
-    TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, XCircle, Barcode,
+    TrendingUp, TrendingDown, TriangleAlert, CheckCircle2, XCircle, Barcode,
     Tag
 } from 'lucide-react';
 import {
@@ -44,7 +44,7 @@ type SortDir  = 'asc' | 'desc';
 
 const stockCfg = {
     in_stock:    { Icon: CheckCircle2,  cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', label: 'En stock'   },
-    low_stock:   { Icon: AlertTriangle, cls: 'text-amber-500  bg-amber-500/10  border-amber-500/20',  label: 'Stock bas'  },
+    low_stock:   { Icon: TriangleAlert, cls: 'text-amber-500  bg-amber-500/10  border-amber-500/20',  label: 'Stock bas'  },
     out_of_stock:{ Icon: XCircle,       cls: 'text-red-500    bg-red-500/10    border-red-500/20',    label: 'Rupture'    },
     overstock:   { Icon: CheckCircle2,  cls: 'text-blue-500   bg-blue-500/10   border-blue-500/20',   label: 'Excédent'   },
 } as const;
@@ -175,7 +175,7 @@ const ProductRow = React.memo(({
                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-black text-[11px] shadow-sm',
                     isGoodMargin
                         ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                        : 'bg-amber-50/15 text-amber-700 border-amber-500/20',
                 )}>
                     {isGoodMargin ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {formatPercent(marginRate)}

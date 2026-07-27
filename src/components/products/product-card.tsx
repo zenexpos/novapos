@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
     MoreHorizontal, Edit, Trash2, CalendarClock, Package,
-    Copy, History, TrendingUp, TrendingDown, AlertTriangle,
+    Copy, History, TrendingUp, TrendingDown, TriangleAlert,
     CheckCircle2, XCircle, Barcode, ChevronRight
 } from 'lucide-react';
 import { cn, formatCurrency, formatPercent, calculateMarginRate, safeToDate } from '@/lib/utils';
@@ -28,7 +28,7 @@ interface ProductCardProps {
 
 const stockCfg: Record<StockStatus, { label: string; bg: string; text: string; border: string; dot: string; Icon: React.ElementType }> = {
     in_stock:    { label: 'En stock',   bg: 'bg-emerald-50/15', text: 'text-emerald-700', border: 'border-emerald-500/20', dot: 'bg-emerald-500', Icon: CheckCircle2  },
-    low_stock:   { label: 'Stock bas',  bg: 'bg-amber-50/15',   text: 'text-amber-700',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: AlertTriangle },
+    low_stock:   { label: 'Stock bas',  bg: 'bg-amber-50/15',   text: 'text-amber-700',   border: 'border-amber-500/20',   dot: 'bg-amber-500',   Icon: TriangleAlert },
     out_of_stock: { label: 'Rupture',    bg: 'bg-red-50/15',     text: 'text-red-700',     border: 'border-red-500/20',     dot: 'bg-red-500 animate-pulse', Icon: XCircle       },
     overstock:   { label: 'Excédent',   bg: 'bg-blue-50/15',    text: 'text-blue-700',    border: 'border-blue-500/20',    dot: 'bg-blue-500',    Icon: Package       },
 };
