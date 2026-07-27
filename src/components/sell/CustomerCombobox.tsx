@@ -28,7 +28,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CustomerDialog } from '@/components/customers/customer-dialog';
-import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 
@@ -47,7 +46,6 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
     const [isLoading, setIsLoading] = useState(false);
     const internalInputRef = useRef<HTMLInputElement>(null);
 
-    // Resolve details of the selected customer
     const { value: selectedCustomer } = useLiveQuery<Customer | undefined>(
         () => selectedUuid ? db.customers.where('uuid').equals(selectedUuid).first() : Promise.resolve(undefined),
         [selectedUuid]
@@ -173,7 +171,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                                         const isSelected = selectedUuid === c.uuid;
                                         return (
                                             <div 
-                                                key={c.uuid}
+                                                key={c.uuid} 
                                                 onClick={() => handleSelect(c.uuid)}
                                                 className={cn(
                                                     "group flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer shadow-inner border-2",

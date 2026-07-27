@@ -11,13 +11,12 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v6 — Titanium Production Grade.
+ * useLiveQuery v7 — Titanium Production Grade.
  * 
- * Optimized to eliminate the "Maximum update depth exceeded" error.
- * 1. Removed setState calls during the render phase.
- * 2. Uses a stable reference for the query function.
- * 3. Implements shallow comparison to prevent unnecessary React re-renders.
- * 4. Dependencies are handled as a single array element to maintain constant hook signature.
+ * Optimized to eliminate the "Maximum update depth exceeded" and "Changed size" errors.
+ * 1. Constant length dependency array [tick, deps_string].
+ * 2. Stable reference for the query function.
+ * 3. Deep dependency checking via stringification to prevent unnecessary re-subscribing.
  */
 export function useLiveQuery<T>(
     querier:      () => T | Promise<T>,
@@ -29,7 +28,7 @@ export function useLiveQuery<T>(
     const [error, setError] = useState<Error | null>(null);
     const [tick, setTick] = useState(0);
     
-    // Stable reference to the latest querier to avoid re-subscribing on every anonymous function definition
+    // Stable reference to the latest querier
     const querierRef = useRef(querier);
     useEffect(() => {
         querierRef.current = querier;
@@ -37,10 +36,12 @@ export function useLiveQuery<T>(
 
     const refresh = useCallback(() => setTick(t => t + 1), []);
 
+    // Create a stable string key for dependencies to ensure fixed size and value comparison
+    const depsKey = JSON.stringify(deps);
+
     useEffect(() => {
         let isSubscribed = true;
         
-        // Start loading if no data present
         if (value === undefined) setIsLoading(true);
         setError(null);
 
@@ -51,17 +52,12 @@ export function useLiveQuery<T>(
                 if (!isSubscribed) return;
                 
                 setValue(prev => {
-                    // 1. Identity check
                     if (prev === val) return prev;
-                    
-                    // 2. Shallow comparison for arrays (Standard Dexie toArray results)
-                    // Prevents infinite loops when DB content hasn't changed but a new array reference is returned
                     if (Array.isArray(prev) && Array.isArray(val)) {
                         if (prev.length === val.length && prev.every((item, i) => item === val[i])) {
                             return prev;
                         }
                     }
-                    
                     return val;
                 });
                 
@@ -80,8 +76,8 @@ export function useLiveQuery<T>(
             isSubscribed = false;
             subscription.unsubscribe();
         };
-        // deps are wrapped in the array to keep hook size constant regardless of what is inside deps
-    }, [tick, deps]);
+        // Dependency array has a constant size of 2
+    }, [tick, depsKey]);
 
     return { value, isLoading, error, refresh };
 }
