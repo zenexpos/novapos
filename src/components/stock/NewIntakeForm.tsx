@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Save, Loader2, Truck, Calendar as CalendarIcon, Hash, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Trash2, Save, Loader2, Truck, Calendar as CalendarIcon, Hash, AlertTriangle, TrendingUp, Barcode } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -21,7 +21,7 @@ import { ocrParserService } from '@/services/ocr-parser.service';
 
 /**
  * NewIntakeForm Elite - محرك اللوجستيك المتقدم.
- * مصمم لمعالجة البيانات الكثيفة، دعم المسح الضوئي (OCR)، والتوزيع الدقيق لتكاليف الاستيراد.
+ * تم تحديثه لدعم عمود الكود بار (Barcode) وتوزيع التكاليف التناسبي.
  */
 export function NewIntakeForm() {
     const router = useRouter();
@@ -88,10 +88,10 @@ export function NewIntakeForm() {
     const updateItem = (id: string, field: keyof StockIntakeItem, value: any) => {
         setItems(prev => prev.map(item => {
             if (item.id === id) {
-                // التأكد من حفظ الأرقام كأرقام حقيقية لمنع أخطاء الحسابات
-                const finalValue = (field === 'quantity' || field === 'purchasePrice' || field === 'price' || field === 'quantityDamaged')
-                    ? safeNumber(value)
-                    : value;
+                let finalValue = value;
+                if (field === 'quantity' || field === 'purchasePrice' || field === 'price' || field === 'quantityDamaged') {
+                    finalValue = safeNumber(value);
+                }
                 return { ...item, [field]: finalValue };
             }
             return item;
@@ -176,19 +176,20 @@ export function NewIntakeForm() {
                                 <TableHeader className="bg-muted/30">
                                     <TableRow className="h-9 border-b border-white/5">
                                         <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-4 tracking-widest">الصنف</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-center px-2 w-24 tracking-widest">الكمية</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-2 w-32 tracking-widest">سعر الشراء</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-primary text-right px-2 w-32 tracking-widest">سعر البيع</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-2 w-32 tracking-widest">الكود بار</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-center px-2 w-20 tracking-widest">الكمية</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-2 w-28 tracking-widest">سعر الشراء</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-primary text-right px-2 w-28 tracking-widest">سعر البيع</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase text-muted-foreground/40 text-right px-2 w-24 tracking-widest">تكلفة الـ Revient</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-emerald-500/50 text-right px-2 w-20 tracking-widest">الهامش</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-4 w-32 tracking-widest">الإجمالي</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-emerald-500/50 text-right px-2 w-16 tracking-widest">الهامش</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-4 w-28 tracking-widest">الإجمالي</TableHead>
                                         <TableHead className="w-10"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="h-64 text-center opacity-10 text-[10px] font-black uppercase tracking-[0.4em]">في انتظار إدخال بيانات المخزون</TableCell>
+                                            <TableCell colSpan={9} className="h-64 text-center opacity-10 text-[10px] font-black uppercase tracking-[0.4em]">في انتظار إدخال بيانات المخزون</TableCell>
                                         </TableRow>
                                     ) : (
                                         items.map((item) => {
@@ -202,7 +203,16 @@ export function NewIntakeForm() {
                                             return (
                                                 <TableRow key={item.id} className="hover:bg-white/5 border-b border-border/10 h-11 transition-colors group">
                                                     <TableCell className="px-4 py-0">
-                                                        <span className="font-bold text-xs uppercase truncate block max-w-[400px]">{item.name}</span>
+                                                        <span className="font-bold text-[11px] uppercase truncate block max-w-[250px]">{item.name}</span>
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-0">
+                                                        <input 
+                                                            type="text" 
+                                                            value={Array.isArray(item.barcodes) ? item.barcodes.join(', ') : ''} 
+                                                            onChange={e => updateItem(item.id, 'barcodes', e.target.value.split(',').map(b => b.trim()).filter(Boolean))}
+                                                            className="w-full h-7 bg-black/20 border-none rounded-lg text-[9px] font-mono font-bold tabular-nums outline-none shadow-inner px-2 text-muted-foreground/80 focus:ring-1 focus:ring-primary/30"
+                                                            placeholder="كود بار..."
+                                                        />
                                                     </TableCell>
                                                     <TableCell className="px-2 py-0">
                                                         <input 
@@ -231,15 +241,14 @@ export function NewIntakeForm() {
                                                         />
                                                     </TableCell>
                                                     <TableCell className="px-2 py-0 text-right">
-                                                        <span className="font-mono text-[10px] font-bold opacity-30 tabular-nums">{landingCost.toFixed(2)}</span>
+                                                        <span className="font-mono text-[9px] font-bold opacity-30 tabular-nums">{landingCost.toFixed(2)}</span>
                                                     </TableCell>
                                                     <TableCell className="px-2 py-0 text-right">
                                                         <span className={cn(
-                                                            "text-[11px] font-black tabular-nums flex items-center justify-end gap-1", 
-                                                            margin < 0 ? "text-destructive" : "text-emerald-500/50"
+                                                            "text-[10px] font-black tabular-nums flex items-center justify-end gap-1", 
+                                                            margin < 0 ? "text-destructive" : "text-emerald-500/40"
                                                         )}>
                                                             {margin.toFixed(0)}%
-                                                            {margin < 0 && <AlertTriangle className="h-2.5 w-2.5" />}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="px-4 py-0 text-right font-mono font-black text-xs tabular-nums text-foreground/80">
