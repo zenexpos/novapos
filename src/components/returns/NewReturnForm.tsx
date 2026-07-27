@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,7 +129,7 @@ export function NewReturnForm() {
             });
 
             if (success) {
-                toast.success("Retour validé. Avoir généré.");
+                toast.success("Retour validé.");
                 router.push('/returns');
             }
         } catch (e) {
@@ -150,21 +150,19 @@ export function NewReturnForm() {
     ], 'Facturation', !!sale);
 
     return (
-        <div className="grid lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4 duration-700">
-            <div className="lg:col-span-8 space-y-6">
-                <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
-                    <CardHeader className="bg-muted/20 border-b border-white/5 p-4 flex flex-col sm:flex-row items-center gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm">
-                                <Receipt className="h-5 w-5" />
-                            </div>
-                            <CardTitle className="text-lg font-semibold tracking-tight">Source de Vente</CardTitle>
+        <div className="grid lg:grid-cols-12 gap-2 animate-in fade-in duration-500">
+            <div className="lg:col-span-8 space-y-2">
+                <Card className="rounded-xl border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
+                    <CardHeader className="bg-muted/20 border-b border-white/5 p-3 flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Receipt className="h-4 w-4 text-primary opacity-50" />
+                            <CardTitle className="text-sm font-black uppercase tracking-widest">Facture Source</CardTitle>
                         </div>
-                        <div className="relative flex-grow max-w-md group">
-                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-30" />
+                        <div className="relative flex-grow max-w-sm group">
+                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground opacity-30" />
                             <Input 
-                                placeholder="N° Facture (ex: 240412-1234)..."
-                                className="pl-10 h-11 rounded-xl bg-black/20 border-none shadow-inner font-mono font-bold"
+                                placeholder="N° Facture..."
+                                className="pl-9 h-9 rounded-lg bg-black/20 border-none shadow-inner font-mono font-bold text-xs"
                                 value={searchInvoice}
                                 onChange={e => setSearchInvoice(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && fetchSale(searchInvoice)}
@@ -174,30 +172,29 @@ export function NewReturnForm() {
                                 size="icon" 
                                 onClick={() => fetchSale(searchInvoice)}
                                 disabled={isLoadingSale}
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                             >
-                                {isLoadingSale ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                                {isLoadingSale ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
                             </Button>
                         </div>
                     </CardHeader>
                     
                     <CardContent className="p-0">
                         {!sale ? (
-                            <div className="h-80 flex flex-col items-center justify-center text-center p-6 opacity-20 space-y-4">
-                                <Search className="h-16 w-16" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Saisissez un numéro de facture pour charger les flux</p>
+                            <div className="h-60 flex flex-col items-center justify-center text-center p-6 opacity-20">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">En attente d'identification...</p>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <Table>
-                                    <TableHeader className="bg-black/20 border-none">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[50px] p-4"></TableHead>
-                                            <TableHead className="font-bold text-[10px] uppercase text-muted-foreground/60 p-4">Désignation</TableHead>
-                                            <TableHead className="font-bold text-[10px] uppercase text-muted-foreground/60 text-center">Facturé</TableHead>
-                                            <TableHead className="font-bold text-[10px] uppercase text-muted-foreground/60 text-center">Renvoyé</TableHead>
-                                            <TableHead className="font-bold text-[10px] uppercase text-muted-foreground/60 text-center">Stock</TableHead>
-                                            <TableHead className="font-bold text-[10px] uppercase text-muted-foreground/60 text-right">Valeur</TableHead>
+                                    <TableHeader className="bg-black/10 border-none">
+                                        <TableRow className="border-white/5 h-8">
+                                            <TableHead className="w-[40px] p-2 text-center"></TableHead>
+                                            <TableHead className="font-black text-[8px] uppercase text-muted-foreground/50 p-2">Désignation</TableHead>
+                                            <TableHead className="font-black text-[8px] uppercase text-muted-foreground/50 text-center p-2">Qté</TableHead>
+                                            <TableHead className="font-black text-[8px] uppercase text-muted-foreground/50 text-center p-2">Retour</TableHead>
+                                            <TableHead className="font-black text-[8px] uppercase text-muted-foreground/50 text-center p-2">Action</TableHead>
+                                            <TableHead className="font-black text-[8px] uppercase text-muted-foreground/50 text-right p-2">Valeur</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -205,46 +202,44 @@ export function NewReturnForm() {
                                             const uuid = item.productUuid || `null-${item.name}`;
                                             const isSelected = !!selectedItems[uuid];
                                             return (
-                                                <TableRow key={uuid} className={cn("border-white/5 group transition-all", isSelected ? "bg-primary/5" : "hover:bg-white/5")}>
-                                                    <TableCell className="p-4">
+                                                <TableRow key={uuid} className={cn("border-white/5 h-10 transition-colors", isSelected ? "bg-primary/5" : "hover:bg-white/5")}>
+                                                    <TableCell className="p-2 text-center">
                                                         <Checkbox 
                                                             checked={isSelected}
                                                             onCheckedChange={c => handleToggleItem(uuid, !!c)}
-                                                            className="h-5 w-5 border-primary data-[state=checked]:bg-primary rounded-md"
+                                                            className="h-4 w-4 border-primary/20 data-[state=checked]:bg-primary"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="p-4">
-                                                        <p className="font-bold text-sm tracking-tight">{item.name}</p>
-                                                        <p className="text-[10px] font-semibold text-muted-foreground/40">{formatCurrency(item.price)}/u</p>
+                                                    <TableCell className="p-2">
+                                                        <p className="font-bold text-[11px] uppercase truncate max-w-[200px]">{item.name}</p>
+                                                        <p className="text-[8px] font-bold text-muted-foreground/40">{formatCurrency(item.price)}/u</p>
                                                     </TableCell>
-                                                    <TableCell className="p-4 text-center">
-                                                        <span className="text-xs font-bold opacity-40">{item.quantity}</span>
+                                                    <TableCell className="p-2 text-center">
+                                                        <span className="text-[10px] font-black opacity-20 tabular-nums">{item.quantity}</span>
                                                     </TableCell>
-                                                    <TableCell className="p-4">
+                                                    <TableCell className="p-2">
                                                         <Input 
                                                             type="number"
                                                             disabled={!isSelected}
                                                             value={selectedItems[uuid]?.quantity || 0}
                                                             onChange={e => updateReturnQty(uuid, parseFloat(e.target.value) || 0)}
-                                                            className="w-20 h-8 mx-auto text-center font-bold bg-black/20 border-none shadow-inner"
+                                                            className="w-16 h-7 mx-auto text-center font-black text-xs bg-black/20 border-none shadow-inner p-0"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="p-4 text-center">
-                                                        <Button 
-                                                            variant="ghost" 
+                                                    <TableCell className="p-2 text-center">
+                                                        <button 
                                                             disabled={!isSelected}
                                                             onClick={() => setSelectedItems(prev => ({ ...prev, [uuid]: { ...prev[uuid], restock: !prev[uuid].restock } }))}
                                                             className={cn(
-                                                                "h-8 rounded-lg text-[9px] font-bold uppercase w-full gap-2 transition-all border",
-                                                                !isSelected ? "opacity-10" : 
+                                                                "px-2 py-1 rounded-md text-[7px] font-black uppercase border transition-all",
+                                                                !isSelected ? "opacity-10 grayscale" : 
                                                                 selectedItems[uuid].restock ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"
                                                             )}
                                                         >
-                                                            {isSelected && selectedItems[uuid].restock ? <PackageCheck className="h-3.5 w-3.5" /> : <PackageX className="h-3.5 w-3.5" />}
-                                                            {isSelected && (selectedItems[uuid].restock ? 'Rentrée' : 'Talon')}
-                                                        </Button>
+                                                            {isSelected && (selectedItems[uuid].restock ? 'Rentrée Stock' : 'Talon/Perte')}
+                                                        </button>
                                                     </TableCell>
-                                                    <TableCell className="p-4 text-right font-mono font-bold text-sm">
+                                                    <TableCell className="p-2 text-right font-mono font-black text-[10px] tabular-nums">
                                                         {isSelected ? formatCurrency(selectedItems[uuid].quantity * item.price) : '-'}
                                                     </TableCell>
                                                 </TableRow>
@@ -258,79 +253,74 @@ export function NewReturnForm() {
                 </Card>
             </div>
 
-            <div className="lg:col-span-4 space-y-6">
-                <Card className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden sticky top-24 shadow-xl">
-                    <CardHeader className="bg-amber-500/10 border-b border-amber-500/20 p-4">
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-amber-600 flex items-center gap-2">
-                            <Undo2 className="h-4 w-4" /> Bilan de Régularisation
+            <div className="lg:col-span-4">
+                <Card className="rounded-xl border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden sticky top-20 shadow-sm">
+                    <CardHeader className="bg-amber-500/10 border-b border-amber-500/20 p-3">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                            Bilan de Régularisation
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-6">
+                    <CardContent className="p-4 space-y-4">
                         {sale ? (
-                            <div className="space-y-6">
-                                <div className="p-4 bg-black/20 rounded-2xl border border-white/5 space-y-3 shadow-inner">
-                                    <div className="flex items-center gap-3 text-muted-foreground/60 border-b border-white/5 pb-2 mb-2">
-                                        <User className="h-4 w-4" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">Partenaire Client</span>
-                                    </div>
-                                    <p className="font-black text-base tracking-tight">{customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'}</p>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase opacity-40">
-                                        <Calendar className="h-3.5 w-3.5" />
-                                        {format(safeToDate(sale.createdAt!), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                            <div className="space-y-4">
+                                <div className="p-3 bg-black/20 rounded-xl border border-white/5 space-y-1 shadow-inner">
+                                    <p className="text-[8px] font-black uppercase text-muted-foreground/30 tracking-widest">Partenaire Client</p>
+                                    <p className="font-black text-xs uppercase truncate">{customer ? `${customer.firstName} ${customer.lastName}` : 'Passage'}</p>
+                                    <div className="flex items-center gap-1.5 text-[8px] font-bold opacity-30 uppercase mt-1">
+                                        <Calendar className="h-2 w-2" />
+                                        {format(safeToDate(sale.createdAt!), 'dd/MM/yy HH:mm', { locale: fr })}
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-semibold uppercase text-muted-foreground/60 ml-1">Motif du retour</Label>
+                                <div className="space-y-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[8px] font-black uppercase text-muted-foreground/40 ml-1">Commentaires</Label>
                                         <textarea 
                                             value={notes}
                                             onChange={e => setNotes(e.target.value)}
-                                            placeholder="Commentaires..."
-                                            className="w-full h-24 rounded-xl bg-black/20 border-none shadow-inner p-4 text-sm resize-none"
+                                            placeholder="..."
+                                            className="w-full h-16 rounded-xl bg-black/20 border-none shadow-inner p-3 text-[11px] font-medium resize-none focus:ring-1 focus:ring-primary/20"
                                         />
                                     </div>
 
-                                    <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-[10px] font-semibold uppercase text-emerald-600 flex items-center gap-2">
-                                                <Coins className="h-3.5 w-3.5" /> Remboursé en Cash
-                                            </Label>
-                                            <Input 
-                                                type="number" 
-                                                value={amountRefunded || ''}
-                                                onChange={e => setAmountRefunded(parseFloat(e.target.value) || 0)}
-                                                className="w-24 h-9 text-right rounded-lg bg-background border-none shadow-sm font-mono font-bold text-emerald-600"
-                                                placeholder="0.00"
-                                            />
-                                        </div>
+                                    <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex items-center justify-between">
+                                        <Label className="text-[8px] font-black uppercase text-emerald-600 flex items-center gap-1.5">
+                                            <Coins className="h-3 w-3" /> Remboursé Cash
+                                        </Label>
+                                        <Input 
+                                            type="number" 
+                                            value={amountRefunded || ''}
+                                            onChange={e => setAmountRefunded(parseFloat(e.target.value) || 0)}
+                                            className="w-24 h-8 text-right rounded-lg bg-background border-none shadow-sm font-mono font-black text-xs text-emerald-600"
+                                            placeholder="0.00"
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="pt-6 border-t border-white/5 space-y-3">
-                                    <div className="flex justify-between items-center text-xs font-semibold uppercase text-muted-foreground/40">
+                                <div className="pt-4 border-t border-white/5 space-y-2">
+                                    <div className="flex justify-between items-center text-[9px] font-bold uppercase text-muted-foreground/30">
                                         <span>Valeur Marchandise</span>
-                                        <span className="font-mono text-foreground font-bold">{formatCurrency(totalReturnValue)}</span>
+                                        <span className="font-mono">{formatCurrency(totalReturnValue)}</span>
                                     </div>
-                                    <div className="flex justify-between items-end pt-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Avoir INALT</span>
-                                        <span className="text-2xl font-black text-primary tracking-tighter">{formatCurrency(creditToCustomer)}</span>
+                                    <div className="flex justify-between items-center p-3 bg-primary/5 rounded-xl border border-primary/10">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">Avoir au Compte</span>
+                                        <span className="text-lg font-black text-primary tabular-nums tracking-tighter">{formatCurrency(creditToCustomer)}</span>
                                     </div>
                                 </div>
 
                                 <Button 
                                     onClick={handleSaveReturn}
                                     disabled={isSubmitting || Object.keys(selectedItems).length === 0}
-                                    className="w-full h-14 rounded-2xl font-black text-lg shadow-2xl transition-all active:scale-[0.98] gap-3 bg-amber-500 hover:bg-amber-600 text-white border-none"
+                                    className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 gap-2 bg-amber-500 hover:bg-amber-600 text-white border-none"
                                 >
-                                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
+                                    {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                                     Valider Retour [Ctrl+Enter]
                                 </Button>
                             </div>
                         ) : (
-                            <div className="py-10 text-center space-y-4 opacity-20">
-                                <AlertCircle className="h-12 w-12 mx-auto" />
-                                <p className="text-[10px] font-black uppercase tracking-widest max-w-[200px] mx-auto">En attente d'une facture source...</p>
+                            <div className="py-10 text-center opacity-10">
+                                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                                <p className="text-[8px] font-black uppercase tracking-widest">Identifiez une facture source</p>
                             </div>
                         )}
                     </CardContent>
