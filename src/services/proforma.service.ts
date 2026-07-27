@@ -49,8 +49,7 @@ class ProformaService {
         }
 
         const now = new Date();
-        let proformaNumber = '';
-
+        
         const subtotalCents = cart.items.reduce(
             (acc, item) => acc + Math.round(preciseMultiply(item.price, item.cartQuantity) * 100),
             0,
@@ -66,7 +65,7 @@ class ProformaService {
         const totalCents = Math.max(0, subtotalCents - discountCents);
 
         const items: SaleItem[] = cart.items.map(item => ({
-            productUuid: item.uuid.startsWith('custom-') ? null : item.uuid,
+            productUuid: (item.uuid && !item.uuid.startsWith('custom-')) ? item.uuid : null,
             name: item.name,
             price: safeNumber(item.price),
             purchasePrice: safeNumber(item.purchasePrice),
@@ -79,7 +78,7 @@ class ProformaService {
             items,
             subtotal: subtotalCents / 100,
             total: totalCents / 100,
-            customerUuid: cart.customerUuid || undefined,
+            customerUuid: cart.customerUuids?.[0] || undefined, 
             status: 'draft',
             createdAt: now,
             updatedAt: now,
@@ -87,8 +86,8 @@ class ProformaService {
             version: 1
         };
 
-        await db.transaction('rw', [db.proforma_invoices, db.inventory_logs, db.company_profile], async () => {
-            proformaNumber = await this.generateProformaNumber();
+        await db.transaction('rw', [db.proforma_invoices, db.inventory_logs, db.company_profile, db.sync_queue], async () => {
+            const proformaNumber = await this.generateProformaNumber();
             newProforma.proformaNumber = proformaNumber;
             await db.proforma_invoices.add(newProforma);
             

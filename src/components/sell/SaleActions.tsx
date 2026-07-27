@@ -1,13 +1,16 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wallet, ReceiptText } from 'lucide-react';
 import { DraftsDropdown } from './DraftsDropdown';
 import { CustomerCombobox } from './CustomerCombobox';
 import { useActiveCart } from '@/stores/cartStore';
 import { proformaService } from '@/services/proforma.service';
+import { ProformaDialog } from './ProformaDialog';
+import { useAppStore } from '@/stores/appStore';
 import { toast } from 'sonner';
+import type { ProformaInvoice } from '@/lib/types';
 
 interface SaleActionsProps {
     customerComboRef: React.RefObject<{ focusInput: () => void } | null>;
@@ -16,15 +19,21 @@ interface SaleActionsProps {
 
 function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProps) {
     const cart = useActiveCart();
+    const profile = useAppStore(state => state.companyProfile);
+    const [isProformaOpen, setIsProformaOpen] = useState(false);
+    const [lastProforma, setLastProforma] = useState<ProformaInvoice | null>(null);
+
     const hasItems = !!(cart && cart.items.length > 0);
 
     const handleCreateProforma = async () => {
         if (!hasItems) return;
         try {
-            await proformaService.createProformaFromCart(cart!);
-            toast.success("Proforma générée");
+            const proforma = await proformaService.createProformaFromCart(cart!);
+            setLastProforma(proforma);
+            setIsProformaOpen(true);
+            toast.success("Proforma générée avec succès");
         } catch (e) {
-            toast.error("Erreur proforma");
+            toast.error("Erreur lors de la génération de la proforma");
         }
     };
 
@@ -35,7 +44,7 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
             <div className="flex-grow" />
             <Button
                 variant="outline"
-                className="h-8 px-2.5 gap-1.5 border-primary/20 bg-primary/5 text-primary"
+                className="h-8 px-2.5 gap-1.5 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all"
                 onClick={handleCreateProforma}
                 disabled={!hasItems}
             >
@@ -50,6 +59,14 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
                 <Wallet className="h-4 w-4" />
                 Finaliser [F10]
             </Button>
+
+            <ProformaDialog 
+                isOpen={isProformaOpen} 
+                onOpenChange={setIsProformaOpen} 
+                proforma={lastProforma}
+                profile={profile}
+                customerName={cart?.customerUuids?.length === 1 ? undefined : (cart?.customerUuids && cart.customerUuids.length > 1 ? `${cart.customerUuids.length} Clients` : undefined)}
+            />
         </div>
     );
 }

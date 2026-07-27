@@ -17,7 +17,7 @@ import {
 } from '@/lib/utils';
 import {
     Loader2, CheckCircle2, AlertCircle,
-    Wallet, ShieldAlert, UserX, UserCheck, Users, Info
+    Wallet, ShieldAlert, UserX, UserCheck, Users
 } from 'lucide-react';
 import { PrintReceiptDialog } from '../sales/PrintReceiptDialog';
 import type { Sale, Customer } from '@/lib/types';
