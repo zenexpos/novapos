@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Wallet, ReceiptText } from 'lucide-react';
 import { DraftsDropdown } from './DraftsDropdown';
@@ -10,20 +10,38 @@ import { proformaService } from '@/services/proforma.service';
 import { ProformaDialog } from './ProformaDialog';
 import { useAppStore } from '@/stores/appStore';
 import { toast } from 'sonner';
-import type { ProformaInvoice } from '@/lib/types';
+import type { ProformaInvoice, Customer } from '@/lib/types';
+import { db } from '@/lib/db';
 
 interface SaleActionsProps {
     customerComboRef: React.RefObject<{ focusInput: () => void } | null>;
     onOpenPayment: () => void;
 }
 
+/**
+ * iPOS Zen - Sale Actions Console.
+ * Orchestrates Cart Drafts, Customer selection and Proforma generation.
+ */
 function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProps) {
     const cart = useActiveCart();
     const profile = useAppStore(state => state.companyProfile);
     const [isProformaOpen, setIsProformaOpen] = useState(false);
     const [lastProforma, setLastProforma] = useState<ProformaInvoice | null>(null);
+    const [customerName, setCustomerName] = useState<string | undefined>(undefined);
 
     const hasItems = !!(cart && cart.items.length > 0);
+
+    // Resolve current customer name for proforma display
+    useEffect(() => {
+        if (cart?.customerUuid) {
+            db.customers.where('uuid').equals(cart.customerUuid).first().then(c => {
+                if (c) setCustomerName(`${c.firstName} ${c.lastName}`);
+                else setCustomerName(undefined);
+            });
+        } else {
+            setCustomerName(undefined);
+        }
+    }, [cart?.customerUuid]);
 
     const handleCreateProforma = async () => {
         if (!hasItems) return;
@@ -65,7 +83,7 @@ function SaleActionsContent({ customerComboRef, onOpenPayment }: SaleActionsProp
                 onOpenChange={setIsProformaOpen} 
                 proforma={lastProforma}
                 profile={profile}
-                customerName={cart?.customerUuids?.length === 1 ? undefined : (cart?.customerUuids && cart.customerUuids.length > 1 ? `${cart.customerUuids.length} Clients` : undefined)}
+                customerName={customerName}
             />
         </div>
     );

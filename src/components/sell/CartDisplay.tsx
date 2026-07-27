@@ -2,11 +2,9 @@
 
 import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Minus, Plus, ShoppingCart, Edit3 } from 'lucide-react';
-import { formatCurrency, roundQty, cn } from "@/lib/utils";
+import { Trash2, Minus, Plus, ShoppingCart, Edit3, Check } from 'lucide-react';
+import { roundQty, roundFinancial, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
@@ -15,14 +13,28 @@ interface CartItemRowProps {
     isSelected: boolean;
     onUpdate: (uuid: string, quantity: number) => void;
     onPriceUpdate: (uuid: string, price: number) => void;
-    onTotalUpdate: (uuid: string, total: number) => void;
     onRemove: (uuid: string) => void;
     onSelect: () => void;
 }
 
-const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
+/**
+ * iPOS Cart Row Component.
+ * Features: Inline quantity controls and "Open Price" direct editing.
+ */
+const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onRemove, onSelect }: CartItemRowProps) => {
+    const [isEditingPrice, setIsEditingPrice] = useState(false);
+    const [tempPrice, setTempPrice] = useState(item.price.toString());
+    
     const isZero = item.cartQuantity <= 0;
     const lineTotal = item.price * item.cartQuantity;
+
+    const handlePriceSubmit = () => {
+        const val = roundFinancial(parseFloat(tempPrice) || 0);
+        if (val >= 0) {
+            onPriceUpdate(item.uuid, val);
+        }
+        setIsEditingPrice(false);
+    };
 
     return (
         <div 
@@ -34,7 +46,7 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 isZero && "opacity-40"
             )}
         >
-            {/* Designation & Price */}
+            {/* Designation & Dynamic Price Editing */}
             <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5">
                     <span className={cn("font-bold text-[12px] tracking-tight truncate", isZero && "line-through")}>
@@ -42,13 +54,38 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                     </span>
                     {(item as any).isPriceOverridden && <Edit3 className="h-2.5 w-2.5 text-blue-500" />}
                 </div>
-                <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-black text-primary tabular-nums">{item.price}</span>
-                    <span className="text-[8px] font-bold text-muted-foreground/30 uppercase">/ {item.unit || 'pcs'}</span>
-                </div>
+                
+                {isEditingPrice ? (
+                    <div className="flex items-center gap-1 animate-in zoom-in-95 duration-200">
+                        <input
+                            autoFocus
+                            type="number"
+                            value={tempPrice}
+                            onChange={(e) => setTempPrice(e.target.value)}
+                            onKeyDown={(e) => { 
+                                if(e.key === 'Enter') handlePriceSubmit();
+                                if(e.key === 'Escape') setIsEditingPrice(false);
+                            }}
+                            onBlur={handlePriceSubmit}
+                            className="w-16 h-4 bg-background border rounded px-1 text-[10px] font-black focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button onClick={handlePriceSubmit} className="text-emerald-500 hover:scale-125 transition-transform">
+                            <Check className="h-2 w-2" />
+                        </button>
+                    </div>
+                ) : (
+                    <div 
+                        className="flex items-center gap-1 cursor-pointer hover:bg-primary/5 rounded px-1 -ml-1 transition-colors group/price"
+                        onClick={(e) => { e.stopPropagation(); setIsEditingPrice(true); setTempPrice(item.price.toString()); }}
+                        title="Modifier le prix unitaire"
+                    >
+                        <span className="text-[10px] font-black text-primary tabular-nums group-hover/price:underline">{item.price}</span>
+                        <span className="text-[8px] font-bold text-muted-foreground/30 uppercase">/ {item.unit || 'pcs'}</span>
+                    </div>
+                )}
             </div>
             
-            {/* Quantity Controls - Ultra Compact */}
+            {/* Quantity Controls - High Density */}
             <div className="flex items-center bg-background/50 rounded border h-7 overflow-hidden">
                 <button 
                     onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
@@ -77,10 +114,11 @@ const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUp
                 </span>
             </div>
 
-            {/* Remove */}
+            {/* Remove Action */}
             <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
                 className="flex items-center justify-center h-8 w-8 text-muted-foreground/10 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                aria-label="Supprimer l'article"
             >
                 <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -93,18 +131,18 @@ export function CartDisplay() {
     const [isMounted, setIsMounted] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const cart = useActiveCart();
-    const { updateItemQuantity, updateItemPrice, updateItemTotal, removeItemFromCart } = useCartActions();
+    const { updateItemQuantity, updateItemPrice, removeItemFromCart } = useCartActions();
     
     useEffect(() => { setIsMounted(true); }, []);
 
     const handleUpdateQty = useCallback((u: string, q: number) => updateItemQuantity(u, q), [updateItemQuantity]);
     const handleUpdatePrice = useCallback((u: string, p: number) => updateItemPrice(u, p), [updateItemPrice]);
-    const handleUpdateTotal = useCallback((u: string, t: number) => updateItemTotal(u, t), [updateItemTotal]);
     const handleRemove = useCallback((u: string) => removeItemFromCart(u), [removeItemFromCart]);
 
     useKeyboardShortcuts([
         { key: 'ArrowDown', action: () => { if (cart?.items.length) setSelectedIndex(prev => prev === null || prev >= cart.items.length - 1 ? 0 : prev + 1); }, description: 'Suivant', ignoreInputFocus: true },
-        { key: 'ArrowUp', action: () => { if (cart?.items.length) setSelectedIndex(prev => prev === null || prev <= 0 ? cart.items.length - 1 : prev - 1); }, description: 'Précédent', ignoreInputFocus: true }
+        { key: 'ArrowUp', action: () => { if (cart?.items.length) setSelectedIndex(prev => prev === null || prev <= 0 ? cart.items.length - 1 : prev - 1); }, description: 'Précédent', ignoreInputFocus: true },
+        { key: 'Delete', action: () => { if (selectedIndex !== null && cart?.items[selectedIndex]) handleRemove(cart.items[selectedIndex].uuid); }, description: 'Supprimer ligne', ignoreInputFocus: true }
     ], 'ListePanier', isMounted && !!cart?.items.length);
 
     if (!isMounted) return null;
@@ -128,7 +166,6 @@ export function CartDisplay() {
                         isSelected={selectedIndex === index}
                         onUpdate={handleUpdateQty} 
                         onPriceUpdate={handleUpdatePrice}
-                        onTotalUpdate={handleUpdateTotal}
                         onRemove={handleRemove} 
                         onSelect={() => setSelectedIndex(index)}
                     />
