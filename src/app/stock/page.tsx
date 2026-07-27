@@ -1,17 +1,21 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { StockIntake, Supplier, InventoryLog } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Archive, LayoutGrid, List, History, ArrowUpDown, RefreshCw, Building, Wallet, UserPlus, Trash2, X, FileUp } from 'lucide-react';
+import { 
+    Search, Plus, Archive, LayoutGrid, List, History, 
+    ArrowUpDown, RefreshCw, Building, Wallet, UserPlus, 
+    Trash2, X, FileUp 
+} from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
 import { StockIntakeCard } from '@/components/stock/stock-intake-card';
 import { StockIntakeTable } from '@/components/stock/stock-intake-table';
 import { StockIntakeDetailsDialog } from '@/components/stock/stock-intake-details-dialog';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,10 +40,8 @@ import { EMPTY_ARRAY } from '@/lib/constants';
 
 type StockTab = 'intakes' | 'logs' | 'suppliers';
 
-/**
- * iPOS Stock & Logistics Hub.
- * Advanced inventory management with audited movements.
- */
+type EnrichedLog = InventoryLog & { productName: string; reference?: string };
+
 export default function StockPage() {
     const router = useRouter();
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -63,12 +65,15 @@ export default function StockPage() {
     const [isDeleteSupplierOpen, setIsDeleteSupplierOpen] = useState(false);
     const [isBulkDeleteSupplierOpen, setIsBulkDeleteSupplierOpen] = useState(false);
 
+    // 1. Suppliers Query
     const suppliersResult = useLiveQuery<Supplier[]>(async () => {
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
     const suppliers = suppliersResult.value ?? (EMPTY_ARRAY as Supplier[]);
+    const supplierMap = useMemo(() => new Map(suppliers.map(s => [s.uuid, s])), [suppliers]);
     
+    // 2. Intakes Query
     const stockIntakesResult = useLiveQuery<StockIntake[]>(async () => {
         if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as StockIntake[];
         const start = startOfDay(dateRange.from);
@@ -76,25 +81,23 @@ export default function StockPage() {
         
         const results = await db.stock_intakes.where('createdAt').between(start, end, true, true).toArray();
         
-        let filtered = results;
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            const matchingSupplierUuids = suppliers
-                .filter(s => s.name.toLowerCase().includes(q))
-                .map(s => s.uuid);
+        if (!searchQuery.trim()) return results.sort((a,b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 
-            filtered = results.filter(i => 
-                (i.invoiceNumber && i.invoiceNumber.toLowerCase().includes(q)) ||
-                (i.supplierUuid && matchingSupplierUuids.includes(i.supplierUuid))
-            );
-        }
+        const q = searchQuery.toLowerCase();
+        const matchingSupplierUuids = suppliers
+            .filter(s => s.name.toLowerCase().includes(q))
+            .map(s => s.uuid);
 
-        return filtered.sort((a,b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+        return results.filter(i => 
+            (i.invoiceNumber && i.invoiceNumber.toLowerCase().includes(q)) ||
+            (i.supplierUuid && matchingSupplierUuids.includes(i.supplierUuid))
+        ).sort((a,b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     }, [isMounted, dateRange, searchQuery, suppliers]);
     const stockIntakes = stockIntakesResult.value ?? (EMPTY_ARRAY as StockIntake[]);
 
-    const inventoryLogsResult = useLiveQuery<InventoryLog[]>(async () => {
-        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as InventoryLog[];
+    // 3. Inventory Logs Query with Join
+    const inventoryLogsResult = useLiveQuery<EnrichedLog[]>(async () => {
+        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as EnrichedLog[];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
@@ -102,39 +105,33 @@ export default function StockPage() {
             .where('createdAt')
             .between(start, end, true, true)
             .reverse()
-            .limit(150)
+            .limit(200)
             .toArray();
 
-        const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter((uuid): uuid is string => uuid !== null)));
+        const productUuids = Array.from(new Set(logs.map(l => l.productUuid).filter((uuid): uuid is string => !!uuid)));
         const products = productUuids.length > 0
             ? await db.products.where('uuid').anyOf(productUuids).toArray()
             : [];
         const productMap = new Map(products.map(p => [p.uuid, p.name]));
 
-        const result = logs.map(l => ({
+        const result: EnrichedLog[] = logs.map(l => ({
             ...l,
             productName: productMap.get(l.productUuid ?? '') || 'Produit inconnu'
         }));
 
         if (!searchQuery.trim()) return result;
         const q = searchQuery.toLowerCase();
-        return result.filter(l => l.productName.toLowerCase().includes(q));
+        return result.filter(l => l.productName.toLowerCase().includes(q) || (l.details && l.details.toLowerCase().includes(q)));
     }, [isMounted, dateRange, searchQuery]);
-    const inventoryLogs = inventoryLogsResult.value ?? (EMPTY_ARRAY as InventoryLog[]);
+    const inventoryLogs = inventoryLogsResult.value ?? (EMPTY_ARRAY as EnrichedLog[]);
 
     const filteredSuppliers = useMemo(() => {
-        if (!suppliers) return [];
         if (!searchQuery.trim()) return suppliers;
         const q = searchQuery.toLowerCase();
-        return suppliers.filter(s => s.name.toLowerCase().includes(q) || s.phone?.includes(q));
+        return suppliers.filter(s => s.name.toLowerCase().includes(q) || (s.phone && s.phone.includes(q)));
     }, [suppliers, searchQuery]);
 
-    const supplierMap = useMemo(() => new Map((suppliers || []).map(s => [s.uuid, s])), [suppliers]);
-
-    const isLoading = suppliersResult.isLoading || (activeTab === 'intakes' && stockIntakesResult.isLoading);
-
     const totalSuppliersDebt = useMemo(() => {
-        if (!suppliers) return 0;
         return suppliers.reduce((sum, s) => sum + Math.round(safeNumber(s.balance) * 100), 0) / 100;
     }, [suppliers]);
 
@@ -191,11 +188,10 @@ export default function StockPage() {
     };
 
     const handleToggleSelectAllSuppliers = () => {
-        if (!suppliers) return;
-        if (selectedSuppliers.size === suppliers.length) {
+        if (selectedSuppliers.size === filteredSuppliers.length) {
             setSelectedSuppliers(new Set());
         } else {
-            setSelectedSuppliers(new Set(suppliers.map(s => s.uuid)));
+            setSelectedSuppliers(new Set(filteredSuppliers.map(s => s.uuid)));
         }
     };
 
@@ -207,15 +203,14 @@ export default function StockPage() {
             setSelectedSuppliers(new Set());
             suppliersResult.refresh();
         } catch (e: any) {
-            toast.error("Échec de la suppression groupée (Vérifiez factures et paiements).");
+            toast.error("Échec de la suppression groupée (Solde ou historique actif).");
         }
     };
 
     const handleExportSuppliers = () => {
-        if (!suppliers) return;
         const toExport = selectedSuppliers.size > 0 
-            ? suppliers.filter(s => selectedSuppliers.has(s.uuid))
-            : suppliers;
+            ? filteredSuppliers.filter(s => selectedSuppliers.has(s.uuid))
+            : filteredSuppliers;
 
         const data = toExport.map(s => ({
             'Nom': s.name,
@@ -236,6 +231,8 @@ export default function StockPage() {
         { key: 'n', action: () => activeTab === 'suppliers' ? handleAddSupplier() : router.push('/stock/intake'), description: 'Nouvel élément', ignoreInputFocus: false }
     ], 'Logistique');
 
+    const isLoading = suppliersResult.isLoading || (activeTab === 'intakes' && stockIntakesResult.isLoading);
+
     return (
         <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader
@@ -251,8 +248,8 @@ export default function StockPage() {
                         </Button>
                     ) : (
                         <>
-                            <Button variant="outline" size="sm" onClick={() => setIsAdjustmentOpen(true)} className="h-9 px-3 rounded-lg">
-                                <ArrowUpDown className="h-4 w-4 mr-1" /> Correction
+                            <Button variant="outline" size="sm" onClick={() => setIsAdjustmentOpen(true)} className="h-9 px-3 rounded-lg border-primary/20 bg-primary/5 hover:bg-primary/10">
+                                <ArrowUpDown className="h-4 w-4 mr-1 text-primary" /> Correction
                             </Button>
                             <Button size="sm" asChild className="h-9 px-6 rounded-lg shadow-sm">
                                 <Link href="/stock/intake">
@@ -293,36 +290,21 @@ export default function StockPage() {
 
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-muted/20 p-1.5 rounded-xl border">
                 <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
-                    <button 
-                        onClick={() => setActiveTab('intakes')}
-                        className={cn(
-                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
-                            activeTab === 'intakes' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
-                        )}
-                    >
-                        Réceptions
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('suppliers')}
-                        className={cn(
-                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
-                            activeTab === 'suppliers' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
-                        )}
-                    >
-                        Fournisseurs
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('logs')}
-                        className={cn(
-                            "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
-                            activeTab === 'logs' ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
-                        )}
-                    >
-                        Audit Flux
-                    </button>
+                    {(['intakes', 'suppliers', 'logs'] as StockTab[]).map(tab => (
+                        <button 
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={cn(
+                                "px-4 py-1.5 rounded-md text-[10px] font-black uppercase transition-all",
+                                activeTab === tab ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground/60 hover:text-foreground"
+                            )}
+                        >
+                            {tab === 'intakes' ? 'Réceptions' : tab === 'suppliers' ? 'Fournisseurs' : 'Audit Flux'}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="flex items-center gap-2 px-1">
+                <div className="flex items-center gap-2 px-1 flex-grow lg:flex-grow-0">
                     <div className="relative flex-grow">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                         <Input 
@@ -377,7 +359,7 @@ export default function StockPage() {
                         {activeTab === 'logs' && (
                             inventoryLogs.length === 0 ? (
                                 <EmptyState icon={History} title="Aucun mouvement" description="Aucune transaction de stock détectée." />
-                            ) : <InventoryLogTable logs={inventoryLogs as any} />
+                            ) : <InventoryLogTable logs={inventoryLogs} />
                         )}
                         {activeTab === 'suppliers' && (
                             filteredSuppliers.length === 0 ? (
@@ -397,7 +379,7 @@ export default function StockPage() {
             <SupplierDialog isOpen={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
             
             <ConfirmAlertDialog isOpen={isDeleteSupplierOpen} onOpenChange={setIsDeleteSupplierOpen} title="Révoquer le partenaire ?" description="Seuls les comptes avec un solde nul peuvent être supprimés." onConfirm={performDeleteSupplier} confirmText="Révoquer" />
-            <ConfirmAlertDialog isOpen={isBulkDeleteSupplierOpen} onOpenChange={setIsBulkDeleteSupplierOpen} title="Supprimer la sélection ?" description="Seuls les comptes avec un solde nul seront supprimés." onConfirm={handleBulkDeleteSuppliers} confirmText="Supprimer" />
+            <ConfirmAlertDialog isOpen={isBulkDeleteSupplierOpen} onOpenChange={setIsBulkDeleteSupplierOpen} title="Supprimer la sélection ?" description="Seuls les comptes مع رصيد صفر سيتم حذفهم." onConfirm={handleBulkDeleteSuppliers} confirmText="Supprimer" />
         </div>
     );
 }

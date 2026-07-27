@@ -92,7 +92,11 @@ export function SupplierTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {sortedSuppliers.map((supplier) => {
+                    {sortedSuppliers.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-40 text-center opacity-20 italic font-bold">Aucun fournisseur trouvé.</TableCell>
+                        </TableRow>
+                    ) : sortedSuppliers.map((supplier) => {
                         const isSelected = selectedSuppliers.has(supplier.uuid);
                         return (
                             <TableRow 
@@ -112,12 +116,12 @@ export function SupplierTable({
                                 </TableCell>
                                 <TableCell className="px-2 py-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all shadow-inner">
+                                        <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors shadow-inner">
                                             <Building className="h-3.5 w-3.5" />
                                         </div>
                                         <div className="flex flex-col -space-y-0.5 min-w-0">
                                             <span className="font-bold text-[11px] truncate uppercase tracking-tight">{supplier.name}</span>
-                                            <Link href={`/stock/suppliers/detail?uuid=${supplier.uuid}`} className="text-[8px] font-semibold uppercase text-muted-foreground/40 hover:text-primary/60 transition-colors flex items-center gap-1">
+                                            <Link href={`/stock/suppliers/detail?uuid=${supplier.uuid}`} className="text-[8px] font-semibold uppercase text-muted-foreground/40 hover:text-primary/60 transition-colors flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                                 Dossier <ChevronRight className="h-2 w-2" />
                                             </Link>
                                         </div>
