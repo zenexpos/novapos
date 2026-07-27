@@ -17,11 +17,9 @@ import {
     Loader2, 
     FileUp, 
     RefreshCw,
-    X,
     FilterX,
     Archive,
-    Filter,
-    Tag
+    Filter
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductTable } from '@/components/products/product-table';
@@ -37,9 +35,6 @@ import { ProductDetailsSheet } from '@/components/products/ProductDetailsSheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -50,8 +45,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { productService } from '@/services/product.service';
 import { supplierService } from '@/services/supplier.service';
 import { useAppStore } from '@/stores/appStore';
-import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import Papa from 'papaparse';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -64,7 +57,6 @@ const sortOptions: { [key: string]: string } = {
     'price_desc': 'Prix Vente (Max)',
     'price_asc': 'Prix Vente (Min)',
     'quantity_desc': 'Stock (Décr.)',
-    'margin_desc': 'Marge (Max)',
 };
 
 function ProductsContent() {
@@ -104,12 +96,6 @@ function ProductsContent() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
-    const categoriesResult = useLiveQuery<string[]>(async () => {
-        const prods = await productService.getProducts();
-        return Array.from(new Set(prods.map(p => p.category).filter(Boolean) as string[])).sort();
-    }, []);
-    const categories = categoriesResult.value ?? [];
-
     useEffect(() => {
         const statusFromQuery = searchParams.get('stockStatus') as StockStatusFilter;
         if (statusFromQuery) setStockStatus(statusFromQuery);
@@ -135,8 +121,7 @@ function ProductsContent() {
     const onDialogSuccess = useCallback(() => {
         fetchMeta();
         productsResult.refresh();
-        categoriesResult.refresh();
-    }, [fetchMeta, productsResult, categoriesResult]);
+    }, [fetchMeta, productsResult]);
 
     const handleEditProduct = useCallback((product: Product) => {
         setSelectedProduct(product);
@@ -177,18 +162,6 @@ function ProductsContent() {
         if (selectedProducts.size === products.length) setSelectedProducts(new Set());
         else setSelectedProducts(new Set(products.map(p => p.uuid)));
     }, [products, selectedProducts.size]);
-
-    const handleBulkCategoryChange = async (category: string) => {
-        if (selectedProducts.size === 0) return;
-        try {
-            await productService.bulkUpdate(Array.from(selectedProducts), { category });
-            toast.success(`${selectedProducts.size} items mis à jour.`);
-            setSelectedProducts(new Set());
-            onDialogSuccess();
-        } catch (e) {
-            toast.error("Échec bulk update.");
-        }
-    };
 
     const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -262,56 +235,53 @@ function ProductsContent() {
     return (
         <div className="p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-32">
             <PageHeader
-                title="Catalogue Elite"
-                description="Contrôle direct du stock et des marges"
+                title="Catalogue"
+                description="Inventaire et tarification"
                 icon={Package}
-                className="mb-6"
+                className="mb-4"
             >
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="rounded-xl border-primary/10">
-                        <FileUp className="h-3.5 w-3.5 mr-1" /> Exporter
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-9 px-3 rounded-lg">
+                        <FileUp className="h-4 w-4 mr-1" /> Exporter
                     </Button>
-                    <Button asChild variant="outline" size="sm" disabled={isAnalyzing} className="rounded-xl border-primary/10">
+                    <Button asChild variant="outline" size="sm" disabled={isAnalyzing} className="h-9 px-3 rounded-lg">
                         <label htmlFor="csv-product-importer" className="cursor-pointer flex items-center">
-                            {isAnalyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Archive className="h-3.5 w-3.5 mr-1" />}
+                            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Archive className="h-4 w-4 mr-1" />}
                             Importer
                             <input type="file" id="csv-product-importer" accept=".csv" className="sr-only" onChange={handleFileSelected} />
                         </label>
                     </Button>
-                    <Button size="sm" onClick={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }} className="rounded-xl shadow-lg gap-1.5 px-6">
-                        <Plus className="h-4 w-4" /> Nouveau [N]
+                    <Button size="sm" onClick={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }} className="h-9 px-6 rounded-lg shadow-sm">
+                        <Plus className="h-4 w-4 mr-1.5" /> Nouveau [N]
                     </Button>
                 </div>
             </PageHeader>
 
             <InventoryStats isLoading={isLoading} />
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-card/20 p-1.5 rounded-xl border border-white/5 shadow-inner">
-                <div className="relative group flex-grow max-w-xl px-2">
-                    <Search className={cn(
-                        "absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 transition-all duration-300",
-                        searchQuery ? "text-primary" : "text-muted-foreground/30"
-                    )} />
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-muted/20 p-2 rounded-xl border">
+                <div className="relative group flex-grow max-w-xl">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
                     <Input 
                         ref={searchInputRef}
                         placeholder="Chercher une référence... [F3]"
-                        className="pl-11 h-9 rounded-lg bg-black/20 border-none shadow-inner font-bold"
+                        className="pl-9 h-10 border-none bg-transparent focus-visible:ring-0 font-bold"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-2 px-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-lg border-white/5 bg-black/20 font-bold px-4 gap-2">
-                                <Filter className="h-3.5 w-3.5 opacity-40" />
-                                {stockStatus === 'all' ? 'Stocks' : 'Filtré'}
+                            <Button variant="outline" size="sm" className="h-9 rounded-lg px-4 gap-2">
+                                <Filter className="h-3.5 w-3.5" />
+                                {stockStatus === 'all' ? 'Tous les stocks' : 'Filtré'}
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl">
+                        <DropdownMenuContent className="w-56" align="end">
                             <DropdownMenuRadioGroup value={stockStatus} onValueChange={(v: any) => setStockStatus(v)}>
-                                <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous les articles</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="all" className="text-xs font-bold">Tous</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="in_stock" className="text-xs font-bold text-emerald-500">En Stock</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="low_stock" className="text-xs font-bold text-amber-500">Stock Faible</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="out_of_stock" className="text-xs font-bold text-red-500">Rupture</DropdownMenuRadioItem>
@@ -321,12 +291,12 @@ function ProductsContent() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 rounded-lg border-white/5 bg-black/20 font-bold px-4 gap-2">
-                                <RefreshCw className="h-3.5 w-3.5 opacity-40" />
+                            <Button variant="outline" size="sm" className="h-9 rounded-lg px-4 gap-2">
+                                <RefreshCw className="h-3.5 w-3.5" />
                                 Trier
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="rounded-xl border-white/5 shadow-2xl">
+                        <DropdownMenuContent className="w-56" align="end">
                             <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
                                 {Object.entries(sortOptions).map(([key, value]) => (
                                     <DropdownMenuRadioItem key={key} value={key} className="text-xs font-bold">{value}</DropdownMenuRadioItem>
@@ -335,13 +305,13 @@ function ProductsContent() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <div className="flex items-center gap-1 p-1 bg-black/20 rounded-lg border border-white/5 shadow-inner">
-                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3.5 w-3.5"/></Button>
-                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5"/></Button>
+                    <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg border">
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                     </div>
 
                     {isFiltered && (
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-destructive hover:bg-destructive/10" onClick={resetFilters}>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-destructive" onClick={resetFilters}>
                             <FilterX className="h-4 w-4" />
                         </Button>
                     )}
@@ -350,9 +320,9 @@ function ProductsContent() {
 
             {selectedProducts.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
-                    <div className="bg-card/80 backdrop-blur-md border-2 border-primary/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-6">
-                        <span className="text-[10px] font-black uppercase text-primary tabular-nums">{selectedProducts.size} sélectionnés</span>
-                        <div className="h-4 w-px bg-white/10" />
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-6">
+                        <span className="text-[10px] font-black uppercase text-primary">{selectedProducts.size} sélectionnés</span>
+                        <div className="h-4 w-px bg-border" />
                         <div className="flex items-center gap-4">
                             <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
                             <button onClick={() => setIsBulkDeleteDialogOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Supprimer</button>
@@ -367,14 +337,14 @@ function ProductsContent() {
                ) : products.length === 0 ? (
                     <EmptyState 
                         icon={Archive} 
-                        title="Silence de Catalogue" 
+                        title="Catalogue Vide" 
                         description={isFiltered ? "Ajustez vos filtres." : "Aucun article enregistré."} 
                         actionLabel="Ajouter un produit"
                         onAction={() => { setSelectedProduct(null); setIsProductDialogOpen(true); }}
                     />
                ) : (
                     viewMode === 'grid' ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
                             {products.map(p => (
                                 <ProductCard 
                                     key={p.uuid} 
@@ -423,9 +393,9 @@ function ProductsContent() {
 
 function ProductGridSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
             {[...Array(12)].map((_, i) => (
-                <div key={i} className="h-40 rounded-xl bg-card/40 border border-white/5 animate-pulse" />
+                <div key={i} className="h-32 rounded-xl bg-card border animate-pulse" />
             ))}
         </div>
     );
@@ -433,7 +403,7 @@ function ProductGridSkeleton() {
 
 export default function ProductsPage() {
     return (
-        <Suspense fallback={<div className="p-20 text-center opacity-20"><Loader2 className="h-10 w-10 animate-spin mx-auto" /></div>}>
+        <Suspense fallback={<div className="p-20 text-center opacity-20"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>}>
             <ProductsContent />
         </Suspense>
     );
