@@ -13,7 +13,7 @@ import { inventoryService }      from '@/services/inventory.service';
 import { supplierService }       from '@/services/supplier.service';
 import { productService }        from '@/services/product.service';
 import { supabaseSyncService }   from '@/services/supabase.service';
-import { safeNumber, roundFinancial } from '@/lib/utils';
+import { safeNumber, roundFinancial, calculateStockStatus } from '@/lib/utils';
 
 let _syncTimer: NodeJS.Timeout | null = null;
 
@@ -180,8 +180,15 @@ export const useAppStore = create<AppState>()(
                     try {
                         const intakeUuid = uuidv4();
                         const shippingCents = Math.round(safeNumber(intakeData.shippingCost) * 100);
-                        let itemsTotalCents = 0;
+                        let itemsTotalPurchaseCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
+
+                        // 1. First Pass: Calculate total purchase value for pro-rata distribution
+                        intakeData.items.forEach(item => {
+                            itemsTotalPurchaseCents += (Math.round(safeNumber(item.purchasePrice) * 100) * safeNumber(item.quantity));
+                        });
+
+                        const shippingFactor = itemsTotalPurchaseCents > 0 ? shippingCents / itemsTotalPurchaseCents : 0;
 
                         await db.transaction('rw', [
                             db.products, db.suppliers, db.stock_intakes, 
@@ -193,24 +200,28 @@ export const useAppStore = create<AppState>()(
                             for (const item of intakeData.items) {
                                 const qty = safeNumber(item.quantity);
                                 const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
-                                itemsTotalCents += (pPriceCents * qty);
-                                const shipPerItem = Math.round(shippingCents / intakeData.items.length);
-                                const landing = roundFinancial((pPriceCents + (shipPerItem / (qty || 1))) / 100);
+                                
+                                // Precise Pro-rata landing cost calculation
+                                const landing = roundFinancial((pPriceCents * (1 + shippingFactor)) / 100);
 
                                 let productUuid = item.productUuid;
+                                
                                 if (item.productUuid) {
+                                    // Update existing product prices
                                     await productService.updateProductFromIntake(item.productUuid, { 
                                         purchasePrice: safeNumber(item.purchasePrice), 
                                         price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined 
                                     });
                                 } else if (item.isNew) {
+                                    // Handle auto-creation of new product from intake
                                     productUuid = uuidv4();
+                                    const initialQty = 0; // We adjust it via inventory log right after
                                     await db.products.add({ 
                                         uuid: productUuid, 
                                         name: item.name, 
-                                        price: safeNumber(item.price), 
-                                        purchasePrice: safeNumber(item.purchasePrice), 
-                                        quantity: 0, 
+                                        price: roundFinancial(safeNumber(item.price)), 
+                                        purchasePrice: roundFinancial(safeNumber(item.purchasePrice)), 
+                                        quantity: initialQty, 
                                         minStockLevel: 0, 
                                         barcodes: item.barcodes || [], 
                                         unit: (item.unit as any) || 'Pièce', 
@@ -219,10 +230,13 @@ export const useAppStore = create<AppState>()(
                                         createdAt: new Date(), 
                                         updatedAt: new Date(), 
                                         syncStatus: 'pending', 
-                                        version: 1 
+                                        version: 1,
+                                        totalSold: 0,
+                                        totalRevenue: 0
                                     });
                                 }
                                 
+                                // Stock Adjustment with audit trail
                                 if (productUuid && qty > 0) {
                                     await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
                                 }
@@ -232,14 +246,14 @@ export const useAppStore = create<AppState>()(
                                         productUuid, 
                                         productName: item.name, 
                                         quantityReceived: qty, 
-                                        quantityDamaged: item.quantityDamaged, 
+                                        quantityDamaged: safeNumber(item.quantityDamaged), 
                                         purchasePrice: safeNumber(item.purchasePrice), 
                                         landingCost: landing 
                                     });
                                 }
                             }
 
-                            const total = (itemsTotalCents + shippingCents) / 100;
+                            const total = roundFinancial((itemsTotalPurchaseCents + shippingCents) / 100);
                             const newIntake = { 
                                 uuid: intakeUuid, 
                                 supplierUuid: supplier.uuid, 
@@ -256,6 +270,7 @@ export const useAppStore = create<AppState>()(
                             
                             await db.stock_intakes.add(newIntake);
                             
+                            // Essential: Audit supplier balance after purchase
                             await supplierService.recalculateSupplierBalance(supplier.uuid);
                             
                             await db.sync_queue.add({ 
@@ -269,8 +284,8 @@ export const useAppStore = create<AppState>()(
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        console.error('Stock Intake Error:', err);
-                        toast.error('Erreur stock', { description: err.message });
+                        console.error('Stock Intake Internal Error:', err);
+                        toast.error('Erreur technique lors de la réception', { description: err.message });
                         return false;
                     }
                 },
