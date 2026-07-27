@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Composant déprécié. Logique consolidée dans src/app/bread/page.tsx.
+ * @fileOverview Ce composant a été supprimé. La logique est consolidée dans src/app/bread/page.tsx.
  */
-export const BreadDayView = () => null;
+export default function BreadDayView() { return null; }

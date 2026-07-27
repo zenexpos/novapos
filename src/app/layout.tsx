@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import './globals.css';
 import { ClientProviders } from '@/components/layout/ClientProviders';
@@ -11,29 +13,10 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import { Metadata, Viewport } from 'next';
 import { APP_CONFIG } from '@/lib/config/app-config';
 
-export const metadata: Metadata = {
-  title: 'iPOS Zen — Système POS Souverain',
-  description: 'Gestion de point de vente locale, sécurisée et hors-ligne.',
-  icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    shortcut: ['/icon.svg'],
-    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-  },
-  manifest: '/manifest.webmanifest',
-};
-
-export const viewport: Viewport = {
-  themeColor: APP_CONFIG.pwa.themeColor,
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr-FR" suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20" suppressHydrationWarning>
+      <body className="antialiased bg-background text-foreground overflow-hidden selection:bg-primary/20">
         <ServiceWorkerRegister />
         <ClientProviders>
           <TooltipProvider delayDuration={0}>

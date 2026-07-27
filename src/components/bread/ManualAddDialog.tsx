@@ -1,5 +1,5 @@
 'use client';
 /**
- * @fileOverview Composant déprécié. Logique migrée dans BreadOrderForm.tsx.
+ * @fileOverview Ce composant a été supprimé. La logique est migrée vers BreadOrderForm.tsx.
  */
-export const ManualAddDialog = () => null;
+export default function ManualAddDialog() { return null; }

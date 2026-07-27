@@ -1,6 +1,5 @@
 'use client';
 /**
- * @fileOverview Composant supprimé pour optimiser les performances (CPU/GPU) sur terminaux POS.
- * Logic is intentionally disabled to ensure 60fps UI responsiveness.
+ * @fileOverview Désactivé pour préserver les ressources CPU/GPU sur terminaux POS.
  */
-export const AmbientBackground = () => null;
+export default function AmbientBackground() { return null; }

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import type { Product, Supplier } from '@/lib/types';
+import React, { useState, useMemo } from 'react';
+import type { Product, Supplier, StockStatus } from '@/lib/types';
 import {
     Table, TableBody, TableCell, TableHead,
     TableHeader, TableRow,
@@ -18,7 +18,7 @@ import {
     History, FileText
 } from 'lucide-react';
 import {
-    cn, formatCurrency, calculateMarginRate
+    cn, formatCurrency, calculateMarginRate, safeNumber, safeToDate
 } from '@/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 
@@ -35,12 +35,12 @@ interface ProductTableProps {
     suppliers: Supplier[];
 }
 
-const stockCfg = {
+const stockCfg: Record<StockStatus, { Icon: React.ElementType, cls: string, label: string }> = {
     in_stock:    { Icon: CheckCircle2,  cls: 'text-emerald-600', label: 'Stock' },
     low_stock:   { Icon: TriangleAlert, cls: 'text-amber-600', label: 'Bas' },
     out_of_stock:{ Icon: XCircle,       cls: 'text-red-600', label: 'Rupt.' },
     overstock:   { Icon: CheckCircle2,  cls: 'text-blue-600', label: 'Exc.' },
-} as const;
+};
 
 const ProductRow = React.memo(({ 
     product, isSelected, onToggle, onEdit, onDuplicate, onHistory, onDelete, onSelect
@@ -127,20 +127,33 @@ const ProductRow = React.memo(({
 });
 ProductRow.displayName = 'ProductRow';
 
+type SortKey = 'name' | 'price' | 'quantity';
+
 export function ProductTable({
     products, onEdit, onDuplicate, onHistory, onDelete, onSelect,
     selectedProducts, onToggleProductSelection, onToggleSelectAll,
     suppliers
 }: ProductTableProps) {
-    const [sortKey, setSortKey] = useState<'name' | 'price' | 'qty'>('name');
+    const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-    const toggleSort = (key: 'name' | 'price' | 'qty') => {
+    const toggleSort = (key: SortKey) => {
         if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
         else { setSortKey(key); setSortDir('asc'); }
     };
 
-    const SortBtn = ({ label, col }: { label: string, col: 'name' | 'price' | 'qty' }) => (
+    const sortedProducts = useMemo(() => {
+        return [...products].sort((a, b) => {
+            const valA = a[sortKey];
+            const valB = b[sortKey];
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+            return sortDir === 'asc' ? safeNumber(valA) - safeNumber(valB) : safeNumber(valB) - safeNumber(valA);
+        });
+    }, [products, sortKey, sortDir]);
+
+    const SortBtn = ({ label, col }: { label: string, col: SortKey }) => (
         <button onClick={() => toggleSort(col)} className="flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-widest text-[9px] font-black">
             {label}
             {sortKey !== col ? <ChevronsUpDown className="h-2.5 w-2.5 opacity-30" /> : sortDir === 'asc' ? <ChevronUp className="h-2.5 w-2.5 text-primary" /> : <ChevronDown className="h-2.5 w-2.5 text-primary" />}
@@ -162,14 +175,14 @@ export function ProductTable({
                         <TableHead><SortBtn label="Désignation" col="name" /></TableHead>
                         <TableHead className="text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest">État</TableHead>
                         <TableHead className="text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest hidden lg:table-cell">Catégorie</TableHead>
-                        <TableHead><SortBtn label="Stock" col="qty" /></TableHead>
+                        <TableHead><SortBtn label="Stock" col="quantity" /></TableHead>
                         <TableHead className="text-right"><SortBtn label="Prix" col="price" /></TableHead>
                         <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground/50 tracking-widest hidden sm:table-cell">Marge</TableHead>
                         <TableHead className="w-10 px-4" />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {products.map((product) => (
+                    {sortedProducts.map((product) => (
                         <ProductRow 
                             key={product.uuid} 
                             product={product} 
