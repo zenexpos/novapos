@@ -1,6 +1,6 @@
 'use client';
 
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, isAfter, startOfDay } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus, SyncStatus } from '@/lib/types';
 import { db } from '@/lib/db';
@@ -9,7 +9,7 @@ import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
 
 /**
- * Bread Logistics Service — Enterprise Grade.
+ * Bread Logistics Service — Elite Grade.
  * Managed automated daily distribution and financial conversion with transaction safety.
  */
 class BreadService {
@@ -65,6 +65,7 @@ class BreadService {
         if (!date) return;
         
         const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // Protection: Don't generate for past dates manually
         if (date < todayStr) return;
 
         await db.transaction('rw', [db.bread_orders, db.customers, db.company_profile, db.sync_queue], async () => {
@@ -140,27 +141,21 @@ class BreadService {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
+                // Skip if already billed or no customer linked
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
-                // Create a standard sale entity to reflect in the ledger
                 const sale = await salesService.createSale({
                     items: [{
-                        uuid: 'BREAD_VIRTUAL_PROD',
+                        productUuid: 'BREAD_VIRTUAL_PROD',
                         name: `Flux Pain - Ref ${order.orderNumber}`,
                         price: breadPrice || order.unitPrice,
                         purchasePrice: 0,
-                        cartQuantity: safeNumber(order.quantity), 
                         quantity: safeNumber(order.quantity),
-                        barcodes: [],
-                        minStockLevel: 0,
-                        stockStatus: 'in_stock',
-                        syncStatus: 'synced',
-                        version: 1,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    } as any],
+                        tvaRate: 0
+                    }],
                     discountType: 'fixed',
                     discountValue: 0,
+                    deliveryFee: 0,
                     amountPaid: order.isPaid ? roundFinancial(order.quantity * (breadPrice || order.unitPrice)) : 0,
                     customerUuid: order.customerUuid,
                 });
@@ -182,13 +177,14 @@ class BreadService {
         const dayIndex = parseISO(date).getDay();
         const dayOfWeek = BREAD_WEEK_DAYS[dayIndex];
         const profile = await db.company_profile.toCollection().first();
-        const unitPrice = profile?.breadPrice || 0;
+        const unitPrice = profile?.breadPrice || 10;
 
         const activeBreadClients = await db.customers
             .filter(c => !!c.isBreadClient && !c.deletedAt)
             .toArray();
 
         for (const client of activeBreadClients) {
+            // Check start date if present
             if (client.breadProfile?.startDate && date < client.breadProfile.startDate) continue;
             
             let quantity = 0;
