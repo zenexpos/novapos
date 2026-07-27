@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ProductReturn } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Undo2, RotateCcw, TrendingDown, DollarSign } from 'lucide-react';
+import { Undo2, RotateCcw, TrendingDown } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -13,72 +13,64 @@ interface ReturnStatsProps {
 }
 
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
-    <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-            <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground group-hover:text-primary transition-all duration-500">{title}</CardTitle>
-            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
-                <Icon className="h-5 w-5" />
+    <Card className="h-full bg-card/30 border-white/5 rounded-xl group overflow-hidden shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3">
+            <CardTitle className="text-[8px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all tracking-widest">{title}</CardTitle>
+            <div className={cn("p-1.5 rounded-lg shadow-inner", colorClass)}>
+                <Icon className="h-3 w-3" />
             </div>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-            <div className="text-xl font-semibold tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left mb-1">{value}</div>
-            {subtitle && <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/40">{subtitle}</p>}
+        <CardContent className="px-3 pb-3">
+            <div className="text-base font-black tracking-tighter text-foreground tabular-nums leading-none">{value}</div>
+            {subtitle && <p className="text-[7px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
 );
 
 export function ReturnStats({ returns, isLoading }: ReturnStatsProps) {
     const stats = React.useMemo(() => {
-        if (!returns) return { totalValue: 0, totalRefunded: 0, count: 0, avgReturn: 0 };
+        if (!returns) return { totalValue: 0, totalRefunded: 0, count: 0 };
         const totalValue = returns.reduce((sum, r) => sum + r.totalReturnValue, 0);
         const totalRefunded = returns.reduce((sum, r) => sum + r.amountRefunded, 0);
         return {
             totalValue,
             totalRefunded,
-            count: returns.length,
-            avgReturn: returns.length > 0 ? totalValue / returns.length : 0
+            count: returns.length
         };
     }, [returns]);
 
     if (isLoading) {
         return (
-            <div className="grid gap-6 md:grid-cols-4">
-                {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />
+            <div className="grid gap-2 grid-cols-3">
+                {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-xl bg-card/20" />
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-3 animate-in fade-in duration-500">
             <StatCard 
-                title="Total Retours" 
+                title="إجمالي المرتجعات" 
                 value={formatCurrency(stats.totalValue)} 
                 icon={Undo2} 
                 colorClass="bg-primary/10 text-primary"
-                subtitle={`${stats.count} opérations`}
+                subtitle={`${stats.count} عملية`}
             />
             <StatCard 
-                title="Remboursements" 
+                title="التعويض النقدي" 
                 value={formatCurrency(stats.totalRefunded)} 
                 icon={RotateCcw} 
                 colorClass="bg-emerald-500/10 text-emerald-500"
-                subtitle="Cash rendu aux clients"
+                subtitle="سيولة خارجة"
             />
             <StatCard 
-                title="Avoirs Clients" 
+                title="أرصدة العملاء" 
                 value={formatCurrency(stats.totalValue - stats.totalRefunded)} 
                 icon={TrendingDown} 
                 colorClass="bg-amber-500/10 text-amber-500"
-                subtitle="Déduit des dettes"
-            />
-            <StatCard 
-                title="Panier Moyen Retour" 
-                value={formatCurrency(stats.avgReturn)} 
-                icon={DollarSign} 
-                colorClass="bg-purple-500/10 text-purple-500"
-                subtitle="Valeur moyenne par bon"
+                subtitle="مخصوم من الديون"
             />
         </div>
     );

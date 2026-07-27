@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useDebouncedAbortSignal } from '@/hooks/useDebounce';
 import type { ProductReturn, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
     LayoutGrid, 
     List, 
     FileUp, 
-    X
+    X,
+    RefreshCw
 } from 'lucide-react';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useDateRange } from '@/hooks/useDateRange';
@@ -38,13 +39,16 @@ import { returnService } from '@/services/return.service';
 
 export default function ReturnsPage() {
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
+    
+    useEffect(() => { setIsMounted(true); }, []);
     
     const viewMode = useAppStore(state => state.returnsViewMode);
     const setViewMode = useAppStore(state => state.actions.setReturnsViewMode);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const { debouncedValue: debouncedSearchQuery, signal } = useDebouncedAbortSignal(searchQuery, 300);
-    const { dateRange, setDate, isMounted } = useDateRange(29);
+    const { debouncedValue: debouncedSearchQuery } = useDebouncedAbortSignal(searchQuery, 300);
+    const { dateRange, setDate } = useDateRange(29);
     
     const [selectedReturn, setSelectedReturn] = useState<ProductReturn | null>(null);
     const [selectedReturns, setSelectedReturns] = useState<Set<string>>(new Set());
@@ -66,14 +70,13 @@ export default function ReturnsPage() {
        }
 
        return results.sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
-   }, [isMounted, dateRange, debouncedSearchQuery, signal]);
+   }, [isMounted, dateRange, debouncedSearchQuery]);
+    
     const returns = returnsResult.value ?? [];
+    const isLoading = returnsResult.isLoading || !isMounted;
 
     const customersResult = useLiveQuery<Customer[]>(() => db.customers.toArray());
-    const customers = customersResult.value ?? [];
-    const customerMap = useMemo(() => new Map(customers.map(c => [c.uuid, c])), [customers]);
-
-    const isLoading = returnsResult.isLoading || !isMounted;
+    const customerMap = useMemo(() => new Map((customersResult.value || []).map(c => [c.uuid, c])), [customersResult.value]);
 
     const handleToggleSelection = (uuid: string) => {
         setSelectedReturns(prev => {
@@ -93,8 +96,12 @@ export default function ReturnsPage() {
                 successCount++;
             } catch (e) {}
         }
-        if (successCount > 0) toast.success(`${successCount} retour(s) annulé(s).`);
+        if (successCount > 0) {
+            toast.success(`${successCount} retour(s) annulé(s).`);
+            returnsResult.refresh();
+        }
         setSelectedReturns(new Set());
+        setIsBulkCancelConfirmOpen(false);
     };
 
     const handleExportCsv = () => {
@@ -113,7 +120,7 @@ export default function ReturnsPage() {
         }));
 
         const csv = Papa.unparse(csvData);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -132,103 +139,109 @@ export default function ReturnsPage() {
         setIsCancelOpen(true);
     };
 
-    const resetFilters = () => setSearchQuery('');
-
     useKeyboardShortcuts([
-        {
-            key: 'F3',
-            action: () => searchInputRef.current?.focus(),
-            description: 'Rechercher un retour',
-            ignoreInputFocus: true
-        }
-    ], 'Retours');
+        { key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Rechercher un retour', ignoreInputFocus: true },
+        { key: 'n', action: () => {}, description: 'Nouveau retour', ignoreInputFocus: false }
+    ], 'Retours', isMounted);
 
     return (
-        <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000">
-            <PageHeader
-                title="Registre des Retours"
-                description="Régularisation Elite des flux de marchandises et des crédits"
-            >
-                <div className="flex gap-3 w-full sm:w-auto">
-                    <Button variant="outline" onClick={handleExportCsv} className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide border-primary/20 hover:bg-primary/5 transition-all">
-                        <FileUp className="mr-2 h-4 w-4 text-primary" /> Exporter
+        <div className="p-3 space-y-3 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h1 className="text-xl font-black tracking-tighter uppercase leading-none">Registre des Retours</h1>
+                    <p className="text-[9px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-1">Régularisation des flux marchandises</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-8 rounded-lg font-bold text-[10px] uppercase gap-2">
+                        <FileUp className="h-3.5 w-3.5" /> تصدير
                     </Button>
-                    <Button asChild className="flex-1 sm:flex-none h-12 rounded-2xl font-semibold text-xs uppercase tracking-wide shadow-xl shadow-sm transition-all active:scale-95">
-                        <Link href="/returns/new"><Plus className="mr-2 h-4 w-4" /> Nouveau Retour</Link>
+                    <Button asChild size="sm" className="h-8 rounded-lg font-black text-[10px] uppercase gap-2 shadow-sm">
+                        <Link href="/returns/new"><Plus className="h-3.5 w-3.5" /> Nouveau</Link>
                     </Button>
                 </div>
-            </PageHeader>
+            </div>
 
             <ReturnStats returns={returns} isLoading={isLoading} />
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-card/20 p-2 rounded-lg border border-white/5 backdrop-blur-sm">
-                <div className="relative group flex-grow max-w-xl px-4">
-                    <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors duration-500" />
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 bg-card/30 p-1.5 rounded-xl border">
+                <div className="relative group flex-grow max-w-xl">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
                     <Input 
                         ref={searchInputRef}
-                        placeholder="Rechercher par N° Facture [F3]..."
-                        className="pl-14 h-9 rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20 font-bold text-lg"
+                        placeholder="N° Facture... [F3]"
+                        className="pl-8 h-8 rounded-lg bg-black/10 border-none font-bold text-[10px]"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex flex-wrap items-center gap-3 px-4">
-                    <DateRangePicker date={dateRange} setDate={setDate} />
-                    <div className="flex items-center gap-1.5 p-1.5 bg-black/20 rounded-lg border border-white/5 shadow-inner">
-                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                <div className="flex items-center gap-2">
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-[10px] sm:w-[220px]" />
+                    <div className="flex items-center gap-1.5 p-1 bg-muted/20 rounded-lg border">
+                        <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3.5 w-3.5"/></Button>
+                        <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5"/></Button>
                     </div>
                 </div>
             </div>
 
-            <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="min-h-[500px]">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 animate-pulse" />)}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-card/20 border-none animate-pulse" />)}
                     </div>
                 ) : returns.length === 0 ? (
-                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Ajustez vos filtres." : "Commencez par enregistrer un retour."} />
+                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بتسجيل أول عملية إرجاع سلع."} />
                 ) : (
                     viewMode === 'list' ? (
                         <ReturnTable 
                             returns={returns}
-                            customerMap={customerMap as any}
+                            customerMap={customerMap}
                             selectedReturns={selectedReturns}
                             onToggleSelection={handleToggleSelection}
                             onViewDetails={handleViewDetails}
                             onCancel={handleCancelReturn}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                            {returns.map(r => {
-                                const customer = r.customerUuid ? customerMap.get(r.customerUuid) : undefined;
-                                return (
-                                    <ReturnHistoryCard 
-                                        key={r.uuid} 
-                                        productReturn={r}
-                                        customerName={customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'}
-                                        isSelected={selectedReturns.has(r.uuid)}
-                                        onToggleSelection={() => handleToggleSelection(r.uuid)}
-                                        onViewDetails={handleViewDetails}
-                                        onCancelReturn={handleCancelReturn}
-                                    />
-                                )
-                            })}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
+                            {returns.map(r => (
+                                <ReturnHistoryCard 
+                                    key={r.uuid} 
+                                    productReturn={r}
+                                    customerName={r.customerUuid ? `${customerMap.get(r.customerUuid)?.firstName} ${customerMap.get(r.customerUuid)?.lastName}` : 'زبون عابر'}
+                                    isSelected={selectedReturns.has(r.uuid)}
+                                    onToggleSelection={() => handleToggleSelection(r.uuid)}
+                                    onViewDetails={handleViewDetails}
+                                    onCancelReturn={handleCancelReturn}
+                                />
+                            ))}
                         </div>
                     )
                 )}
             </div>
 
-            <ReturnDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} productReturn={selectedReturn} customerName={selectedReturn?.customerUuid ? `${customerMap.get(selectedReturn.customerUuid)?.firstName} ${customerMap.get(selectedReturn.customerUuid)?.lastName}` : 'Client de passage'} />
-            <CancelReturnDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} productReturn={selectedReturn} onSuccess={() => {}} />
+            {selectedReturns.size > 0 && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-5 py-2 flex items-center gap-4">
+                        <span className="text-[9px] font-black uppercase text-primary">{selectedReturns.size} عمليات</span>
+                        <div className="h-3 w-px bg-border" />
+                        <div className="flex items-center gap-3">
+                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
+                        </div>
+                        <button onClick={() => setSelectedReturns(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3 w-3 opacity-20" /></button>
+                    </div>
+                </div>
+            )}
+
+            <ReturnDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} productReturn={selectedReturn} customerName={selectedReturn?.customerUuid ? `${customerMap.get(selectedReturn.customerUuid)?.firstName} ${customerMap.get(selectedReturn.customerUuid)?.lastName}` : 'زبون عابر'} />
+            <CancelReturnDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} productReturn={selectedReturn} onSuccess={() => returnsResult.refresh()} />
             
             <ConfirmAlertDialog
                 isOpen={isBulkCancelConfirmOpen}
                 onOpenChange={setIsBulkCancelConfirmOpen}
                 title={`Annuler ${selectedReturns.size} retours ?`}
-                description="Cette opération est définitive. Le stock et les avoirs seront réversés."
+                description="سيتم حذف العمليات المختارة وإرجاع السلع للمخزون وتحديث أرصدة العملاء بشكل دائم."
                 onConfirm={handleBulkCancel}
-                confirmText="Confirmer l'Annulation"
+                confirmText="تأكيد الإلغاء"
             />
         </div>
     );

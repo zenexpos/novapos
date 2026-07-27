@@ -5,7 +5,7 @@ import type { ProductReturn } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, FileText, Trash2, Clock, Hash, Undo2, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, FileText, Trash2, Clock, Hash, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeToDate, formatCurrency, cn } from '@/lib/utils';
@@ -29,86 +29,72 @@ const ReturnHistoryCardComponent = ({
     onCancelReturn 
 }: ReturnHistoryCardProps) => {
 
-    const handleCardClick = () => {
-        onToggleSelection();
-    };
-
     return (
         <Card 
-            onClick={handleCardClick}
+            onClick={onToggleSelection}
             className={cn(
-                "app-card group flex flex-col transition-all duration-500 bg-card/40 backdrop-blur-sm border-white/5 relative overflow-hidden rounded-lg cursor-pointer",
-                isSelected ? "ring-2 ring-primary border-primary/30 shadow-sm scale-[1.02]" : "hover:bg-primary/5"
+                "group relative flex flex-col transition-all duration-200 bg-card/40 border border-border/40 rounded-xl cursor-pointer",
+                isSelected ? "border-primary bg-primary/5" : "hover:border-primary/20"
             )}
         >
-            <div className="absolute -right-4 -top-4 opacity-[0.02] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none">
-                <Undo2 className="h-32 w-32 rotate-12" />
-            </div>
-
-            {/* Actions isolated container */}
-            <div 
-                className="absolute top-4 right-4 z-10 flex gap-2 items-center"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm flex items-center justify-center">
-                    <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={onToggleSelection}
-                        className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
-                    />
-                </div>
+            <div className="absolute top-2 right-2 z-10 flex gap-1 items-center" onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={onToggleSelection}
+                    className="h-3 w-3 border-primary/20"
+                />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="h-9 w-9 bg-background/80 backdrop-blur-md border-white/5 shadow-xl rounded-xl transition-all">
-                            <MoreHorizontal className="h-5 w-5" />
-                        </Button>
+                        <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-opacity">
+                            <MoreHorizontal className="h-3 w-3" />
+                        </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-sm bg-card">
-                        <DropdownMenuItem onClick={() => onViewDetails(productReturn)} className="rounded-xl p-3">
-                            <FileText className="mr-2 h-4 w-4" /> Détails du retour
+                    <DropdownMenuContent align="end" className="w-40 rounded-xl border-white/5 bg-card">
+                        <DropdownMenuItem onClick={() => onViewDetails(productReturn)} className="text-[9px] font-black p-2 uppercase">
+                            <FileText className="mr-2 h-3 w-3" /> التفاصيل
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onCancelReturn(productReturn)} className="text-destructive focus:text-destructive rounded-xl p-3">
-                            <Trash2 className="mr-2 h-4 w-4" /> Annuler le retour
+                        <DropdownMenuItem onClick={() => onCancelReturn(productReturn)} className="text-destructive text-[9px] font-black p-2 uppercase">
+                            <Trash2 className="mr-2 h-3 w-3" /> إلغاء العملية
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
 
-            <CardHeader className="p-6 pb-2 space-y-3 relative z-10">
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-semibold text-muted-foreground/30 flex items-center gap-1 uppercase tracking-tighter">
-                        <Hash className="h-2.5 w-2.5" /> Origine: {productReturn.originalInvoiceNumber}
+            <CardHeader className="p-3 pb-1 space-y-1">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[7px] font-mono font-bold text-muted-foreground/30 uppercase tracking-tighter">
+                        <Hash className="h-2 w-2" /> {productReturn.originalInvoiceNumber}
                     </span>
                 </div>
-                <CardTitle className="text-xl font-semibold leading-tight tracking-tighter group-hover:text-primary transition-colors truncate pr-12">
-                    {customerName || 'Client de passage'}
+                <CardTitle className="text-[11px] font-black leading-tight tracking-tight group-hover:text-primary transition-colors truncate pr-8 uppercase">
+                    {customerName || 'زبون عابر'}
                 </CardTitle>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-semibold uppercase tracking-wide">
-                    <Clock className="h-3 w-3 opacity-50" />
+                <div className="flex items-center gap-1 text-[6px] text-muted-foreground/30 font-bold uppercase tracking-widest">
+                    <Clock className="h-1.5 w-1.5 opacity-30" />
                     {format(safeToDate(productReturn.createdAt!), 'd MMMM, HH:mm', { locale: fr })}
                 </div>
             </CardHeader>
 
-            <CardContent className="p-6 py-4 space-y-5 relative z-10">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-3xl bg-black/20 border border-white/5 shadow-inner">
-                        <p className="text-[8px] font-semibold uppercase text-muted-foreground/40 mb-1.5">Volume Items</p>
-                        <p className="font-semibold text-sm tracking-tight">{productReturn.items.length} Positions</p>
+            <CardContent className="p-3 py-1.5">
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-lg bg-black/10 border border-white/5">
+                        <p className="text-[6px] font-bold uppercase text-muted-foreground/40 mb-1">السلع</p>
+                        <p className="font-black text-[9px] tracking-tight">{productReturn.items.length} صنف</p>
                     </div>
-                    <div className="p-4 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 shadow-inner">
-                        <p className="text-[8px] font-semibold uppercase text-emerald-600/70 mb-1.5">Remboursé</p>
-                        <p className="font-semibold text-sm tracking-tight text-emerald-600">{formatCurrency(productReturn.amountRefunded)}</p>
+                    <div className="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                        <p className="text-[6px] font-bold uppercase text-emerald-600/70 mb-1">المبلغ المردود</p>
+                        <p className="font-black text-[9px] tracking-tight text-emerald-600">{formatCurrency(productReturn.amountRefunded)}</p>
                     </div>
                 </div>
             </CardContent>
 
-            <CardFooter className="p-6 pt-4 border-t border-white/5 bg-muted/5 flex items-center justify-between relative z-10">
-                 <div className="space-y-0.5">
-                    <p className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-wide">Valeur Marchande</p>
-                    <p className="text-lg font-semibold text-primary tracking-tighter leading-none">{formatCurrency(productReturn.totalReturnValue)}</p>
+            <CardFooter className="p-2 pt-0 border-t border-white/5 bg-muted/5 flex items-center justify-between">
+                 <div className="flex flex-col">
+                    <span className="text-[6px] font-black uppercase text-muted-foreground/30">القيمة الإجمالية</span>
+                    <span className="text-sm font-black text-primary tabular-nums tracking-tighter leading-none">{formatCurrency(productReturn.totalReturnValue)}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onViewDetails(productReturn); }} className="h-9 rounded-xl font-semibold text-[10px] uppercase tracking-wide hover:bg-primary/10 hover:text-primary transition-all px-4">
-                    Details <ChevronRight className="ml-1 h-3 w-3 opacity-50" />
+                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onViewDetails(productReturn); }} className="h-5 rounded-md font-black text-[7px] uppercase tracking-widest hover:bg-primary/5 hover:text-primary px-1.5">
+                    فحص <ChevronRight className="ml-0.5 h-2 w-2" />
                 </Button>
             </CardFooter>
         </Card>
