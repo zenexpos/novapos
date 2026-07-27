@@ -11,7 +11,7 @@ export interface LiveQueryResult<T> {
 }
 
 /**
- * useLiveQuery v7 — Titanium Production Grade.
+ * useLiveQuery v8 — Titanium Production Grade.
  * 
  * Optimized to eliminate the "Maximum update depth exceeded" and "Changed size" errors.
  * 1. Constant length dependency array [tick, deps_string].
@@ -53,6 +53,7 @@ export function useLiveQuery<T>(
                 
                 setValue(prev => {
                     if (prev === val) return prev;
+                    // Strict comparison for arrays to prevent re-render loops
                     if (Array.isArray(prev) && Array.isArray(val)) {
                         if (prev.length === val.length && prev.every((item, i) => item === val[i])) {
                             return prev;
@@ -76,7 +77,7 @@ export function useLiveQuery<T>(
             isSubscribed = false;
             subscription.unsubscribe();
         };
-        // Dependency array has a constant size of 2
+        // Fixed length dependency array to satisfy React Hook rules
     }, [tick, depsKey]);
 
     return { value, isLoading, error, refresh };
