@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -21,7 +21,6 @@ import {
     Plus, 
     Package, 
     Hash, 
-    Box, 
     Building, 
     Coins, 
     FileText, 
@@ -374,7 +373,7 @@ export function ProductDialog({ isOpen, onOpenChange, product, suppliers, onSucc
                         <div className="space-y-6">
                             <SectionHeader 
                                 title="Stock & Logistique" 
-                                icon={Box} 
+                                icon={Package} 
                                 description="Gestion des quantités et alertes."
                             />
                             

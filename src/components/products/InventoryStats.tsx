@@ -19,7 +19,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: s
             </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+            <div className="text-xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
             {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
@@ -95,18 +95,18 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
 
     if (productsResult.value === undefined || externalLoading) {
         return (
-             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-                {[...Array(8)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40" />
+             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full rounded-lg bg-card/40 animate-pulse" />
                 ))}
             </div>
         )
     }
 
     return (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 animate-in fade-in duration-1000">
             <StatCard 
-                title="Investissement" 
+                title="Investissement Stock" 
                 value={formatCurrency(stats.totalValue)} 
                 icon={Landmark} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
@@ -117,49 +117,21 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 value={formatCurrency(stats.totalRetail)} 
                 icon={TrendingUp} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle={`Profit: ${formatCurrency(stats.totalRetail - stats.totalValue)}`} 
+                subtitle={`Profit estimé: ${formatCurrency(stats.totalRetail - stats.totalValue)}`} 
             />
             <StatCard 
-                title="Marge Elite" 
+                title="Marge Moyenne" 
                 value={`${stats.avgMargin.toFixed(1)}%`} 
                 icon={Percent} 
                 colorClass="bg-violet-500/10 text-violet-500" 
-                subtitle="Rentabilité moyenne" 
+                subtitle="Rentabilité Elite" 
             />
             <StatCard 
-                title="Vendus (Mois)" 
-                value={String(Math.round(stats.soldMonth))} 
-                icon={ShoppingBag} 
-                colorClass="bg-primary/10 text-primary" 
-                subtitle="Volume de sortie" 
-            />
-            <StatCard 
-                title="Stock Faible" 
-                value={String(stats.low)} 
+                title="Ruptures & Alertes" 
+                value={String(stats.out + stats.low)} 
                 icon={AlertTriangle} 
                 colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle="À commander" 
-            />
-            <StatCard 
-                title="Ruptures" 
-                value={String(stats.out)} 
-                icon={PackageX} 
-                colorClass="bg-red-500/10 text-red-500" 
-                subtitle="Ventes perdues" 
-            />
-            <StatCard 
-                title="Catalogue" 
-                value={String(stats.total)} 
-                icon={Package} 
-                colorClass="bg-muted text-muted-foreground" 
-                subtitle={`${stats.active} items actifs`} 
-            />
-            <StatCard 
-                title="Péremption" 
-                value={String(stats.expiring)} 
-                icon={CalendarClock} 
-                colorClass="bg-orange-500/10 text-orange-500" 
-                subtitle="Moins de 30 jours" 
+                subtitle={`${stats.out} ruptures totales`} 
             />
         </div>
     );
