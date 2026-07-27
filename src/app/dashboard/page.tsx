@@ -7,23 +7,21 @@ import { useDateRange } from '@/hooks/useDateRange';
 import { dashboardService } from '@/services/dashboard.service';
 import {
     TrendingUp, Receipt, Users, Archive, ShoppingCart, 
-    LayoutDashboard, Percent, Wallet, Wheat, PlusCircle
+    LayoutDashboard, Percent, Wallet, Wheat
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 import { DashboardWidgets } from '@/components/dashboard/DashboardWidgets';
 import { TopLists } from '@/components/dashboard/TopLists';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { useAppStore } from '@/stores/appStore';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
 
 /**
- * Command Center Elite - iPOS Zen.
- * PRODUCTION AUDIT: Implemented Hydration Guard to prevent SSR mismatches.
+ * لوحة القيادة Elite - iPOS Zen.
+ * تم تنظيفها من الزوائد والمكررات للتركيز على الأداء والوضوح المالي.
  */
 export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
@@ -95,24 +93,9 @@ export default function DashboardPage() {
                         <TopLists type="products" items={data?.topProducts ?? []} isLoading={isLoading} />
                         <TopLists type="customers" items={data?.topCustomers ?? []} isLoading={isLoading} />
                     </div>
-                    <ActivityFeed items={data?.recentActivity ?? []} isLoading={isLoading} />
                 </div>
 
                 <div className="lg:col-span-4 space-y-8">
-                    <Card className="rounded-2xl border-white/5 bg-primary/5 shadow-xl overflow-hidden group">
-                        <CardHeader className="bg-primary/10 border-b border-primary/20 p-4">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                                <PlusCircle className="h-4 w-4" /> Console d'Exécution
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 grid grid-cols-2 gap-3">
-                            <QuickActionLink href="/sell" label="Vendre" icon={ShoppingCart} />
-                            <QuickActionLink href="/customers" label="+ Client" icon={Users} />
-                            <QuickActionLink href="/bread" label="Pain" icon={Wheat} />
-                            <QuickActionLink href="/stock" label="Stock" icon={Archive} />
-                        </CardContent>
-                    </Card>
-
                     <DashboardWidgets 
                         type="bread" 
                         data={data?.breadSummary} 
@@ -120,17 +103,9 @@ export default function DashboardPage() {
                         breadPrice={companyProfile?.breadPrice || 10}
                     />
                     <DashboardWidgets type="alerts" data={data?.alerts} isLoading={isLoading} />
+                    <ActivityFeed items={data?.recentActivity ?? []} isLoading={isLoading} />
                 </div>
             </div>
         </div>
-    );
-}
-
-function QuickActionLink({ href, label, icon: Icon }: { href: string, label: string, icon: any }) {
-    return (
-        <Link href={href} className="flex flex-col items-center justify-center p-4 rounded-2xl bg-card border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all group shadow-sm">
-            <Icon className="h-6 w-6 text-primary/40 group-hover:text-primary transition-colors mb-2" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 group-hover:text-primary text-center">{label}</span>
-        </Link>
     );
 }
