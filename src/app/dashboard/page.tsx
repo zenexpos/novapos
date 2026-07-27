@@ -43,10 +43,10 @@ export default function DashboardPage() {
 
     // التركيز على 4 مؤشرات أساسية فقط لتقليل التشتت (Zen Philosophy)
     const statCards = useMemo(() => [
-        { title: 'Recettes', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
-        { title: 'Bénéfice Net', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
-        { title: 'Dépenses', value: formatCurrency(data?.stats.totalExpenses ?? 0), icon: Wallet, change: data?.stats.totalExpensesChange, positiveIsGood: false, color: 'red' as const },
-        { title: 'Dettes Clients', value: formatCurrency(data?.stats.totalOutstandingDebt ?? 0), icon: Users, color: 'violet' as const },
+        { title: 'الرقم الإجمالي', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
+        { title: 'الربح الصافي', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
+        { title: 'المصاريف', value: formatCurrency(data?.stats.totalExpenses ?? 0), icon: Wallet, change: data?.stats.totalExpensesChange, positiveIsGood: false, color: 'red' as const },
+        { title: 'ديون العملاء', value: formatCurrency(data?.stats.totalOutstandingDebt ?? 0), icon: Users, color: 'violet' as const },
     ], [data]);
 
     if (!mounted) {
@@ -67,8 +67,8 @@ export default function DashboardPage() {
     return (
         <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
             <PageHeader
-                title="Command Center Elite"
-                description="Pilotage souverain de votre écosystème commercial"
+                title="مركز القيادة السيادي"
+                description="تحليل شامل للأداء المالي واللوجستي"
                 icon={LayoutDashboard}
             >
                 <div className="flex gap-4 items-center">

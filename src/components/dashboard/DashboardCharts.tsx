@@ -13,8 +13,8 @@ interface DashboardChartsProps {
 }
 
 /**
- * Command Center Analytics Engine.
- * PRODUCTION AUDIT: Fixed Skeleton import and implemented React.memo for high-frequency dashboard updates.
+ * محرك التحليلات للوحة القيادة.
+ * تم تصحيح استيراد Skeleton وضمان أداء عالٍ للعرض.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
@@ -38,8 +38,8 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                         <TrendingUp className="h-6 w-6" />
                     </div>
                     <div>
-                        <CardTitle className="text-xl font-black tracking-tighter uppercase">Dynamique Commerciale</CardTitle>
-                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">Comparatif CA vs Profit sur la période</p>
+                        <CardTitle className="text-xl font-black tracking-tighter uppercase">الديناميكية التجارية</CardTitle>
+                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">مقارنة الإيرادات مقابل الأرباح خلال الفترة</p>
                     </div>
                 </div>
             </CardHeader>
@@ -93,7 +93,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                             <Area 
                                 type="monotone" 
                                 dataKey="revenue" 
-                                name="Chiffre d'Affaires"
+                                name="الإيرادات"
                                 stroke="hsl(var(--chart-1))" 
                                 strokeWidth={4}
                                 fillOpacity={1} 
@@ -103,7 +103,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                             <Area 
                                 type="monotone" 
                                 dataKey="profit" 
-                                name="Bénéfice Net"
+                                name="صافي الربح"
                                 stroke="hsl(var(--chart-2))" 
                                 strokeWidth={3}
                                 strokeDasharray="5 5"
@@ -116,7 +116,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                 ) : (
                     <div className="flex flex-col items-center justify-center opacity-20 text-center">
                         <BarChart3 className="h-16 w-16 mb-4" />
-                        <p className="text-xs font-black uppercase tracking-widest">Aucune donnée pour cette période</p>
+                        <p className="text-xs font-black uppercase tracking-widest">لا توجد بيانات لهذه الفترة</p>
                     </div>
                 )}
             </CardContent>
