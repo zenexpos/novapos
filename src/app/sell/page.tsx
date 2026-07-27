@@ -14,7 +14,7 @@ import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 function SellPageContent() {
     const [isMounted, setIsMounted] = useState(false);
     const cart = useActiveCart();
-    const { createCart, clearCart, selectCart } = useCartActions();
+    const { createCart, clearCart } = useCartActions();
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isCustomItemOpen, setIsCustomItemOpen] = useState(false);
     const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
@@ -40,55 +40,12 @@ function SellPageContent() {
     }, [cart]);
 
     const shortcuts = [
-        {
-            key: 'F2',
-            action: () => customerComboRef.current?.focusInput(),
-            description: 'Identifier un client',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'F3',
-            action: () => searchInputRef.current?.focusInput(),
-            description: 'Rechercher un produit',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'F4',
-            action: () => setIsCustomItemOpen(true),
-            description: 'Ajouter un article personnalisé',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'F10',
-            action: openPayment,
-            description: 'Finaliser la vente (Payer)',
-            ignoreInputFocus: true
-        },
-        {
-            key: ' ',
-            action: () => searchInputRef.current?.focusInput(),
-            description: 'Focus sur la recherche',
-            ignoreInputFocus: false
-        },
-        {
-            key: 'Backspace',
-            ctrl: true,
-            action: () => {
-                if (cart && cart.items.length > 0) setIsClearConfirmOpen(true);
-            },
-            description: 'Vider le panier actuel',
-            ignoreInputFocus: true
-        },
-        {
-            key: 'w',
-            ctrl: true,
-            action: () => {
-                createCart();
-                toast.success('Vente suspendue. Nouveau panier créé.');
-            },
-            description: 'Suspendre la vente et créer un nouveau panier',
-            ignoreInputFocus: true
-        }
+        { key: 'F2', action: () => customerComboRef.current?.focusInput(), description: 'Identifier un client', ignoreInputFocus: true },
+        { key: 'F3', action: () => searchInputRef.current?.focusInput(), description: 'Rechercher un produit', ignoreInputFocus: true },
+        { key: 'F4', action: () => setIsCustomItemOpen(true), description: 'Ajouter un article personnalisé', ignoreInputFocus: true },
+        { key: 'F10', action: openPayment, description: 'Finaliser la vente (Payer)', ignoreInputFocus: true },
+        { key: 'Backspace', ctrl: true, action: () => { if (cart && cart.items.length > 0) setIsClearConfirmOpen(true); }, description: 'Vider le panier', ignoreInputFocus: true },
+        { key: 'w', ctrl: true, action: () => { createCart(); toast.success('Nouveau panier créé.'); }, description: 'Vente suspendue', ignoreInputFocus: true }
     ];
 
     useKeyboardShortcuts(shortcuts, 'Vente');
@@ -96,12 +53,12 @@ function SellPageContent() {
     if (!isMounted) return null;
 
     return (
-        <div className="h-full flex flex-col p-2 gap-2 overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-2 flex-grow min-h-0">
-                {/* Cart panel */}
-                <div className="lg:col-span-3 flex flex-col glass rounded-2xl overflow-hidden min-h-0 shadow-[var(--glass-shadow)]">
+        <div className="h-full flex flex-col p-1 gap-1 overflow-hidden bg-background">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-1 flex-grow min-h-0">
+                {/* Cart panel (60%) */}
+                <div className="lg:col-span-3 flex flex-col bg-card border rounded-xl overflow-hidden min-h-0 shadow-sm">
                     <CartDisplay />
-                    <div className="mt-auto p-3 space-y-3 border-t border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-sm">
+                    <div className="mt-auto p-2 space-y-2 border-t bg-muted/20 backdrop-blur-sm">
                         <CartTotalBar />
                         <SaleActions 
                             customerComboRef={customerComboRef}
@@ -110,8 +67,8 @@ function SellPageContent() {
                     </div>
                 </div>
 
-                {/* Product search panel */}
-                <div className="lg:col-span-2 flex flex-col min-h-0 glass rounded-2xl overflow-hidden">
+                {/* Product search panel (40%) */}
+                <div className="lg:col-span-2 flex flex-col min-h-0 bg-card border rounded-xl overflow-hidden shadow-sm">
                     <ProductSelector 
                         ref={searchInputRef} 
                         isCustomItemOpen={isCustomItemOpen}
@@ -126,7 +83,7 @@ function SellPageContent() {
                 isOpen={isClearConfirmOpen}
                 onOpenChange={setIsClearConfirmOpen}
                 title="Vider le panier ?"
-                description="Tous les articles de la vente en cours seront supprimés définitivement."
+                description="Tous les articles de la vente en cours seront supprimés."
                 onConfirm={async () => {
                     clearCart();
                     toast.success("Panier vidé");
