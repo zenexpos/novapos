@@ -266,19 +266,28 @@ export default function BreadPage() {
                     ) : (
                         <div className="animate-in fade-in duration-500">
                             {viewMode === 'list' ? (
-                                <BreadOrderTable orders={filteredOrders} selectedOrders={selectedOrders} onToggleSelection={(id) => setSelectedOrders(prev => {
-                                    const next = new Set(prev);
-                                    if (next.has(id)) next.delete(id); else next.add(id);
-                                    return next;
-                                })} />
+                                <BreadOrderTable 
+                                    orders={filteredOrders} 
+                                    selectedOrders={selectedOrders} 
+                                    onToggleSelection={(id) => setSelectedOrders(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(id)) next.delete(id); else next.add(id);
+                                        return next;
+                                    })} 
+                                />
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                                     {filteredOrders.map(o => (
-                                        <BreadOrderCard key={o.uuid} order={o} isSelected={selectedOrders.has(o.uuid)} onToggleSelection={(id) => setSelectedOrders(prev => {
-                                            const next = new Set(prev);
-                                            if (next.has(id)) next.delete(id); else next.add(id);
-                                            return next;
-                                        })} />
+                                        <BreadOrderCard 
+                                            key={o.uuid} 
+                                            order={o} 
+                                            isSelected={selectedOrders.has(o.uuid)} 
+                                            onToggleSelection={(id) => setSelectedOrders(prev => {
+                                                const next = new Set(prev);
+                                                if (next.has(id)) next.delete(id); else next.add(id);
+                                                return next;
+                                            })} 
+                                        />
                                     ))}
                                 </div>
                             )}

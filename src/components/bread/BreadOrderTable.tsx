@@ -65,16 +65,15 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
         }
     }, [orderToDelete]);
 
-    const isAllSelected = orders.length > 0 && selectedOrders.size === orders.length;
+    const isAllSelected = orders.length > 0 && orders.every(o => selectedOrders.has(o.uuid));
+    const isSomeSelected = orders.length > 0 && orders.some(o => selectedOrders.has(o.uuid)) && !isAllSelected;
 
     const toggleSelectAll = useCallback((checked: boolean) => {
         if (checked) {
-            // Select all that are not selected
             orders.forEach(o => {
                 if (!selectedOrders.has(o.uuid)) onToggleSelection(o.uuid);
             });
         } else {
-            // Deselect all that are selected
             orders.forEach(o => {
                 if (selectedOrders.has(o.uuid)) onToggleSelection(o.uuid);
             });
@@ -83,9 +82,9 @@ const BreadOrderTableComponent = ({ orders, selectedOrders, onToggleSelection }:
 
     return (
         <>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-white/5 bg-card/40 backdrop-blur-sm shadow-sm">
             <Table>
-                <TableHeader className="bg-muted/50 border-b border-white/5">
+                <TableHeader className="bg-muted/30">
                     <TableRow className="hover:bg-transparent border-none">
                         <TableHead className="w-12 px-6">
                             <Checkbox 

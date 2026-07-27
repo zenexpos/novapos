@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
 import { roundFinancial, roundQty, safeNumber } from '@/lib/utils';
+import { customerService } from './customer.service';
 
 /**
  * Bread Logistics Service — Elite Grade.
@@ -141,9 +142,10 @@ class BreadService {
             const orders = await db.bread_orders.where('uuid').anyOf(orderUuids).toArray();
             
             for (const order of orders) {
-                // Skip if already billed or no customer linked
+                // Skip if already billed, no customer linked, or already deleted
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
+                // Create the sale entity
                 const sale = await salesService.createSale({
                     items: [{
                         productUuid: 'BREAD_VIRTUAL_PROD',
