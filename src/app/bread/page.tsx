@@ -113,6 +113,14 @@ export default function BreadPage() {
         setCurrentDate(prev => prev ? addDays(prev, days) : new Date());
     }, []);
 
+    const handleToggleAll = useCallback((checked: boolean) => {
+        if (checked) {
+            setSelectedOrders(new Set(filteredOrders.map(o => o.uuid)));
+        } else {
+            setSelectedOrders(new Set());
+        }
+    }, [filteredOrders]);
+
     const resetFilters = () => {
         setSearchQuery('');
         setFilterDelivery('all');
@@ -146,7 +154,7 @@ export default function BreadPage() {
     if (!isMounted || !currentDate) return null;
 
     return (
-        <div className="p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
+        <div className="p-2 sm:p-4 space-y-3 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <PageHeader 
                 title="Logistique Pain"
                 description={format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}
@@ -204,7 +212,7 @@ export default function BreadPage() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="h-8 rounded-lg border-white/5 bg-black/10 px-3 text-[9px] font-black uppercase tracking-widest gap-2">
-                                            <Filter className="h-3 w-3 opacity-50" />
+                                            <Filter className="h-3.5 w-3.5 opacity-50" />
                                             {filterDelivery === 'all' ? 'Livraison' : filterDelivery === 'delivered' ? 'Livré' : 'Attente'}
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -220,7 +228,7 @@ export default function BreadPage() {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="h-8 rounded-lg border-white/5 bg-black/10 px-3 text-[9px] font-black uppercase tracking-widest gap-2">
-                                            <Filter className="h-3 w-3 opacity-50" />
+                                            <Filter className="h-3.5 w-3.5 opacity-50" />
                                             {filterPayment === 'all' ? 'Règlement' : filterPayment === 'paid' ? 'Payé' : 'Crédit'}
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -274,9 +282,10 @@ export default function BreadPage() {
                                         if (next.has(id)) next.delete(id); else next.add(id);
                                         return next;
                                     })} 
+                                    onToggleAll={handleToggleAll}
                                 />
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                                     {filteredOrders.map(o => (
                                         <BreadOrderCard 
                                             key={o.uuid} 
