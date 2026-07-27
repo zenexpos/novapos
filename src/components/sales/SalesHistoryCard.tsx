@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import type { Sale } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,110 +30,104 @@ const SalesHistoryCardComponent = ({
     onCancelSale 
 }: SalesHistoryCardProps) => {
     const paymentStatusMap = {
-        paid: { text: 'Payé Cash', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+        paid: { text: 'Soldé Cash', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20' },
         partial: { text: 'Solde Partiel', icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/20' },
-        unpaid: { text: 'Dette Totale', icon: Clock, color: 'text-destructive', bg: 'bg-destructive/10 border-destructive/20' },
+        unpaid: { text: 'Dette Totale', icon: Clock, color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/20' },
     };
     const status = paymentStatusMap[sale.paymentStatus];
 
-    const handleCardClick = () => {
-        onToggleSelection();
-    };
-
     return (
         <Card 
-            onClick={handleCardClick}
+            onClick={onToggleSelection}
             className={cn(
-                "app-card group flex flex-col transition-all duration-500 bg-card/40 backdrop-blur-sm border-white/5 relative overflow-hidden rounded-lg cursor-pointer",
-                isSelected ? "ring-2 ring-primary border-primary/30 shadow-sm scale-[1.02]" : "hover:bg-primary/5"
+                "group relative flex flex-col transition-all duration-300 bg-card/40 border border-white/5 rounded-xl cursor-pointer",
+                isSelected ? "ring-2 ring-primary bg-primary/5 shadow-lg scale-[1.02]" : "hover:border-primary/40 hover:bg-card shadow-sm"
             )}
         >
-            <div className="absolute -right-4 -top-4 opacity-[0.02] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none">
-                <Receipt className="h-32 w-32 rotate-12" />
-            </div>
-
-            {/* Actions isolated container */}
+            {/* Actions overlay */}
             <div 
-                className="absolute top-4 right-4 z-10 flex gap-2 items-center"
+                className="absolute top-3 right-3 z-10 flex gap-1.5 items-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-xl border border-white/5 shadow-sm flex items-center justify-center">
+                <div className="p-1.5 bg-background/80 backdrop-blur-md rounded-lg border border-white/5 shadow-sm">
                     <Checkbox
                         checked={isSelected}
                         onCheckedChange={onToggleSelection}
-                        className="h-5 w-5 border-primary data-[state=checked]:bg-primary"
+                        className="h-4 w-4 border-primary/40 data-[state=checked]:bg-primary"
                     />
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="h-9 w-9 bg-background/80 backdrop-blur-md border-white/5 shadow-xl rounded-xl transition-transform active:scale-95">
-                            <MoreHorizontal className="h-5 w-5" />
-                        </Button>
+                        <button className="h-7 w-7 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-md border border-white/5 opacity-40 group-hover:opacity-100 hover:bg-muted transition-all">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-2xl border-none shadow-sm bg-card">
-                        <DropdownMenuItem onClick={() => onViewDetails(sale)} className="rounded-xl p-3">
-                            <FileText className="mr-2 h-4 w-4" /> Examiner détails
+                    <DropdownMenuContent align="end" className="rounded-xl border-white/5 shadow-xl bg-card">
+                        <DropdownMenuItem onClick={() => onViewDetails(sale)} className="text-xs font-bold p-2.5">
+                            <FileText className="mr-2 h-3.5 w-3.5 opacity-40" /> Détails Elite
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onCancelSale(sale)} className="text-destructive focus:text-destructive rounded-xl p-3">
-                            <Trash2 className="mr-2 h-4 w-4" /> Annuler la vente
+                        <DropdownMenuItem onClick={() => onCancelSale(sale)} className="text-destructive text-xs font-bold p-2.5">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> Annuler Vente
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
 
-            <CardHeader className="p-6 pb-2 space-y-3 relative z-10">
+            <CardHeader className="p-4 pb-1 space-y-2">
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={cn("rounded-lg font-semibold uppercase text-[8px] px-2 py-0.5 border shadow-sm", status.bg, status.color)}>
-                        <status.icon className="h-2.5 w-2.5 mr-1" />
+                    <Badge variant="outline" className={cn("rounded-md font-black uppercase text-[7px] px-1.5 py-0 border tracking-tighter", status.bg, status.color)}>
+                        <status.icon className="h-2 w-2 mr-1" />
                         {status.text}
                     </Badge>
-                    <span className="text-[10px] font-mono font-semibold text-muted-foreground/30 flex items-center gap-1 uppercase tracking-tighter">
-                        <Hash className="h-2.5 w-2.5" /> {sale.invoiceNumber}
+                    <span className="text-[8px] font-mono font-bold text-muted-foreground/30 flex items-center gap-1 uppercase">
+                        <Hash className="h-2 w-2" /> {sale.invoiceNumber.slice(-8)}
                     </span>
                 </div>
-                <CardTitle className="text-xl font-semibold leading-tight tracking-tighter group-hover:text-primary transition-colors truncate pr-12">
-                    {customerName || 'Client de passage'}
+                <CardTitle className="text-base font-black leading-tight tracking-tight group-hover:text-primary transition-colors truncate pr-14 uppercase">
+                    {customerName || 'Passage'}
                 </CardTitle>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-semibold uppercase tracking-wide">
-                    <Clock className="h-3 w-3 opacity-50" />
-                    {format(safeToDate(sale.createdAt!), 'd MMMM, HH:mm', { locale: fr })}
+                <div className="flex items-center gap-2 text-[8px] text-muted-foreground/40 font-bold uppercase tracking-widest">
+                    <Clock className="h-2.5 w-2.5" />
+                    {format(safeToDate(sale.createdAt!), 'd MMM, HH:mm', { locale: fr })}
                 </div>
             </CardHeader>
 
-            <CardContent className="p-6 py-4 space-y-5 relative z-10">
-                <div className="flex items-center justify-between text-[9px] font-semibold uppercase text-muted-foreground/60 border-b border-white/5 pb-2">
-                    <span className="text-foreground">Recu: {formatCurrency(sale.amountPaid)}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-3xl bg-black/20 border border-white/5 shadow-inner">
-                        <p className="text-[8px] font-semibold uppercase text-muted-foreground/40 mb-1.5">Volume Items</p>
-                        <p className="font-semibold text-sm tracking-tight">{sale.items?.length || 0} Positions</p>
+            <CardContent className="p-4 py-3 space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 rounded-xl bg-black/20 border border-white/5 shadow-inner">
+                        <p className="text-[7px] font-black uppercase text-muted-foreground/40 mb-1">Volume</p>
+                        <p className="font-black text-xs tabular-nums">{sale.items?.length || 0} ITEMS</p>
                     </div>
                     <div className={cn(
-                        "p-4 rounded-3xl border transition-all duration-500 shadow-inner",
-                        sale.remainingBalance > 0 ? "bg-destructive/5 border-destructive/20" : "bg-emerald-500/5 border-emerald-500/20"
+                        "p-3 rounded-xl border shadow-inner",
+                        sale.remainingBalance > 0.01 ? "bg-red-500/5 border-red-500/10" : "bg-emerald-500/5 border-emerald-500/10"
                     )}>
-                        <p className={cn("text-[8px] font-semibold uppercase mb-1.5", sale.remainingBalance > 0 ? "text-destructive/70" : "text-emerald-600/70")}>
-                            {sale.remainingBalance > 0 ? 'Reste à Payé' : 'Vente Solder'}
+                        <p className={cn("text-[7px] font-black uppercase mb-1", sale.remainingBalance > 0.01 ? "text-red-500/60" : "text-emerald-600/60")}>
+                            {sale.remainingBalance > 0.01 ? 'SOLDE DÛ' : 'SOLDE NET'}
                         </p>
-                        <p className={cn("font-semibold text-sm tracking-tight", sale.remainingBalance > 0 ? "text-destructive" : "text-emerald-500")}>
+                        <p className={cn("font-black text-xs tabular-nums tracking-tighter", sale.remainingBalance > 0.01 ? "text-red-500" : "text-emerald-500")}>
                             {formatCurrency(Math.max(0, sale.remainingBalance))}
                         </p>
                     </div>
                 </div>
             </CardContent>
 
-            <CardFooter className="p-6 pt-4 border-t border-white/5 bg-muted/5 flex items-center justify-between relative z-10">
-                 <div className="space-y-0.5">
-                    <p className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-wide">Valeur Transaction</p>
-                    <p className="text-lg font-semibold text-primary tracking-tighter leading-none">{formatCurrency(sale.total)}</p>
+            <CardFooter className="p-4 pt-3 border-t border-white/5 bg-muted/5 flex items-center justify-between">
+                 <div className="space-y-0">
+                    <p className="text-[7px] font-black uppercase text-muted-foreground/30 tracking-widest">Total Transaction</p>
+                    <p className="text-lg font-black text-primary tracking-tighter tabular-nums leading-none">{formatCurrency(sale.total)}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onViewDetails(sale); }} className="h-9 rounded-xl font-semibold text-[10px] uppercase tracking-wide hover:bg-primary/10 hover:text-primary transition-all px-4">
-                    Details <ChevronRight className="ml-1 h-3 w-3 opacity-50" />
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={(e) => { e.stopPropagation(); onViewDetails(sale); }} 
+                    className="h-8 rounded-lg font-black text-[8px] uppercase tracking-[0.2em] hover:bg-primary/10 hover:text-primary px-3"
+                >
+                    Détails <ChevronRight className="ml-1 h-2.5 w-2.5" />
                 </Button>
             </CardFooter>
         </Card>
     );
 };
 
-export const SalesHistoryCard = React.memo(SalesHistoryCardComponent);
+export const SalesHistoryCard = memo(SalesHistoryCardComponent);

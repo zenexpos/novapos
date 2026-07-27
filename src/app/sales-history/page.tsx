@@ -89,7 +89,7 @@ export default function SalesHistoryPage() {
         // 1. Fetch Sales (Optimized)
         const sales = await salesService.filterSales(filters);
 
-        // 2. Fetch Payments (Optimized lookup)
+        // 2. Fetch Payments (Audited Lookup)
         let paymentsQuery = db.payments.toCollection();
         if (dateRange?.from) {
             paymentsQuery = db.payments.where('paymentDate').between(startOfDay(dateRange.from), endOfDay(dateRange.to || new Date()), true, true);
@@ -99,15 +99,14 @@ export default function SalesHistoryPage() {
         let filteredPayments = rawPayments;
         if (debounced.debouncedValue) {
             const q = debounced.debouncedValue.toLowerCase().trim();
-            // Search customers by searchName directly
             const matchingCustomers = await db.customers
-                .where('searchName')
-                .startsWith(q)
+                .filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(q) || (c.phone || '').includes(q))
                 .toArray();
             const matchingCustomerUuids = new Set(matchingCustomers.map(c => c.uuid));
             filteredPayments = rawPayments.filter(p => matchingCustomerUuids.has(p.customerUuid));
         }
 
+        // Only show payments when 'all' or 'paid' filter is active (as payments are completed transactions)
         if (filterStatus !== 'all' && filterStatus !== 'paid') {
             filteredPayments = [];
         }
@@ -117,7 +116,6 @@ export default function SalesHistoryPage() {
             ...filteredPayments.map(p => ({ type: 'payment' as const, data: p, date: safeToDate(p.paymentDate) }))
         ];
 
-        // Limit results to avoid browser lag, sort by date
         return combined
             .sort((a, b) => b.date.getTime() - a.date.getTime())
             .slice(0, 500);
@@ -131,17 +129,22 @@ export default function SalesHistoryPage() {
 
     const stats = useMemo(() => {
         if (!historyData) return { totalRevenue: 0, totalReceived: 0, totalDebt: 0, count: 0 };
-        let rev = 0; let rec = 0; let count = 0;
+        let revCents = 0; let recCents = 0; let count = 0;
         historyData.forEach(item => {
             if (item.type === 'sale') {
-                rev += Math.round(safeNumber(item.data.total) * 100);
-                rec += Math.round(safeNumber(item.data.amountPaid) * 100);
+                revCents += Math.round(safeNumber(item.data.total) * 100);
+                recCents += Math.round(safeNumber(item.data.amountPaid) * 100);
                 count++;
             } else {
-                rec += Math.round(safeNumber(item.data.amount) * 100);
+                recCents += Math.round(safeNumber(item.data.amount) * 100);
             }
         });
-        return { totalRevenue: rev / 100, totalReceived: rec / 100, totalDebt: Math.max(0, (rev - rec) / 100), count };
+        return { 
+            totalRevenue: revCents / 100, 
+            totalReceived: recCents / 100, 
+            totalDebt: Math.max(0, (revCents - recCents) / 100), 
+            count 
+        };
     }, [historyData]);
 
     const chartData = useMemo(() => {
@@ -160,7 +163,11 @@ export default function SalesHistoryPage() {
         });
         return Array.from(dataMap.values())
             .sort((a, b) => a.fullDate.localeCompare(b.fullDate))
-            .map(d => ({ date: format(parseISO(d.fullDate), 'dd/MM'), total: d.totalCents / 100, received: d.receivedCents / 100 }));
+            .map(d => ({ 
+                date: format(parseISO(d.fullDate), 'dd/MM'), 
+                total: d.totalCents / 100, 
+                received: d.receivedCents / 100 
+            }));
     }, [historyData]);
 
     const handleToggleSelection = (uuid: string) => {
@@ -193,10 +200,11 @@ export default function SalesHistoryPage() {
         const data = toExport.map(item => ({
             'Date': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
             'Type': item.type === 'sale' ? 'Vente' : 'Paiement',
-            'Référence': item.type === 'sale' ? item.data.invoiceNumber : 'Paiement Dette',
+            'Référence': item.type === 'sale' ? item.data.invoiceNumber : 'Encaissement Dette',
             'Client': item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Passage',
-            'Total': item.type === 'sale' ? item.data.total : item.data.amount,
-            'Statut': item.type === 'sale' ? item.data.paymentStatus : 'Confirmé'
+            'Total Transaction': item.type === 'sale' ? item.data.total : item.data.amount,
+            'Versé': item.type === 'sale' ? item.data.amountPaid : item.data.amount,
+            'Statut': item.type === 'sale' ? item.data.paymentStatus : 'Validé'
         }));
 
         exportService.exportToCsv(`historique-flux-${new Date().toISOString().split('T')[0]}`, data);
@@ -209,111 +217,106 @@ export default function SalesHistoryPage() {
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || !!dateRange?.from;
     
     return (
-        <div className="p-6 sm:p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
-            <PageHeader title="Flux Financiers Elite" description="Registre unifié des ventes et encaissements">
-                <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                    <Button variant="outline" onClick={handleExportCsv} className="rounded-xl h-12 font-bold gap-2 border-primary/20 bg-card hover:bg-primary/5 transition-all">
-                        <FileDown className="h-4 w-4 text-primary" /> Exporter
+        <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-24">
+            <PageHeader title="Flux Financiers Elite" description="Registre unifié des ventes et encaissements de dettes.">
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="rounded-lg font-bold gap-2">
+                        <FileDown className="h-4 w-4" /> Exporter
                     </Button>
-                    <div className="flex items-center bg-card/40 backdrop-blur-md rounded-2xl border border-white/5 p-1 shadow-inner">
-                        <DateRangePicker date={dateRange} setDate={setDate} />
-                        {!dateRange?.from && (
-                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 text-[8px] font-black uppercase px-3 py-1 animate-pulse">Archive Complète</Badge>
-                        )}
+                    <div className="flex items-center bg-muted/20 rounded-xl border p-1">
+                        <DateRangePicker date={dateRange} setDate={setDate} className="h-8 border-none bg-transparent shadow-none" />
                     </div>
-                    <Button variant="outline" size="icon" className="h-12 w-12 rounded-2xl border-white/5 bg-card/40 hover:bg-primary/10 transition-all" onClick={() => historyDataResult.refresh()}>
-                        <RefreshCw className={cn("h-5 w-5 text-primary", isLoading && "animate-spin")} />
+                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={() => historyDataResult.refresh()}>
+                        <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </PageHeader>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-1 space-y-4">
-                    <Card className="app-card rounded-lg glass overflow-hidden shadow-sm">
-                        <CardHeader className="bg-primary/5 border-b border-white/5 p-6">
-                            <CardTitle className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-widest"><Sparkles className="h-3.5 w-3.5" /> Bilan de Période</CardTitle>
+                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
+                        <CardHeader className="bg-primary/5 border-b border-white/5 p-5">
+                            <CardTitle className="text-[10px] font-black uppercase text-primary flex items-center gap-2 tracking-[0.2em]"><Sparkles className="h-3.5 w-3.5" /> Bilan Période</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="p-5 space-y-6">
                             <div className="space-y-1">
-                                <p className="text-[10px] font-semibold text-muted-foreground/40 uppercase">Chiffre d'Affaires</p>
+                                <p className="text-[10px] font-bold text-muted-foreground/40 uppercase">Chiffre d'Affaires</p>
                                 <p className="text-3xl font-black tracking-tighter text-primary tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
                             </div>
-                            <div className="grid grid-cols-1 gap-3 pt-2">
-                                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 shadow-inner group hover:bg-emerald-500/10 transition-all">
-                                    <p className="text-[9px] font-semibold uppercase text-emerald-600 mb-1">Total Encaissé</p>
-                                    <p className="font-bold text-xl text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
+                            <div className="grid gap-3 pt-2">
+                                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                                    <p className="text-[9px] font-bold uppercase text-emerald-600 mb-1">Total Encaissé</p>
+                                    <p className="font-black text-xl text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10 shadow-inner group hover:bg-destructive/10 transition-all">
-                                    <p className="text-[9px] font-semibold uppercase text-destructive mb-1">Reste à Recouvrer</p>
-                                    <p className="font-bold text-xl text-destructive tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
+                                <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
+                                    <p className="text-[9px] font-bold uppercase text-red-600 mb-1">Reste à Recouvrer</p>
+                                    <p className="font-black text-xl text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="app-card rounded-lg glass p-6 space-y-6 shadow-sm">
+                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm p-5 space-y-5">
                         <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                            <Input ref={searchInputRef} placeholder="Chercher un flux... [F3]" className="pl-11 h-12 rounded-xl bg-black/20 border-none shadow-inner font-bold text-lg" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                            {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors"><X className="h-4 w-4" /></button>}
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
+                            <Input ref={searchInputRef} placeholder="Chercher un flux... [F3]" className="pl-9 h-10 rounded-xl bg-black/20 border-none font-bold" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
-                        <div className="space-y-4">
-                            <Badge variant="outline" className="text-[10px] font-black uppercase text-muted-foreground/40 ml-1">Statut des Ventes</Badge>
-                            <div className="grid gap-2">
+                        <div className="space-y-3">
+                            <p className="text-[9px] font-black uppercase text-muted-foreground/30 ml-1 tracking-widest">Statut des Ventes</p>
+                            <div className="grid grid-cols-2 gap-2">
                                 {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
-                                    <button key={s} onClick={() => setFilterStatus(s)} className={cn("flex items-center justify-between p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary shadow-lg" : "bg-black/10 border-white/5 text-muted-foreground/60 hover:bg-black/20")}>
+                                    <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-3 py-2 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary shadow-md" : "bg-black/10 border-transparent text-muted-foreground/60 hover:bg-black/20")}>
                                         {s === 'all' ? 'Tous' : s === 'paid' ? 'Soldés' : s === 'partial' ? 'Partiels' : 'Crédits'}
-                                        {filterStatus === s && <CheckCircle2 className="h-3 w-3" />}
                                     </button>
                                 ))}
                             </div>
                         </div>
-                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase rounded-xl h-12 gap-2"><FilterX className="h-4 w-4" /> Réinitialiser</Button>}
+                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[10px] font-bold uppercase rounded-xl h-10 gap-2"><FilterX className="h-4 w-4" /> Réinitialiser</Button>}
                     </Card>
                 </div>
 
                 <div className="lg:col-span-3 space-y-4">
-                    <Card className="app-card rounded-lg glass overflow-hidden shadow-sm">
+                    <Card className="rounded-2xl border-none bg-card/40 backdrop-blur-sm shadow-sm overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-white/5 bg-muted/20">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-sm"><TrendingUp className="h-6 w-6" /></div>
-                                <div><CardTitle className="text-xl font-bold tracking-tighter uppercase">Flux de Liquidité</CardTitle><p className="text-[10px] font-semibold uppercase text-primary/50 tracking-widest">Revenus et remboursements sur la période</p></div>
+                                <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm"><TrendingUp className="h-5 w-5" /></div>
+                                <div><CardTitle className="text-lg font-black tracking-tighter uppercase">Analyse des Flux</CardTitle><p className="text-[9px] font-bold uppercase text-primary/40">Liquidité reçue vs Volume d'affaires</p></div>
                             </div>
-                            <div className="flex items-center gap-1.5 p-1.5 bg-black/20 rounded-lg border border-white/5 shadow-inner">
-                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
+                            <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg">
+                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
+                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="h-72 p-4">
+                        <CardContent className="h-64 p-4">
                             {!isLoading && chartData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData}>
                                         <defs>
-                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
-                                            <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/><stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/></linearGradient>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
+                                            <linearGradient id="colorReceived" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.2}/><stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/></linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.2)" />
-                                        <XAxis dataKey="date" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={15} />
-                                        <YAxis fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dx={-15} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
-                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(16px)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }} formatter={(v: number, name: string) => [formatCurrency(v), name === 'total' ? 'Chiffre Affaire' : 'Flux Reçu']} />
-                                        <Area type="monotone" dataKey="total" name="total" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} isAnimationActive={false} />
-                                        <Area type="monotone" dataKey="received" name="received" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="5 5" isAnimationActive={false} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.1)" />
+                                        <XAxis dataKey="date" fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={10} />
+                                        <YAxis fontSize={10} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dx={-10} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(16px)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }} formatter={(v: number) => [formatCurrency(v), '']} />
+                                        <Area type="monotone" dataKey="total" name="Affaires" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} isAnimationActive={false} />
+                                        <Area type="monotone" dataKey="received" name="Réel" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorReceived)" strokeWidth={2} strokeDasharray="4 4" isAnimationActive={false} />
                                     </AreaChart>
                                 </ResponsiveContainer>
-                            ) : <div className="h-full flex flex-col items-center justify-center opacity-20 uppercase text-[10px] font-black italic gap-4"><Calendar className="h-12 w-12" /> {isLoading ? 'Chargement...' : 'Aucun flux détecté'}</div>}
+                            ) : <div className="h-full flex flex-col items-center justify-center opacity-10 uppercase text-[10px] font-black italic gap-2"><Calendar className="h-10 w-10" /> {isLoading ? 'Chargement...' : 'Aucun flux'}</div>}
                         </CardContent>
                     </Card>
 
-                    <div className="min-h-[600px] animate-in fade-in duration-500">
+                    <div className="min-h-[500px]">
                         {isLoading ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-56 w-full rounded-lg bg-card/40 animate-pulse border border-white/5" />)}
+                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-2xl bg-card/40 border border-white/5 animate-pulse" />)}
                             </div>
                         ) : historyData && historyData.length > 0 ? (
                             viewMode === 'list' ? (
                                 <SalesHistoryTable 
                                     historyItems={historyData} 
-                                    customerMap={customerMap} 
+                                    customerMap={customerMap as any} 
                                     selectedItems={selectedItems} 
                                     onToggleSelection={handleToggleSelection} 
                                     onViewDetails={(s) => { setSelectedSale(s); setIsDetailsOpen(true); }} 
@@ -326,11 +329,11 @@ export default function SalesHistoryPage() {
                                         item.type === 'sale' ? (
                                             <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Client de passage'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
                                         ) : (
-                                            <Card key={item.data.uuid} className="app-card rounded-lg border-white/5 bg-card/40 backdrop-blur-sm p-6 relative overflow-hidden group">
-                                                <div className="absolute -right-4 -top-4 opacity-[0.05] text-emerald-500 group-hover:opacity-10 transition-opacity"><HandCoins className="h-32 w-32 rotate-12" /></div>
-                                                <div className="flex justify-between items-start mb-6"><div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-inner"><HandCoins className="h-6 w-6" /></div><Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-3 py-1">Paiement Reçu</Badge></div>
-                                                <div className="space-y-1"><p className="text-[10px] font-semibold text-muted-foreground/40 uppercase">Encaissement Dette</p><p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p></div>
-                                                <div className="mt-4 flex flex-col gap-2"><p className="font-bold text-sm tracking-tight truncate">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p><div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-semibold uppercase tracking-wide"><Clock className="h-3 w-3 opacity-50" />{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</div></div>
+                                            <Card key={item.data.uuid} className="rounded-2xl border-none bg-card/40 backdrop-blur-sm p-5 relative overflow-hidden group shadow-sm">
+                                                <div className="absolute -right-4 -top-4 opacity-[0.03] text-emerald-500 group-hover:opacity-10 transition-opacity"><HandCoins className="h-32 w-32 rotate-12" /></div>
+                                                <div className="flex justify-between items-start mb-4"><div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500"><HandCoins className="h-5 w-5" /></div><Badge className="bg-emerald-500 text-white border-none uppercase text-[8px] font-black px-2 py-0.5">Encaissement</Badge></div>
+                                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-muted-foreground/40 uppercase">Montant Reçu</p><p className="text-2xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p></div>
+                                                <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-1"><p className="font-black text-sm tracking-tight truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p><div className="flex items-center gap-2 text-[9px] text-muted-foreground/40 font-bold uppercase tracking-wide"><Clock className="h-3 w-3 opacity-30" />{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</div></div>
                                             </Card>
                                         )
                                     ))}
@@ -347,11 +350,13 @@ export default function SalesHistoryPage() {
 
             {selectedItems.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/80 backdrop-blur-sm border-2 border-primary/20 shadow-2xl rounded-full px-8 py-4 flex items-center gap-4">
-                        <div className="flex items-center gap-4 pr-8 border-r border-white/10"><div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">{selectedItems.size}</div><span className="text-[10px] font-black uppercase text-muted-foreground">Sélections</span></div>
-                        <Button variant="ghost" onClick={handleExportCsv} className="rounded-full h-12 px-6 font-black text-[10px] uppercase hover:bg-primary/10 transition-all"><FileDown className="mr-2 h-4 w-4" /> Exporter (.csv)</Button>
-                        <Button variant="ghost" onClick={() => setIsBulkCancelConfirmOpen(true)} className="rounded-full h-12 px-6 font-black text-[10px] uppercase text-destructive hover:bg-destructive/10 transition-all"><Trash2 className="mr-2 h-4 w-4" /> Annuler Flux</Button>
-                        <Button variant="ghost" size="icon" onClick={() => setSelectedItems(new Set())} className="rounded-full h-12 w-12 hover:bg-white/5"><X className="h-4 w-4" /></Button>
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-6">
+                        <div className="flex items-center gap-4 pr-6 border-r border-white/10"><div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black">{selectedItems.size}</div><span className="text-[9px] font-black uppercase text-muted-foreground/60">Sélection</span></div>
+                        <div className="flex items-center gap-2">
+                            <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary px-3 py-2 transition-colors">Exporter</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:bg-destructive/10 px-3 py-2 rounded-lg transition-colors">Annuler Flux</button>
+                        </div>
+                        <button onClick={() => setSelectedItems(new Set())} className="p-2 rounded-full hover:bg-white/10"><X className="h-4 w-4 opacity-40" /></button>
                     </div>
                 </div>
             )}
