@@ -33,9 +33,9 @@ export const SalesHistoryTable = memo(({
     onCancel 
 }: SalesHistoryTableProps) => {
     const statusMap = {
-        paid: { text: 'Soldé', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
-        partial: { text: 'Partiel', icon: AlertCircle, className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-        unpaid: { text: 'Crédit', icon: Clock, className: 'bg-red-500/10 text-red-600 border-red-500/20' },
+        paid: { text: 'مسددة', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+        partial: { text: 'جزئية', icon: AlertCircle, className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+        unpaid: { text: 'دين', icon: Clock, className: 'bg-red-500/10 text-red-600 border-red-500/20' },
     };
 
     const handleToggleAll = (checked: boolean) => {
@@ -53,18 +53,18 @@ export const SalesHistoryTable = memo(({
             <Table>
                 <TableHeader className="bg-muted/30">
                     <TableRow className="border-none h-9">
-                        <TableHead className="w-[50px] px-4">
+                        <TableHead className="w-[40px] px-3">
                            <Checkbox
                                 checked={isAllSelected}
                                 onCheckedChange={handleToggleAll}
                                 className="border-primary/40 data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">Temps</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">Référence</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">Partenaire Client</TableHead>
-                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">État Flux</TableHead>
-                        <TableHead className="px-2 text-right font-black text-[9px] uppercase text-primary tracking-widest">Valeur</TableHead>
+                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">الوقت</TableHead>
+                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">المرجع</TableHead>
+                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">العميل الشريك</TableHead>
+                        <TableHead className="px-2 font-black text-[9px] uppercase text-muted-foreground/60 tracking-widest">حالة التدفق</TableHead>
+                        <TableHead className="px-2 text-right font-black text-[9px] uppercase text-primary tracking-widest">القيمة</TableHead>
                         <TableHead className="w-[60px] px-4"></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -73,11 +73,13 @@ export const SalesHistoryTable = memo(({
                         const isSale = item.type === 'sale';
                         const uuid = item.data.uuid;
                         const isSelected = selectedItems.has(uuid);
+                        const isCancelled = isSale && item.data.isCancelled;
+                        
                         const customer = isSale 
                             ? (item.data.customerUuid ? customerMap.get(item.data.customerUuid) : undefined)
                             : customerMap.get(item.data.customerUuid);
 
-                        const displayName = customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage';
+                        const displayName = customer ? `${customer.firstName} ${customer.lastName}` : 'عميل عابر';
 
                         return (
                             <TableRow 
@@ -85,10 +87,11 @@ export const SalesHistoryTable = memo(({
                                 onClick={() => onToggleSelection(uuid)}
                                 className={cn(
                                     "group transition-all border-b border-white/5 cursor-pointer h-10",
-                                    isSelected ? "bg-primary/5" : isSale ? "hover:bg-primary/5" : "hover:bg-emerald-500/5"
+                                    isSelected ? "bg-primary/5" : isSale ? "hover:bg-primary/5" : "hover:bg-emerald-500/5",
+                                    isCancelled && "opacity-40 grayscale"
                                 )}
                             >
-                                <TableCell className="px-4 py-0" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-3 py-0" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox 
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(uuid)}
@@ -110,7 +113,7 @@ export const SalesHistoryTable = memo(({
                                             {isSale ? <ReceiptIcon className="h-3 w-3" /> : <HandCoins className="h-3 w-3" />}
                                         </div>
                                         <span className="text-[9px] font-mono font-bold text-muted-foreground/50 tracking-tighter">
-                                            {isSale ? item.data.invoiceNumber : 'CASH_RECV'}
+                                            {isSale ? item.data.invoiceNumber.slice(-8) : 'CASH-RCV'}
                                         </span>
                                     </div>
                                 </TableCell>
@@ -120,14 +123,16 @@ export const SalesHistoryTable = memo(({
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-2 py-0">
-                                    {isSale ? (
+                                    {isCancelled ? (
+                                        <Badge variant="outline" className="px-1.5 py-0 rounded-md font-black text-[7px] uppercase tracking-tighter border-muted">ملغاة</Badge>
+                                    ) : isSale ? (
                                         <Badge variant="outline" className={cn("gap-1 px-1.5 py-0 rounded-md font-black text-[7px] uppercase tracking-tighter shadow-sm", statusMap[item.data.paymentStatus].className)}>
                                             {React.createElement(statusMap[item.data.paymentStatus].icon, { className: "h-2 w-2" })}
                                             {statusMap[item.data.paymentStatus].text}
                                         </Badge>
                                     ) : (
                                         <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase italic opacity-60">
-                                            <CheckCircle className="h-2 w-2" /> Encaissement
+                                            <CheckCircle className="h-2 w-2" /> تحصيل دين
                                         </div>
                                     )}
                                 </TableCell>
@@ -140,17 +145,17 @@ export const SalesHistoryTable = memo(({
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-4 py-0 text-right" onClick={(e) => e.stopPropagation()}>
-                                    {isSale && (
+                                    {isSale && !isCancelled && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted opacity-20 group-hover:opacity-100 transition-all">
+                                                <button className="h-7 w-7 flex items-center justify-center rounded-md opacity-20 group-hover:opacity-100 hover:bg-muted transition-all">
                                                     <MoreHorizontal className="h-3.5 w-3.5" />
                                                 </button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-white/5">
-                                                <DropdownMenuItem onClick={() => onViewDetails(item.data)} className="text-xs font-bold p-2"><FileText className="mr-2 h-3.5 w-3.5" /> Examiner</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onPrint(item.data)} className="text-xs font-bold p-2"><Printer className="mr-2 h-3.5 w-3.5" /> Imprimer</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => onCancel(item.data)} className="text-destructive text-xs font-bold p-2"><Trash2 className="mr-2 h-3.5 w-3.5" /> Annuler</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onViewDetails(item.data)} className="text-xs font-bold p-2"><FileText className="mr-2 h-3.5 w-3.5" /> فحص التفاصيل</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onPrint(item.data)} className="text-xs font-bold p-2"><Printer className="mr-2 h-3.5 w-3.5" /> طباعة الفاتورة</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onCancel(item.data)} className="text-destructive text-xs font-bold p-2"><Trash2 className="mr-2 h-3.5 w-3.5" /> إلغاء البيع</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}
