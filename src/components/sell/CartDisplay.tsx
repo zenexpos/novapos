@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useActiveCart, useCartActions } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, X, Coins, AlertTriangle, Calculator, Edit3, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingCart, Edit3 } from 'lucide-react';
 import { formatCurrency, roundQty, cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CartItemRowProps {
     item: CartItem;
@@ -22,97 +21,69 @@ interface CartItemRowProps {
 }
 
 const CartItemRow = memo(({ item, isSelected, onUpdate, onPriceUpdate, onTotalUpdate, onRemove, onSelect }: CartItemRowProps) => {
-    const handleQtyChange = (val: string) => {
-        const num = parseFloat(val);
-        if (isNaN(num)) return;
-        onUpdate(item.uuid, Math.max(0, num));
-    };
-
-    const handlePriceChange = (val: string) => {
-        const num = parseFloat(val);
-        if (isNaN(num)) return;
-        onPriceUpdate(item.uuid, Math.max(0, num));
-    };
-
-    const handleTotalChange = (val: string) => {
-        const newTotal = parseFloat(val);
-        if (isNaN(newTotal)) return;
-        onTotalUpdate(item.uuid, newTotal);
-    };
-
     const isZero = item.cartQuantity <= 0;
-    const isSellingAtLoss = item.price < item.purchasePrice && item.purchasePrice > 0;
     const lineTotal = item.price * item.cartQuantity;
-    const isPriceOverridden = (item as any).isPriceOverridden;
 
     return (
         <div 
             tabIndex={0}
             onFocus={onSelect}
             className={cn(
-                "grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center p-2 rounded-lg border transition-all duration-200 group outline-none h-16",
-                isSelected ? "bg-primary/5 border-primary/40 shadow-sm" : "bg-card border-transparent hover:border-border/60",
-                isZero && "opacity-50"
+                "grid grid-cols-[1fr_auto_auto_40px] gap-x-2 items-center px-3 py-1 rounded-md transition-all duration-150 group outline-none h-11 border-b border-transparent",
+                isSelected ? "bg-primary/5 shadow-inner" : "hover:bg-muted/30",
+                isZero && "opacity-40"
             )}
         >
-            <div className="flex-grow min-w-0 pl-2">
-                <div className="flex items-center gap-2">
-                    <p className={cn("font-bold text-sm tracking-tight truncate", isZero && "line-through")}>
+            {/* Designation & Price */}
+            <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                    <span className={cn("font-bold text-[12px] tracking-tight truncate", isZero && "line-through")}>
                         {item.name}
-                    </p>
-                    {isPriceOverridden && <Edit3 className="h-3 w-3 text-blue-500 opacity-50" />}
+                    </span>
+                    {(item as any).isPriceOverridden && <Edit3 className="h-2.5 w-2.5 text-blue-500" />}
                 </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                    <div className="relative w-20">
-                        <Input 
-                            type="number" 
-                            value={item.price}
-                            onChange={(e) => handlePriceChange(e.target.value)}
-                            className={cn("h-7 px-1 text-[11px] font-bold bg-muted/50 border-none", isSellingAtLoss && "text-destructive")}
-                        />
-                    </div>
-                    <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tighter">/ {item.unit || 'pcs'}</span>
+                <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-black text-primary tabular-nums">{item.price}</span>
+                    <span className="text-[8px] font-bold text-muted-foreground/30 uppercase">/ {item.unit || 'pcs'}</span>
                 </div>
             </div>
             
-            <div className="flex items-center bg-muted/40 rounded-md border overflow-hidden">
+            {/* Quantity Controls - Ultra Compact */}
+            <div className="flex items-center bg-background/50 rounded border h-7 overflow-hidden">
                 <button 
                     onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, Math.max(0, roundQty(item.cartQuantity - 1))); }}
-                    className="w-7 h-8 flex items-center justify-center hover:bg-muted text-muted-foreground"
+                    className="w-6 h-full flex items-center justify-center hover:bg-muted text-muted-foreground/50 hover:text-foreground"
                 >
                     <Minus className="h-3 w-3" />
                 </button>
-                <Input
-                    type="number" step="0.001"
+                <input
+                    type="number" 
                     value={item.cartQuantity}
-                    onChange={(e) => handleQtyChange(e.target.value)}
-                    className="w-14 text-center h-8 bg-transparent border-none font-bold text-sm focus-visible:ring-0 tabular-nums"
+                    onChange={(e) => onUpdate(item.uuid, parseFloat(e.target.value) || 0)}
+                    className="w-10 text-center h-full bg-transparent border-none font-bold text-[11px] focus:outline-none tabular-nums"
                 />
                 <button 
                     onClick={(e) => { e.stopPropagation(); onUpdate(item.uuid, roundQty(item.cartQuantity + 1)); }}
-                    className="w-7 h-8 flex items-center justify-center hover:bg-muted text-muted-foreground"
+                    className="w-6 h-full flex items-center justify-center hover:bg-muted text-muted-foreground/50 hover:text-foreground"
                 >
                     <Plus className="h-3 w-3" />
                 </button>
             </div>
 
-            <div className="w-28 text-right">
-                <Input
-                    type="number"
-                    value={Math.round(lineTotal)}
-                    onChange={(e) => handleTotalChange(e.target.value)}
-                    className="h-8 w-24 ml-auto text-right font-black text-sm bg-muted/30 border-none shadow-none"
-                />
+            {/* Line Total */}
+            <div className="w-20 text-right">
+                <span className="font-black text-[13px] tracking-tighter tabular-nums text-foreground">
+                    {Math.round(lineTotal)}
+                </span>
             </div>
 
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity"
+            {/* Remove */}
+            <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(item.uuid); }}
+                className="flex items-center justify-center h-8 w-8 text-muted-foreground/10 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
             >
-                <Trash2 className="h-4 w-4" />
-            </Button>
+                <Trash2 className="h-3.5 w-3.5" />
+            </button>
         </div>
     );
 });
@@ -140,22 +111,16 @@ export function CartDisplay() {
     
     if (!cart || cart.items.length === 0) {
         return (
-            <div className="flex-grow flex flex-col items-center justify-center p-8 opacity-20">
-                <ShoppingCart className="h-16 w-16 mb-4" />
-                <p className="text-xs font-black uppercase tracking-widest">Selle en attente</p>
+            <div className="flex-grow flex flex-col items-center justify-center p-8 opacity-10">
+                <ShoppingCart className="h-12 w-12 mb-2" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Caisse prête</p>
             </div>
         )
     }
 
     return (
         <ScrollArea className="flex-grow">
-            <div className="p-3 space-y-1">
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 px-3 mb-2 text-[9px] font-black uppercase text-muted-foreground/30 tracking-widest">
-                    <div>Article</div>
-                    <div className="w-28 text-center">Quantité</div>
-                    <div className="w-28 text-right">Montant</div>
-                    <div className="w-8"></div>
-                </div>
+            <div className="py-2">
                 {cart.items.map((item, index) => (
                     <CartItemRow 
                         key={item.uuid} 

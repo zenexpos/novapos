@@ -53,12 +53,12 @@ function SellPageContent() {
     if (!isMounted) return null;
 
     return (
-        <div className="h-full flex flex-col p-1 gap-1 overflow-hidden bg-background">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-1 flex-grow min-h-0">
-                {/* Cart panel (60%) */}
-                <div className="lg:col-span-3 flex flex-col bg-card border rounded-xl overflow-hidden min-h-0 shadow-sm">
+        <div className="h-full flex flex-col p-0.5 gap-0.5 overflow-hidden bg-background">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0.5 flex-grow min-h-0">
+                {/* Cart panel (7/12) */}
+                <div className="lg:col-span-7 flex flex-col bg-card border-r overflow-hidden min-h-0 shadow-sm">
                     <CartDisplay />
-                    <div className="mt-auto p-2 space-y-2 border-t bg-muted/20 backdrop-blur-sm">
+                    <div className="mt-auto p-3 space-y-3 border-t bg-muted/10">
                         <CartTotalBar />
                         <SaleActions 
                             customerComboRef={customerComboRef}
@@ -67,8 +67,8 @@ function SellPageContent() {
                     </div>
                 </div>
 
-                {/* Product search panel (40%) */}
-                <div className="lg:col-span-2 flex flex-col min-h-0 bg-card border rounded-xl overflow-hidden shadow-sm">
+                {/* Product search panel (5/12) */}
+                <div className="lg:col-span-5 flex flex-col min-h-0 bg-card overflow-hidden">
                     <ProductSelector 
                         ref={searchInputRef} 
                         isCustomItemOpen={isCustomItemOpen}
