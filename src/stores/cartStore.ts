@@ -12,7 +12,7 @@ import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/u
 
 /**
  * iPOS Zen - Cart Store (Enterprise Grade)
- * Unified cart management with Joint Invoicing support for multiple customers.
+ * Unified cart management with single customer association.
  */
 interface CartActions {
     getActiveCart:       () => Cart | null;
@@ -27,8 +27,7 @@ interface CartActions {
     updateItemPrice:     (productUuid: string, newPrice: number) => void;
     updateItemTotal:     (productUuid: string, total: number) => void;
 
-    toggleCustomer:      (customerUuid: string) => void;
-    clearCustomers:      () => void;
+    setCustomer:         (customerUuid: string | undefined) => void;
     setDiscount:         (type: 'fixed' | 'percentage', value: number) => void;
 
     clearCart:    () => void;
@@ -43,7 +42,7 @@ interface CartState {
 
 const defaultCart: Omit<Cart, 'id' | 'name'> = {
     items:         [],
-    customerUuids: [], 
+    customerUuid:  undefined, 
     discount:      { type: 'fixed', value: 0 },
 };
 
@@ -79,7 +78,7 @@ export const useCartStore = create<CartState>()(
                             const cart = state.carts[0];
                             if (cart) {
                                 cart.items = [];
-                                cart.customerUuids = [];
+                                cart.customerUuid = undefined;
                                 cart.discount = { type: 'fixed', value: 0 };
                             }
                             return;
@@ -194,22 +193,12 @@ export const useCartStore = create<CartState>()(
                     }));
                 },
 
-                toggleCustomer: (customerUuid) => {
+                setCustomer: (customerUuid) => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
-                            if (!cart.customerUuids) cart.customerUuids = [];
-                            const index = cart.customerUuids.indexOf(customerUuid);
-                            if (index >= 0) cart.customerUuids.splice(index, 1);
-                            else cart.customerUuids.push(customerUuid);
+                            cart.customerUuid = customerUuid;
                         }
-                    }));
-                },
-
-                clearCustomers: () => {
-                    set(produce((state: CartState) => {
-                        const cart = state.carts.find(c => c.id === state.activeCartId);
-                        if (cart) cart.customerUuids = [];
                     }));
                 },
 
@@ -225,7 +214,7 @@ export const useCartStore = create<CartState>()(
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
                             cart.items = [];
-                            cart.customerUuids = [];
+                            cart.customerUuid = undefined;
                             cart.discount = { type: 'fixed', value: 0 };
                         }
                     }));
@@ -238,16 +227,13 @@ export const useCartStore = create<CartState>()(
                     const activeItems = activeCart.items.filter(i => i.cartQuantity > 0);
                     if (activeItems.length === 0) return null;
 
-                    const customerUuids = activeCart.customerUuids || [];
-                    
                     try {
-                        // FIXED: Single createSale call for multiple customers to prevent double-stock deduction
                         const lastSale = await salesService.createSale({
                             items:         activeItems,
                             discountType:  activeCart.discount.type,
                             discountValue: activeCart.discount.value,
                             amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                            customerUuids: customerUuids,
+                            customerUuid:  activeCart.customerUuid,
                             dueDate,
                         });
 

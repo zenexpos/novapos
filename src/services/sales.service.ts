@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Service de gestion des ventes Maître.
- * Audit Elite : Gestion des ventes individuelles et groupées (Joint Responsibility).
+ * Audit Elite : Gestion des ventes individuelles simplifiée.
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +35,7 @@ class SalesService {
     discountType: 'fixed' | 'percentage';
     discountValue: number;
     amountPaid: number;
-    customerUuids: string[];
+    customerUuid?: string;
     dueDate?: Date;
   }): Promise<Sale> {
     if (!saleData.items || saleData.items.length === 0) {
@@ -84,7 +84,7 @@ class SalesService {
       amountPaid,
       remainingBalance,
       paymentStatus,
-      customerUuids: saleData.customerUuids || [],
+      customerUuid: saleData.customerUuid,
       createdAt: now,
       updatedAt: now,
       dueDate: saleData.dueDate,
@@ -101,7 +101,6 @@ class SalesService {
     ], async () => {
       await db.sales.add(newSale);
       
-      // DE-DUPLICATION FIX: Subtract stock only ONCE even if N customers are attached
       for (const item of saleData.items) {
         if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
@@ -114,11 +113,8 @@ class SalesService {
         }
       }
       
-      // Recalculate balance for EVERY customer involved (Shared debt logic)
-      if (saleData.customerUuids.length > 0) {
-        for (const cUuid of saleData.customerUuids) {
-          await customerService.recalculateCustomerStatus(cUuid);
-        }
+      if (saleData.customerUuid) {
+        await customerService.recalculateCustomerStatus(saleData.customerUuid);
       }
 
       await db.sync_queue.add({
@@ -161,10 +157,8 @@ class SalesService {
         }
       }
 
-      if (sale.customerUuids && sale.customerUuids.length > 0) {
-        for (const cUuid of sale.customerUuids) {
-          await customerService.recalculateCustomerStatus(cUuid);
-        }
+      if (sale.customerUuid) {
+        await customerService.recalculateCustomerStatus(sale.customerUuid);
       }
 
       await db.sync_queue.add({

@@ -1,16 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useActiveCart, useCartActions } from '@/stores/cartStore';
 import type { Customer } from '@/lib/types';
 import { calculateCartTotals, formatCurrency, cn } from '@/lib/utils';
-import { User, Receipt, UserX, Users, Trash2 } from 'lucide-react';
+import { User, Receipt, UserX, Trash2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { EMPTY_ARRAY } from '@/lib/constants';
 
 export function SaleInfoBar() {
     const cart = useActiveCart();
@@ -18,13 +17,11 @@ export function SaleInfoBar() {
     const { clearCart } = useCartActions();
     const [isMounted, setIsMounted] = useState(false);
 
-    const selectedUuids = useMemo(() => cart?.customerUuids || (EMPTY_ARRAY as string[]), [cart?.customerUuids]);
+    const customerUuid = cart?.customerUuid;
 
-    const { value: customers } = useLiveQuery<Customer[]>(
-        () => selectedUuids.length > 0 
-            ? db.customers.where('uuid').anyOf(selectedUuids).toArray() 
-            : Promise.resolve(EMPTY_ARRAY as Customer[]),
-        [selectedUuids]
+    const { value: customer } = useLiveQuery<Customer | undefined>(
+        () => customerUuid ? db.customers.where('uuid').equals(customerUuid).first() : Promise.resolve(undefined),
+        [customerUuid]
     );
 
     useEffect(() => { setIsMounted(true); }, []);
@@ -63,13 +60,11 @@ export function SaleInfoBar() {
 
                 {/* Customer Display - Ultra Compact */}
                 <div className="flex items-center gap-3 flex-grow min-w-0">
-                    {customers && customers.length > 0 ? (
+                    {customer ? (
                         <div className="flex items-center gap-2 min-w-0">
-                            <Users className="h-3.5 w-3.5 text-primary/60 shrink-0" />
+                            <User className="h-3.5 w-3.5 text-primary/60 shrink-0" />
                             <span className="text-[10px] font-black uppercase truncate text-muted-foreground">
-                                {customers.length === 1 
-                                    ? `${customers[0].firstName} ${customers[0].lastName}` 
-                                    : `${customers.length} CLTS SELECTIONNÉS`}
+                                {customer.firstName} {customer.lastName}
                             </span>
                         </div>
                     ) : (

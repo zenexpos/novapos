@@ -78,7 +78,7 @@ class ProformaService {
             items,
             subtotal: subtotalCents / 100,
             total: totalCents / 100,
-            customerUuid: cart.customerUuids?.[0] || undefined, 
+            customerUuid: cart.customerUuid, 
             status: 'draft',
             createdAt: now,
             updatedAt: now,

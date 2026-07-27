@@ -203,16 +203,14 @@ class CustomerService {
     }
 
     /**
-     * Recalculates customer balance. Now uses independent invoice values.
-     * Supports shared invoices by dividing the totals among owners.
+     * Recalculates customer balance from independent invoice values.
      */
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
         return await db.transaction('rw', [db.customers, db.sales, db.payments, db.product_returns], async () => {
             const customer = await db.customers.where('uuid').equals(customerUuid).first();
             if (!customer?.id) throw new Error("Client introuvable lors de l'audit financier.");
 
-            // Fetch sales explicitly assigned to this customer
-            const sales = await db.sales.where('customerUuids').equals(customerUuid).toArray();
+            const sales = await db.sales.where('customerUuid').equals(customerUuid).toArray();
             const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
             const returns = await db.product_returns.where('customerUuid').equals(customerUuid).toArray();
 
@@ -222,10 +220,8 @@ class CustomerService {
             let totalSpentCents = 0;
 
             activeSales.forEach(s => {
-                // If it's a shared invoice, the debt is split among owners
-                const ownerCount = s.customerUuids?.length || 1;
-                totalDebtCents  += Math.round((safeNumber(s.remainingBalance) / ownerCount) * 100);
-                totalSpentCents += Math.round((safeNumber(s.total) / ownerCount) * 100);
+                totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
+                totalSpentCents += Math.round(safeNumber(s.total) * 100);
             });
 
             payments.forEach(p => {
@@ -267,7 +263,7 @@ class CustomerService {
 
     async getCustomerActivity(customerUuid: string, page: number = 1, limit: number = 10): Promise<Array<any>> {
         const [sales, payments, returns] = await Promise.all([
-            db.sales.where('customerUuids').equals(customerUuid).toArray(),
+            db.sales.where('customerUuid').equals(customerUuid).toArray(),
             db.payments.where('customerUuid').equals(customerUuid).toArray(),
             db.product_returns.where('customerUuid').equals(customerUuid).toArray(),
         ]);
@@ -290,7 +286,7 @@ class CustomerService {
     }
 
     async getCustomerMonthlySpending(customerUuid: string): Promise<{ month: string, total: number }[]> {
-        const sales = await db.sales.where('customerUuids').equals(customerUuid).filter(s => !s.isCancelled).toArray();
+        const sales = await db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled).toArray();
         const last6Months = Array.from({ length: 6 }).map((_, i) => {
             const date = subMonths(new Date(), i);
             return {
@@ -319,7 +315,7 @@ class CustomerService {
     async getCustomerStatementData(customerUuid: string): Promise<{ customer: Customer, unpaidSales: Sale[] }> {
         const [customer, sales] = await Promise.all([
             this.getCustomerByUuid(customerUuid),
-            db.sales.where('customerUuids').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
+            db.sales.where('customerUuid').equals(customerUuid).filter(s => !s.isCancelled && s.remainingBalance > 0.009).toArray()
         ]);
 
         if (!customer) throw new Error("Client non trouvé");

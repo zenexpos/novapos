@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useEffect, forwardRef, useDeferredValue, useImperativeHandle, useRef } from 'react';
 import { customerService } from '@/services/customer.service';
@@ -13,9 +13,9 @@ import {
     UserX, 
     Phone, 
     ChevronRight,
-    Users,
     CheckCircle2,
-    XCircle
+    XCircle,
+    UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,14 +30,12 @@ import { CustomerDialog } from '@/components/customers/customer-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { EMPTY_ARRAY } from '@/lib/constants';
 
 export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.ComponentPropsWithoutRef<'div'>>((_, ref) => {
-    const { toggleCustomer, clearCustomers } = useCartActions();
+    const { setCustomer } = useCartActions();
     const activeCart = useActiveCart();
     
-    // FIXED: Use useMemo with primitive values to stabilize dependencies for useLiveQuery
-    const selectedUuids = useMemo(() => activeCart?.customerUuids || (EMPTY_ARRAY as string[]), [activeCart?.customerUuids]);
+    const selectedUuid = activeCart?.customerUuid;
     
     const [isOpen, setIsOpen] = useState(false);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -48,21 +46,16 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
     const [isLoading, setIsLoading] = useState(false);
     const internalInputRef = useRef<HTMLInputElement>(null);
 
-    // Resolve details of all selected customers with stable deps
-    const { value: selectedCustomersDetails } = useLiveQuery<Customer[]>(
-        () => selectedUuids.length > 0
-            ? db.customers.where('uuid').anyOf(selectedUuids).toArray()
-            : Promise.resolve(EMPTY_ARRAY as Customer[]),
-        [selectedUuids]
+    // Resolve details of the selected customer
+    const { value: selectedCustomer } = useLiveQuery<Customer | undefined>(
+        () => selectedUuid ? db.customers.where('uuid').equals(selectedUuid).first() : Promise.resolve(undefined),
+        [selectedUuid]
     );
 
     const displayName = useMemo(() => {
-        if (selectedUuids.length === 0) return "Client de passage";
-        if (selectedUuids.length === 1 && selectedCustomersDetails?.[0]) {
-            return `${selectedCustomersDetails[0].firstName} ${selectedCustomersDetails[0].lastName}`;
-        }
-        return `${selectedUuids.length} Clients sélectionnés`;
-    }, [selectedUuids, selectedCustomersDetails]);
+        if (!selectedUuid || !selectedCustomer) return "Client de passage";
+        return `${selectedCustomer.firstName} ${selectedCustomer.lastName}`;
+    }, [selectedUuid, selectedCustomer]);
 
     useImperativeHandle(ref, () => ({
         focusInput: () => {
@@ -101,12 +94,13 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
     }, [customers, deferredSearch]);
 
     const handleSelect = (uuid: string) => {
-        toggleCustomer(uuid);
+        setCustomer(selectedUuid === uuid ? undefined : uuid);
+        setIsOpen(false);
     };
 
     const handleNewCustomerSuccess = (customer?: Customer) => {
         if (customer) {
-            toggleCustomer(customer.uuid);
+            setCustomer(customer.uuid);
             setIsOpen(false);
             toast.success(`Client ${customer.firstName} enregistré et ajouté`);
         }
@@ -119,18 +113,13 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                 onClick={() => setIsOpen(true)}
                 className={cn(
                     "h-9 px-4 rounded-xl border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all gap-2 group shadow-sm max-w-[250px]",
-                    selectedUuids.length > 1 && "border-primary/50 bg-primary/10"
+                    selectedUuid && "border-primary/50 bg-primary/10"
                 )}
             >
-                <Users className="h-4 w-4 text-primary shrink-0" />
+                {selectedUuid ? <UserCheck className="h-4 w-4 text-primary shrink-0" /> : <UserX className="h-4 w-4 text-muted-foreground/40 shrink-0" />}
                 <span className="text-xs font-bold uppercase tracking-tight truncate">
                     {displayName} [F2]
                 </span>
-                {selectedUuids.length > 1 && (
-                    <Badge variant="secondary" className="h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black">
-                        {selectedUuids.length}
-                    </Badge>
-                )}
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -139,21 +128,21 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-lg">
-                                    <Users className="h-6 w-6" />
+                                    <User className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <DialogTitle className="text-xl font-black tracking-tight">Sélection des Clients</DialogTitle>
-                                    <p className="text-[10px] font-bold uppercase text-primary/50">Assigner un ou plusieurs clients à cette facture</p>
+                                    <DialogTitle className="text-xl font-black tracking-tight">Identification Client</DialogTitle>
+                                    <p className="text-[10px] font-bold uppercase text-primary/50">Assigner un client à cette facture pour le suivi des dettes</p>
                                 </div>
                             </div>
-                            {selectedUuids.length > 0 && (
+                            {selectedUuid && (
                                 <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    onClick={clearCustomers}
+                                    onClick={() => { setCustomer(undefined); setIsOpen(false); }}
                                     className="text-[10px] font-black uppercase text-destructive hover:bg-destructive/10"
                                 >
-                                    <XCircle className="h-3 w-3 mr-1.5" /> Réinitialiser
+                                    <XCircle className="h-3 w-3 mr-1.5" /> Client de passage
                                 </Button>
                             )}
                         </div>
@@ -164,7 +153,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <Input
                                 ref={internalInputRef}
-                                placeholder="Rechercher par nom یا رقم هاتف..."
+                                placeholder="Rechercher par nom ou téléphone..."
                                 className="pl-14 h-12 text-lg font-bold rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -175,12 +164,12 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                             <div className="space-y-2">
                                 {isLoading ? (
                                     <div className="flex flex-col items-center justify-center py-20 opacity-20">
-                                        <Users className="h-12 w-12 animate-pulse" />
+                                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
                                         <p className="text-xs font-bold uppercase mt-4">Chargement...</p>
                                     </div>
                                 ) : filteredCustomers.length > 0 ? (
                                     filteredCustomers.map(c => {
-                                        const isSelected = selectedUuids.includes(c.uuid);
+                                        const isSelected = selectedUuid === c.uuid;
                                         return (
                                             <div 
                                                 key={c.uuid}
@@ -211,9 +200,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                                                             <p className="text-sm font-black text-destructive tracking-tighter">{formatCurrency(c.outstandingBalance)}</p>
                                                         </div>
                                                     )}
-                                                    <Badge variant={isSelected ? "default" : "outline"} className="text-[9px] font-black uppercase">
-                                                        {isSelected ? 'Sélectionné' : 'Choisir'}
-                                                    </Badge>
+                                                    <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-all" />
                                                 </div>
                                             </div>
                                         );

@@ -1,10 +1,10 @@
 /**
  * iPOS Zen - Schéma de base de données Enterprise.
- * Version 16.0 - Support multi-customer in sales.
+ * Version 17.0 - Reverted to single customer per sale.
  */
 
 export const DB_NAME = 'iPOSDatabase';
-export const DB_VERSION = 16;
+export const DB_VERSION = 17;
 
 export const DB_SCHEMA = {
     // Indexation par barcodes pour le scan rapide, et supplierUuid pour le filtrage
@@ -12,8 +12,7 @@ export const DB_SCHEMA = {
     // Indexation par searchName pour la recherche CRM rapide
     customers:          '++id, &uuid, searchName, outstandingBalance, debtStatus, syncStatus, deletedAt',
     // Indexation chronologique et par statut pour le journal
-    // *customerUuids allows efficient multi-valued lookup in Dexie
-    sales:              '++id, &uuid, invoiceNumber, *customerUuids, paymentStatus, createdAt, syncStatus, isCancelled, deletedAt',
+    sales:              '++id, &uuid, invoiceNumber, customerUuid, paymentStatus, createdAt, syncStatus, isCancelled, deletedAt',
     // Indexation par catégorie pour les rapports financiers
     expenses:           '++id, &uuid, category, expenseDate, syncStatus, deletedAt',
     suppliers:          '++id, &uuid, &name, syncStatus, deletedAt',

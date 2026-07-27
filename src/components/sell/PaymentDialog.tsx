@@ -17,7 +17,7 @@ import {
 } from '@/lib/utils';
 import {
     Loader2, CheckCircle2, AlertCircle,
-    Wallet, ShieldAlert, UserX, UserCheck, Users
+    Wallet, ShieldAlert, UserX, UserCheck
 } from 'lucide-react';
 import { PrintReceiptDialog } from '../sales/PrintReceiptDialog';
 import type { Sale, Customer } from '@/lib/types';
@@ -45,10 +45,8 @@ function PaymentDialogContent({
     const [customer,        setCustomer]        = useState<Customer | null>(null);
     const [approveOverLimit, setApproveOverLimit] = useState(false);
 
-    // FIXED: Stabilize arrays to prevent infinite loops in dependencies
     const activeItems = useMemo(() => cart?.items.filter(i => i.cartQuantity > 0) || [], [cart?.items]);
-    const customerUuids = useMemo(() => cart?.customerUuids || [], [cart?.customerUuids]);
-    const isMultiCustomer = customerUuids.length > 1;
+    const customerUuid = cart?.customerUuid;
 
     const totals = useMemo(
         () => (cart ? calculateCartTotals({ ...cart, items: activeItems }) : { total: 0 }),
@@ -60,7 +58,7 @@ function PaymentDialogContent({
     const change       = roundFinancial(Math.max(0, amountPaid - total));
     
     const isFullPay    = amountPaid >= total - FINANCIAL_EPSILON;
-    const isCreditSale = !!(customerUuids.length > 0 && amountPaid < total - FINANCIAL_EPSILON);
+    const isCreditSale = !!(customerUuid && amountPaid < total - FINANCIAL_EPSILON);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -76,8 +74,8 @@ function PaymentDialogContent({
         setLastSale(null);
         setApproveOverLimit(false);
 
-        if (customerUuids.length === 1) {
-            customerService.getCustomerByUuid(customerUuids[0]).then(c => {
+        if (customerUuid) {
+            customerService.getCustomerByUuid(customerUuid).then(c => {
                 if (!isMountedRef.current) return;
                 setCustomer(c || null);
                 const now = new Date();
@@ -93,7 +91,7 @@ function PaymentDialogContent({
             setDueDate(undefined);
             setCustomer(null);
         }
-    }, [isOpen, cart, activeItems, customerUuids]);
+    }, [isOpen, cart, activeItems, customerUuid]);
 
     const projectedBalance = useMemo(() => {
         if (!customer) return 0;
@@ -105,7 +103,7 @@ function PaymentDialogContent({
         return projectedBalance > (customer.creditLimit + FINANCIAL_EPSILON);
     }, [customer, projectedBalance]);
 
-    const canFinalize = !isLoading && amountPaid >= 0 && (isFullPay || (customerUuids.length > 0 && (!isOverLimit || approveOverLimit)));
+    const canFinalize = !isLoading && amountPaid >= 0 && (isFullPay || (customerUuid && (!isOverLimit || approveOverLimit)));
 
     const handleProcessSale = useCallback(async () => {
         if (!canFinalize) return;
@@ -144,18 +142,6 @@ function PaymentDialogContent({
                     </DialogHeader>
 
                     <div className="p-6 space-y-6">
-                        {isMultiCustomer && (
-                            <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-start gap-3 animate-in slide-in-from-top-2">
-                                <Users className="h-5 w-5 text-primary shrink-0" />
-                                <div className="space-y-1">
-                                    <p className="text-xs font-black uppercase text-primary tracking-tight">Facturation Groupée Elite</p>
-                                    <p className="text-[10px] text-primary/70 leading-relaxed font-bold">
-                                        Vente partagée entre {customerUuids.length} clients. La dette et les revenus seront répartis équitablement.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
                         <div className="p-6 bg-muted rounded-2xl border border-border text-center space-y-1 shadow-inner relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-2 opacity-[0.02] group-hover:opacity-10 transition-opacity"><Wallet className="h-20 w-20" /></div>
                             <p className="text-[10px] font-black uppercase text-muted-foreground/40 tracking-[0.2em] relative z-10">Total Net à Percevoir</p>
@@ -184,28 +170,18 @@ function PaymentDialogContent({
                             </div>
                         </div>
 
-                        {!isMultiCustomer ? (
-                            <div className={cn("p-4 rounded-2xl border flex items-center gap-4 transition-all duration-500", customer ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-amber-500/5 border-amber-500/20")}>
-                                <div className={cn("p-2.5 rounded-xl shadow-inner", customer ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500")}>
-                                    {customer ? <UserCheck className="h-5 w-5" /> : <UserX className="h-5 w-5" />}
-                                </div>
-                                <div className="flex-grow min-w-0">
-                                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Affectation Client</p>
-                                    <p className="text-sm font-bold tracking-tight truncate">{customer ? `${customer.firstName} ${customer.lastName}` : "Client de passage"}</p>
-                                </div>
-                                {!customer && !isFullPay && <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px] font-black">Encaissement requis</Badge>}
+                        <div className={cn("p-4 rounded-2xl border flex items-center gap-4 transition-all duration-500", customer ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-amber-500/5 border-amber-500/20")}>
+                            <div className={cn("p-2.5 rounded-xl shadow-inner", customer ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500")}>
+                                {customer ? <UserCheck className="h-5 w-5" /> : <UserX className="h-5 w-5" />}
                             </div>
-                        ) : (
-                            <div className="p-4 rounded-2xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-sm"><Users className="h-4 w-4" /></div>
-                                    <span className="text-xs font-black uppercase tracking-tight text-primary">{customerUuids.length} Clients Partenaires</span>
-                                </div>
-                                <Badge variant="outline" className="border-primary/40 text-primary font-black">BULK MODE</Badge>
+                            <div className="flex-grow min-w-0">
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Affectation Client</p>
+                                <p className="text-sm font-bold tracking-tight truncate">{customer ? `${customer.firstName} ${customer.lastName}` : "Client de passage"}</p>
                             </div>
-                        )}
+                            {!customer && !isFullPay && <Badge variant="destructive" className="h-6 px-3 rounded-lg animate-pulse uppercase text-[8px] font-black">Encaissement requis</Badge>}
+                        </div>
 
-                        {isCreditSale && (customer || isMultiCustomer) && (
+                        {isCreditSale && customer && (
                             <div className="space-y-4 p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl animate-in zoom-in-95 duration-500">
                                 <div className="flex items-start gap-3">
                                     <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
@@ -213,7 +189,7 @@ function PaymentDialogContent({
                                         Transfert de <span className="font-black underline">{formatCurrency(total - amountPaid)}</span> au registre des dettes.
                                     </p>
                                 </div>
-                                {isOverLimit && !isMultiCustomer && (
+                                {isOverLimit && (
                                     <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3 shadow-inner">
                                         <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Crédit Dépassé</div>
                                         <div className="flex items-center justify-between">
@@ -240,7 +216,7 @@ function PaymentDialogContent({
                 </DialogContent>
             </Dialog>
 
-            <PrintReceiptDialog isOpen={isReceiptOpen} onOpenChange={setIsReceiptOpen} sale={lastSale} customerName={customer ? `${customer.firstName} ${customer.lastName}` : isMultiCustomer ? `${customerUuids.length} Clients` : 'Client de passage'} />
+            <PrintReceiptDialog isOpen={isReceiptOpen} onOpenChange={setIsReceiptOpen} sale={lastSale} customerName={customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'} />
         </>
     );
 }
