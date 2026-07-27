@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ShoppingBag, Truck, Hash, Loader2, PackagePlus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Trash2, Save, ShoppingBag, Hash, Loader2, Plus } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import type { Product, StockIntakeItem } from '@/lib/types';
@@ -131,20 +131,14 @@ export function NewIntakeForm() {
         }
     };
 
-    useKeyboardShortcuts([
-        { key: 'Enter', ctrl: true, action: handleSave, description: 'Valider', ignoreInputFocus: true }
-    ], 'Logistique');
+    useKeyboardShortcuts([{ key: 'Enter', ctrl: true, action: handleSave, description: 'Valider', ignoreInputFocus: true }], 'Logistique');
 
     return (
-        <div className="grid lg:grid-cols-12 gap-2 animate-in fade-in duration-500 pb-20">
-            <div className="lg:col-span-9 space-y-2">
-                <Card className="rounded-xl border bg-card/50 overflow-hidden shadow-sm">
-                    <CardHeader className="bg-muted/30 border-b p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                            <ShoppingBag className="h-4 w-4 text-primary" />
-                            <CardTitle className="text-sm font-black uppercase tracking-widest">Réception Articles</CardTitle>
-                        </div>
-                        <div className="max-w-md flex-grow">
+        <div className="grid lg:grid-cols-12 gap-1 animate-in fade-in duration-300">
+            <div className="lg:col-span-9 space-y-1">
+                <Card className="rounded-xl border border-border/40 bg-card/30 overflow-hidden shadow-none">
+                    <CardHeader className="bg-muted/10 border-b p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+                        <div className="max-w-xl flex-grow">
                             <ProductIntakeCombobox 
                                 onProductSelected={handleAddProduct}
                                 onNewProductCreated={handleCreateNewProduct}
@@ -154,24 +148,22 @@ export function NewIntakeForm() {
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-black/10 border-none">
-                                    <TableRow className="h-8 border-b">
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 px-3">Désignation</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-center px-2">Qté</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-right px-2">Achat</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-primary/60 text-right px-2">Vente</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-right px-2">Revient</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-emerald-500/60 text-right px-2">Marge</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-right px-3">Total</TableHead>
-                                        <TableHead className="w-8"></TableHead>
+                                <TableHeader className="bg-muted/5 border-none">
+                                    <TableRow className="h-7 border-b border-border/40">
+                                        <TableHead className="text-[8px] font-black uppercase text-muted-foreground/40 px-2 tracking-[0.1em]">Désignation</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-muted-foreground/40 text-center px-1 tracking-[0.1em]">Qté</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-muted-foreground/40 text-right px-1 tracking-[0.1em]">Achat</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-primary/40 text-right px-1 tracking-[0.1em]">Vente</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-muted-foreground/40 text-right px-1 tracking-[0.1em]">Revient</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-emerald-500/40 text-right px-1 tracking-[0.1em]">Marge</TableHead>
+                                        <TableHead className="text-[8px] font-black uppercase text-muted-foreground/40 text-right px-2 tracking-[0.1em]">Total</TableHead>
+                                        <TableHead className="w-7"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="h-40 text-center p-6 opacity-20 text-[10px] font-bold uppercase tracking-widest">
-                                                Aucun produit dans la liste
-                                            </TableCell>
+                                            <TableCell colSpan={8} className="h-40 text-center opacity-10 text-[9px] font-black uppercase tracking-[0.3em]">Zone de saisie libre</TableCell>
                                         </TableRow>
                                     ) : (
                                         items.map((item) => {
@@ -183,51 +175,51 @@ export function NewIntakeForm() {
                                             const margin = sellPrice > 0 ? ((sellPrice - landingCost) / sellPrice) * 100 : 0;
                                             
                                             return (
-                                                <TableRow key={item.id} className={cn("group transition-all h-10", landingCost > sellPrice && sellPrice > 0 && "bg-destructive/5")}>
-                                                    <TableCell className="px-3 py-1">
+                                                <TableRow key={item.id} className={cn("group hover:bg-white/5 transition-all border-b border-border/20 h-8", landingCost > sellPrice && sellPrice > 0 && "bg-destructive/5")}>
+                                                    <TableCell className="px-2 py-0">
                                                         <div className="flex flex-col">
-                                                            <span className="font-bold text-xs uppercase truncate max-w-[250px]">{item.name}</span>
+                                                            <span className="font-bold text-[11px] uppercase truncate max-w-[280px]">{item.name}</span>
                                                             {item.isNew && <span className="text-[7px] font-black text-primary uppercase">Nouveau</span>}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1">
+                                                    <TableCell className="px-1 py-0">
                                                         <input 
                                                             type="number" 
                                                             value={item.quantity} 
                                                             onChange={e => updateItem(item.id, 'quantity', e.target.value)}
-                                                            className="w-16 h-7 text-center bg-black/5 border rounded font-bold text-xs outline-none focus:ring-1 focus:ring-primary/30"
+                                                            className="w-14 h-6 text-center bg-black/10 border-none rounded font-bold text-[10px] outline-none focus:ring-1 focus:ring-primary/40 tabular-nums"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1 text-right">
+                                                    <TableCell className="px-1 py-0 text-right">
                                                         <input 
                                                             type="number" 
                                                             value={item.purchasePrice || ''} 
                                                             onChange={e => updateItem(item.id, 'purchasePrice', e.target.value)}
-                                                            className="w-20 h-7 text-right bg-black/5 border rounded font-mono font-bold text-xs outline-none focus:ring-1 focus:ring-primary/30"
+                                                            className="w-16 h-6 text-right bg-black/10 border-none rounded font-mono font-bold text-[10px] outline-none focus:ring-1 focus:ring-primary/40 tabular-nums"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1 text-right">
+                                                    <TableCell className="px-1 py-0 text-right">
                                                         <input 
                                                             type="number" 
                                                             value={item.price || ''} 
                                                             onChange={e => updateItem(item.id, 'price', e.target.value)}
-                                                            className="w-20 h-7 text-right bg-primary/5 border border-primary/20 rounded font-mono font-bold text-xs text-primary outline-none focus:ring-1 focus:ring-primary/50"
+                                                            className="w-16 h-6 text-right bg-primary/5 border border-primary/20 rounded font-mono font-bold text-[10px] text-primary outline-none focus:ring-1 focus:ring-primary/50 tabular-nums"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1 text-right">
-                                                        <span className="font-mono text-[10px] font-bold text-muted-foreground/60">{landingCost.toFixed(2)}</span>
+                                                    <TableCell className="px-1 py-0 text-right">
+                                                        <span className="font-mono text-[9px] font-bold text-muted-foreground/30">{landingCost.toFixed(2)}</span>
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1 text-right">
-                                                        <span className={cn("text-[9px] font-black", margin < 0 ? "text-destructive" : "text-emerald-500")}>
+                                                    <TableCell className="px-1 py-0 text-right">
+                                                        <span className={cn("text-[9px] font-black tabular-nums", margin < 0 ? "text-destructive" : "text-emerald-500/60")}>
                                                             {margin.toFixed(0)}%
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell className="px-3 py-1 text-right font-mono font-bold text-xs">
+                                                    <TableCell className="px-2 py-0 text-right font-mono font-black text-[11px] tracking-tighter text-foreground/80 tabular-nums">
                                                         {formatCurrency(rowTotal)}
                                                     </TableCell>
-                                                    <TableCell className="px-2 py-1 text-center">
-                                                        <button onClick={() => removeItem(item.id)} className="text-destructive/20 hover:text-destructive transition-all">
-                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                    <TableCell className="px-1 py-0 text-center">
+                                                        <button onClick={() => removeItem(item.id)} className="text-destructive/10 hover:text-destructive transition-all opacity-0 group-hover:opacity-100">
+                                                            <Trash2 className="h-3 w-3" />
                                                         </button>
                                                     </TableCell>
                                                 </TableRow>
@@ -241,58 +233,57 @@ export function NewIntakeForm() {
                 </Card>
             </div>
 
-            <div className="lg:col-span-3 space-y-2">
-                <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-xl sticky top-20">
-                    <CardHeader className="bg-primary/5 border-b p-3">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary/60">Finalisation Réception</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-4">
+            <div className="lg:col-span-3 space-y-1">
+                <Card className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-md shadow-none sticky top-20">
+                    <CardContent className="p-3 space-y-3">
                         <OcrInvoiceScanner onResult={handleOcrResult} disabled={isSubmitting} />
 
-                        <div className="space-y-3">
-                            <div className="space-y-1">
-                                <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Fournisseur *</Label>
+                        <div className="space-y-2">
+                            <div className="space-y-0.5">
+                                <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Mvrd / Fournisseur</Label>
                                 <Input 
-                                    placeholder="Nom..." 
-                                    className="h-9 rounded-lg bg-black/10 border-none font-bold text-sm"
+                                    placeholder="Identité..." 
+                                    className="h-8 rounded-lg bg-black/10 border-none font-bold text-[11px] uppercase"
                                     value={supplierName}
                                     onChange={e => setSupplierName(e.target.value)}
                                 />
                             </div>
-                            <div className="space-y-1">
-                                <Label className="text-[9px] font-black uppercase opacity-40 ml-1">N° Facture / BL</Label>
-                                <Input 
-                                    placeholder="Référence..." 
-                                    className="h-9 rounded-lg bg-black/10 border-none font-mono text-sm"
-                                    value={invoiceNumber}
-                                    onChange={e => setInvoiceNumber(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Transport (DA)</Label>
-                                <Input 
-                                    type="number" 
-                                    value={shippingCost || ''} 
-                                    onChange={e => setShippingCost(safeNumber(e.target.value))}
-                                    className="h-9 rounded-lg bg-black/10 border-none text-right font-mono"
-                                />
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-0.5">
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Facture N°</Label>
+                                    <Input 
+                                        placeholder="REF..." 
+                                        className="h-8 rounded-lg bg-black/10 border-none font-mono text-[10px]"
+                                        value={invoiceNumber}
+                                        onChange={e => setInvoiceNumber(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Trans. (DA)</Label>
+                                    <Input 
+                                        type="number" 
+                                        value={shippingCost || ''} 
+                                        onChange={e => setShippingCost(safeNumber(e.target.value))}
+                                        className="h-8 rounded-lg bg-black/10 border-none text-right font-mono text-[10px] font-bold"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-white/5">
-                            <div className="bg-black/20 p-4 rounded-xl border flex justify-between items-center">
-                                <span className="text-[9px] font-black uppercase text-primary">Investissement</span>
-                                <span className="text-xl font-black text-primary tabular-nums tracking-tighter">{formatCurrency(totalValue)}</span>
+                        <div className="pt-2 border-t border-white/5">
+                            <div className="bg-black/20 p-3 rounded-xl border border-white/5 flex justify-between items-center shadow-inner">
+                                <span className="text-[8px] font-black uppercase text-primary tracking-widest">Invest. Net</span>
+                                <span className="text-lg font-black text-primary tabular-nums tracking-tighter">{formatCurrency(totalValue)}</span>
                             </div>
                         </div>
 
                         <Button 
                             onClick={handleSave} 
                             disabled={isSubmitting || items.length === 0}
-                            className="w-full h-12 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 gap-2"
+                            className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 gap-2"
                         >
                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            Confirmer [Entrée]
+                            Valider [Enter]
                         </Button>
                     </CardContent>
                 </Card>
