@@ -30,11 +30,14 @@ import { CustomerDialog } from '@/components/customers/customer-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
+import { EMPTY_ARRAY } from '@/lib/constants';
 
 export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.ComponentPropsWithoutRef<'div'>>((_, ref) => {
     const { toggleCustomer, clearCustomers } = useCartActions();
     const activeCart = useActiveCart();
-    const selectedUuids = activeCart?.customerUuids || [];
+    
+    // FIXED: Use useMemo with primitive values to stabilize dependencies for useLiveQuery
+    const selectedUuids = useMemo(() => activeCart?.customerUuids || (EMPTY_ARRAY as string[]), [activeCart?.customerUuids]);
     
     const [isOpen, setIsOpen] = useState(false);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -45,11 +48,11 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
     const [isLoading, setIsLoading] = useState(false);
     const internalInputRef = useRef<HTMLInputElement>(null);
 
-    // Resolve details of all selected customers
+    // Resolve details of all selected customers with stable deps
     const { value: selectedCustomersDetails } = useLiveQuery<Customer[]>(
         () => selectedUuids.length > 0
             ? db.customers.where('uuid').anyOf(selectedUuids).toArray()
-            : Promise.resolve([]),
+            : Promise.resolve(EMPTY_ARRAY as Customer[]),
         [selectedUuids]
     );
 
@@ -99,7 +102,6 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
 
     const handleSelect = (uuid: string) => {
         toggleCustomer(uuid);
-        // We keep the dialog open for multiple selections
     };
 
     const handleNewCustomerSuccess = (customer?: Customer) => {

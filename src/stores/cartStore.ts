@@ -12,7 +12,7 @@ import { FINANCIAL_EPSILON, safeNumber, roundFinancial, roundQty } from '@/lib/u
 
 /**
  * iPOS Zen - Cart Store (Enterprise Grade)
- * Unified cart management with Bulk Invoicing support for multiple customers.
+ * Unified cart management with Joint Invoicing support for multiple customers.
  */
 interface CartActions {
     getActiveCart:       () => Cart | null;
@@ -241,34 +241,15 @@ export const useCartStore = create<CartState>()(
                     const customerUuids = activeCart.customerUuids || [];
                     
                     try {
-                        let lastSale: Sale | null = null;
-
-                        // Bulk Invoicing Logic: creates independent invoices per customer
-                        if (customerUuids.length > 0) {
-                            for (const cUuid of customerUuids) {
-                                lastSale = await salesService.createSale({
-                                    items:         activeItems,
-                                    discountType:  activeCart.discount.type,
-                                    discountValue: activeCart.discount.value,
-                                    amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                                    customerUuid:  cUuid,
-                                    dueDate,
-                                });
-                            }
-                            if (customerUuids.length > 1) {
-                                toast.success(`${customerUuids.length} Factures souveraines générées.`);
-                            }
-                        } else {
-                            // Standard sale (Walk-in)
-                            lastSale = await salesService.createSale({
-                                items:         activeItems,
-                                discountType:  activeCart.discount.type,
-                                discountValue: activeCart.discount.value,
-                                amountPaid:    roundFinancial(safeNumber(amountPaid)),
-                                customerUuid:  undefined,
-                                dueDate,
-                            });
-                        }
+                        // FIXED: Single createSale call for multiple customers to prevent double-stock deduction
+                        const lastSale = await salesService.createSale({
+                            items:         activeItems,
+                            discountType:  activeCart.discount.type,
+                            discountValue: activeCart.discount.value,
+                            amountPaid:    roundFinancial(safeNumber(amountPaid)),
+                            customerUuids: customerUuids,
+                            dueDate,
+                        });
 
                         get().actions.clearCart();
                         useAppStore.getState().actions.triggerSmartSync();

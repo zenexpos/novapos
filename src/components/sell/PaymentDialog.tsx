@@ -45,6 +45,7 @@ function PaymentDialogContent({
     const [customer,        setCustomer]        = useState<Customer | null>(null);
     const [approveOverLimit, setApproveOverLimit] = useState(false);
 
+    // FIXED: Stabilize arrays to prevent infinite loops in dependencies
     const activeItems = useMemo(() => cart?.items.filter(i => i.cartQuantity > 0) || [], [cart?.items]);
     const customerUuids = useMemo(() => cart?.customerUuids || [], [cart?.customerUuids]);
     const isMultiCustomer = customerUuids.length > 1;
@@ -149,7 +150,7 @@ function PaymentDialogContent({
                                 <div className="space-y-1">
                                     <p className="text-xs font-black uppercase text-primary tracking-tight">Facturation Groupée Elite</p>
                                     <p className="text-[10px] text-primary/70 leading-relaxed font-bold">
-                                        {customerUuids.length} factures indépendantes vont être générées. Le montant reçu sera appliqué à <span className="underline">chaque</span> copie.
+                                        Vente partagée entre {customerUuids.length} clients. La dette et les revenus seront répartis équitablement.
                                     </p>
                                 </div>
                             </div>

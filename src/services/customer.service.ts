@@ -204,6 +204,7 @@ class CustomerService {
 
     /**
      * Recalculates customer balance. Now uses independent invoice values.
+     * Supports shared invoices by dividing the totals among owners.
      */
     async recalculateCustomerStatus(customerUuid: string): Promise<Customer> {
         return await db.transaction('rw', [db.customers, db.sales, db.payments, db.product_returns], async () => {
@@ -221,9 +222,10 @@ class CustomerService {
             let totalSpentCents = 0;
 
             activeSales.forEach(s => {
-                // Bulk Copy logic: Each invoice in history for this user is 100% theirs
-                totalDebtCents  += Math.round(safeNumber(s.remainingBalance) * 100);
-                totalSpentCents += Math.round(safeNumber(s.total) * 100);
+                // If it's a shared invoice, the debt is split among owners
+                const ownerCount = s.customerUuids?.length || 1;
+                totalDebtCents  += Math.round((safeNumber(s.remainingBalance) / ownerCount) * 100);
+                totalSpentCents += Math.round((safeNumber(s.total) / ownerCount) * 100);
             });
 
             payments.forEach(p => {

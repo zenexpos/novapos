@@ -1,7 +1,7 @@
 'use client';
 /**
  * @fileOverview Service de gestion des ventes Maître.
- * Audit Elite : Gestion des ventes individuelles (Supporte les appels en boucle pour le mode multi-client).
+ * Audit Elite : Gestion des ventes individuelles et groupées (Joint Responsibility).
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +35,7 @@ class SalesService {
     discountType: 'fixed' | 'percentage';
     discountValue: number;
     amountPaid: number;
-    customerUuid?: string; // Single customer per record to ensure independent "copies"
+    customerUuids: string[];
     dueDate?: Date;
   }): Promise<Sale> {
     if (!saleData.items || saleData.items.length === 0) {
@@ -84,7 +84,7 @@ class SalesService {
       amountPaid,
       remainingBalance,
       paymentStatus,
-      customerUuids: saleData.customerUuid ? [saleData.customerUuid] : [],
+      customerUuids: saleData.customerUuids || [],
       createdAt: now,
       updatedAt: now,
       dueDate: saleData.dueDate,
@@ -101,7 +101,7 @@ class SalesService {
     ], async () => {
       await db.sales.add(newSale);
       
-      // Stock deduction for this specific copy
+      // DE-DUPLICATION FIX: Subtract stock only ONCE even if N customers are attached
       for (const item of saleData.items) {
         if (item.uuid && !item.uuid.startsWith('custom-') && item.uuid !== 'BREAD_VIRTUAL_PROD') {
           await inventoryService.adjustStock(
@@ -114,9 +114,11 @@ class SalesService {
         }
       }
       
-      // Recalculate balance for the specific customer
-      if (saleData.customerUuid) {
-        await customerService.recalculateCustomerStatus(saleData.customerUuid);
+      // Recalculate balance for EVERY customer involved (Shared debt logic)
+      if (saleData.customerUuids.length > 0) {
+        for (const cUuid of saleData.customerUuids) {
+          await customerService.recalculateCustomerStatus(cUuid);
+        }
       }
 
       await db.sync_queue.add({
