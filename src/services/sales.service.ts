@@ -34,6 +34,7 @@ class SalesService {
     items: CartItem[];
     discountType: 'fixed' | 'percentage';
     discountValue: number;
+    deliveryFee: number;
     amountPaid: number;
     customerUuid?: string;
     dueDate?: Date;
@@ -58,7 +59,8 @@ class SalesService {
         discountAmount = roundFinancial(safeNumber(saleData.discountValue));
     }
 
-    const total = roundFinancial(Math.max(0, subtotal - discountAmount));
+    const deliveryFee = roundFinancial(safeNumber(saleData.deliveryFee));
+    const total = roundFinancial(Math.max(0, subtotal - discountAmount + deliveryFee));
     const amountPaid = roundFinancial(safeNumber(saleData.amountPaid));
     const remainingBalance = roundFinancial(Math.max(0, total - amountPaid));
 
@@ -80,6 +82,7 @@ class SalesService {
       items: saleItems,
       subtotal,
       discountAmount,
+      deliveryFee,
       total,
       amountPaid,
       remainingBalance,

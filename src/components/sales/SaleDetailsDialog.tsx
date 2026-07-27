@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { fr }     from 'date-fns/locale';
 import {
     FileText, User, Calendar, Package, Tag,
-    TrendingUp, CreditCard, Printer, X,
+    TrendingUp, CreditCard, Printer, X, Truck
 } from 'lucide-react';
 import { db } from '@/lib/db';
 import { PrintReceiptDialog } from './PrintReceiptDialog';
@@ -50,7 +50,8 @@ export function SaleDetailsDialog({
                 sum + Number(item.purchasePrice || 0) * Number(item.quantity),
             0,
         );
-        return sale.total - cogs;
+        // Margin logic: Revenue - COGS (Delivery fee is usually offset by delivery expense)
+        return sale.total - cogs - (sale.deliveryFee || 0);
     }, [sale]);
 
     // Raccourcis pour les détails de vente
@@ -166,9 +167,15 @@ export function SaleDetailsDialog({
                                     <span className="font-mono">{formatCurrency(sale.subtotal)}</span>
                                 </div>
                                 {sale.discountAmount && sale.discountAmount > 0 && (
-                                    <div className="flex justify-between text-sm text-emerald-600">
+                                    <div className="flex justify-between text-sm text-amber-600">
                                         <span>Remise</span>
                                         <span className="font-mono">-{formatCurrency(sale.discountAmount)}</span>
+                                    </div>
+                                )}
+                                {sale.deliveryFee > 0 && (
+                                    <div className="flex justify-between text-sm text-primary">
+                                        <span className="flex items-center gap-1.5"><Truck className="h-3 w-3" /> Livraison</span>
+                                        <span className="font-mono">+{formatCurrency(sale.deliveryFee)}</span>
                                     </div>
                                 )}
                                 <Separator />

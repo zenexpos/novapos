@@ -29,6 +29,7 @@ interface CartActions {
 
     setCustomer:         (customerUuid: string | undefined) => void;
     setDiscount:         (type: 'fixed' | 'percentage', value: number) => void;
+    setDeliveryFee:      (value: number) => void;
 
     clearCart:    () => void;
     processSale:  (amountPaid: number, dueDate?: Date) => Promise<Sale | null>;
@@ -43,6 +44,7 @@ interface CartState {
 const defaultCart: Omit<Cart, 'id' | 'name'> = {
     items:         [],
     customerUuid:  undefined, 
+    deliveryFee:   0,
     discount:      { type: 'fixed', value: 0 },
 };
 
@@ -79,6 +81,7 @@ export const useCartStore = create<CartState>()(
                             if (cart) {
                                 cart.items = [];
                                 cart.customerUuid = undefined;
+                                cart.deliveryFee = 0;
                                 cart.discount = { type: 'fixed', value: 0 };
                             }
                             return;
@@ -209,12 +212,20 @@ export const useCartStore = create<CartState>()(
                     }));
                 },
 
+                setDeliveryFee: (value) => {
+                    set(produce((state: CartState) => {
+                        const cart = state.carts.find(c => c.id === state.activeCartId);
+                        if (cart) cart.deliveryFee = Math.max(0, roundFinancial(safeNumber(value)));
+                    }));
+                },
+
                 clearCart: () => {
                     set(produce((state: CartState) => {
                         const cart = state.carts.find(c => c.id === state.activeCartId);
                         if (cart) {
                             cart.items = [];
                             cart.customerUuid = undefined;
+                            cart.deliveryFee = 0;
                             cart.discount = { type: 'fixed', value: 0 };
                         }
                     }));
@@ -232,6 +243,7 @@ export const useCartStore = create<CartState>()(
                             items:         activeItems,
                             discountType:  activeCart.discount.type,
                             discountValue: activeCart.discount.value,
+                            deliveryFee:   activeCart.deliveryFee,
                             amountPaid:    roundFinancial(safeNumber(amountPaid)),
                             customerUuid:  activeCart.customerUuid,
                             dueDate,

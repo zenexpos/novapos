@@ -51,7 +51,7 @@ export function preciseMultiply(a: number, b: number): number {
 /**
  * Calcule les totaux du panier avec une précision absolue par ligne.
  */
-export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number } }) {
+export function calculateCartTotals(cart: { items: any[], discount?: { type: string, value: number }, deliveryFee?: number }) {
     const subtotal = cart.items.reduce((acc, item) => {
         const qty = safeNumber(item.cartQuantity || item.quantity);
         const price = safeNumber(item.price);
@@ -67,11 +67,13 @@ export function calculateCartTotals(cart: { items: any[], discount?: { type: str
         }
     }
 
-    const total = Math.max(0, subtotal - discountAmount);
+    const deliveryFee = safeNumber(cart.deliveryFee);
+    const total = Math.max(0, subtotal - discountAmount + deliveryFee);
 
     return {
         subtotal: roundFinancial(subtotal),
         discountAmount: roundFinancial(discountAmount),
+        deliveryFee: roundFinancial(deliveryFee),
         total: roundFinancial(total),
     };
 }

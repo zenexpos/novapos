@@ -18,6 +18,7 @@ export interface Sale extends BaseEntity {
     subtotal: number;
     discountType?: 'fixed' | 'percentage';
     discountAmount: number;
+    deliveryFee: number;
     total: number;
     amountPaid: number;
     remainingBalance: number;
@@ -37,6 +38,7 @@ export interface Cart {
     name: string;
     items: CartItem[];
     customerUuid?: string;
+    deliveryFee: number;
     discount: {
         type: 'fixed' | 'percentage';
         value: number;

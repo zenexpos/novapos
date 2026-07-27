@@ -17,7 +17,8 @@ import {
 } from '@/lib/utils';
 import {
     Loader2, CheckCircle2, AlertCircle,
-    Wallet, ShieldAlert, UserX, UserCheck
+    Wallet, ShieldAlert, UserX, UserCheck,
+    Truck
 } from 'lucide-react';
 import { PrintReceiptDialog } from '../sales/PrintReceiptDialog';
 import type { Sale, Customer } from '@/lib/types';
@@ -28,7 +29,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 /**
  * iPOS Zen - Audit Encaissement (Elite Logic).
- * Audit Fixed: Proper DialogFooter usage and single customer handling.
+ * Includes Delivery Fee management.
  */
 function PaymentDialogContent({
     isOpen,
@@ -39,9 +40,10 @@ function PaymentDialogContent({
 }) {
     const isMountedRef     = useRef(true);
     const cart             = useActiveCart();
-    const { processSale }  = useCartActions();
+    const { processSale, setDeliveryFee }  = useCartActions();
 
     const [amountPaidStr,   setAmountPaidStr]   = useState('0');
+    const [deliveryFeeStr,  setDeliveryFeeStr]  = useState('0');
     const [dueDate,         setDueDate]         = useState<Date | undefined>();
     const [isLoading,       setIsLoading]       = useState(false);
     const [lastSale,        setLastSale]        = useState<Sale | null>(null);
@@ -53,8 +55,8 @@ function PaymentDialogContent({
     const customerUuid = cart?.customerUuid;
 
     const totals = useMemo(
-        () => (cart ? calculateCartTotals({ ...cart, items: activeItems }) : { total: 0 }),
-        [cart, activeItems],
+        () => (cart ? calculateCartTotals({ ...cart, items: activeItems }) : { total: 0, subtotal: 0, deliveryFee: 0, discountAmount: 0 }),
+        [cart, activeItems]
     );
 
     const total = totals.total;
@@ -74,6 +76,7 @@ function PaymentDialogContent({
         
         const currentTotals = calculateCartTotals({ ...cart, items: activeItems });
         setAmountPaidStr(currentTotals.total.toFixed(2));
+        setDeliveryFeeStr(currentTotals.deliveryFee.toString());
         setIsLoading(false);
         setLastSale(null);
         setApproveOverLimit(false);
@@ -124,6 +127,16 @@ function PaymentDialogContent({
         }
     }, [amountPaid, dueDate, processSale, onOpenChange, canFinalize]);
 
+    const updateDeliveryFee = (val: string) => {
+        setDeliveryFeeStr(val);
+        setDeliveryFee(safeNumber(val));
+        // Auto-update amount paid if it was matching the previous total
+        if (Math.abs(amountPaid - total) < FINANCIAL_EPSILON) {
+             const newTotals = calculateCartTotals({ ...cart!, deliveryFee: safeNumber(val), items: activeItems });
+             setAmountPaidStr(newTotals.total.toFixed(2));
+        }
+    };
+
     useKeyboardShortcuts([
         { key: 'Enter', action: handleProcessSale, description: "Valider l'encaissement", ignoreInputFocus: true },
         { key: 'Escape', action: () => onOpenChange(false), description: 'Annuler', ignoreInputFocus: true }
@@ -166,10 +179,22 @@ function PaymentDialogContent({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1">Reliquat Monnaie</Label>
-                                <div className={cn('h-14 flex items-center justify-center rounded-2xl border-2 border-dashed text-2xl font-black tabular-nums transition-all', change >= 0.01 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-sm' : 'bg-muted border-border text-muted-foreground/20')}>
-                                    {change >= 0.01 ? formatCurrency(change) : '0.00'}
-                                </div>
+                                <Label htmlFor="delivery-fee" className="text-[10px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1.5"><Truck className="h-3 w-3" /> سعر التوصيل</Label>
+                                <Input
+                                    id="delivery-fee"
+                                    type="text"
+                                    inputMode="decimal"
+                                    className="h-14 rounded-2xl bg-primary/5 border-none shadow-inner text-2xl font-black text-center text-primary focus-visible:ring-primary/20"
+                                    value={deliveryFeeStr}
+                                    onChange={e => { if (/^[0-9]*\.?[0-9]*$/.test(e.target.value) || e.target.value === '') updateDeliveryFee(e.target.value); }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                           <Label className="text-[10px] font-black uppercase text-muted-foreground/60 ml-1">Reliquat Monnaie</Label>
+                           <div className={cn('flex-grow h-10 flex items-center justify-center rounded-xl border-2 border-dashed text-lg font-black tabular-nums transition-all', change >= 0.01 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-sm' : 'bg-muted border-border text-muted-foreground/20')}>
+                                {change >= 0.01 ? formatCurrency(change) : '0.00'}
                             </div>
                         </div>
 
@@ -194,7 +219,7 @@ function PaymentDialogContent({
                                 </div>
                                 {isOverLimit && (
                                     <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3 shadow-inner">
-                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Dépassé</div>
+                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafンド Dépassé</div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Autoriser exception</span>
                                             <Switch checked={approveOverLimit} onCheckedChange={setApproveOverLimit} className="data-[state=checked]:bg-destructive" />

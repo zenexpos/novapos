@@ -73,6 +73,7 @@ const ThermalReceipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'c
             <div className="border-t-2 border-black pt-2 space-y-1 text-[8.5pt]">
                 <div className="flex justify-between"><span>TOTAL BRUT:</span> <span>{fmt(sale.subtotal)}</span></div>
                 {sale.discountAmount > 0 && <div className="flex justify-between text-red-600 font-bold"><span>REMISE:</span> <span>-{fmt(sale.discountAmount)}</span></div>}
+                {sale.deliveryFee > 0 && <div className="flex justify-between font-bold"><span>LIVRAISON:</span> <span>{fmt(sale.deliveryFee)}</span></div>}
                 
                 <div className="flex justify-between font-black text-[12pt] border-t border-black mt-1 pt-1">
                     <span>NET À PAYER:</span>
@@ -171,6 +172,12 @@ const A4Receipt = ({ sale, profile }: Omit<ReceiptProps, 'receiptType' | 'custom
                             <div className="flex justify-between text-sm text-red-600 font-bold">
                                 <span className="uppercase text-[7.5pt]">Remise Accordée:</span>
                                 <span className="font-mono">-{fmt(sale.discountAmount)}</span>
+                            </div>
+                        )}
+                        {sale.deliveryFee > 0 && (
+                             <div className="flex justify-between text-sm font-bold">
+                                <span className="uppercase text-[7.5pt]">Frais de Livraison:</span>
+                                <span className="font-mono">{fmt(sale.deliveryFee)}</span>
                             </div>
                         )}
                         <div className="flex justify-between border-t border-black pt-2 mb-2">
