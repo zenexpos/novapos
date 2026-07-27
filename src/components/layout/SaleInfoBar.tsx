@@ -4,26 +4,30 @@ import { useState, useEffect } from 'react';
 import { useActiveCart, useCartActions } from '@/stores/cartStore';
 import type { Customer } from '@/lib/types';
 import { calculateCartTotals, formatCurrency, cn } from '@/lib/utils';
-import { User, Receipt, UserX, Trash2, Phone, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { User, Receipt, UserX, Trash2, Phone, AlertTriangle, ShieldAlert, HandCoins } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
+import { AddPaymentDialog } from '@/components/payments/AddPaymentDialog';
+import { toast } from 'sonner';
 
 /**
  * iPOS Zen - Enriched Sale Info Bar.
  * Displays critical cart metrics and detailed customer financial status in real-time.
+ * Now includes instant debt settlement action.
  */
 export function SaleInfoBar() {
     const cart = useActiveCart();
     const pathname = usePathname();
     const { clearCart } = useCartActions();
     const [isMounted, setIsMounted] = useState(false);
+    const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
     const customerUuid = cart?.customerUuid;
 
-    const { value: customer } = useLiveQuery<Customer | undefined>(
+    const { value: customer, refresh: refreshCustomer } = useLiveQuery<Customer | undefined>(
         () => customerUuid ? db.customers.where('uuid').equals(customerUuid).first() : Promise.resolve(undefined),
         [customerUuid]
     );
@@ -37,6 +41,11 @@ export function SaleInfoBar() {
 
     const { total } = calculateCartTotals(cart);
     const itemCount = cart.items.reduce((s, i) => s + i.cartQuantity, 0);
+
+    const handlePaymentSuccess = () => {
+        refreshCustomer();
+        toast.success("Règlement enregistré avec succès.");
+    };
 
     return (
         <div className="print-hide bg-card border-b border-border shadow-sm z-30 h-12 flex items-center px-4">
@@ -87,23 +96,37 @@ export function SaleInfoBar() {
                                 </div>
                             </div>
 
-                            {/* Global Debt Pulse */}
-                            <div className="flex flex-col -space-y-1">
-                                <span className="text-[8px] font-black uppercase text-muted-foreground/40">Solde Antérieur</span>
-                                <div className="flex items-center gap-2">
-                                    <span className={cn(
-                                        "text-xs font-black tabular-nums tracking-tighter",
-                                        customer.outstandingBalance > 0.01 ? "text-destructive" : "text-emerald-500"
-                                    )}>
-                                        {formatCurrency(customer.outstandingBalance)}
-                                    </span>
-                                    {customer.isOverLimit && (
-                                        <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/20 animate-pulse">
-                                            <ShieldAlert className="h-2.5 w-2.5" />
-                                            <span className="text-[7px] font-black uppercase">Crédit Saturé</span>
-                                        </div>
-                                    )}
+                            {/* Global Debt Pulse & Quick Settle */}
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col -space-y-1">
+                                    <span className="text-[8px] font-black uppercase text-muted-foreground/40">Solde Antérieur</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                            "text-xs font-black tabular-nums tracking-tighter",
+                                            customer.outstandingBalance > 0.01 ? "text-destructive" : "text-emerald-500"
+                                        )}>
+                                            {formatCurrency(customer.outstandingBalance)}
+                                        </span>
+                                        {customer.isOverLimit && (
+                                            <div className="flex items-center gap-1 bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/20 animate-pulse">
+                                                <ShieldAlert className="h-2.5 w-2.5" />
+                                                <span className="text-[7px] font-black uppercase">Crédit Saturé</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                                
+                                {customer.outstandingBalance > 0.01 && (
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => setIsPaymentDialogOpen(true)}
+                                        className="h-7 px-3 rounded-lg border-emerald-500/20 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all gap-1.5 font-black text-[9px] uppercase tracking-widest"
+                                    >
+                                        <HandCoins className="h-3 w-3" />
+                                        Encaisser
+                                    </Button>
+                                )}
                             </div>
                         </>
                     ) : (
@@ -129,6 +152,16 @@ export function SaleInfoBar() {
                     )}
                 </div>
             </div>
+
+            {/* Quick Settle Dialog */}
+            {customer && (
+                <AddPaymentDialog 
+                    isOpen={isPaymentDialogOpen}
+                    onOpenChange={setIsPaymentDialogOpen}
+                    customer={customer}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 }
