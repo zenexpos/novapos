@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Save, Loader2, Truck, Calendar as CalendarIcon, Hash } from 'lucide-react';
+import { Trash2, Save, Loader2, Truck, Calendar as CalendarIcon, Hash, AlertTriangle, TrendingUp } from 'lucide-react';
 import { ProductIntakeCombobox } from './ProductIntakeCombobox';
 import { OcrInvoiceScanner } from './OcrInvoiceScanner';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -20,8 +20,8 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { ocrParserService } from '@/services/ocr-parser.service';
 
 /**
- * NewIntakeForm - Elite Logistics Engine.
- * Optimized for high-speed entry, OCR support, and precise landing cost distribution.
+ * NewIntakeForm Elite - محرك اللوجستيك المتقدم.
+ * مصمم لمعالجة البيانات الكثيفة، دعم المسح الضوئي (OCR)، والتوزيع الدقيق لتكاليف الاستيراد.
  */
 export function NewIntakeForm() {
     const router = useRouter();
@@ -32,15 +32,17 @@ export function NewIntakeForm() {
     const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(new Date());
     const [shippingCost, setShippingCost] = useState<number>(0);
     const [items, setItems] = useState<StockIntakeItem[]>([]);
-    const [isSubmitting, setIsSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // حساب القيمة الإجمالية للمشتريات (بدون مصاريف النقل)
     const itemsTotalValue = useMemo(() => {
         return items.reduce((sum, item) => {
-            return sum + Math.round(preciseMultiply(safeNumber(item.quantity), safeNumber(item.purchasePrice)) * 100);
+            const rowCents = Math.round(preciseMultiply(safeNumber(item.quantity), safeNumber(item.purchasePrice)) * 100);
+            return sum + rowCents;
         }, 0) / 100;
     }, [items]);
 
-    // Value-based pro-rata distribution factor
+    // معامل توزيع مصاريف النقل تناسبياً بناءً على القيمة
     const shippingFactor = useMemo(() => {
         return itemsTotalValue > 0 ? shippingCost / itemsTotalValue : 0;
     }, [itemsTotalValue, shippingCost]);
@@ -50,7 +52,7 @@ export function NewIntakeForm() {
     const handleAddProduct = useCallback((product: Product) => {
         const existing = items.find(i => i.productUuid === product.uuid);
         if (existing) {
-            toast.info(`"${product.name}" est déjà dans la liste.`);
+            toast.info(`"${product.name}" موجود بالفعل في القائمة.`);
             return;
         }
         const newItem: StockIntakeItem = {
@@ -84,7 +86,16 @@ export function NewIntakeForm() {
     };
 
     const updateItem = (id: string, field: keyof StockIntakeItem, value: any) => {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+        setItems(prev => prev.map(item => {
+            if (item.id === id) {
+                // التأكد من حفظ الأرقام كأرقام حقيقية لمنع أخطاء الحسابات
+                const finalValue = (field === 'quantity' || field === 'purchasePrice' || field === 'price' || field === 'quantityDamaged')
+                    ? safeNumber(value)
+                    : value;
+                return { ...item, [field]: finalValue };
+            }
+            return item;
+        }));
     };
 
     const removeItem = (id: string) => {
@@ -109,21 +120,21 @@ export function NewIntakeForm() {
                 isNew: p.isNew ?? true
             }));
             setItems(prev => [...newIntakeItems, ...prev]);
-            toast.success(`${parsedItems.length} articles détectés.`);
+            toast.success(`تم التعرف على ${parsedItems.length} صنفاً.`);
         }
     }, []);
 
     const handleSave = async () => {
         if (!supplierName.trim()) { 
-            toast.error("Veuillez spécifier le fournisseur."); 
+            toast.error("يرجى تحديد المورد."); 
             return; 
         }
         if (items.length === 0) { 
-            toast.error("La liste de réception est vide."); 
+            toast.error("قائمة السلع المستقبلة فارغة."); 
             return; 
         }
         
-        setIsSaving(true);
+        setIsSubmitting(true);
         try {
             const success = await processStockIntake({
                 supplierName: supplierName.trim(),
@@ -135,18 +146,18 @@ export function NewIntakeForm() {
             });
             
             if (success) {
-                toast.success("Mise à jour du stock réussie.");
+                toast.success("تم تحديث المخزون بنجاح.");
                 router.push('/stock');
             }
         } catch (error: any) {
-            toast.error("Échec de la validation de la réception.");
+            toast.error("فشل تأكيد الاستلام.", { description: error.message });
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
     };
 
     useKeyboardShortcuts([
-        { key: 'Enter', ctrl: true, action: handleSave, description: 'Valider réception', ignoreInputFocus: true }
+        { key: 'Enter', ctrl: true, action: handleSave, description: 'تأكيد الاستلام', ignoreInputFocus: true }
     ], 'NewIntake');
 
     return (
@@ -162,22 +173,22 @@ export function NewIntakeForm() {
                     <CardContent className="p-0">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-muted/10">
-                                    <TableRow className="h-8 border-b-border/40">
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 px-4">Désignation</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-center px-2 w-24">Qté</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-right px-2 w-32">P.U Achat</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-primary text-right px-2 w-32">P.U Vente</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/30 text-right px-2 w-24">Revient</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-emerald-500/40 text-right px-2 w-20">Marge</TableHead>
-                                        <TableHead className="text-[9px] font-black uppercase text-muted-foreground/60 text-right px-4 w-32">Ligne</TableHead>
+                                <TableHeader className="bg-muted/30">
+                                    <TableRow className="h-9 border-b border-white/5">
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-4 tracking-widest">الصنف</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-center px-2 w-24 tracking-widest">الكمية</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-2 w-32 tracking-widest">سعر الشراء</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-primary text-right px-2 w-32 tracking-widest">سعر البيع</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/40 text-right px-2 w-24 tracking-widest">تكلفة الـ Revient</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-emerald-500/50 text-right px-2 w-20 tracking-widest">الهامش</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-4 w-32 tracking-widest">الإجمالي</TableHead>
                                         <TableHead className="w-10"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="h-64 text-center opacity-10 text-[10px] font-black uppercase tracking-[0.4em]">En attente de saisie de stock</TableCell>
+                                            <TableCell colSpan={8} className="h-64 text-center opacity-10 text-[10px] font-black uppercase tracking-[0.4em]">في انتظار إدخال بيانات المخزون</TableCell>
                                         </TableRow>
                                     ) : (
                                         items.map((item) => {
@@ -189,9 +200,9 @@ export function NewIntakeForm() {
                                             const margin = sellPrice > 0 ? ((sellPrice - landingCost) / sellPrice) * 100 : 0;
                                             
                                             return (
-                                                <TableRow key={item.id} className="hover:bg-white/5 border-b border-border/10 h-10 transition-colors group">
+                                                <TableRow key={item.id} className="hover:bg-white/5 border-b border-border/10 h-11 transition-colors group">
                                                     <TableCell className="px-4 py-0">
-                                                        <span className="font-bold text-xs uppercase truncate block max-w-[450px]">{item.name}</span>
+                                                        <span className="font-bold text-xs uppercase truncate block max-w-[400px]">{item.name}</span>
                                                     </TableCell>
                                                     <TableCell className="px-2 py-0">
                                                         <input 
@@ -223,8 +234,12 @@ export function NewIntakeForm() {
                                                         <span className="font-mono text-[10px] font-bold opacity-30 tabular-nums">{landingCost.toFixed(2)}</span>
                                                     </TableCell>
                                                     <TableCell className="px-2 py-0 text-right">
-                                                        <span className={cn("text-[11px] font-black tabular-nums", margin < 0 ? "text-destructive" : "text-emerald-500/50")}>
+                                                        <span className={cn(
+                                                            "text-[11px] font-black tabular-nums flex items-center justify-end gap-1", 
+                                                            margin < 0 ? "text-destructive" : "text-emerald-500/50"
+                                                        )}>
                                                             {margin.toFixed(0)}%
+                                                            {margin < 0 && <AlertTriangle className="h-2.5 w-2.5" />}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="px-4 py-0 text-right font-mono font-black text-xs tabular-nums text-foreground/80">
@@ -250,40 +265,42 @@ export function NewIntakeForm() {
                 <div className="sticky top-2 space-y-2">
                     <OcrInvoiceScanner onResult={handleOcrResult} disabled={isSubmitting} />
 
-                    <div className="space-y-3 p-4 bg-black/20 rounded-2xl border border-white/5 shadow-inner">
+                    <div className="space-y-4 p-5 bg-black/20 rounded-2xl border border-white/5 shadow-inner">
                         <div className="space-y-1.5">
-                            <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Partenaire Fournisseur</Label>
+                            <Label className="text-[10px] font-black uppercase opacity-40 ml-1">المورد (Partenaire)</Label>
                             <Input 
-                                placeholder="Nom de l'établissement..." 
-                                className="h-10 text-xs font-black uppercase bg-muted/20 border-none shadow-inner"
+                                placeholder="اسم المؤسسة..." 
+                                className="h-11 text-sm font-black uppercase bg-muted/20 border-none shadow-inner"
                                 value={supplierName}
                                 onChange={e => setSupplierName(e.target.value)}
                             />
                         </div>
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-3">
                             <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Référence Bon / Facture</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">مرجع الفاتورة</Label>
                                 <div className="relative">
-                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-20" />
+                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-20" />
                                     <Input 
                                         placeholder="Ex: BF-2024-001" 
-                                        className="pl-9 h-10 text-xs font-mono font-bold bg-muted/20 border-none shadow-inner"
+                                        className="pl-10 h-11 text-sm font-mono font-bold bg-muted/20 border-none shadow-inner"
                                         value={invoiceNumber}
                                         onChange={e => setInvoiceNumber(e.target.value)}
                                     />
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Date du document</Label>
-                                <DatePicker date={invoiceDate} setDate={setInvoiceDate} className="h-10 text-xs" />
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">تاريخ المستند</Label>
+                                <DatePicker date={invoiceDate} setDate={setInvoiceDate} className="h-11" />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-[9px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1"><Truck className="h-2.5 w-2.5" /> Frais de Transport</Label>
+                                <Label className="text-[10px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1.5">
+                                    <Truck className="h-3 w-3" /> مصاريف الشحن (Transport)
+                                </Label>
                                 <Input 
                                     type="number" 
                                     value={shippingCost || ''} 
                                     onChange={e => setShippingCost(safeNumber(e.target.value))}
-                                    className="h-10 text-sm font-mono font-black text-right bg-primary/5 border-none shadow-inner text-primary"
+                                    className="h-11 text-base font-mono font-black text-right bg-primary/5 border-none shadow-inner text-primary"
                                     placeholder="0.00"
                                 />
                             </div>
@@ -291,8 +308,11 @@ export function NewIntakeForm() {
                     </div>
 
                     <div className="bg-primary/10 p-5 rounded-2xl border border-primary/20 flex justify-between items-center shadow-lg group hover:bg-primary/20 transition-all">
-                        <span className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">Total TTC</span>
-                        <span className="text-2xl font-black text-primary tabular-nums tracking-tighter group-hover:scale-105 transition-transform">{formatCurrency(totalValue)}</span>
+                        <div className="space-y-0.5">
+                            <p className="text-[9px] font-black uppercase text-primary/60 tracking-[0.2em]">الإجمالي النهائي</p>
+                            <span className="text-[10px] font-bold text-primary/40 uppercase">Toutes Taxes Comprises</span>
+                        </div>
+                        <span className="text-2xl font-black text-primary tabular-nums tracking-tighter">{formatCurrency(totalValue)}</span>
                     </div>
 
                     <Button 
@@ -301,7 +321,7 @@ export function NewIntakeForm() {
                         className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all gap-3"
                     >
                         {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                        Valider Réception
+                        تأكيد عملية الاستلام
                     </Button>
                 </div>
             </div>

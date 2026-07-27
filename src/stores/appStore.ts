@@ -183,11 +183,14 @@ export const useAppStore = create<AppState>()(
                         let itemsTotalPurchaseCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        // 1. First Pass: Calculate total purchase value for pro-rata distribution
+                        // 1. حساب الإجمالي الكلي للمشتريات (بالسنتات لتجنب أخطاء الفواصل)
                         intakeData.items.forEach(item => {
-                            itemsTotalPurchaseCents += (Math.round(safeNumber(item.purchasePrice) * 100) * safeNumber(item.quantity));
+                            const qty = safeNumber(item.quantity);
+                            const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
+                            itemsTotalPurchaseCents += (pPriceCents * qty);
                         });
 
+                        // معامل توزيع مصاريف النقل تناسبياً بناءً على قيمة كل منتج
                         const shippingFactor = itemsTotalPurchaseCents > 0 ? shippingCents / itemsTotalPurchaseCents : 0;
 
                         await db.transaction('rw', [
@@ -195,33 +198,33 @@ export const useAppStore = create<AppState>()(
                             db.inventory_logs, db.supplier_payments, db.sync_queue,
                             db.company_profile
                         ], async () => {
+                            // البحث عن المورد أو إنشاؤه
                             const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
                             for (const item of intakeData.items) {
                                 const qty = safeNumber(item.quantity);
                                 const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
                                 
-                                // Precise Pro-rata landing cost calculation
+                                // حساب تكلفة الـ Revient الحقيقية (سعر الشراء + حصته من الشحن)
                                 const landing = roundFinancial((pPriceCents * (1 + shippingFactor)) / 100);
 
                                 let productUuid = item.productUuid;
                                 
                                 if (item.productUuid) {
-                                    // Update existing product prices
+                                    // تحديث أسعار المنتج الحالي في القاعدة
                                     await productService.updateProductFromIntake(item.productUuid, { 
                                         purchasePrice: safeNumber(item.purchasePrice), 
                                         price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined 
                                     });
                                 } else if (item.isNew) {
-                                    // Handle auto-creation of new product from intake
+                                    // إنشاء منتج جديد تلقائياً في حال لم يكن موجوداً
                                     productUuid = uuidv4();
-                                    const initialQty = 0; // We adjust it via inventory log right after
                                     await db.products.add({ 
                                         uuid: productUuid, 
                                         name: item.name, 
                                         price: roundFinancial(safeNumber(item.price)), 
                                         purchasePrice: roundFinancial(safeNumber(item.purchasePrice)), 
-                                        quantity: initialQty, 
+                                        quantity: 0, // سيتعدل فوراً عبر سجل المخزون أدناه
                                         minStockLevel: 0, 
                                         barcodes: item.barcodes || [], 
                                         unit: (item.unit as any) || 'Pièce', 
@@ -236,7 +239,7 @@ export const useAppStore = create<AppState>()(
                                     });
                                 }
                                 
-                                // Stock Adjustment with audit trail
+                                // تعديل المخزون مع تسجيل حركة التدفق (Audit Trail)
                                 if (productUuid && qty > 0) {
                                     await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
                                 }
@@ -253,6 +256,7 @@ export const useAppStore = create<AppState>()(
                                 }
                             }
 
+                            // حفظ فاتورة الاستلام في القاعدة
                             const total = roundFinancial((itemsTotalPurchaseCents + shippingCents) / 100);
                             const newIntake = { 
                                 uuid: intakeUuid, 
@@ -270,9 +274,10 @@ export const useAppStore = create<AppState>()(
                             
                             await db.stock_intakes.add(newIntake);
                             
-                            // Essential: Audit supplier balance after purchase
+                            // تحديث رصيد المورد المستحق (Audit Supplier Balance)
                             await supplierService.recalculateSupplierBalance(supplier.uuid);
                             
+                            // تسجيل العملية في طابور المزامنة السحابية
                             await db.sync_queue.add({ 
                                 table: 'stock_intakes', 
                                 operation: 'CREATE', 
@@ -284,8 +289,8 @@ export const useAppStore = create<AppState>()(
                         get().actions.triggerSmartSync();
                         return true;
                     } catch (err: any) {
-                        console.error('Stock Intake Internal Error:', err);
-                        toast.error('Erreur technique lors de la réception', { description: err.message });
+                        console.error('[iPOS Stock Engine] Intake Failure:', err);
+                        toast.error('فشل في معالجة عملية الاستلام', { description: err.message });
                         return false;
                     }
                 },
