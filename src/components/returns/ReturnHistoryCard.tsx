@@ -51,10 +51,10 @@ const ReturnHistoryCardComponent = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-32 rounded-xl border-white/5 bg-card">
                         <DropdownMenuItem onClick={() => onViewDetails(productReturn)} className="text-[9px] font-black p-2 uppercase">
-                            <FileText className="mr-2 h-3 w-3" /> التفاصيل
+                            <FileText className="mr-2 h-3 w-3" /> Détails
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onCancelReturn(productReturn)} className="text-destructive text-[9px] font-black p-2 uppercase">
-                            <Trash2 className="mr-2 h-3 w-3" /> إلغاء العملية
+                            <Trash2 className="mr-2 h-3 w-3" /> Annuler retour
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -67,7 +67,7 @@ const ReturnHistoryCardComponent = ({
                     </span>
                 </div>
                 <CardTitle className="text-[10px] font-black leading-none tracking-tight group-hover:text-primary transition-colors truncate pr-6 uppercase">
-                    {customerName || 'زبون عابر'}
+                    {customerName || 'Client de passage'}
                 </CardTitle>
                 <div className="flex items-center gap-1 text-[6px] text-muted-foreground/30 font-bold uppercase tracking-widest">
                     <Clock className="h-1.5 w-1.5 opacity-30" />
@@ -78,11 +78,11 @@ const ReturnHistoryCardComponent = ({
             <CardContent className="p-2 py-1">
                 <div className="flex justify-between items-center bg-black/5 rounded-md p-1.5">
                     <div className="flex flex-col">
-                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">المردود</span>
+                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">Remboursé</span>
                         <span className="font-black text-[10px] tabular-nums text-emerald-600 leading-none">{formatCurrency(productReturn.amountRefunded)}</span>
                     </div>
                     <div className="text-right flex flex-col border-l border-white/5 pl-1.5">
-                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">القيمة</span>
+                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">Valeur</span>
                         <span className="font-black text-[10px] tabular-nums text-foreground leading-none">{formatCurrency(productReturn.totalReturnValue)}</span>
                     </div>
                 </div>
@@ -90,7 +90,7 @@ const ReturnHistoryCardComponent = ({
 
             <CardFooter className="p-1.5 pt-0 flex justify-end">
                 <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onViewDetails(productReturn); }} className="h-4 rounded-md font-black text-[7px] uppercase tracking-widest hover:bg-primary/5 hover:text-primary px-1">
-                    فحص <ChevronRight className="ml-0.5 h-1.5 w-1.5" />
+                    Examiner <ChevronRight className="ml-0.5 h-1.5 w-1.5" />
                 </Button>
             </CardFooter>
         </Card>

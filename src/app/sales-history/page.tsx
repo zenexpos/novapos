@@ -141,7 +141,7 @@ export default function SalesHistoryPage() {
             try { await salesService.processSaleCancellation(uuid); successCount++; } catch (e) {}
         }
         if (successCount > 0) {
-            toast.success(`${successCount} فاتورة ملغاة.`);
+            toast.success(`${successCount} opérations annulées.`);
             historyDataResult.refresh();
         }
         setSelectedItems(new Set());
@@ -154,20 +154,20 @@ export default function SalesHistoryPage() {
             : historyData;
 
         const data = toExport.map(item => ({
-            'الوقت': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
-            'النوع': item.type === 'sale' ? 'بيع' : 'تحصيل دين',
-            'المرجع': item.type === 'sale' ? item.data.invoiceNumber : 'CASH-RCV',
-            'العميل': item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'عابر',
-            'إجمالي': item.type === 'sale' ? item.data.total : item.data.amount,
-            'الحالة': item.type === 'sale' ? (item.data.isCancelled ? 'ملغاة' : item.data.paymentStatus) : 'منجز'
+            'Date': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
+            'Type': item.type === 'sale' ? 'Vente' : 'Encaissement',
+            'Référence': item.type === 'sale' ? item.data.invoiceNumber : 'PAIE-CLIENT',
+            'Client': item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Passage',
+            'Total': item.type === 'sale' ? item.data.total : item.data.amount,
+            'Statut': item.type === 'sale' ? (item.data.isCancelled ? 'Annulée' : item.data.paymentStatus) : 'Validé'
         }));
 
-        exportService.exportToCsv(`سجل-التدفقات-${new Date().toISOString().split('T')[0]}`, data);
+        exportService.exportToCsv(`journal-flux-${new Date().toISOString().split('T')[0]}`, data);
     };
 
     const resetFilters = () => { setSearchQuery(''); setFilterStatus('all'); setDate(undefined); };
 
-    useKeyboardShortcuts([{ key: 'F3', action: () => searchInputRef.current?.focus(), description: 'بحث في السجل', ignoreInputFocus: true }], 'SalesHistory');
+    useKeyboardShortcuts([{ key: 'F3', action: () => searchInputRef.current?.focus(), description: 'Chercher dans le journal', ignoreInputFocus: true }], 'SalesHistory');
 
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || !!dateRange?.from;
     
@@ -175,12 +175,12 @@ export default function SalesHistoryPage() {
         <div className="p-3 space-y-3 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">سجل التدفقات المالية</h1>
-                    <p className="text-[9px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-1">الأرشيف المركزي للمبيعات والتحصيل</p>
+                    <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Journal des Flux Financiers</h1>
+                    <p className="text-[9px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-1">Archive centrale des ventes et recouvrements</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-8 rounded-lg font-bold text-[10px] uppercase gap-2">
-                        <FileDown className="h-3.5 w-3.5" /> تصدير
+                        <FileDown className="h-3.5 w-3.5" /> Exporter
                     </Button>
                     <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-[10px]" />
                     <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => historyDataResult.refresh()}>
@@ -194,16 +194,16 @@ export default function SalesHistoryPage() {
                     <Card className="rounded-xl border bg-card/50 shadow-sm overflow-hidden">
                         <CardContent className="p-3 space-y-3">
                             <div>
-                                <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">حجم المبيعات</p>
+                                <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">Volume de Ventes</p>
                                 <p className="text-xl font-black tracking-tighter text-primary tabular-nums leading-none">{formatCurrency(stats.totalRevenue)}</p>
                             </div>
                             <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
                                 <div>
-                                    <p className="text-[7px] font-bold uppercase text-emerald-600/60 mb-0.5">السيولة المحصلة</p>
+                                    <p className="text-[7px] font-bold uppercase text-emerald-600/60 mb-0.5">Liquidités Perçues</p>
                                     <p className="font-black text-sm text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[7px] font-bold uppercase text-red-600/60 mb-0.5">ديون قيد التحصيل</p>
+                                    <p className="text-[7px] font-bold uppercase text-red-600/60 mb-0.5">Restes à Recouvrer</p>
                                     <p className="font-black text-sm text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
                                 </div>
                             </div>
@@ -213,16 +213,16 @@ export default function SalesHistoryPage() {
                     <Card className="rounded-xl border bg-card/30 p-3 space-y-3">
                         <div className="relative group">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40" />
-                            <Input ref={searchInputRef} placeholder="رقم الفاتورة... [F3]" className="pl-8 h-8 rounded-lg bg-black/10 border-none font-bold text-[10px]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                            <Input ref={searchInputRef} placeholder="Référence... [F3]" className="pl-8 h-8 rounded-lg bg-black/10 border-none font-bold text-[10px]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
                         <div className="grid grid-cols-2 gap-1">
                             {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
                                 <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all", filterStatus === s ? "bg-primary text-primary-foreground" : "bg-black/5 text-muted-foreground/60 hover:bg-black/10")}>
-                                    {s === 'all' ? 'الكل' : s === 'paid' ? 'كاش' : s === 'partial' ? 'جزئي' : 'دين'}
+                                    {s === 'all' ? 'Tout' : s === 'paid' ? 'Payé' : s === 'partial' ? 'Partiel' : 'Dette'}
                                 </button>
                             ))}
                         </div>
-                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/5 text-[8px] font-bold uppercase h-7 gap-1.5"><FilterX className="h-3 w-3" /> تصفير</Button>}
+                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/5 text-[8px] font-bold uppercase h-7 gap-1.5"><FilterX className="h-3 w-3" /> Réinitialiser</Button>}
                     </Card>
                 </div>
 
@@ -232,7 +232,7 @@ export default function SalesHistoryPage() {
                             <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3.5 w-3.5"/></Button>
                             <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5"/></Button>
                         </div>
-                        <span className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">{historyData?.length || 0} عملية مؤرشفة</span>
+                        <span className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">{historyData?.length || 0} opérations archivées</span>
                     </div>
 
                     <div className="min-h-[500px]">
@@ -255,14 +255,14 @@ export default function SalesHistoryPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                                     {historyData.map(item => (
                                         item.type === 'sale' ? (
-                                            <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'عابر'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
+                                            <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'Client de passage'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
                                         ) : (
                                             <Card key={item.data.uuid} className="rounded-xl border bg-card/30 p-3 relative overflow-hidden group shadow-sm">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-[7px] font-black uppercase text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">تحصيل</span>
+                                                    <span className="text-[7px] font-black uppercase text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">Paiement Client</span>
                                                     <span className="text-[7px] text-muted-foreground/30 font-bold uppercase">{format(item.date, 'd MMM, HH:mm', { locale: fr })}</span>
                                                 </div>
-                                                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">المبلغ المقبوض</p>
+                                                <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Montant encaissé</p>
                                                 <p className="text-lg font-black text-emerald-600 tracking-tighter tabular-nums leading-none">{formatCurrency(item.data.amount)}</p>
                                                 <div className="mt-2 pt-2 border-t border-white/5">
                                                     <p className="font-bold text-[10px] truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p>
@@ -272,7 +272,7 @@ export default function SalesHistoryPage() {
                                     ))}
                                 </div>
                             )
-                        ) : <EmptyState icon={ReceiptIcon} title="السجل فارغ" description="لم يتم تسجيل أي عمليات بعد." />}
+                        ) : <EmptyState icon={ReceiptIcon} title="Journal vide" description="Aucune opération enregistrée sur cette période." />}
                     </div>
                 </div>
             </div>
@@ -280,11 +280,11 @@ export default function SalesHistoryPage() {
             {selectedItems.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
                     <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-5 py-2 flex items-center gap-4">
-                        <span className="text-[9px] font-black uppercase text-primary">{selectedItems.size} عمليات</span>
+                        <span className="text-[9px] font-black uppercase text-primary">{selectedItems.size} sélectionnées</span>
                         <div className="h-3 w-px bg-border" />
                         <div className="flex items-center gap-3">
-                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
-                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
+                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Annuler</button>
                         </div>
                         <button onClick={() => setSelectedItems(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3 w-3 opacity-20" /></button>
                     </div>
@@ -293,8 +293,8 @@ export default function SalesHistoryPage() {
 
             <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={selectedSale} />
             <CancelSaleDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} sale={selectedSale} onSuccess={() => historyDataResult.refresh()} />
-            <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'عابر'} />
-            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`إلغاء ${selectedItems.size} عملية؟`} description="سيتم حذف العمليات وإرجاع السلع للمخزون وتحديث أرصدة العملاء." onConfirm={handleBulkCancel} confirmText="تأكيد الإلغاء" />
+            <PrintReceiptDialog isOpen={isPrintOpen} onOpenChange={setIsPrintOpen} sale={selectedSale} customerName={selectedSale?.customerUuid ? (customerMap.get(selectedSale.customerUuid) ? `${customerMap.get(selectedSale.customerUuid)?.firstName} ${customerMap.get(selectedSale.customerUuid)?.lastName}` : undefined) : 'Passage'} />
+            <ConfirmAlertDialog isOpen={isBulkCancelConfirmOpen} onOpenChange={setIsBulkCancelConfirmOpen} title={`Annuler ${selectedItems.size} opérations ?`} description="Cette action restaurera les stocks et mettra à jour les soldes clients définitivement." onConfirm={handleBulkCancel} confirmText="Confirmer l'annulation" />
         </div>
     );
 }

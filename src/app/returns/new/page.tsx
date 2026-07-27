@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 import { NewReturnForm } from '@/components/returns/NewReturnForm';
-import { PageHeader }    from '@/components/layout/PageHeader';
 import { Button }        from '@/components/ui/button';
 import { Skeleton }      from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
@@ -26,8 +25,8 @@ export default function NewReturnPage() {
                     </Link>
                 </Button>
                 <div className="flex flex-col">
-                    <h1 className="text-xl font-black uppercase tracking-tighter leading-none">مرجع جديد</h1>
-                    <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Régularisation des flux</p>
+                    <h1 className="text-xl font-black uppercase tracking-tighter leading-none">Nouveau Retour</h1>
+                    <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">Régularisation des flux marchandises</p>
                 </div>
             </div>
             <Suspense fallback={<ReturnFallback />}>

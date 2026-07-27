@@ -80,7 +80,7 @@ export default function ReturnsPage() {
     const handleToggleSelection = (uuid: string) => {
         setSelectedReturns(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(uuid)) next.delete(uuid); else next.add(uuid);
+            if (newSet.has(uuid)) newSet.delete(uuid); else newSet.add(uuid);
             return newSet;
         });
     };
@@ -146,12 +146,12 @@ export default function ReturnsPage() {
         <div className="p-2 space-y-2 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-20">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
                 <div>
-                    <h1 className="text-lg font-black tracking-tighter uppercase leading-none">Registre المرتجعات</h1>
+                    <h1 className="text-lg font-black tracking-tighter uppercase leading-none">Registre des Retours</h1>
                     <p className="text-[8px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-0.5">Régularisation des flux marchandises</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-7 rounded-lg font-bold text-[9px] uppercase gap-1.5">
-                        <FileUp className="h-3 w-3" /> تصدير
+                        <FileUp className="h-3 w-3" /> Exporter
                     </Button>
                     <Button asChild size="sm" className="h-7 rounded-lg font-black text-[9px] uppercase gap-1.5 shadow-sm">
                         <Link href="/returns/new"><Plus className="h-3 w-3" /> Nouveau</Link>
@@ -187,7 +187,7 @@ export default function ReturnsPage() {
                         {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-card/20 border-none animate-pulse" />)}
                     </div>
                 ) : returns.length === 0 ? (
-                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "لا توجد نتائج مطابقة لبحثك." : "ابدأ بتسجيل أول عملية إرجاع سلع."} />
+                    <EmptyState icon={Undo2} title="Aucun retour" description={searchQuery ? "Aucun résultat correspondant." : "Commencez par enregistrer un retour marchandise."} />
                 ) : (
                     viewMode === 'list' ? (
                         <ReturnTable 
@@ -204,7 +204,7 @@ export default function ReturnsPage() {
                                 <ReturnHistoryCard 
                                     key={r.uuid} 
                                     productReturn={r}
-                                    customerName={r.customerUuid ? `${customerMap.get(r.customerUuid)?.firstName} ${customerMap.get(r.customerUuid)?.lastName}` : 'زبون عابر'}
+                                    customerName={r.customerUuid ? `${customerMap.get(r.customerUuid)?.firstName} ${customerMap.get(r.customerUuid)?.lastName}` : 'Client de passage'}
                                     isSelected={selectedReturns.has(r.uuid)}
                                     onToggleSelection={() => handleToggleSelection(r.uuid)}
                                     onViewDetails={handleViewDetails}
@@ -219,27 +219,27 @@ export default function ReturnsPage() {
             {selectedReturns.size > 0 && (
                 <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
                     <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-5 py-2 flex items-center gap-4">
-                        <span className="text-[9px] font-black uppercase text-primary">{selectedReturns.size} عمليات</span>
+                        <span className="text-[9px] font-black uppercase text-primary">{selectedReturns.size} opérations</span>
                         <div className="h-3 w-px bg-border" />
                         <div className="flex items-center gap-3">
-                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
-                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
+                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">Exporter</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">Annuler</button>
                         </div>
                         <button onClick={() => setSelectedReturns(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3 w-3 opacity-20" /></button>
                     </div>
                 </div>
             )}
 
-            <ReturnDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} productReturn={selectedReturn} customerName={selectedReturn?.customerUuid ? `${customerMap.get(selectedReturn.customerUuid)?.firstName} ${customerMap.get(selectedReturn.customerUuid)?.lastName}` : 'زبون عابر'} />
+            <ReturnDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} productReturn={selectedReturn} customerName={selectedReturn?.customerUuid ? `${customerMap.get(selectedReturn.customerUuid)?.firstName} ${customerMap.get(selectedReturn.customerUuid)?.lastName}` : 'Client de passage'} />
             <CancelReturnDialog isOpen={isCancelOpen} onOpenChange={setIsCancelOpen} productReturn={selectedReturn} onSuccess={() => returnsResult.refresh()} />
             
             <ConfirmAlertDialog
                 isOpen={isBulkCancelConfirmOpen}
                 onOpenChange={setIsBulkCancelConfirmOpen}
                 title={`Annuler ${selectedReturns.size} retours ?`}
-                description="سيتم حذف العمليات المختارة وإرجاع السلع للمخزون وتحديث أرصدة العملاء بشكل دائم."
+                description="Cette opération restaurera les stocks et mettra à jour les soldes clients définitivement."
                 onConfirm={handleBulkCancel}
-                confirmText="تأكيد الإلغاء"
+                confirmText="Confirmer l'annulation"
             />
         </div>
     );

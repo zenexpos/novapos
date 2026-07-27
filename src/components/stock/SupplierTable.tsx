@@ -85,7 +85,8 @@ export const SupplierTable = memo(({
                         <TableHead className="px-2 text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest">Contact</TableHead>
                         <TableHead className="px-2 text-right">
                             <button onClick={() => handleSort('balance')} className="flex items-center justify-end w-full text-[9px] font-black uppercase text-destructive hover:text-primary transition-colors tracking-widest">
-                                Solde <SortIcon colKey="balance" />
+                                Solde Dû
+                                <SortIcon colKey="balance" />
                             </button>
                         </TableHead>
                         <TableHead className="w-[100px] px-2"></TableHead>
@@ -94,7 +95,7 @@ export const SupplierTable = memo(({
                 <TableBody>
                     {sortedSuppliers.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-32 text-center opacity-20 italic font-bold text-xs uppercase">Vide.</TableCell>
+                            <TableCell colSpan={5} className="h-32 text-center opacity-20 italic font-bold text-xs uppercase">Aucune donnée.</TableCell>
                         </TableRow>
                     ) : sortedSuppliers.map((supplier) => {
                         const isSelected = selectedSuppliers.has(supplier.uuid);

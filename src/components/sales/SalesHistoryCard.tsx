@@ -32,9 +32,9 @@ const SalesHistoryCardComponent = ({
     const isCancelled = sale.isCancelled;
     
     const statusMap = {
-        paid: { text: 'خالصة', className: 'bg-emerald-500/10 text-emerald-600' },
-        partial: { text: 'جزئي', className: 'bg-amber-500/10 text-amber-600' },
-        unpaid: { text: 'دين', className: 'bg-red-500/10 text-red-600' },
+        paid: { text: 'Soldée', className: 'bg-emerald-500/10 text-emerald-600' },
+        partial: { text: 'Partiel', className: 'bg-amber-500/10 text-amber-600' },
+        unpaid: { text: 'Dette', className: 'bg-red-500/10 text-red-600' },
     };
     const status = statusMap[sale.paymentStatus];
 
@@ -60,9 +60,9 @@ const SalesHistoryCardComponent = ({
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-32 rounded-xl border-white/5 bg-card">
-                        <DropdownMenuItem onClick={() => onViewDetails(sale)} className="text-[9px] font-black p-2 uppercase">التفاصيل</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onViewDetails(sale)} className="text-[9px] font-black p-2 uppercase">Détails</DropdownMenuItem>
                         {!isCancelled && (
-                            <DropdownMenuItem onClick={() => onCancelSale(sale)} className="text-destructive text-[9px] font-black p-2 uppercase">إلغاء</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onCancelSale(sale)} className="text-destructive text-[9px] font-black p-2 uppercase">Annuler vente</DropdownMenuItem>
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -71,7 +71,7 @@ const SalesHistoryCardComponent = ({
             <CardHeader className="p-3 pb-1 space-y-1">
                 <div className="flex items-center gap-1.5">
                     {isCancelled ? (
-                        <Badge variant="outline" className="text-[6px] font-black uppercase px-1 py-0 border-none bg-muted/40 opacity-40">ملغاة</Badge>
+                        <Badge variant="outline" className="text-[6px] font-black uppercase px-1 py-0 border-none bg-muted/40 opacity-40">Annulée</Badge>
                     ) : (
                         <Badge variant="outline" className={cn("text-[6px] font-black uppercase px-1 py-0 border-none", status.className)}>
                             {status.text}
@@ -82,19 +82,19 @@ const SalesHistoryCardComponent = ({
                     </span>
                 </div>
                 <CardTitle className="text-[11px] font-black leading-tight tracking-tight group-hover:text-primary transition-colors truncate pr-8 uppercase">
-                    {customerName || 'عميل عابر'}
+                    {customerName || 'Client de passage'}
                 </CardTitle>
             </CardHeader>
 
             <CardContent className="p-3 py-1.5">
                 <div className="flex justify-between items-center bg-black/5 rounded-lg p-2">
                     <div className="flex flex-col">
-                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">الإجمالي</span>
+                        <span className="text-[6px] font-bold uppercase text-muted-foreground/40">Montant Total</span>
                         <span className="font-black text-[11px] tabular-nums text-foreground">{formatCurrency(sale.total)}</span>
                     </div>
                     {!isCancelled && sale.remainingBalance > 0.01 && (
                          <div className="text-right flex flex-col">
-                            <span className="text-[6px] font-bold uppercase text-red-500/40">الباقي</span>
+                            <span className="text-[6px] font-bold uppercase text-red-500/40">Reste</span>
                             <span className="font-black text-[11px] tabular-nums text-red-500">{formatCurrency(sale.remainingBalance)}</span>
                         </div>
                     )}
@@ -112,7 +112,7 @@ const SalesHistoryCardComponent = ({
                     onClick={(e) => { e.stopPropagation(); onViewDetails(sale); }} 
                     className="h-5 rounded-md font-black text-[7px] uppercase tracking-widest hover:bg-primary/5 hover:text-primary px-1.5"
                 >
-                    فحص <ChevronRight className="ml-0.5 h-2 w-2" />
+                    Consulter <ChevronRight className="ml-0.5 h-2 w-2" />
                 </Button>
             </CardFooter>
         </Card>

@@ -41,11 +41,11 @@ export function ReturnTable({ returns, customerMap, selectedReturns, onToggleSel
                                 className="h-3 w-3 border-primary/20 data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">التوقيت</TableHead>
-                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">الأصل</TableHead>
-                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">الشريك</TableHead>
-                        <TableHead className="px-1 text-right text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">مردود</TableHead>
-                        <TableHead className="px-1 text-right text-[7px] font-black uppercase text-primary tracking-widest">القيمة</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">Date / Heure</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">Facture</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">Partenaire</TableHead>
+                        <TableHead className="px-1 text-right text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">Remboursé</TableHead>
+                        <TableHead className="px-1 text-right text-[7px] font-black uppercase text-primary tracking-widest">Valeur Totale</TableHead>
                         <TableHead className="w-[35px] px-2"></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -78,7 +78,7 @@ export function ReturnTable({ returns, customerMap, selectedReturns, onToggleSel
                                 </TableCell>
                                 <TableCell className="px-1 py-0">
                                     <span className="font-bold text-[8px] uppercase truncate max-w-[150px] block group-hover:text-primary transition-colors">
-                                        {customer ? `${customer.firstName} ${customer.lastName}` : 'عابر'}
+                                        {customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-1 py-0 text-right font-mono text-[8px] text-emerald-500 font-bold">
@@ -97,8 +97,8 @@ export function ReturnTable({ returns, customerMap, selectedReturns, onToggleSel
                                             </button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-32 rounded-xl border-white/5 bg-card">
-                                            <DropdownMenuItem onClick={() => onViewDetails(r)} className="text-[9px] font-black p-2 uppercase">فحص</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onCancel(r)} className="text-destructive text-[9px] font-black p-2 uppercase">إلغاء</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onViewDetails(r)} className="text-[9px] font-black p-2 uppercase">Examiner</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onCancel(r)} className="text-destructive text-[9px] font-black p-2 uppercase">Annuler</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>

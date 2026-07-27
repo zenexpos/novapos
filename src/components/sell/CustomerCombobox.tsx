@@ -11,7 +11,6 @@ import {
     Search, 
     User, 
     UserX, 
-    Phone, 
     ChevronRight,
     CheckCircle2,
     XCircle,
@@ -33,7 +32,6 @@ import { db } from '@/lib/db';
 
 /**
  * iPOS Zen - Elite Customer Selection.
- * Audit Fixed: Missing Loader2 defined, Single Customer logic enforced.
  */
 export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.ComponentPropsWithoutRef<'div'>>((_, ref) => {
     const { setCustomer } = useCartActions();
@@ -148,7 +146,7 @@ export const CustomerCombobox = forwardRef<{ focusInput: () => void }, React.Com
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                             <Input
                                 ref={internalInputRef}
-                                placeholder="Rechercher par nom یا رقم الهاتف..."
+                                placeholder="Rechercher par nom ou téléphone..."
                                 className="pl-14 h-12 text-lg font-bold rounded-2xl bg-black/20 border-none shadow-inner focus-visible:ring-primary/20"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}

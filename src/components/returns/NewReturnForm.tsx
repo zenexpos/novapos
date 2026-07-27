@@ -231,11 +231,11 @@ export function NewReturnForm() {
                                                                 selectedItems[uuid].restock ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"
                                                             )}
                                                         >
-                                                            {isSelected ? (selectedItems[uuid].restock ? 'Rentrée Stock' : 'Perte/Talon') : '-'}
+                                                            {isSelected ? (selectedItems[uuid].restock ? 'Rentrée Stock' : 'Perte/Démarque') : '-'}
                                                         </button>
                                                     </TableCell>
                                                     <TableCell className="px-4 py-0 text-right font-mono font-black text-[10px] tabular-nums text-foreground/80">
-                                                        {isSelected ? formatCurrency(selectedItems[uuid].quantity * item.price) : '0.00'}
+                                                        {isSelected ? formatCurrency(selectedItems[uuid].quantity * item.price) : '0,00'}
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -260,7 +260,7 @@ export function NewReturnForm() {
                             <div className="space-y-4">
                                 <div className="p-2 bg-black/10 rounded-lg border border-white/5 space-y-1">
                                     <p className="text-[7px] font-bold uppercase text-muted-foreground/30">Client Destinataire</p>
-                                    <p className="font-black text-[10px] uppercase truncate">{customer ? `${customer.firstName} ${customer.lastName}` : 'Passage'}</p>
+                                    <p className="font-black text-[10px] uppercase truncate">{customer ? `${customer.firstName} ${customer.lastName}` : 'Client de passage'}</p>
                                 </div>
 
                                 <div className="space-y-3">

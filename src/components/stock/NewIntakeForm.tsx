@@ -20,8 +20,8 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { ocrParserService } from '@/services/ocr-parser.service';
 
 /**
- * NewIntakeForm Elite - محرك اللوجستيك المتقدم.
- * تم إصلاح أخطاء الإدخال والتعامل مع الأكواد بار والحسابات المالية.
+ * NewIntakeForm Elite - Advanced Logistics Engine.
+ * Optimized for rapid entry and high financial precision.
  */
 export function NewIntakeForm() {
     const router = useRouter();
@@ -34,7 +34,7 @@ export function NewIntakeForm() {
     const [items, setItems] = useState<StockIntakeItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // حساب القيمة الإجمالية للمشتريات (بدون مصاريف النقل)
+    // Calculate total value of items (before shipping)
     const itemsTotalValue = useMemo(() => {
         return items.reduce((sum, item) => {
             const rowCents = Math.round(preciseMultiply(safeNumber(item.quantity), safeNumber(item.purchasePrice)) * 100);
@@ -42,7 +42,7 @@ export function NewIntakeForm() {
         }, 0) / 100;
     }, [items]);
 
-    // معامل توزيع مصاريف النقل تناسبياً بناءً على القيمة
+    // Shipping factor for proportional landing cost distribution
     const shippingFactor = useMemo(() => {
         return itemsTotalValue > 0 ? shippingCost / itemsTotalValue : 0;
     }, [itemsTotalValue, shippingCost]);
@@ -52,7 +52,7 @@ export function NewIntakeForm() {
     const handleAddProduct = useCallback((product: Product) => {
         const existing = items.find(i => i.productUuid === product.uuid);
         if (existing) {
-            toast.info(`"${product.name}" موجود بالفعل.`);
+            toast.info(`"${product.name}" est déjà dans la liste.`);
             return;
         }
         const newItem: StockIntakeItem = {
@@ -116,17 +116,17 @@ export function NewIntakeForm() {
                 isNew: p.isNew ?? true
             }));
             setItems(prev => [...newIntakeItems, ...prev]);
-            toast.success(`تم التعرف على ${parsedItems.length} صنفاً.`);
+            toast.success(`${parsedItems.length} articles reconnus.`);
         }
     }, []);
 
     const handleSave = async () => {
         if (!supplierName.trim()) { 
-            toast.error("يرجى تحديد المورد."); 
+            toast.error("Veuillez spécifier le fournisseur."); 
             return; 
         }
         if (items.length === 0) { 
-            toast.error("قائمة السلع فارغة."); 
+            toast.error("La liste de réception est vide."); 
             return; 
         }
         
@@ -142,18 +142,18 @@ export function NewIntakeForm() {
             });
             
             if (success) {
-                toast.success("تم تأكيد الاستلام وتحديث المخزون.");
+                toast.success("Réception confirmée et stock mis à jour.");
                 router.push('/stock');
             }
         } catch (error: any) {
-            toast.error("فشل تأكيد الاستلام.", { description: error.message });
+            toast.error("Échec de la validation réception.", { description: error.message });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     useKeyboardShortcuts([
-        { key: 'Enter', ctrl: true, action: handleSave, description: 'تأكيد الاستلام', ignoreInputFocus: true }
+        { key: 'Enter', ctrl: true, action: handleSave, description: 'Valider la réception', ignoreInputFocus: true }
     ], 'NewIntake');
 
     return (
@@ -169,13 +169,13 @@ export function NewIntakeForm() {
                     <Table>
                         <TableHeader className="bg-muted/30 sticky top-0 z-10">
                             <TableRow className="h-9 border-b border-white/5">
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-4 tracking-widest">الصنف</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-2 w-32 tracking-widest">الكود بار</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-center px-2 w-20 tracking-widest">الكمية</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-2 w-28 tracking-widest">سعر الشراء</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-primary text-right px-2 w-28 tracking-widest">سعر البيع</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/30 text-right px-2 w-20 tracking-widest">الـ Revient</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-4 w-28 tracking-widest">الإجمالي</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-4 tracking-widest">Désignation</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 px-2 w-32 tracking-widest">Code-barres</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-center px-2 w-20 tracking-widest">Qté</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-2 w-28 tracking-widest">P.U Achat</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-primary text-right px-2 w-28 tracking-widest">P.U Vente</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/30 text-right px-2 w-20 tracking-widest">C. Revient</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground/80 text-right px-4 w-28 tracking-widest">Total</TableHead>
                                 <TableHead className="w-10"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -185,7 +185,7 @@ export function NewIntakeForm() {
                                     <TableCell colSpan={8} className="h-64 text-center opacity-10">
                                         <div className="flex flex-col items-center gap-4">
                                             <Search className="h-12 w-12" />
-                                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">ابدأ بالبحث عن منتجات أو مسح فاتورة</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">Ajoutez des produits ou scannez une facture</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -211,7 +211,7 @@ export function NewIntakeForm() {
                                                         value={item.barcodes?.join(', ') || ''} 
                                                         onChange={e => updateItem(item.id, 'barcodes', e.target.value.split(',').map(b => b.trim()))}
                                                         className="w-full h-7 bg-black/20 border-none rounded-lg text-[9px] font-mono font-bold pl-6 pr-2 outline-none shadow-inner text-muted-foreground/80 focus:ring-1 focus:ring-primary/30"
-                                                        placeholder="أكواد..."
+                                                        placeholder="Code..."
                                                     />
                                                 </div>
                                             </TableCell>
@@ -244,7 +244,7 @@ export function NewIntakeForm() {
                                             <TableCell className="px-2 py-0 text-right">
                                                 <div className="flex flex-col items-end">
                                                     <span className="font-mono text-[9px] font-bold opacity-30">{landingCost.toFixed(2)}</span>
-                                                    <span className={cn("text-[7px] font-black uppercase", margin < 0 ? "text-destructive" : "text-emerald-500/40")}>{margin.toFixed(0)}% mrg</span>
+                                                    <span className={cn("text-[7px] font-black uppercase", margin < 0 ? "text-destructive" : "text-emerald-500/40")}>{margin.toFixed(0)}% marge</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="px-4 py-0 text-right font-mono font-black text-xs tabular-nums text-foreground/80">
@@ -271,16 +271,16 @@ export function NewIntakeForm() {
 
                         <div className="space-y-4 p-4 bg-black/20 rounded-2xl border border-white/5 shadow-inner">
                             <div className="space-y-1.5">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">المورد</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Fournisseur</Label>
                                 <Input 
-                                    placeholder="اسم الشريك..." 
+                                    placeholder="Nom du partenaire..." 
                                     className="h-10 text-sm font-black uppercase bg-muted/20 border-none shadow-inner"
                                     value={supplierName}
                                     onChange={e => setSupplierName(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">مرجع الفاتورة</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Référence Facture</Label>
                                 <div className="relative">
                                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-20" />
                                     <Input 
@@ -292,12 +292,12 @@ export function NewIntakeForm() {
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">تاريخ الفاتورة</Label>
+                                <Label className="text-[10px] font-black uppercase opacity-40 ml-1">Date d'Opération</Label>
                                 <DatePicker date={invoiceDate} setDate={setInvoiceDate} className="h-10" />
                             </div>
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1.5">
-                                    <Truck className="h-3 w-3" /> مصاريف الشحن
+                                    <Truck className="h-3 w-3" /> Frais de Transport
                                 </Label>
                                 <Input 
                                     type="number" 
@@ -311,7 +311,7 @@ export function NewIntakeForm() {
 
                         <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 flex justify-between items-center shadow-lg">
                             <div className="space-y-0.5">
-                                <p className="text-[9px] font-black uppercase text-primary/60 tracking-widest">صافي الاستلام</p>
+                                <p className="text-[9px] font-black uppercase text-primary/60 tracking-widest">Valeur de Réception</p>
                                 <span className="text-[8px] font-bold text-primary/40 uppercase">Total Net TTC</span>
                             </div>
                             <span className="text-xl font-black text-primary tabular-nums tracking-tighter">{formatCurrency(totalValue)}</span>
@@ -325,7 +325,7 @@ export function NewIntakeForm() {
                     className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all gap-3 mt-auto"
                 >
                     {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                    تأكيد الاستلام [Enter]
+                    Valider la Réception [Enter]
                 </Button>
             </div>
         </div>

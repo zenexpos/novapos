@@ -6,7 +6,7 @@ import {
     Activity, Clock, ShoppingCart, User, 
     Landmark, Wallet, Archive, History, ChevronRight
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -33,7 +33,7 @@ export function ActivityFeed({ items, isLoading }: ActivityFeedProps) {
             <CardHeader className="bg-muted/20 border-b border-white/5 p-4 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Activity className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Journal d'Activité Elite</CardTitle>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Activités Récentes</CardTitle>
                 </div>
                 <span className="text-[8px] font-black uppercase tracking-widest opacity-20">Temps Réel</span>
             </CardHeader>
@@ -91,7 +91,7 @@ export function ActivityFeed({ items, isLoading }: ActivityFeedProps) {
             </CardContent>
             <div className="p-4 bg-muted/5 border-t border-white/5 flex justify-center">
                 <button className="text-[9px] font-black uppercase text-muted-foreground/30 hover:text-primary tracking-[0.3em] transition-colors">
-                    Archives Systèmes Complètes
+                    Consulter les archives complètes
                 </button>
             </div>
         </Card>

@@ -19,8 +19,8 @@ import { useAppStore } from '@/stores/appStore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
- * لوحة القيادة Elite - iPOS Zen.
- * تم تنظيفها من الزوائد والمكررات للتركيز على الأداء والوضوح المالي العالي.
+ * Elite Dashboard - iPOS Zen.
+ * Optimized for performance and high financial clarity.
  */
 export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
@@ -41,12 +41,12 @@ export default function DashboardPage() {
     const data = dataResult.value;
     const isLoading = dataResult.isLoading || !mounted || !dateRangeMounted;
 
-    // التركيز على 4 مؤشرات أساسية فقط لتقليل التشتت (Zen Philosophy)
+    // Focus on 4 core indicators to minimize distraction (Zen Philosophy)
     const statCards = useMemo(() => [
-        { title: 'الرقم الإجمالي', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
-        { title: 'الربح الصافي', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
-        { title: 'المصاريف', value: formatCurrency(data?.stats.totalExpenses ?? 0), icon: Wallet, change: data?.stats.totalExpensesChange, positiveIsGood: false, color: 'red' as const },
-        { title: 'ديون العملاء', value: formatCurrency(data?.stats.totalOutstandingDebt ?? 0), icon: Users, color: 'violet' as const },
+        { title: 'Chiffre d\'Affaires', value: formatCurrency(data?.stats.totalRevenue ?? 0), icon: TrendingUp, change: data?.stats.totalRevenueChange, color: 'primary' as const },
+        { title: 'Bénéfice Net', value: formatCurrency(data?.stats.netProfit ?? 0), icon: Percent, change: data?.stats.netProfitChange, color: 'emerald' as const },
+        { title: 'Charges', value: formatCurrency(data?.stats.totalExpenses ?? 0), icon: Wallet, change: data?.stats.totalExpensesChange, positiveIsGood: false, color: 'red' as const },
+        { title: 'Dettes Clients', value: formatCurrency(data?.stats.totalOutstandingDebt ?? 0), icon: Users, color: 'violet' as const },
     ], [data]);
 
     if (!mounted) {
@@ -67,8 +67,8 @@ export default function DashboardPage() {
     return (
         <div className="p-6 space-y-8 max-w-[1800px] mx-auto animate-in fade-in duration-1000 pb-20">
             <PageHeader
-                title="مركز القيادة السيادي"
-                description="تحليل شامل للأداء المالي واللوجستي"
+                title="Centre de Commande Souverain"
+                description="Analyse stratégique de la performance financière et logistique"
                 icon={LayoutDashboard}
             >
                 <div className="flex gap-4 items-center">

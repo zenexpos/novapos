@@ -13,8 +13,8 @@ interface DashboardChartsProps {
 }
 
 /**
- * محرك التحليلات للوحة القيادة.
- * تم تصحيح استيراد Skeleton وضمان أداء عالٍ للعرض.
+ * Dashboard Analytics Engine.
+ * Optimized rendering and zero-clutter standard.
  */
 const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => {
     if (isLoading) {
@@ -38,8 +38,8 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                         <TrendingUp className="h-6 w-6" />
                     </div>
                     <div>
-                        <CardTitle className="text-xl font-black tracking-tighter uppercase">الديناميكية التجارية</CardTitle>
-                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">مقارنة الإيرادات مقابل الأرباح خلال الفترة</p>
+                        <CardTitle className="text-xl font-black tracking-tighter uppercase">Dynamique Commerciale</CardTitle>
+                        <p className="text-[10px] font-bold uppercase text-primary/50 tracking-widest mt-1">Comparaison des revenus vs bénéfices réels</p>
                     </div>
                 </div>
             </CardHeader>
@@ -93,7 +93,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                             <Area 
                                 type="monotone" 
                                 dataKey="revenue" 
-                                name="الإيرادات"
+                                name="Revenus"
                                 stroke="hsl(var(--chart-1))" 
                                 strokeWidth={4}
                                 fillOpacity={1} 
@@ -103,7 +103,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                             <Area 
                                 type="monotone" 
                                 dataKey="profit" 
-                                name="صافي الربح"
+                                name="Bénéfice Net"
                                 stroke="hsl(var(--chart-2))" 
                                 strokeWidth={3}
                                 strokeDasharray="5 5"
@@ -116,7 +116,7 @@ const DashboardChartsComponent = ({ data, isLoading }: DashboardChartsProps) => 
                 ) : (
                     <div className="flex flex-col items-center justify-center opacity-20 text-center">
                         <BarChart3 className="h-16 w-16 mb-4" />
-                        <p className="text-xs font-black uppercase tracking-widest">لا توجد بيانات لهذه الفترة</p>
+                        <p className="text-xs font-black uppercase tracking-widest">Aucune donnée disponible</p>
                     </div>
                 )}
             </CardContent>

@@ -52,25 +52,25 @@ export function ReturnStats({ returns, isLoading }: ReturnStatsProps) {
     return (
         <div className="grid gap-1.5 grid-cols-1 sm:grid-cols-3 animate-in fade-in duration-500">
             <StatCard 
-                title="إجمالي المرتجعات" 
+                title="Total Mouvements" 
                 value={formatCurrency(stats.totalValue)} 
                 icon={Undo2} 
                 colorClass="bg-primary/10 text-primary"
-                subtitle={`${stats.count} عملية`}
+                subtitle={`${stats.count} retours`}
             />
             <StatCard 
-                title="التعويض النقدي" 
+                title="Remboursements Cash" 
                 value={formatCurrency(stats.totalRefunded)} 
                 icon={RotateCcw} 
                 colorClass="bg-emerald-500/10 text-emerald-500"
-                subtitle="سيولة خارجة"
+                subtitle="Sorties de caisse"
             />
             <StatCard 
-                title="أرصدة العملاء" 
+                title="Crédits Déduits" 
                 value={formatCurrency(stats.totalValue - stats.totalRefunded)} 
                 icon={TrendingDown} 
                 colorClass="bg-amber-500/10 text-amber-500"
-                subtitle="مخصوم من الديون"
+                subtitle="Avoirs clients"
             />
         </div>
     );

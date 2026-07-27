@@ -73,7 +73,7 @@ export function EmptyState({
                             <ArrowRight className="h-4 w-4 ml-4 opacity-40 group-hover:translate-x-1 transition-transform" />
                         </Button>
                         <div className="mt-8 flex items-center justify-center gap-3 text-[11px] font-black text-primary/60 uppercase tracking-[0.2em] animate-pulse">
-                            <MousePointer2 className="h-4 w-4" /> انقر هنا للبدء
+                            <MousePointer2 className="h-4 w-4" /> Cliquez pour commencer
                         </div>
                     </div>
                 )}
