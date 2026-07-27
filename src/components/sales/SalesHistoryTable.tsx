@@ -5,7 +5,7 @@ import type { Sale, Customer } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, FileText, Trash2, Printer, CheckCircle, AlertCircle, Clock, Hash, User, HandCoins, Receipt as ReceiptIcon } from 'lucide-react';
+import { MoreHorizontal, Clock, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { safeToDate, formatCurrency, cn } from '@/lib/utils';
@@ -33,9 +33,9 @@ export const SalesHistoryTable = memo(({
     onCancel 
 }: SalesHistoryTableProps) => {
     const statusMap = {
-        paid: { text: 'كاش', className: 'bg-emerald-500/5 text-emerald-600 border-transparent' },
-        partial: { text: 'جزئي', className: 'bg-amber-500/5 text-amber-600 border-transparent' },
-        unpaid: { text: 'دين', className: 'bg-red-500/5 text-red-600 border-transparent' },
+        paid: { text: 'كاش', className: 'bg-emerald-500/10 text-emerald-600 border-transparent' },
+        partial: { text: 'جزئي', className: 'bg-amber-500/10 text-amber-600 border-transparent' },
+        unpaid: { text: 'دين', className: 'bg-red-500/10 text-red-600 border-transparent' },
     };
 
     const handleToggleAll = (checked: boolean) => {
@@ -49,23 +49,23 @@ export const SalesHistoryTable = memo(({
     const isAllSelected = historyItems.length > 0 && selectedItems.size === historyItems.length;
 
     return (
-        <div className="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden shadow-sm">
+        <div className="rounded-xl border bg-card/30 overflow-hidden shadow-sm">
             <Table>
                 <TableHeader className="bg-muted/30">
-                    <TableRow className="border-none h-8">
-                        <TableHead className="w-[30px] px-2">
+                    <TableRow className="border-none h-7">
+                        <TableHead className="w-[30px] px-2 text-center">
                            <Checkbox
                                 checked={isAllSelected}
                                 onCheckedChange={handleToggleAll}
                                 className="h-3 w-3 border-primary/20 data-[state=checked]:bg-primary"
                             />
                         </TableHead>
-                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الوقت</TableHead>
-                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">المرجع</TableHead>
-                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الشريك</TableHead>
-                        <TableHead className="px-1 text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">الحالة</TableHead>
-                        <TableHead className="px-1 text-right text-[8px] font-black uppercase text-primary tracking-widest">القيمة</TableHead>
-                        <TableHead className="w-[40px] px-2"></TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">التوقيت</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">المرجع</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">الشريك</TableHead>
+                        <TableHead className="px-1 text-[7px] font-black uppercase text-muted-foreground/40 tracking-widest">الحالة</TableHead>
+                        <TableHead className="px-1 text-right text-[7px] font-black uppercase text-primary tracking-widest">القيمة</TableHead>
+                        <TableHead className="w-[35px] px-2"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -86,12 +86,12 @@ export const SalesHistoryTable = memo(({
                                 key={uuid} 
                                 onClick={() => onToggleSelection(uuid)}
                                 className={cn(
-                                    "group transition-all border-b border-white/5 cursor-pointer h-8",
-                                    isSelected ? "bg-primary/5" : "hover:bg-primary/5",
+                                    "group transition-all border-b border-border/20 cursor-pointer h-7",
+                                    isSelected ? "bg-primary/5" : "hover:bg-muted/10",
                                     isCancelled && "opacity-30 grayscale"
                                 )}
                             >
-                                <TableCell className="px-2 py-0" onClick={(e) => e.stopPropagation()}>
+                                <TableCell className="px-2 py-0 text-center" onClick={(e) => e.stopPropagation()}>
                                     <Checkbox 
                                         checked={isSelected} 
                                         onCheckedChange={() => onToggleSelection(uuid)}
@@ -99,42 +99,42 @@ export const SalesHistoryTable = memo(({
                                     />
                                 </TableCell>
                                 <TableCell className="px-1 py-0 whitespace-nowrap">
-                                    <span className="font-bold text-[9px] tabular-nums">{format(item.date, 'dd/MM HH:mm')}</span>
+                                    <span className="font-bold text-[8px] tabular-nums opacity-60">{format(item.date, 'dd/MM HH:mm')}</span>
                                 </TableCell>
                                 <TableCell className="px-1 py-0">
-                                    <span className="text-[8px] font-mono font-bold opacity-30 tracking-tighter">
+                                    <span className="text-[8px] font-mono font-bold opacity-20">
                                         {isSale ? item.data.invoiceNumber.slice(-6) : 'PYM-RCV'}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-1 py-0">
-                                    <span className="font-bold text-[9px] uppercase truncate max-w-[120px] block transition-colors group-hover:text-primary">
+                                    <span className="font-bold text-[8px] uppercase truncate max-w-[100px] block group-hover:text-primary transition-colors">
                                         {displayName}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-1 py-0">
                                     {isCancelled ? (
-                                        <span className="text-[7px] font-black uppercase opacity-20">ملغاة</span>
+                                        <span className="text-[6px] font-black uppercase opacity-20">ملغاة</span>
                                     ) : isSale ? (
                                         <Badge variant="outline" className={cn("px-1 py-0 text-[6px] font-black uppercase border-none", statusMap[item.data.paymentStatus].className)}>
                                             {statusMap[item.data.paymentStatus].text}
                                         </Badge>
                                     ) : (
-                                        <span className="text-[7px] font-black text-emerald-600 uppercase opacity-40 italic">تحصيل</span>
+                                        <span className="text-[6px] font-black text-emerald-600 uppercase opacity-30 italic">تحصيل</span>
                                     )}
                                 </TableCell>
                                 <TableCell className="px-1 py-0 text-right">
                                     <span className={cn(
-                                        "font-black text-[10px] tabular-nums tracking-tighter",
+                                        "font-black text-[9px] tabular-nums tracking-tighter",
                                         isSale ? "text-foreground" : "text-emerald-600"
                                     )}>
-                                        {isSale ? formatCurrency(item.data.total) : formatCurrency((item.data as any).amount)}
+                                        {formatCurrency(isSale ? item.data.total : (item.data as any).amount)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="px-2 py-0 text-right" onClick={(e) => e.stopPropagation()}>
                                     {isSale && !isCancelled && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all">
+                                                <button className="h-5 w-5 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-opacity">
                                                     <MoreHorizontal className="h-3 w-3" />
                                                 </button>
                                             </DropdownMenuTrigger>

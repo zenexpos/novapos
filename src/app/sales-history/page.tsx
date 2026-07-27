@@ -8,17 +8,8 @@ import type { Sale, Customer, Payment } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { 
-    Search, 
-    LayoutGrid, 
-    List, 
-    RefreshCw, 
-    FilterX, 
-    TrendingUp,
-    Calendar,
-    HandCoins,
-    Receipt as ReceiptIcon,
-    FileDown,
-    X
+    Search, LayoutGrid, List, RefreshCw, FilterX, TrendingUp, 
+    Receipt as ReceiptIcon, FileDown, X
 } from 'lucide-react';
 import { SalesHistoryCard } from '@/components/sales/SalesHistoryCard';
 import { SalesHistoryTable } from '@/components/sales/SalesHistoryTable';
@@ -40,7 +31,6 @@ import { ConfirmAlertDialog } from '@/components/ui/ConfirmAlertDialog';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
-import { Badge } from '@/components/ui/badge';
 import { exportService } from '@/services/shared/export.service';
 
 type SalesStatus = 'all' | 'paid' | 'partial' | 'unpaid';
@@ -120,12 +110,11 @@ export default function SalesHistoryPage() {
 
     const stats = useMemo(() => {
         if (!historyData) return { totalRevenue: 0, totalReceived: 0, totalDebt: 0, count: 0 };
-        let revCents = 0; let recCents = 0; let count = 0;
+        let revCents = 0; let recCents = 0;
         historyData.forEach(item => {
             if (item.type === 'sale' && !item.data.isCancelled) {
                 revCents += Math.round(safeNumber(item.data.total) * 100);
                 recCents += Math.round(safeNumber(item.data.amountPaid) * 100);
-                count++;
             } else if (item.type === 'payment') {
                 recCents += Math.round(safeNumber(item.data.amount) * 100);
             }
@@ -133,32 +122,8 @@ export default function SalesHistoryPage() {
         return { 
             totalRevenue: revCents / 100, 
             totalReceived: recCents / 100, 
-            totalDebt: Math.max(0, (revCents - recCents) / 100), 
-            count 
+            totalDebt: Math.max(0, (revCents - recCents) / 100)
         };
-    }, [historyData]);
-
-    const chartData = useMemo(() => {
-        if (!historyData || historyData.length === 0) return [];
-        const dataMap = new Map<string, { fullDate: string, totalCents: number, receivedCents: number }>();
-        historyData.forEach(item => {
-            const sortKey = format(item.date, 'yyyy-MM-dd');
-            const current = dataMap.get(sortKey) || { fullDate: sortKey, totalCents: 0, receivedCents: 0 };
-            if (item.type === 'sale' && !item.data.isCancelled) {
-                current.totalCents += Math.round(safeNumber(item.data.total) * 100);
-                current.receivedCents += Math.round(safeNumber(item.data.amountPaid) * 100);
-            } else if (item.type === 'payment') {
-                current.receivedCents += Math.round(safeNumber(item.data.amount) * 100);
-            }
-            dataMap.set(sortKey, current);
-        });
-        return Array.from(dataMap.values())
-            .sort((a, b) => a.fullDate.localeCompare(b.fullDate))
-            .map(d => ({ 
-                date: format(parseISO(d.fullDate), 'dd/MM'), 
-                total: d.totalCents / 100, 
-                received: d.receivedCents / 100 
-            }));
     }, [historyData]);
 
     const handleToggleSelection = (uuid: string) => {
@@ -189,12 +154,11 @@ export default function SalesHistoryPage() {
             : historyData;
 
         const data = toExport.map(item => ({
-            'التاريخ': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
+            'الوقت': formatDate(item.date, 'dd/MM/yyyy HH:mm'),
             'النوع': item.type === 'sale' ? 'بيع' : 'تحصيل دين',
             'المرجع': item.type === 'sale' ? item.data.invoiceNumber : 'CASH-RCV',
             'العميل': item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'عابر',
-            'إجمالي العملية': item.type === 'sale' ? item.data.total : item.data.amount,
-            'المقبوض': item.type === 'sale' ? item.data.amountPaid : item.data.amount,
+            'إجمالي': item.type === 'sale' ? item.data.total : item.data.amount,
             'الحالة': item.type === 'sale' ? (item.data.isCancelled ? 'ملغاة' : item.data.paymentStatus) : 'منجز'
         }));
 
@@ -208,91 +172,73 @@ export default function SalesHistoryPage() {
     const isFiltered = searchQuery !== '' || filterStatus !== 'all' || !!dateRange?.from;
     
     return (
-        <div className="p-4 space-y-4 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
-            <PageHeader title="سجل التدفقات المالية" description="الأرشيف المركزي للمبيعات وتحصيل الديون">
+        <div className="p-3 space-y-3 max-w-[1800px] mx-auto animate-in fade-in duration-500 pb-24">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">سجل التدفقات المالية</h1>
+                    <p className="text-[9px] font-bold text-muted-foreground/50 tracking-widest uppercase mt-1">الأرشيف المركزي للمبيعات والتحصيل</p>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="rounded-lg font-bold gap-2">
-                        <FileDown className="h-4 w-4" /> تصدير
+                    <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-8 rounded-lg font-bold text-[10px] uppercase gap-2">
+                        <FileDown className="h-3.5 w-3.5" /> تصدير
                     </Button>
-                    <DateRangePicker date={dateRange} setDate={setDate} className="h-9" />
-                    <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" onClick={() => historyDataResult.refresh()}>
-                        <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
+                    <DateRangePicker date={dateRange} setDate={setDate} className="h-8 text-[10px]" />
+                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => historyDataResult.refresh()}>
+                        <RefreshCw className={cn("h-3.5 w-3.5 text-primary", isLoading && "animate-spin")} />
                     </Button>
                 </div>
-            </PageHeader>
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-1 space-y-4">
-                    <Card className="rounded-xl border-none bg-card/40 shadow-sm overflow-hidden">
-                        <CardHeader className="bg-primary/5 border-b border-white/5 p-4">
-                            <CardTitle className="text-[10px] font-black uppercase text-primary tracking-widest">الأداء المالي</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 space-y-4">
-                            <div className="space-y-0.5">
-                                <p className="text-[9px] font-bold text-muted-foreground/40 uppercase">حجم المبيعات</p>
-                                <p className="text-2xl font-black tracking-tighter text-primary tabular-nums">{formatCurrency(stats.totalRevenue)}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <div className="lg:col-span-1 space-y-3">
+                    <Card className="rounded-xl border bg-card/50 shadow-sm overflow-hidden">
+                        <CardContent className="p-3 space-y-3">
+                            <div>
+                                <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest mb-1">حجم المبيعات</p>
+                                <p className="text-xl font-black tracking-tighter text-primary tabular-nums leading-none">{formatCurrency(stats.totalRevenue)}</p>
                             </div>
-                            <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-                                <p className="text-[8px] font-bold uppercase text-emerald-600 mb-0.5">السيولة المحصلة</p>
-                                <p className="font-black text-lg text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
-                            </div>
-                            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
-                                <p className="text-[8px] font-bold uppercase text-red-600 mb-0.5">ديون قيد التحصيل</p>
-                                <p className="font-black text-lg text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
+                            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-white/5">
+                                <div>
+                                    <p className="text-[7px] font-bold uppercase text-emerald-600/60 mb-0.5">السيولة المحصلة</p>
+                                    <p className="font-black text-sm text-emerald-600 tracking-tight tabular-nums">{formatCurrency(stats.totalReceived)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[7px] font-bold uppercase text-red-600/60 mb-0.5">ديون قيد التحصيل</p>
+                                    <p className="font-black text-sm text-red-600 tracking-tight tabular-nums">{formatCurrency(stats.totalDebt)}</p>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-xl border-none bg-card/40 p-4 space-y-4">
+                    <Card className="rounded-xl border bg-card/30 p-3 space-y-3">
                         <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40" />
-                            <Input ref={searchInputRef} placeholder="رقم الفاتورة... [F3]" className="pl-9 h-9 rounded-lg bg-black/20 border-none font-bold text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/40" />
+                            <Input ref={searchInputRef} placeholder="رقم الفاتورة... [F3]" className="pl-8 h-8 rounded-lg bg-black/10 border-none font-bold text-[10px]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-2 gap-1">
                             {(['all', 'paid', 'partial', 'unpaid'] as SalesStatus[]).map(s => (
-                                <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-2 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-wider transition-all", filterStatus === s ? "bg-primary text-primary-foreground border-primary" : "bg-black/10 border-transparent text-muted-foreground/60 hover:bg-black/20")}>
-                                    {s === 'all' ? 'الكل' : s === 'paid' ? 'مسددة' : s === 'partial' ? 'جزئية' : 'ديون'}
+                                <button key={s} onClick={() => setFilterStatus(s)} className={cn("px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all", filterStatus === s ? "bg-primary text-primary-foreground" : "bg-black/5 text-muted-foreground/60 hover:bg-black/10")}>
+                                    {s === 'all' ? 'الكل' : s === 'paid' ? 'كاش' : s === 'partial' ? 'جزئي' : 'دين'}
                                 </button>
                             ))}
                         </div>
-                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/10 text-[9px] font-bold uppercase rounded-lg h-8 gap-2"><FilterX className="h-3 w-3" /> تصفير</Button>}
+                        {isFiltered && <Button variant="ghost" onClick={resetFilters} className="w-full text-destructive hover:bg-destructive/5 text-[8px] font-bold uppercase h-7 gap-1.5"><FilterX className="h-3 w-3" /> تصفير</Button>}
                     </Card>
                 </div>
 
-                <div className="lg:col-span-4 space-y-4">
-                    <Card className="rounded-xl border-none bg-card/40 shadow-sm overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between p-3 border-b border-white/5 bg-muted/20">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10 text-primary"><TrendingUp className="h-4 w-4" /></div>
-                                <CardTitle className="text-sm font-black tracking-tight uppercase">التدفق الزمني</CardTitle>
-                            </div>
-                            <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg">
-                                <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('grid')}><LayoutGrid className="h-4 w-4"/></Button>
-                                <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="rounded-md h-7 w-7" onClick={() => setViewMode('list')}><List className="h-4 w-4"/></Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="h-48 p-2">
-                            {!isLoading && chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/><stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/></linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.05)" />
-                                        <XAxis dataKey="date" fontSize={8} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" dy={5} />
-                                        <YAxis fontSize={8} fontWeight="900" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground) / 0.4)" />
-                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card) / 0.9)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.05)'}} itemStyle={{ fontSize: '10px', fontWeight: '900' }} />
-                                        <Area type="monotone" dataKey="total" name="المبيعات" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} isAnimationActive={false} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            ) : <div className="h-full flex items-center justify-center opacity-10 text-[10px] font-black uppercase">لا توجد بيانات</div>}
-                        </CardContent>
-                    </Card>
+                <div className="lg:col-span-4 space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-1.5 p-1 bg-muted/20 rounded-lg border">
+                            <Button variant={viewMode === 'grid' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('grid')}><LayoutGrid className="h-3.5 w-3.5"/></Button>
+                            <Button variant={viewMode === 'list' ? 'secondary': 'ghost'} size="icon" className="h-6 w-6 rounded-md" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5"/></Button>
+                        </div>
+                        <span className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">{historyData?.length || 0} عملية مؤرشفة</span>
+                    </div>
 
-                    <div className="min-h-[400px]">
+                    <div className="min-h-[500px]">
                         {isLoading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-card/40 border border-white/5 animate-pulse" />)}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-card/20 border-none animate-pulse" />)}
                             </div>
                         ) : historyData && historyData.length > 0 ? (
                             viewMode === 'list' ? (
@@ -306,41 +252,41 @@ export default function SalesHistoryPage() {
                                     onCancel={(s) => { setSelectedSale(s); setIsCancelOpen(true); }} 
                                 />
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                                     {historyData.map(item => (
                                         item.type === 'sale' ? (
                                             <SalesHistoryCard key={item.data.uuid} sale={item.data} customerName={item.data.customerUuid ? `${customerMap.get(item.data.customerUuid)?.firstName} ${customerMap.get(item.data.customerUuid)?.lastName}` : 'عابر'} isSelected={selectedItems.has(item.data.uuid)} onToggleSelection={() => handleToggleSelection(item.data.uuid)} onViewDetails={(sale) => { setSelectedSale(sale); setIsDetailsOpen(true); }} onCancelSale={(sale) => { setSelectedSale(sale); setIsCancelOpen(true); }} />
                                         ) : (
-                                            <Card key={item.data.uuid} className="rounded-xl border-none bg-card/40 p-4 relative overflow-hidden group shadow-sm">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500"><HandCoins className="h-4 w-4" /></div>
-                                                    <Badge className="bg-emerald-500 text-white border-none uppercase text-[7px] font-black px-1.5 py-0">تحصيل</Badge>
+                                            <Card key={item.data.uuid} className="rounded-xl border bg-card/30 p-3 relative overflow-hidden group shadow-sm">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-[7px] font-black uppercase text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">تحصيل</span>
+                                                    <span className="text-[7px] text-muted-foreground/30 font-bold uppercase">{format(item.date, 'd MMM, HH:mm', { locale: fr })}</span>
                                                 </div>
                                                 <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">المبلغ المقبوض</p>
-                                                <p className="text-xl font-black text-emerald-600 tracking-tighter tabular-nums">{formatCurrency(item.data.amount)}</p>
-                                                <div className="mt-3 pt-3 border-t border-white/5">
-                                                    <p className="font-black text-xs truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p>
-                                                    <p className="text-[7px] text-muted-foreground/30 font-bold uppercase mt-1">{format(item.date, 'd MMMM, HH:mm', { locale: fr })}</p>
+                                                <p className="text-lg font-black text-emerald-600 tracking-tighter tabular-nums leading-none">{formatCurrency(item.data.amount)}</p>
+                                                <div className="mt-2 pt-2 border-t border-white/5">
+                                                    <p className="font-bold text-[10px] truncate uppercase">{customerMap.get(item.data.customerUuid)?.firstName} {customerMap.get(item.data.customerUuid)?.lastName}</p>
                                                 </div>
                                             </Card>
                                         )
                                     ))}
                                 </div>
                             )
-                        ) : <EmptyState icon={ReceiptIcon} title="السجل فارغ" description="لم يتم تسجيل أي عمليات." />}
+                        ) : <EmptyState icon={ReceiptIcon} title="السجل فارغ" description="لم يتم تسجيل أي عمليات بعد." />}
                     </div>
                 </div>
             </div>
 
             {selectedItems.size > 0 && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-6 py-2.5 flex items-center gap-6">
-                        <span className="text-[9px] font-black uppercase text-primary">{selectedItems.size} فواتير</span>
-                        <div className="flex items-center gap-2">
-                            <button onClick={handleExportCsv} className="text-[9px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
-                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[9px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
+                    <div className="bg-card/90 backdrop-blur-md border border-primary/20 shadow-2xl rounded-full px-5 py-2 flex items-center gap-4">
+                        <span className="text-[9px] font-black uppercase text-primary">{selectedItems.size} عمليات</span>
+                        <div className="h-3 w-px bg-border" />
+                        <div className="flex items-center gap-3">
+                            <button onClick={handleExportCsv} className="text-[8px] font-black uppercase hover:text-primary transition-colors">تصدير</button>
+                            <button onClick={() => setIsBulkCancelConfirmOpen(true)} className="text-[8px] font-black uppercase text-destructive hover:opacity-80 transition-colors">إلغاء</button>
                         </div>
-                        <button onClick={() => setSelectedItems(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3.5 w-3.5 opacity-20" /></button>
+                        <button onClick={() => setSelectedItems(new Set())} className="p-1 rounded-full hover:bg-white/10"><X className="h-3 w-3 opacity-20" /></button>
                     </div>
                 </div>
             )}
