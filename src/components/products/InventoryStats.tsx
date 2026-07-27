@@ -3,9 +3,9 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package, AlertTriangle, PackageX, CalendarClock, TrendingUp, Percent, ShoppingBag, Landmark } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Percent, Landmark } from 'lucide-react';
 import { differenceInDays, startOfDay, startOfMonth } from 'date-fns';
-import { formatCurrency, cn, safeNumber, preciseMultiply, calculateMarginRate } from '@/lib/utils';
+import { formatCurrency, cn, safeNumber, preciseMultiply, calculateMarginRate, roundFinancial } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import type { Product, Sale } from '@/lib/types';
@@ -13,13 +13,13 @@ import type { Product, Sale } from '@/lib/types';
 const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: React.ElementType, colorClass: string, subtitle?: string }) => (
     <Card className="app-card h-full bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 p-6">
-            <CardTitle className="text-[10px] font-semibold uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
             <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
                 <Icon className="h-5 w-5" />
             </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-            <div className="text-xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
+            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
             {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/40 mt-1">{subtitle}</p>}
         </CardContent>
     </Card>
@@ -78,8 +78,6 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
             }
         });
 
-        const soldMonthCount = salesMonth.reduce((acc, s) => s.isCancelled ? acc : acc + s.items.reduce((sum, i) => sum + i.quantity, 0), 0);
-
         return {
             total: products.filter(p => !p.deletedAt).length,
             active: activeCount,
@@ -89,9 +87,8 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
             totalValue: totalValAccumulatorCents / 100,
             totalRetail: totalRetailAccumulatorCents / 100,
             avgMargin: marginCount > 0 ? totalMargin / marginCount : 0,
-            soldMonth: soldMonthCount
         };
-    }, [products, salesMonth]);
+    }, [products]);
 
     if (productsResult.value === undefined || externalLoading) {
         return (
@@ -117,7 +114,7 @@ export const InventoryStats = ({ isLoading: externalLoading }: { isLoading?: boo
                 value={formatCurrency(stats.totalRetail)} 
                 icon={TrendingUp} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle={`Profit estimé: ${formatCurrency(stats.totalRetail - stats.totalValue)}`} 
+                subtitle={`Profit estimé: ${formatCurrency(roundFinancial(stats.totalRetail - stats.totalValue))}`} 
             />
             <StatCard 
                 title="Marge Moyenne" 

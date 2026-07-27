@@ -9,14 +9,12 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import type { Product } from '@/lib/types';
-import { formatCurrency, formatPercent, calculateMarginRate, cn } from '@/lib/utils';
+import { formatCurrency, formatPercent, calculateMarginRate, safeNumber, preciseMultiply, roundFinancial } from '@/lib/utils';
 import { 
     Package, 
     TrendingUp, 
-    History, 
     Coins, 
     Tag, 
-    Calendar, 
     Building, 
     Edit,
     ArrowRight,
@@ -38,10 +36,14 @@ interface ProductDetailsSheetProps {
 export function ProductDetailsSheet({ isOpen, onOpenChange, product, onEdit }: ProductDetailsSheetProps) {
     if (!product) return null;
 
-    const marginRate = calculateMarginRate(product.price, product.purchasePrice);
-    const inventoryValue = product.quantity * product.purchasePrice;
-    const potentialRevenue = product.quantity * product.price;
-    const potentialProfit = potentialRevenue - inventoryValue;
+    const qty = safeNumber(product.quantity);
+    const cost = safeNumber(product.purchasePrice);
+    const price = safeNumber(product.price);
+
+    const marginRate = calculateMarginRate(price, cost);
+    const inventoryValue = preciseMultiply(qty, cost);
+    const potentialRevenue = preciseMultiply(qty, price);
+    const potentialProfit = roundFinancial(potentialRevenue - inventoryValue);
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -68,13 +70,13 @@ export function ProductDetailsSheet({ isOpen, onOpenChange, product, onEdit }: P
                     {/* SECTION : STATS DE STOCK */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <Box className="h-4 w-4 text-primary opacity-40" />
+                            <BoxIcon className="h-4 w-4 text-primary opacity-40" />
                             <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">Gestion des Unités</h4>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-1">
                                 <p className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">En Stock</p>
-                                <p className="text-3xl font-black tabular-nums">{product.quantity}<span className="text-xs ml-1 opacity-20">{product.unit ?? 'PCS'}</span></p>
+                                <p className="text-3xl font-black tabular-nums">{qty}<span className="text-xs ml-1 opacity-20">{product.unit ?? 'PCS'}</span></p>
                             </div>
                             <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-1">
                                 <p className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">Seuil Alerte</p>
@@ -92,17 +94,17 @@ export function ProductDetailsSheet({ isOpen, onOpenChange, product, onEdit }: P
                         <div className="space-y-3">
                             <div className="flex justify-between items-center p-4 rounded-xl border border-white/5 bg-muted/20">
                                 <span className="text-xs font-bold uppercase opacity-60">Prix d'Achat (PMP)</span>
-                                <span className="font-mono font-black text-sm">{formatCurrency(product.purchasePrice)}</span>
+                                <span className="font-mono font-black text-sm">{formatCurrency(cost)}</span>
                             </div>
                             <div className="flex justify-between items-center p-4 rounded-xl border border-primary/20 bg-primary/5">
                                 <span className="text-xs font-bold uppercase text-primary">Prix de Vente</span>
-                                <span className="font-mono font-black text-lg text-primary">{formatCurrency(product.price)}</span>
+                                <span className="font-mono font-black text-lg text-primary">{formatCurrency(price)}</span>
                             </div>
                             <div className="flex justify-between items-center p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
                                 <span className="text-xs font-bold uppercase text-emerald-600">Marge Brute</span>
                                 <div className="text-right">
                                     <p className="font-mono font-black text-lg text-emerald-600">{formatPercent(marginRate)}</p>
-                                    <p className="text-[8px] font-bold text-emerald-600/50 uppercase tracking-tighter">Profit net: {formatCurrency(product.price - product.purchasePrice)}/u</p>
+                                    <p className="text-[8px] font-bold text-emerald-600/50 uppercase tracking-tighter">Profit net: {formatCurrency(roundFinancial(price - cost))}/u</p>
                                 </div>
                             </div>
                         </div>
@@ -136,8 +138,8 @@ export function ProductDetailsSheet({ isOpen, onOpenChange, product, onEdit }: P
                                 <Building className="h-4 w-4 opacity-40" />
                             </div>
                             <div>
-                                <p className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">Fournisseur Attitré</p>
-                                <p className="text-xs font-bold">{product.supplierUuid ? 'Chargement...' : 'Non spécifié'}</p>
+                                <p className="text-[8px] font-black uppercase text-muted-foreground/40 tracking-widest">Dernier Mouvement</p>
+                                <p className="text-xs font-bold">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString('fr-FR') : 'Non spécifié'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/20 border border-white/5 group">
@@ -166,7 +168,7 @@ export function ProductDetailsSheet({ isOpen, onOpenChange, product, onEdit }: P
     );
 }
 
-function Box(props: any) {
+function BoxIcon(props: any) {
   return (
     <svg
       {...props}
