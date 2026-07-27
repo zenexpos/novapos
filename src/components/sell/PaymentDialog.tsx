@@ -179,7 +179,7 @@ function PaymentDialogContent({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="delivery-fee" className="text-[10px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1.5"><Truck className="h-3 w-3" /> سعر التوصيل</Label>
+                                <Label htmlFor="delivery-fee" className="text-[10px] font-black uppercase text-primary/60 ml-1 flex items-center gap-1.5"><Truck className="h-3 w-3" /> Frais de livraison</Label>
                                 <Input
                                     id="delivery-fee"
                                     type="text"
@@ -219,7 +219,7 @@ function PaymentDialogContent({
                                 </div>
                                 {isOverLimit && (
                                     <div className="p-3.5 bg-destructive/10 border border-destructive/20 rounded-xl space-y-3 shadow-inner">
-                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafンド Dépassé</div>
+                                        <div className="flex items-center gap-2 text-destructive text-[10px] font-black uppercase tracking-wide"><ShieldAlert className="h-4 w-4" />Plafond Dépassé</div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Autoriser exception</span>
                                             <Switch checked={approveOverLimit} onCheckedChange={setApproveOverLimit} className="data-[state=checked]:bg-destructive" />
@@ -250,4 +250,3 @@ function PaymentDialogContent({
 }
 
 export const PaymentDialog = memo(PaymentDialogContent);
-PaymentDialog.displayName = 'PaymentDialog';

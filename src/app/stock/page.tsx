@@ -365,7 +365,7 @@ export default function StockPage() {
             <SupplierDialog isOpen={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen} supplier={selectedSupplier} onSuccess={() => suppliersResult.refresh()} />
             
             <ConfirmAlertDialog isOpen={isDeleteSupplierOpen} onOpenChange={setIsDeleteSupplierOpen} title="Révoquer le partenaire ?" description="Seuls les comptes avec un solde nul peuvent être supprimés." onConfirm={performDeleteSupplier} confirmText="Révoquer" />
-            <ConfirmAlertDialog isOpen={isBulkDeleteSupplierOpen} onOpenChange={setIsBulkDeleteSupplierOpen} title="Supprimer la sélection ?" description="Seuls les comptes مع رصيد صفر سيتم حذفهم." onConfirm={handleBulkDeleteSuppliers} confirmText="Supprimer" />
+            <ConfirmAlertDialog isOpen={isBulkDeleteSupplierOpen} onOpenChange={setIsBulkDeleteSupplierOpen} title="Supprimer la sélection ?" description="Seuls les comptes avec un solde nul seront supprimés." onConfirm={handleBulkDeleteSuppliers} confirmText="Supprimer" />
         </div>
     );
 }

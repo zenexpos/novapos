@@ -183,14 +183,14 @@ export const useAppStore = create<AppState>()(
                         let itemsTotalPurchaseCents = 0;
                         const finalItems: StockIntakeStoredItem[] = [];
 
-                        // 1. حساب الإجمالي الكلي للمشتريات (بالسنتات لتجنب أخطاء الفواصل)
+                        // 1. Calcul du total des achats (en centimes pour éviter les erreurs de virgule)
                         intakeData.items.forEach(item => {
                             const qty = safeNumber(item.quantity);
                             const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
                             itemsTotalPurchaseCents += (pPriceCents * qty);
                         });
 
-                        // معامل توزيع مصاريف النقل تناسبياً بناءً على قيمة كل منتج
+                        // Facteur de distribution des frais de port proportionnellement à la valeur de chaque produit
                         const shippingFactor = itemsTotalPurchaseCents > 0 ? shippingCents / itemsTotalPurchaseCents : 0;
 
                         await db.transaction('rw', [
@@ -198,33 +198,33 @@ export const useAppStore = create<AppState>()(
                             db.inventory_logs, db.supplier_payments, db.sync_queue,
                             db.company_profile
                         ], async () => {
-                            // البحث عن المورد أو إنشاؤه
+                            // Recherche ou création du fournisseur
                             const supplier = await supplierService.findOrCreateSupplier(intakeData.supplierName, intakeData.supplierUuid);
 
                             for (const item of intakeData.items) {
                                 const qty = safeNumber(item.quantity);
                                 const pPriceCents = Math.round(safeNumber(item.purchasePrice) * 100);
                                 
-                                // حساب تكلفة الـ Revient الحقيقية (سعر الشراء + حصته من الشحن)
+                                // Calcul du coût de revient réel (prix d'achat + part du transport)
                                 const landing = roundFinancial((pPriceCents * (1 + shippingFactor)) / 100);
 
                                 let productUuid = item.productUuid;
                                 
                                 if (item.productUuid) {
-                                    // تحديث أسعار المنتج الحالي في القاعدة
+                                    // Mise à jour des prix du produit actuel dans la base
                                     await productService.updateProductFromIntake(item.productUuid, { 
                                         purchasePrice: safeNumber(item.purchasePrice), 
                                         price: safeNumber(item.price) > 0 ? safeNumber(item.price) : undefined 
                                     });
                                 } else if (item.isNew) {
-                                    // إنشاء منتج جديد تلقائياً في حال لم يكن موجوداً
+                                    // Création automatique d'un nouveau produit s'il n'existe pas
                                     productUuid = uuidv4();
                                     await db.products.add({ 
                                         uuid: productUuid, 
                                         name: item.name, 
                                         price: roundFinancial(safeNumber(item.price)), 
                                         purchasePrice: roundFinancial(safeNumber(item.purchasePrice)), 
-                                        quantity: 0, // سيتعدل فوراً عبر سجل المخزون أدناه
+                                        quantity: 0, // Sera ajusté immédiatement via le log d'inventaire ci-dessous
                                         minStockLevel: 0, 
                                         barcodes: item.barcodes || [], 
                                         unit: (item.unit as any) || 'Pièce', 
@@ -239,7 +239,7 @@ export const useAppStore = create<AppState>()(
                                     });
                                 }
                                 
-                                // تعديل المخزون مع تسجيل حركة التدفق (Audit Trail)
+                                // Ajustement du stock avec enregistrement du mouvement (Piste d'audit)
                                 if (productUuid && qty > 0) {
                                     await inventoryService.adjustStock(productUuid, qty, 'stock_intake', intakeUuid);
                                 }
@@ -256,7 +256,7 @@ export const useAppStore = create<AppState>()(
                                 }
                             }
 
-                            // حفظ فاتورة الاستلام في القاعدة
+                            // Sauvegarde du bon de réception dans la base
                             const total = roundFinancial((itemsTotalPurchaseCents + shippingCents) / 100);
                             const newIntake = { 
                                 uuid: intakeUuid, 
@@ -274,10 +274,10 @@ export const useAppStore = create<AppState>()(
                             
                             await db.stock_intakes.add(newIntake);
                             
-                            // تحديث رصيد المورد المستحق (Audit Supplier Balance)
+                            // Mise à jour du solde dû au fournisseur (Audit)
                             await supplierService.recalculateSupplierBalance(supplier.uuid);
                             
-                            // تسجيل العملية في طابور المزامنة السحابية
+                            // Enregistrement de l'opération dans la file de synchronisation cloud
                             await db.sync_queue.add({ 
                                 table: 'stock_intakes', 
                                 operation: 'CREATE', 
@@ -290,7 +290,7 @@ export const useAppStore = create<AppState>()(
                         return true;
                     } catch (err: any) {
                         console.error('[iPOS Stock Engine] Intake Failure:', err);
-                        toast.error('فشل في معالجة عملية الاستلام', { description: err.message });
+                        toast.error('Échec du traitement de la réception', { description: err.message });
                         return false;
                     }
                 },
