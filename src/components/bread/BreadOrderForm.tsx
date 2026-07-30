@@ -26,8 +26,8 @@ interface BreadOrderFormProps {
 }
 
 /**
- * BreadOrderForm Zen - Version Elite Corrigée.
- * Interface de saisie optimisée pour la productivité sans distraction.
+ * BreadOrderForm Zen Elite.
+ * Interface de saisie ultra-dense et corrigée pour la production.
  */
 export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }: BreadOrderFormProps) {
     const profile = useAppStore(state => state.companyProfile);
@@ -40,15 +40,17 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
     const [isRecurring, setIsRecurring] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Reactive customer list
+    // Flux réactif des clients
     const { value: clients } = useLiveQuery<Customer[]>(
         () => db.customers.filter(c => !c.deletedAt).toArray(),
         []
     );
 
     useEffect(() => {
-        if (isOpen && profile?.breadPrice) {
-            setUnitPrice(profile.breadPrice);
+        if (isOpen) {
+            if (profile?.breadPrice) setUnitPrice(profile.breadPrice);
+            // Reset local states
+            if (!selectedClientUuid) setMode('registered');
         }
     }, [isOpen, profile?.breadPrice]);
 
@@ -77,7 +79,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             let targetCustomerUuid = mode === 'registered' ? selectedClientUuid : undefined;
             let finalCustomName = mode === 'external' ? customName.trim() : undefined;
 
-            // Logic: Create account if recurring is checked for external client
+            // Logic Elite: Conversion automatique en compte abonné si récurrence activée
             if (mode === 'external' && isRecurring) {
                 const names = customName.trim().split(' ');
                 const newCustomer = await customerService.addCustomer({
@@ -99,7 +101,6 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                     }
                 });
             } else if (mode === 'registered' && isRecurring && selectedClientUuid) {
-                // Update existing client to recurring
                 const client = clients?.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
                     isBreadClient: true,
@@ -121,12 +122,12 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 pickupTime
             });
 
-            toast.success("Flux de distribution validé.");
+            toast.success("Flux logistique validé.");
             onSuccess?.();
             onOpenChange(false);
             resetForm();
         } catch (err: any) {
-            toast.error("Erreur technique lors de l'enregistrement.");
+            toast.error("Erreur d'enregistrement technique.");
         } finally {
             setIsLoading(false);
         }
@@ -142,11 +143,11 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             <DialogContent className="sm:max-w-[340px] p-0 overflow-hidden border-none bg-card shadow-2xl rounded-2xl">
                 <form onSubmit={handleAdd}>
                     <DialogHeader className="p-4 border-b border-border bg-muted/20">
-                        <DialogTitle className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60 text-center">Nouveau Flux Pain</DialogTitle>
+                        <DialogTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 text-center">Saisie Distribution</DialogTitle>
                     </DialogHeader>
 
                     <div className="p-4 space-y-5">
-                        {/* Mode Selector */}
+                        {/* Sélecteur de Mode */}
                         <div className="flex p-0.5 bg-muted/40 rounded-lg">
                             <button 
                                 type="button"
@@ -156,7 +157,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     mode === 'registered' ? "bg-card text-primary shadow-sm" : "text-muted-foreground/30 hover:text-muted-foreground"
                                 )}
                             >
-                                Client Elite
+                                Compte Elite
                             </button>
                             <button 
                                 type="button"
@@ -173,7 +174,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                         <div className="space-y-4">
                             {mode === 'registered' ? (
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Client Destinataire</Label>
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Assignation Client</Label>
                                     <Select value={selectedClientUuid} onValueChange={setSelectedClientUuid}>
                                         <SelectTrigger className="h-9 bg-muted/20 border-none font-bold text-xs">
                                             <SelectValue placeholder="Choisir un compte..." />
@@ -187,12 +188,12 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             ) : (
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Nom / Identité</Label>
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Identité / Nom</Label>
                                     <Input 
                                         className="h-9 bg-muted/20 border-none font-bold text-xs uppercase"
                                         value={customName}
                                         onChange={e => setCustomName(e.target.value)}
-                                        placeholder="Ex: Client Comptoire"
+                                        placeholder="NOM DU CLIENT"
                                         autoFocus
                                     />
                                 </div>
@@ -211,7 +212,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Heure de retrait</Label>
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Heure Retrait</Label>
                                     <Input 
                                         type="time" 
                                         className="h-9 bg-muted/20 border-none font-black text-center text-primary"
@@ -221,7 +222,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             </div>
 
-                            {/* Recurring Option */}
+                            {/* Option Abonnement */}
                             <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10 transition-colors hover:bg-primary/10">
                                 <Checkbox 
                                     id="recurring" 
@@ -230,8 +231,8 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     className="h-3.5 w-3.5 border-primary/30 data-[state=checked]:bg-primary"
                                 />
                                 <Label htmlFor="recurring" className="cursor-pointer flex flex-col -space-y-0.5">
-                                    <span className="text-[9px] font-black uppercase text-primary tracking-widest">Activer abonnement</span>
-                                    <span className="text-[7px] font-bold text-primary/40 uppercase">Génération quotidienne auto</span>
+                                    <span className="text-[9px] font-black uppercase text-primary tracking-widest">Activer Récurrence</span>
+                                    <span className="text-[7px] font-bold text-primary/40 uppercase">Génération automatique</span>
                                 </Label>
                             </div>
                         </div>
@@ -244,14 +245,14 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                             onClick={() => onOpenChange(false)} 
                             className="h-9 font-bold text-[9px] uppercase px-4 flex-1"
                         >
-                            Annuler
+                            Fermer
                         </Button>
                         <Button 
                             type="submit"
                             disabled={isLoading}
                             className="flex-[2] h-9 font-black text-[9px] uppercase tracking-widest shadow-lg"
                         >
-                            {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Valider Flux [Enter]'}
+                            {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Valider Flux'}
                         </Button>
                     </DialogFooter>
                 </form>
