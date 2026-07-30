@@ -2,7 +2,7 @@
 
 import { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingBag, CheckCircle2, XCircle, Truck, Landmark } from 'lucide-react';
+import { CheckCircle2, Truck, Landmark, Wallet, Layers } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
@@ -14,16 +14,16 @@ interface BreadStatsProps {
 }
 
 const StatCard = memo(({ title, value, icon: Icon, colorClass, subtitle }: { title: string, value: string, icon: any, colorClass: string, subtitle?: string }) => (
-    <Card className="app-card bg-card/40 backdrop-blur-sm border-white/5 rounded-lg group overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-6">
-            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground group-hover:text-primary transition-all duration-500 tracking-widest">{title}</CardTitle>
-            <div className={cn("p-3 rounded-2xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
+    <Card className="app-card bg-card/40 backdrop-blur-sm border-white/5 rounded-2xl group overflow-hidden transition-all hover:border-primary/20">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-5">
+            <CardTitle className="text-[10px] font-black uppercase text-muted-foreground/60 group-hover:text-primary transition-colors tracking-widest">{title}</CardTitle>
+            <div className={cn("p-2.5 rounded-xl shadow-inner transition-all duration-500 group-hover:scale-110", colorClass)}>
                 <Icon className="h-4 w-4" />
             </div>
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-            <div className="text-2xl font-black tracking-tighter text-foreground group-hover:scale-105 transition-transform duration-500 origin-left tabular-nums">{value}</div>
-            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1">{subtitle}</p>}
+        <CardContent className="px-5 pb-5">
+            <div className="text-2xl font-black tracking-tighter text-foreground tabular-nums leading-none">{value}</div>
+            {subtitle && <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/30 mt-1.5">{subtitle}</p>}
         </CardContent>
     </Card>
 ));
@@ -57,48 +57,48 @@ export const BreadStats = memo(({ date }: BreadStatsProps) => {
         return (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                 {[...Array(5)].map((_, i) => (
-                    <Card key={i} className="h-28 rounded-xl border border-white/5 animate-pulse bg-card/40" />
+                    <Card key={i} className="h-28 rounded-2xl border border-white/5 animate-pulse bg-card/40" />
                 ))}
             </div>
         );
     }
 
     return (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-500">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-700">
             <StatCard 
-                title="Volume" 
+                title="Volume Distribution" 
                 value={`${stats.totalPieces} PCS`} 
-                icon={ShoppingBag} 
+                icon={Layers} 
                 colorClass="bg-primary/10 text-primary" 
-                subtitle={`${stats.count} flux actifs`}
+                subtitle={`${stats.count} commandes actives`}
             />
             <StatCard 
-                title="Payés" 
-                value={String(stats.paidCount)} 
+                title="Liquidités Perçues" 
+                value={formatCurrency(stats.paidVal)} 
                 icon={CheckCircle2} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
-                subtitle={formatCurrency(stats.paidVal)}
+                subtitle={`${stats.paidCount} soldées cash`}
             />
             <StatCard 
-                title="Crédits" 
-                value={String(stats.unpaidCount)} 
-                icon={XCircle} 
-                colorClass="bg-orange-500/10 text-orange-500" 
-                subtitle={formatCurrency(stats.unpaidVal)}
+                title="Reste à Recouvrer" 
+                value={formatCurrency(stats.unpaidVal)} 
+                icon={Wallet} 
+                colorClass="bg-red-500/10 text-red-500" 
+                subtitle={`${stats.unpaidCount} dettes générées`}
             />
             <StatCard 
-                title="Attente" 
+                title="Logistique Reste" 
                 value={`${stats.unreceivedPieces} PCS`} 
                 icon={Truck} 
                 colorClass="bg-amber-500/10 text-amber-500" 
-                subtitle="À distribuer"
+                subtitle="En attente de retrait"
             />
             <StatCard 
-                title="Valeur" 
+                title="Valeur Prévisionnelle" 
                 value={formatCurrency(stats.totalVal)} 
                 icon={Landmark} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle="Chiffre estimé"
+                subtitle="Chiffre d'affaires estimé"
             />
         </div>
     );
