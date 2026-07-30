@@ -148,7 +148,6 @@ class BreadService {
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
                 // Create the sale entity via central finance service
-                // Use a standard item object that matches the structure expected by createSale
                 const breadItem = {
                     uuid: 'BREAD_VIRTUAL_PROD',
                     name: `Flux Pain - Ref ${order.orderNumber}`,

@@ -1,7 +1,7 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Customer, ImportAnalysis, CustomerFormData, CustomerUpdateInput, ProductReturn } from '@/lib/types';
+import type { Customer, ImportAnalysis, CustomerFormData, CustomerUpdateInput, ProductReturn, BreadProfile } from '@/lib/types';
 import { db } from '@/lib/db';
 import Papa from 'papaparse';
 import { startOfMonth, subMonths, format, startOfDay } from 'date-fns';
@@ -105,12 +105,22 @@ class CustomerService {
         const existing = await db.customers.where('uuid').equals(uuid).first();
         if (!existing?.id) throw new Error('Client non identifié.');
 
+        const { breadProfile, ...rest } = updateData;
+
         const finalUpdate: Partial<Customer> = {
-            ...updateData,
+            ...(rest as any),
             updatedAt: new Date(),
             syncStatus: 'pending',
             version: (existing.version || 1) + 1
         };
+
+        if (breadProfile) {
+            const currentProfile = existing.breadProfile || { recurrenceType: 'aucun', defaultQuantity: 0, weeklySchedule: {} };
+            finalUpdate.breadProfile = {
+                ...currentProfile,
+                ...breadProfile
+            } as BreadProfile;
+        }
 
         if (updateData.firstName || updateData.lastName) {
             const f = sanitizeString(updateData.firstName || existing.firstName);
@@ -147,7 +157,6 @@ class CustomerService {
             const payments = await db.payments.where('customerUuid').equals(customerUuid).toArray();
             const returns = await db.product_returns.where('customerUuid').equals(customerUuid).toArray();
 
-            // Precision audit using cents-based arithmetic
             let debtCents = Math.round(safeNumber(customer.initialBalance) * 100);
             let spentCents = 0;
 
