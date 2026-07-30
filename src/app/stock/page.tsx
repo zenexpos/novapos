@@ -69,12 +69,12 @@ export default function StockPage() {
         const arr = await db.suppliers.filter(s => !s.deletedAt).toArray();
         return arr.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
-    const suppliers = suppliersResult.value ?? (EMPTY_ARRAY as Supplier[]);
+    const suppliers = suppliersResult.value ?? (EMPTY_ARRAY as unknown as Supplier[]);
     const supplierMap = useMemo(() => new Map(suppliers.map(s => [s.uuid, s])), [suppliers]);
     
     // 2. Intakes Query
     const stockIntakesResult = useLiveQuery<StockIntake[]>(async () => {
-        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as StockIntake[];
+        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as unknown as StockIntake[];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
@@ -92,11 +92,11 @@ export default function StockPage() {
             (i.supplierUuid && matchingSupplierUuids.includes(i.supplierUuid))
         ).sort((a,b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
     }, [isMounted, dateRange, searchQuery, suppliers]);
-    const stockIntakes = stockIntakesResult.value ?? (EMPTY_ARRAY as StockIntake[]);
+    const stockIntakes = stockIntakesResult.value ?? (EMPTY_ARRAY as unknown as StockIntake[]);
 
     // 3. Inventory Logs Query with Join
     const inventoryLogsResult = useLiveQuery<EnrichedLog[]>(async () => {
-        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as EnrichedLog[];
+        if (!isMounted || !dateRange?.from) return EMPTY_ARRAY as unknown as EnrichedLog[];
         const start = startOfDay(dateRange.from);
         const end = endOfDay(dateRange.to || new Date());
         
@@ -122,7 +122,7 @@ export default function StockPage() {
         const q = searchQuery.toLowerCase();
         return result.filter(l => l.productName.toLowerCase().includes(q) || (l.details && l.details.toLowerCase().includes(q)));
     }, [isMounted, dateRange, searchQuery]);
-    const inventoryLogs = inventoryLogsResult.value ?? (EMPTY_ARRAY as EnrichedLog[]);
+    const inventoryLogs = inventoryLogsResult.value ?? (EMPTY_ARRAY as unknown as EnrichedLog[]);
 
     const filteredSuppliers = useMemo(() => {
         if (!searchQuery.trim()) return suppliers;
@@ -305,7 +305,7 @@ export default function StockPage() {
 
                 <div className="flex items-center gap-2 px-1 flex-grow lg:flex-grow-0">
                     <div className="relative flex-grow">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/50" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                         <Input 
                             ref={searchInputRef}
                             placeholder="Rechercher... [F3]"
