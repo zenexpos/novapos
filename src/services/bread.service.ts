@@ -2,7 +2,7 @@
 
 import { parseISO, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus, SyncStatus } from '@/lib/types';
+import type { BreadOrder, BreadOrderWithCustomer, CreateBreadOrderDTO, BreadPickupStatus, BreadPaymentStatus, SyncStatus, CartItem } from '@/lib/types';
 import { db } from '@/lib/db';
 import { salesService } from './sales.service';
 import { BREAD_WEEK_DAYS } from '@/lib/constants';
@@ -148,15 +148,17 @@ class BreadService {
                 if (order.saleUuid || order.deletedAt || !order.customerUuid) continue;
 
                 // Create the sale entity via central finance service
+                // Use a standard item object that matches the structure expected by createSale
+                const breadItem = {
+                    uuid: 'BREAD_VIRTUAL_PROD',
+                    name: `Flux Pain - Ref ${order.orderNumber}`,
+                    price: breadPrice || order.unitPrice,
+                    purchasePrice: 0,
+                    cartQuantity: safeNumber(order.quantity),
+                } as unknown as CartItem;
+
                 const sale = await salesService.createSale({
-                    items: [{
-                        productUuid: 'BREAD_VIRTUAL_PROD',
-                        name: `Flux Pain - Ref ${order.orderNumber}`,
-                        price: breadPrice || order.unitPrice,
-                        purchasePrice: 0,
-                        quantity: safeNumber(order.quantity),
-                        tvaRate: 0
-                    }],
+                    items: [breadItem],
                     discountType: 'fixed',
                     discountValue: 0,
                     deliveryFee: 0,
