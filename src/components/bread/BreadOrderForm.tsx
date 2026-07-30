@@ -15,6 +15,8 @@ import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { db } from '@/lib/db';
 
 interface BreadOrderFormProps {
     isOpen: boolean;
@@ -24,8 +26,8 @@ interface BreadOrderFormProps {
 }
 
 /**
- * BreadOrderForm Zen - Interface de saisie ultra-pure.
- * Optimisée pour la productivité Elite sans distraction.
+ * BreadOrderForm Zen - Version Elite Corrigée.
+ * Interface de saisie optimisée pour la productivité sans distraction.
  */
 export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }: BreadOrderFormProps) {
     const profile = useAppStore(state => state.companyProfile);
@@ -37,23 +39,18 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
     const [pickupTime, setPickupTime] = useState('08:00');
     const [isRecurring, setIsRecurring] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [manualClients, setManualClients] = useState<Customer[]>([]);
 
-    const fetchClients = useCallback(async () => {
-        try {
-            const data = await customerService.getCustomers();
-            setManualClients(data);
-        } catch (e) {
-            console.error("Error fetching clients:", e);
-        }
-    }, []);
+    // Reactive customer list
+    const { value: clients } = useLiveQuery<Customer[]>(
+        () => db.customers.filter(c => !c.deletedAt).toArray(),
+        []
+    );
 
     useEffect(() => {
-        if (isOpen) {
-            if (mode === 'registered') fetchClients();
-            if (profile?.breadPrice) setUnitPrice(profile.breadPrice);
+        if (isOpen && profile?.breadPrice) {
+            setUnitPrice(profile.breadPrice);
         }
-    }, [isOpen, mode, profile?.breadPrice, fetchClients]);
+    }, [isOpen, profile?.breadPrice]);
 
     const resetForm = useCallback(() => {
         setSelectedClientUuid('');
@@ -67,11 +64,11 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
         if (e) e.preventDefault();
 
         if (mode === 'registered' && !selectedClientUuid) {
-            toast.error("Client requis.");
+            toast.error("Veuillez sélectionner un client.");
             return;
         }
         if (mode === 'external' && !customName.trim()) {
-            toast.error("Nom requis.");
+            toast.error("Veuillez saisir un nom.");
             return;
         }
 
@@ -80,6 +77,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             let targetCustomerUuid = mode === 'registered' ? selectedClientUuid : undefined;
             let finalCustomName = mode === 'external' ? customName.trim() : undefined;
 
+            // Logic: Create account if recurring is checked for external client
             if (mode === 'external' && isRecurring) {
                 const names = customName.trim().split(' ');
                 const newCustomer = await customerService.addCustomer({
@@ -93,13 +91,24 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 targetCustomerUuid = newCustomer.uuid;
                 finalCustomName = undefined;
                 await customerService.updateCustomer(newCustomer.uuid, {
-                    breadProfile: { recurrenceType: 'quotidien', defaultQuantity: quantity, startDate: currentDate, weeklySchedule: {} }
+                    breadProfile: { 
+                        recurrenceType: 'quotidien', 
+                        defaultQuantity: quantity, 
+                        startDate: currentDate, 
+                        weeklySchedule: {} 
+                    }
                 });
             } else if (mode === 'registered' && isRecurring && selectedClientUuid) {
-                const client = manualClients.find(c => c.uuid === selectedClientUuid);
+                // Update existing client to recurring
+                const client = clients?.find(c => c.uuid === selectedClientUuid);
                 await customerService.updateCustomer(selectedClientUuid, {
                     isBreadClient: true,
-                    breadProfile: { recurrenceType: 'quotidien', defaultQuantity: quantity, startDate: client?.breadProfile?.startDate || currentDate, weeklySchedule: client?.breadProfile?.weeklySchedule || {} }
+                    breadProfile: { 
+                        recurrenceType: 'quotidien', 
+                        defaultQuantity: quantity, 
+                        startDate: client?.breadProfile?.startDate || currentDate, 
+                        weeklySchedule: client?.breadProfile?.weeklySchedule || {} 
+                    }
                 });
             }
 
@@ -112,32 +121,33 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                 pickupTime
             });
 
-            toast.success("Flux enregistré.");
+            toast.success("Flux de distribution validé.");
             onSuccess?.();
             onOpenChange(false);
             resetForm();
         } catch (err: any) {
-            toast.error("Erreur d'enregistrement.");
+            toast.error("Erreur technique lors de l'enregistrement.");
         } finally {
             setIsLoading(false);
         }
     };
 
     useKeyboardShortcuts([
-        { key: 'Enter', ctrl: true, action: () => handleAdd(), description: 'Enregistrer', ignoreInputFocus: true },
+        { key: 'Enter', ctrl: true, action: () => handleAdd(), description: 'Valider', ignoreInputFocus: true },
         { key: 'Escape', action: () => onOpenChange(false), description: 'Fermer', ignoreInputFocus: true }
-    ], 'SaisiePainSimple', isOpen);
+    ], 'SaisiePainElite', isOpen);
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[340px] p-0 overflow-hidden border-none bg-card shadow-2xl rounded-2xl">
                 <form onSubmit={handleAdd}>
-                    <DialogHeader className="p-4 border-b border-border">
+                    <DialogHeader className="p-4 border-b border-border bg-muted/20">
                         <DialogTitle className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60 text-center">Nouveau Flux Pain</DialogTitle>
                     </DialogHeader>
 
                     <div className="p-4 space-y-5">
-                        <div className="flex p-0.5 bg-muted/30 rounded-lg">
+                        {/* Mode Selector */}
+                        <div className="flex p-0.5 bg-muted/40 rounded-lg">
                             <button 
                                 type="button"
                                 onClick={() => setMode('registered')}
@@ -166,10 +176,10 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                     <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Client Destinataire</Label>
                                     <Select value={selectedClientUuid} onValueChange={setSelectedClientUuid}>
                                         <SelectTrigger className="h-9 bg-muted/20 border-none font-bold text-xs">
-                                            <SelectValue placeholder="Choisir client..." />
+                                            <SelectValue placeholder="Choisir un compte..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {manualClients.map(c => (
+                                            {clients?.sort((a,b) => a.firstName.localeCompare(b.firstName)).map(c => (
                                                 <SelectItem key={c.uuid} value={c.uuid} className="text-xs font-bold uppercase">{c.firstName} {c.lastName}</SelectItem>
                                             ))}
                                         </SelectContent>
@@ -177,12 +187,13 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             ) : (
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Identité / Nom</Label>
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Nom / Identité</Label>
                                     <Input 
                                         className="h-9 bg-muted/20 border-none font-bold text-xs uppercase"
                                         value={customName}
                                         onChange={e => setCustomName(e.target.value)}
-                                        placeholder="..."
+                                        placeholder="Ex: Client Comptoire"
+                                        autoFocus
                                     />
                                 </div>
                             )}
@@ -196,10 +207,11 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                         value={quantity}
                                         onChange={e => setQuantity(parseFloat(e.target.value) || 0)}
                                         step="0.5"
+                                        min="0"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Heure Retrait</Label>
+                                    <Label className="text-[8px] font-black uppercase opacity-30 ml-1">Heure de retrait</Label>
                                     <Input 
                                         type="time" 
                                         className="h-9 bg-muted/20 border-none font-black text-center text-primary"
@@ -209,22 +221,31 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                            {/* Recurring Option */}
+                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10 transition-colors hover:bg-primary/10">
                                 <Checkbox 
                                     id="recurring" 
                                     checked={isRecurring} 
                                     onCheckedChange={(checked) => setIsRecurring(!!checked)}
-                                    className="h-3.5 w-3.5 border-primary/30"
+                                    className="h-3.5 w-3.5 border-primary/30 data-[state=checked]:bg-primary"
                                 />
-                                <Label htmlFor="recurring" className="cursor-pointer">
-                                    <p className="text-[9px] font-black uppercase text-primary leading-none">Activer abonnement quotidien</p>
+                                <Label htmlFor="recurring" className="cursor-pointer flex flex-col -space-y-0.5">
+                                    <span className="text-[9px] font-black uppercase text-primary tracking-widest">Activer abonnement</span>
+                                    <span className="text-[7px] font-bold text-primary/40 uppercase">Génération quotidienne auto</span>
                                 </Label>
                             </div>
                         </div>
                     </div>
 
                     <DialogFooter className="p-3 bg-muted/20 border-t border-border flex gap-2">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-9 font-bold text-[9px] uppercase px-4 flex-1">Annuler</Button>
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            onClick={() => onOpenChange(false)} 
+                            className="h-9 font-bold text-[9px] uppercase px-4 flex-1"
+                        >
+                            Annuler
+                        </Button>
                         <Button 
                             type="submit"
                             disabled={isLoading}
