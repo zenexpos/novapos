@@ -2,8 +2,8 @@
 
 import { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, Truck, Landmark, Wallet, Layers } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { Layers, PackageCheck, Clock, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/lib/db';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,27 +36,23 @@ export const BreadStats = memo(({ date }: BreadStatsProps) => {
     );
 
     const stats = useMemo(() => {
-        if (!orders) return { 
-            count: 0, totalPieces: 0, totalVal: 0, paidVal: 0, unpaidVal: 0, 
-            unreceivedPieces: 0, paidCount: 0, unpaidCount: 0
+        if (!orders || orders.length === 0) return { 
+            requested: 0, delivered: 0, remaining: 0, paid: 0, count: 0
         };
 
         return {
             count: orders.length,
-            totalPieces: orders.reduce((s, o) => s + (o.quantity || 0), 0),
-            totalVal: orders.reduce((s, o) => s + o.totalAmount, 0),
-            paidVal: orders.reduce((s, o) => s + (o.isPaid ? o.totalAmount : o.amountPaid), 0),
-            unpaidVal: orders.reduce((s, o) => s + (o.isPaid ? 0 : o.remainingAmount), 0),
-            unreceivedPieces: orders.filter(o => !o.isDelivered).reduce((s, o) => s + (o.quantity || 0), 0),
-            paidCount: orders.filter(o => o.isPaid).length,
-            unpaidCount: orders.filter(o => !o.isPaid).length
+            requested: orders.reduce((s, o) => s + (o.quantity || 0), 0),
+            delivered: orders.filter(o => o.isDelivered).reduce((s, o) => s + (o.quantity || 0), 0),
+            remaining: orders.filter(o => !o.isDelivered).reduce((s, o) => s + (o.quantity || 0), 0),
+            paid:      orders.filter(o => o.isPaid).reduce((s, o) => s + (o.quantity || 0), 0),
         };
     }, [orders]);
 
     if (isLoading) {
         return (
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-                {[...Array(5)].map((_, i) => (
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
                     <Card key={i} className="h-28 rounded-2xl border border-white/5 animate-pulse bg-card/40" />
                 ))}
             </div>
@@ -64,41 +60,34 @@ export const BreadStats = memo(({ date }: BreadStatsProps) => {
     }
 
     return (
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 animate-in fade-in duration-700">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 animate-in fade-in duration-700">
             <StatCard 
-                title="Volume Distribution" 
-                value={`${stats.totalPieces} PCS`} 
+                title="Quantité Demandée" 
+                value={`${stats.requested} PCS`} 
                 icon={Layers} 
                 colorClass="bg-primary/10 text-primary" 
-                subtitle={`${stats.count} commandes actives`}
+                subtitle={`${stats.count} flux enregistrés`}
             />
             <StatCard 
-                title="Liquidités Perçues" 
-                value={formatCurrency(stats.paidVal)} 
-                icon={CheckCircle2} 
+                title="Quantité Livrée" 
+                value={`${stats.delivered} PCS`} 
+                icon={PackageCheck} 
                 colorClass="bg-emerald-500/10 text-emerald-500" 
-                subtitle={`${stats.paidCount} soldées cash`}
+                subtitle="Distribution effectuée"
             />
             <StatCard 
-                title="Reste à Recouvrer" 
-                value={formatCurrency(stats.unpaidVal)} 
-                icon={Wallet} 
-                colorClass="bg-red-500/10 text-red-500" 
-                subtitle={`${stats.unpaidCount} dettes générées`}
-            />
-            <StatCard 
-                title="Logistique Reste" 
-                value={`${stats.unreceivedPieces} PCS`} 
-                icon={Truck} 
+                title="Quantité Restante" 
+                value={`${stats.remaining} PCS`} 
+                icon={Clock} 
                 colorClass="bg-amber-500/10 text-amber-500" 
                 subtitle="En attente de retrait"
             />
             <StatCard 
-                title="Valeur Prévisionnelle" 
-                value={formatCurrency(stats.totalVal)} 
-                icon={Landmark} 
+                title="Quantité Payée" 
+                value={`${stats.paid} PCS`} 
+                icon={CheckCircle2} 
                 colorClass="bg-blue-500/10 text-blue-500" 
-                subtitle="Chiffre d'affaires estimé"
+                subtitle="Règlements cash validés"
             />
         </div>
     );
