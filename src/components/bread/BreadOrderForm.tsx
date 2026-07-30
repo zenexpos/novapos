@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { breadService } from '@/services/bread.service';
 import { customerService } from '@/services/customer.service';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import type { Customer } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
@@ -24,7 +24,7 @@ interface BreadOrderFormProps {
 }
 
 /**
- * BreadOrderForm Elite - Ultra-dense distribution entry.
+ * BreadOrderForm Zen - Ultra-dense distribution entry.
  */
 export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }: BreadOrderFormProps) {
     const profile = useAppStore(state => state.companyProfile);
@@ -68,11 +68,11 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
         if (e) e.preventDefault();
 
         if (mode === 'registered' && !selectedClientUuid) {
-            toast.error("Sélectionnez un client.");
+            toast.error("Choisissez un client.");
             return;
         }
         if (mode === 'external' && !customName.trim()) {
-            toast.error("Identité requise.");
+            toast.error("Nom requis.");
             return;
         }
 
@@ -84,7 +84,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             if (mode === 'external' && isRecurring) {
                 const names = customName.trim().split(' ');
                 const firstName = names[0];
-                const lastName = names.slice(1).join(' ') || '(Elite)';
+                const lastName = names.slice(1).join(' ') || '(Pain)';
                 
                 const newCustomer = await customerService.addCustomer({
                     firstName,
@@ -133,7 +133,7 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
             onOpenChange(false);
             resetForm();
         } catch (err: any) {
-            toast.error("Échec de l'enregistrement.");
+            toast.error("Erreur de sauvegarde.");
         } finally {
             setIsLoading(false);
         }
@@ -146,45 +146,45 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border border-white/5 bg-card shadow-2xl">
+            <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none bg-card shadow-2xl rounded-2xl">
                 <form onSubmit={handleAdd}>
-                    <DialogHeader className="bg-muted/30 p-4 border-b border-white/5">
-                        <DialogTitle className="text-sm font-black tracking-widest uppercase">Nouvelle Distribution</DialogTitle>
+                    <DialogHeader className="p-4 border-b border-border bg-muted/50">
+                        <DialogTitle className="text-xs font-black uppercase tracking-widest text-foreground/60">Nouvelle Saisie</DialogTitle>
                     </DialogHeader>
 
-                    <div className="p-4 space-y-4">
-                        <div className="flex p-1 bg-black/20 rounded-xl" role="tablist">
+                    <div className="p-4 space-y-5">
+                        <div className="flex p-0.5 bg-black/10 rounded-lg">
                             <button 
                                 type="button"
-                                onClick={() => { setMode('registered'); setIsRecurring(false); }}
+                                onClick={() => setMode('registered')}
                                 className={cn(
-                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all",
-                                    mode === 'registered' ? "bg-card text-primary shadow-sm" : "text-muted-foreground/40"
+                                    "flex-1 py-1.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                    mode === 'registered' ? "bg-card text-primary shadow-sm" : "text-muted-foreground/40 hover:text-muted-foreground"
                                 )}
                             >
-                                Client Elite
+                                Client Compte
                             </button>
                             <button 
                                 type="button"
-                                onClick={() => { setMode('external'); setIsRecurring(false); }}
+                                onClick={() => setMode('external')}
                                 className={cn(
-                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all",
-                                    mode === 'external' ? "bg-card text-primary shadow-sm" : "text-muted-foreground/40"
+                                    "flex-1 py-1.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                    mode === 'external' ? "bg-card text-primary shadow-sm" : "text-muted-foreground/40 hover:text-muted-foreground"
                                 )}
                             >
-                                Client de Passage
+                                Passage
                             </button>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {mode === 'registered' ? (
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase text-muted-foreground/40 ml-1">Compte Client</Label>
+                                    <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Sélection Client</Label>
                                     <Select value={selectedClientUuid} onValueChange={setSelectedClientUuid}>
-                                        <SelectTrigger className="h-10 rounded-xl bg-black/10 border-none shadow-inner font-bold text-xs">
+                                        <SelectTrigger className="h-10 bg-black/5 border-none font-bold text-xs">
                                             <SelectValue placeholder="Choisir..." />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-white/5 shadow-2xl">
+                                        <SelectContent>
                                             {manualClients.map(c => (
                                                 <SelectItem key={c.uuid} value={c.uuid} className="text-xs font-bold">
                                                     {c.firstName} {c.lastName}
@@ -195,9 +195,9 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
                                 </div>
                             ) : (
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase text-muted-foreground/40 ml-1">Nom / Identité</Label>
+                                    <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Nom / Identité</Label>
                                     <Input 
-                                        className="h-10 rounded-xl bg-black/10 border-none shadow-inner font-bold text-xs"
+                                        className="h-10 bg-black/5 border-none font-bold text-xs"
                                         value={customName}
                                         onChange={e => setCustomName(e.target.value)}
                                         placeholder="..."
@@ -207,49 +207,49 @@ export function BreadOrderForm({ isOpen, onOpenChange, currentDate, onSuccess }:
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase text-muted-foreground/40 ml-1">Quantité (PCS)</Label>
+                                    <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Quantité (PCS)</Label>
                                     <Input 
                                         type="number" 
-                                        className="h-10 rounded-xl bg-black/10 border-none shadow-inner font-black text-sm text-primary text-center"
+                                        className="h-10 bg-black/5 border-none font-black text-center text-primary"
                                         value={quantity}
                                         onChange={e => setQuantity(parseFloat(e.target.value) || 0)}
-                                        step="0.1"
+                                        step="0.5"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase text-muted-foreground/40 ml-1">Retrait Prévu</Label>
+                                    <Label className="text-[9px] font-black uppercase opacity-40 ml-1">Heure Retrait</Label>
                                     <Input 
                                         type="time" 
-                                        className="h-10 rounded-xl bg-black/10 border-none shadow-inner font-black text-sm text-primary text-center"
+                                        className="h-10 bg-black/5 border-none font-black text-center text-primary"
                                         value={pickupTime}
                                         onChange={e => setPickupTime(e.target.value)}
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                            <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10 transition-all hover:bg-primary/10">
                                 <Checkbox 
                                     id="recurring" 
                                     checked={isRecurring} 
                                     onCheckedChange={(checked) => setIsRecurring(!!checked)}
-                                    className="h-4 w-4 rounded-md border-primary"
+                                    className="h-4 w-4 border-primary/40 data-[state=checked]:bg-primary"
                                 />
-                                <Label htmlFor="recurring" className="cursor-pointer">
-                                    <span className="text-[9px] font-black text-primary uppercase">Générer un abonnement</span>
-                                    <p className="text-[7px] text-muted-foreground font-bold uppercase">Création auto tous les jours</p>
+                                <Label htmlFor="recurring" className="cursor-pointer space-y-0.5">
+                                    <p className="text-[9px] font-black uppercase text-primary">Créer Abonnement</p>
+                                    <p className="text-[7px] font-bold uppercase text-muted-foreground/40">Génération auto journalière</p>
                                 </Label>
                             </div>
                         </div>
                     </div>
 
-                    <DialogFooter className="p-3 bg-muted/20 border-t border-white/5 flex gap-2">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-10 font-bold text-[9px] uppercase px-6">Annuler</Button>
+                    <DialogFooter className="p-3 bg-muted/30 border-t border-border flex gap-2">
+                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="h-10 font-bold text-[9px] uppercase px-4">Annuler</Button>
                         <Button 
                             type="submit"
                             disabled={isLoading}
-                            className="flex-1 h-10 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl"
+                            className="flex-1 h-10 font-black text-[9px] uppercase tracking-widest shadow-lg"
                         >
-                            {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Valider Flux [Enter]"}
+                            {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 mr-1.5" /> Enregistrer [Enter]</>}
                         </Button>
                     </DialogFooter>
                 </form>
